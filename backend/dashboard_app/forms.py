@@ -1,14 +1,25 @@
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 
+from backend.ads_app.models import Advertisement
 from backend.concerts_app.models import Concert
 from backend.dashboard_app.widgets import CircularAvatarWidget, SquareCoverWidget
-from backend.links_app.models import Platform
+from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
-from backend.media_app.models import Media
+from backend.media_app.models import Media, MediaCredit
 from backend.music_app.models import Album, Song, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
+
+# kind -> (Model, display-name field) for the ad's optional internal link.
+AD_LINK_KINDS = {
+    'person': (Person, 'full_name_ar'),
+    'album': (Album, 'title_ar'),
+    'song': (Song, 'title_ar'),
+    'media': (Media, 'title_ar'),
+    'concert': (Concert, 'title_ar'),
+}
 
 WIDGET_ATTRS = {'class': 'form-control'}
 SELECT_ATTRS = {'class': 'form-select'}
@@ -55,14 +66,15 @@ class AlbumForm(forms.ModelForm):
     class Meta:
         model = Album
         fields = [
-            'title_ar', 'title_en', 'release_date', 'cover_art_url', 'record_label',
+            'title_ar', 'title_en', 'release_date', 'cover_image', 'cover_art_url', 'record_label',
             'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'release_date': _('تاريخ الإصدار'),
-            'cover_art_url': _('رابط صورة الغلاف'),
+            'cover_image': _('صورة الغلاف'),
+            'cover_art_url': _('رابط صورة الغلاف (اختياري)'),
             'record_label': _('شركة الإنتاج'),
             'visibility': _('حالة الظهور'),
             'publish_at': _('موعد النشر'),
@@ -71,6 +83,7 @@ class AlbumForm(forms.ModelForm):
             'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
+            'cover_image': SquareCoverWidget(),
             'cover_art_url': forms.URLInput(attrs=WIDGET_ATTRS),
             'record_label': forms.Select(attrs=SELECT_ATTRS),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
@@ -126,21 +139,77 @@ class SongForm(forms.ModelForm):
             self.fields[field_name].empty_label = NONE_CHOICE
 
 
-class MediaForm(forms.ModelForm):
+class _BaseWorkForm(forms.ModelForm):
+    """Shared editable fields for a movie/series/program entry (everything
+    except the commercial-only attributes). Each subclass pins media_type
+    so the three sections stay fully separate in the dashboard.
+    """
+    media_type = None
+
     class Meta:
         model = Media
         fields = [
-            'title_ar', 'title_en', 'media_type', 'release_date', 'poster_url', 'synopsis', 'rating',
+            'title_ar', 'title_en', 'poster_image', 'poster_url', 'release_date', 'synopsis', 'rating',
+            'visibility', 'publish_at',
+        ]
+        labels = {
+            'title_ar': _('العنوان بالعربية'),
+            'title_en': _('العنوان بالإنجليزية'),
+            'poster_image': _('صورة العمل'),
+            'poster_url': _('رابط بوستر بديل (اختياري)'),
+            'release_date': _('تاريخ الإصدار'),
+            'synopsis': _('القصة'),
+            'rating': _('التقييم'),
+            'visibility': _('حالة الظهور'),
+            'publish_at': _('موعد النشر'),
+        }
+        widgets = {
+            'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
+            'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
+            'poster_image': SquareCoverWidget(),
+            'poster_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
+            'synopsis': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 4}),
+            'rating': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.1', 'min': 0, 'max': 10}),
+            'visibility': forms.Select(attrs=SELECT_ATTRS),
+            'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.media_type = self.media_type
+        if commit:
+            instance.save()
+        return instance
+
+
+class MovieForm(_BaseWorkForm):
+    media_type = Media.MediaType.MOVIE
+
+
+class SeriesForm(_BaseWorkForm):
+    media_type = Media.MediaType.TV_SERIES
+
+
+class ProgramForm(_BaseWorkForm):
+    media_type = Media.MediaType.PROGRAM
+
+
+class CommercialForm(forms.ModelForm):
+    media_type = Media.MediaType.COMMERCIAL
+
+    class Meta:
+        model = Media
+        fields = [
+            'title_ar', 'title_en', 'poster_image', 'poster_url', 'release_date',
             'advertiser_company', 'brand_name', 'campaign_concept', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
-            'media_type': _('النوع'),
+            'poster_image': _('صورة الإعلان'),
+            'poster_url': _('رابط صورة بديل (اختياري)'),
             'release_date': _('تاريخ الإصدار'),
-            'poster_url': _('رابط البوستر'),
-            'synopsis': _('القصة'),
-            'rating': _('التقييم'),
             'advertiser_company': _('جهة الإعلان'),
             'brand_name': _('اسم العلامة التجارية'),
             'campaign_concept': _('فكرة الحملة'),
@@ -150,16 +219,45 @@ class MediaForm(forms.ModelForm):
         widgets = {
             'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
-            'media_type': forms.Select(attrs=SELECT_ATTRS),
-            'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
+            'poster_image': SquareCoverWidget(),
             'poster_url': forms.URLInput(attrs=WIDGET_ATTRS),
-            'synopsis': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 4}),
-            'rating': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.1', 'min': 0, 'max': 10}),
+            'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
             'advertiser_company': forms.TextInput(attrs=WIDGET_ATTRS),
             'brand_name': forms.TextInput(attrs=WIDGET_ATTRS),
             'campaign_concept': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 3}),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
             'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.media_type = self.media_type
+        if commit:
+            instance.save()
+        return instance
+
+
+MEDIA_SECTION_FORMS = {
+    'movies': MovieForm,
+    'series': SeriesForm,
+    'commercials': CommercialForm,
+    'programs': ProgramForm,
+}
+
+
+class MediaCreditForm(forms.ModelForm):
+    class Meta:
+        model = MediaCredit
+        fields = ['person', 'role', 'character_name']
+        labels = {
+            'person': _('الشخص'),
+            'role': _('الدور'),
+            'character_name': _('اسم الشخصية (للممثلين، اختياري)'),
+        }
+        widgets = {
+            'person': forms.Select(attrs=SELECT_ATTRS),
+            'role': forms.Select(attrs=SELECT_ATTRS),
+            'character_name': forms.TextInput(attrs=WIDGET_ATTRS),
         }
 
 
@@ -232,6 +330,24 @@ class SongLyricSegmentForm(forms.ModelForm):
         return cleaned
 
 
+class ExternalLinkForm(forms.ModelForm):
+    class Meta:
+        model = ExternalLink
+        fields = ['platform', 'direct_url', 'access_type', 'embed_code']
+        labels = {
+            'platform': _('المنصة'),
+            'direct_url': _('الرابط'),
+            'access_type': _('نوع الوصول'),
+            'embed_code': _('كود التضمين (اختياري)'),
+        }
+        widgets = {
+            'platform': forms.Select(attrs=SELECT_ATTRS),
+            'direct_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'access_type': forms.Select(attrs=SELECT_ATTRS),
+            'embed_code': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 2}),
+        }
+
+
 class PlatformForm(forms.ModelForm):
     class Meta:
         model = Platform
@@ -279,3 +395,70 @@ class UserAccountForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class AdvertisementForm(forms.ModelForm):
+    placements = forms.MultipleChoiceField(
+        choices=Advertisement.Placement.choices, required=False,
+        widget=forms.CheckboxSelectMultiple, label=_('الصفحات المحددة (لو مش هيظهر في كل الصفحات)'),
+    )
+
+    class Meta:
+        model = Advertisement
+        fields = ['title', 'image', 'is_active', 'external_url', 'show_on_all_pages']
+        labels = {
+            'title': _('اسم الإعلان (للإدارة فقط)'),
+            'image': _('صورة الإعلان'),
+            'is_active': _('مفعّل'),
+            'external_url': _('رابط موقع خارجي (اختياري، لو مش مرتبط بعنصر داخلي)'),
+            'show_on_all_pages': _('يظهر في كل صفحات الموقع'),
+        }
+        widgets = {
+            'title': forms.TextInput(attrs=WIDGET_ATTRS),
+            'image': SquareCoverWidget(),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'external_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'show_on_all_pages': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = kwargs.get('instance')
+        linked_kind = instance.content_type.model if (instance and instance.content_type_id) else None
+        for kind, (model, name_field) in AD_LINK_KINDS.items():
+            field_name = f'link_{kind}'
+            self.fields[field_name] = forms.ModelChoiceField(
+                queryset=model.objects.all(), required=False, empty_label=NONE_CHOICE,
+                label=_('مرتبط بـ') + f' {model._meta.verbose_name}',
+                widget=forms.Select(attrs=SELECT_ATTRS),
+            )
+            if instance and linked_kind == kind:
+                self.initial[field_name] = instance.object_id
+        if instance and instance.pk:
+            self.initial['placements'] = instance.placements or []
+
+    def clean(self):
+        cleaned = super().clean()
+        chosen = [(kind, cleaned.get(f'link_{kind}')) for kind in AD_LINK_KINDS if cleaned.get(f'link_{kind}')]
+        if len(chosen) > 1:
+            raise forms.ValidationError(_('اختر عنصر واحد بس تربط بيه الإعلان.'))
+        if chosen and cleaned.get('external_url'):
+            raise forms.ValidationError(_('الإعلان يتربط إما بعنصر داخلي أو برابط خارجي، مش الاتنين.'))
+        if not cleaned.get('show_on_all_pages') and not cleaned.get('placements'):
+            self.add_error('placements', _('اختر صفحة واحدة على الأقل، أو فعّل "يظهر في كل الصفحات".'))
+        self._resolved_link = chosen[0] if chosen else None
+        return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self._resolved_link:
+            _, obj = self._resolved_link
+            instance.content_type = ContentType.objects.get_for_model(type(obj))
+            instance.object_id = obj.pk
+        else:
+            instance.content_type = None
+            instance.object_id = None
+        instance.placements = self.cleaned_data.get('placements') or []
+        if commit:
+            instance.save()
+        return instance

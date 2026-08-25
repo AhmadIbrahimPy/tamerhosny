@@ -1,0 +1,182 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "الرئيسية" %}{% endblock %}
+
+{% block content %}
+
+{% if page_ad %}
+<div class="container-xl">
+  {% include "website/partials/ad_banner.html" with ad=page_ad %}
+</div>
+{% else %}
+<div class="th-hero">
+  <div class="container-xl">
+    <h1>{% translate "تامر حسني" %}</h1>
+    <p>{% translate "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="container-xl">
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "أحدث الأغاني" %}</h2>
+      <a href="{% url 'website_app:songs' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for song in songs %}
+      <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
+        <div class="th-img-wrap">
+          {% if song.cover_image %}
+            <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+          {% elif song.album.cover_image %}
+            <img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ song.title_ar }}</div>
+          <div class="th-meta">{{ song.get_song_type_display }}</div>
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "أحدث الأفلام" %}</h2>
+      <a href="{% url 'website_app:movies' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for item in movies %}
+      <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
+        <div class="th-img-wrap">
+          {% if item.display_poster_url %}
+            <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+          {% else %}
+            <i class="bi bi-film icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ item.title_ar }}</div>
+          {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "أحدث المسلسلات" %}</h2>
+      <a href="{% url 'website_app:series' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for item in series %}
+      <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
+        <div class="th-img-wrap">
+          {% if item.display_poster_url %}
+            <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+          {% else %}
+            <i class="bi bi-film icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ item.title_ar }}</div>
+          {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الألبومات" %}</h2>
+      <a href="{% url 'website_app:albums' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for album in albums %}
+      <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card aspect-square plain">
+        <div class="th-img-wrap">
+          {% if album.cover_image %}
+            <img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}">
+          {% elif album.cover_art_url %}
+            <img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}">
+          {% else %}
+            <i class="bi bi-disc icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ album.title_ar }}</div>
+          {% if album.release_date %}<div class="th-meta">{{ album.release_date|date:"Y" }}</div>{% endif %}
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الحفلات" %}</h2>
+      <a href="{% url 'website_app:concerts' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-4">
+      {% for concert in concerts %}
+      <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
+        <div class="th-img-wrap">
+          {% if concert.poster_url %}
+            <img src="{{ concert.poster_url }}" alt="{{ concert.title_ar }}">
+          {% else %}
+            <i class="bi bi-calendar-event icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
+            {{ concert.get_status_display }}
+          </span>
+          <div class="th-title">{{ concert.title_ar }}</div>
+          <div class="th-meta">{{ concert.city }}{% if concert.city and concert.country %}، {% endif %}{{ concert.country }}</div>
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "طاقم العمل والفنانون" %}</h2>
+      <a href="{% url 'website_app:people' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for person in people %}
+      <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
+        {% if person.profile_image %}
+          <img src="{{ person.profile_image.url }}" alt="{{ person.full_name_ar }}">
+        {% else %}
+          <div class="avatar-fallback">{{ person.full_name_ar|slice:":1" }}</div>
+        {% endif %}
+        <div class="th-title">{{ person.full_name_ar }}</div>
+        <div class="th-meta">{{ person.get_primary_role_display }}</div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

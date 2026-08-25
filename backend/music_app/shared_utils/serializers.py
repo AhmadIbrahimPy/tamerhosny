@@ -2,12 +2,17 @@ from backend.links_app.shared_utils.serializers import serialize_link, serialize
 
 
 def serialize_album(album, request=None):
+    cover_url = album.cover_image.url if album.cover_image else None
+    if cover_url and request:
+        cover_url = request.build_absolute_uri(cover_url)
+
     return {
         'id': album.id,
         'title_ar': album.title_ar,
         'title_en': album.title_en,
         'slug': album.slug,
         'release_date': album.release_date,
+        'cover_image': cover_url,
         'cover_art_url': album.cover_art_url,
         'record_label': {'id': album.record_label_id, 'name': album.record_label.name} if album.record_label_id else None,
         **serialize_publishable(album),

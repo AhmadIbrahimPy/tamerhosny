@@ -70,8 +70,10 @@ INSTALLED_APPS = [
     'backend.music_app',
     'backend.media_app',
     'backend.concerts_app',
+    'backend.ads_app',
     'backend.dashboard_app',
     'backend.analytics_app',
+    'backend.website_app',
 ]
 
 LOGIN_URL = 'dashboard_app:login'

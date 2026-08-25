@@ -1,0 +1,37 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "الحفلات" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl th-section">
+  <h1 class="th-section-title">{% translate "الحفلات" %}</h1>
+  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+
+  <div class="th-grid cols-3">
+    {% for concert in concerts %}
+    <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
+      <div class="th-img-wrap">
+        {% if concert.poster_url %}
+          <img src="{{ concert.poster_url }}" alt="{{ concert.title_ar }}">
+        {% else %}
+          <i class="bi bi-calendar-event icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-body">
+        <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
+          {{ concert.get_status_display }}
+        </span>
+        <div class="th-title">{{ concert.title_ar }}</div>
+        <div class="th-meta">{{ concert.venue_name }}{% if concert.venue_name and concert.city %}، {% endif %}{{ concert.city }}</div>
+        <div class="th-meta">{% if concert.date %}{{ concert.date|date:"Y-m-d" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</div>
+      </div>
+    </a>
+    {% empty %}
+    <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+    {% endfor %}
+  </div>
+  <div class="mt-4">
+    {% include "dashboard/partials/pagination.html" with page_obj=concerts %}
+  </div>
+</div>
+{% endblock %}

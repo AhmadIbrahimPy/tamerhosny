@@ -85,9 +85,10 @@ class Platform(models.Model):
 
 
 class ExternalLink(models.Model):
-    """Links a Song or a Media item (movie/series/commercial/program) to
-    where it can be streamed/watched externally. Generic so both domains
-    share one mapper table instead of duplicating link models.
+    """Links a Person, Album, Song, or Media item (movie/series/commercial/
+    program), or Concert to where it can be found externally (a YouTube
+    channel, a song's Spotify page, ...). Generic so every domain shares
+    one mapper table instead of duplicating link models.
     """
 
     class AccessType(models.TextChoices):
@@ -102,7 +103,9 @@ class ExternalLink(models.Model):
         ContentType,
         on_delete=models.CASCADE,
         limit_choices_to=(
-            Q(app_label='music_app', model='song')
+            Q(app_label='people_app', model='person')
+            | Q(app_label='music_app', model='album')
+            | Q(app_label='music_app', model='song')
             | Q(app_label='media_app', model='media')
             | Q(app_label='concerts_app', model='concert')
         ),

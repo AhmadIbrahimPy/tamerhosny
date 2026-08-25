@@ -1,6 +1,9 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+from backend.links_app.models import ExternalLink
+from backend.main_app.shared_utils.slugs import generate_ascii_slug
 
 
 class Person(models.Model):
@@ -11,6 +14,8 @@ class Person(models.Model):
         ARRANGER = 'ARRANGER', _('Arranger')
         MUSIC_PRODUCER = 'MUSIC_PRODUCER', _('Music Producer')
         RECORDING_ENGINEER = 'RECORDING_ENGINEER', _('Recording Engineer')
+        MIXING_ENGINEER = 'MIXING_ENGINEER', _('Mixing Engineer')
+        MASTERING_ENGINEER = 'MASTERING_ENGINEER', _('Mastering Engineer')
         MIX_MASTER_ENGINEER = 'MIX_MASTER_ENGINEER', _('Mix & Master Engineer')
         DIRECTOR = 'DIRECTOR', _('Director')
         PRODUCER = 'PRODUCER', _('Producer')
@@ -26,6 +31,7 @@ class Person(models.Model):
     primary_role = models.CharField(max_length=30, choices=Role.choices, default=Role.OTHER, db_index=True)
     bio = models.TextField(blank=True)
     profile_image = models.ImageField(upload_to='people/', blank=True, null=True)
+    links = GenericRelation(ExternalLink)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -38,7 +44,7 @@ class Person(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.full_name_en or self.full_name_ar, allow_unicode=True)
+            self.slug = generate_ascii_slug(Person, self.full_name_en, 'person')
         super().save(*args, **kwargs)
 
     def __str__(self):

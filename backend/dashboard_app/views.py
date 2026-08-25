@@ -10,24 +10,45 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
 from django.db.models.functions import TruncDate
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 
+from backend.ads_app.models import Advertisement
 from backend.analytics_app.models import AnalyticsEvent
 from backend.concerts_app.models import Concert
 from backend.dashboard_app.forms import (
-    AlbumForm, ConcertForm, MediaForm, PersonForm, PlatformForm, SongForm, SongLyricSegmentForm, StudioForm,
-    UserAccountForm,
+    AdvertisementForm, AlbumForm, ConcertForm, ExternalLinkForm, MediaCreditForm, MEDIA_SECTION_FORMS, PersonForm,
+    PlatformForm, SongForm, SongLyricSegmentForm, StudioForm, UserAccountForm,
 )
-from backend.links_app.models import Platform
+from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
-from backend.media_app.models import Media
+from backend.media_app.models import Media, MediaCredit
 from backend.music_app.models import Album, Song, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
+
+# kind -> (Model, display-name field, list url name, detail url name)
+LINKABLE_KINDS = {
+    'person': (Person, 'full_name_ar', 'dashboard_app:people', 'dashboard_app:person-view'),
+    'album': (Album, 'title_ar', 'dashboard_app:albums', 'dashboard_app:album-view'),
+    'song': (Song, 'title_ar', 'dashboard_app:songs', 'dashboard_app:song-view'),
+    'media': (Media, 'title_ar', 'dashboard_app:movies', 'dashboard_app:media-view'),
+    'concert': (Concert, 'title_ar', 'dashboard_app:concerts', 'dashboard_app:concert-view'),
+}
+
+# dashboard "section" key -> (MediaType value, Arabic label, list url name).
+# Movies, series and commercials are kept as fully separate browse/create
+# flows even though they share one underlying Media table.
+MEDIA_SECTIONS = {
+    'movies': (Media.MediaType.MOVIE, _('الأفلام'), 'dashboard_app:movies'),
+    'series': (Media.MediaType.TV_SERIES, _('المسلسلات'), 'dashboard_app:series'),
+    'commercials': (Media.MediaType.COMMERCIAL, _('الإعلانات والحملات الترويجية'), 'dashboard_app:commercials'),
+    'programs': (Media.MediaType.PROGRAM, _('البرامج'), 'dashboard_app:programs'),
+}
 
 PAGE_SIZE = 20
 
@@ -213,6 +234,75 @@ def analytics_overview(request):
 
 
 # ---------------------------------------------------------------------------
+# Platform links (generic: person / album / song / media / concert)
+# ---------------------------------------------------------------------------
+
+@login_required(login_url='dashboard_app:login')
+def entity_links(request, kind, object_id):
+    mapping = LINKABLE_KINDS.get(kind)
+    if not mapping:
+        return redirect('dashboard_app:home')
+    model, name_field, list_url_name, detail_url_name = mapping
+    instance = get_object_or_404(model, pk=object_id)
+    links = ExternalLink.objects.filter(
+        content_type__model=model._meta.model_name, object_id=object_id,
+    ).select_related('platform')
+
+    if request.method == 'POST':
+        form = ExternalLinkForm(request.POST)
+        if form.is_valid():
+            link = form.save(commit=False)
+            link.content_object = instance
+            link.save()
+            return redirect('dashboard_app:entity-links', kind=kind, object_id=object_id)
+    else:
+        form = ExternalLinkForm()
+
+    return render(request, 'dashboard/pages/links_manage.html', {
+        'kind': kind,
+        'instance': instance,
+        'instance_label': getattr(instance, name_field),
+        'links': links,
+        'form': form,
+        'back_url': _smart_back_url(request, reverse(detail_url_name, args=[object_id])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def entity_link_edit(request, kind, object_id, link_pk):
+    mapping = LINKABLE_KINDS.get(kind)
+    if not mapping:
+        return redirect('dashboard_app:home')
+    model = mapping[0]
+    link = get_object_or_404(
+        ExternalLink, pk=link_pk, content_type__model=model._meta.model_name, object_id=object_id,
+    )
+    form = ExternalLinkForm(request.POST or None, instance=link)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('dashboard_app:entity-links', kind=kind, object_id=object_id)
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': _('تعديل رابط'),
+        'back_url': _smart_back_url(request, reverse('dashboard_app:entity-links', args=[kind, object_id])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def entity_link_delete(request, kind, object_id, link_pk):
+    mapping = LINKABLE_KINDS.get(kind)
+    if not mapping:
+        return redirect('dashboard_app:home')
+    model = mapping[0]
+    link = get_object_or_404(
+        ExternalLink, pk=link_pk, content_type__model=model._meta.model_name, object_id=object_id,
+    )
+    if request.method == 'POST':
+        link.delete()
+    return redirect('dashboard_app:entity-links', kind=kind, object_id=object_id)
+
+
+# ---------------------------------------------------------------------------
 # People
 # ---------------------------------------------------------------------------
 
@@ -301,6 +391,18 @@ def person_view(request, pk):
                 for credit in media_credits
             ],
         },
+        {
+            'title': _('روابط المنصات'),
+            'items': [
+                {
+                    'label': link.platform.get_platform_name_display(),
+                    'url': link.direct_url,
+                    'meta': link.get_access_type_display(),
+                    'external': True,
+                }
+                for link in person.links.select_related('platform').all()
+            ],
+        },
     ]
 
     return render(request, 'dashboard/pages/_detail_generic.html', {
@@ -310,6 +412,9 @@ def person_view(request, pk):
         'related_sections': related_sections,
         'image_url': person.profile_image.url if person.profile_image else None,
         'stats': _event_counts_for(person),
+        'extra_actions': [
+            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['person', pk])},
+        ],
         'edit_url': reverse('dashboard_app:person-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:people')),
     })
@@ -474,6 +579,18 @@ def album_view(request, pk):
                 for song in album.songs.all()
             ],
         },
+        {
+            'title': _('روابط المنصات'),
+            'items': [
+                {
+                    'label': link.platform.get_platform_name_display(),
+                    'url': link.direct_url,
+                    'meta': link.get_access_type_display(),
+                    'external': True,
+                }
+                for link in album.links.select_related('platform').all()
+            ],
+        },
     ]
 
     return render(request, 'dashboard/pages/_detail_generic.html', {
@@ -481,8 +598,11 @@ def album_view(request, pk):
         'subtitle': album.release_date,
         'fields': fields,
         'related_sections': related_sections,
-        'image_url': album.cover_art_url or None,
+        'image_url': (album.cover_image.url if album.cover_image else None) or album.cover_art_url or None,
         'stats': _event_counts_for(album),
+        'extra_actions': [
+            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['album', pk])},
+        ],
         'edit_url': reverse('dashboard_app:album-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:albums')),
     })
@@ -618,6 +738,7 @@ def song_view(request, pk):
         'stats': _event_counts_for(song),
         'extra_actions': [
             {'label': _('إدارة توقيت الكلمات'), 'url': reverse('dashboard_app:song-segments', args=[pk])},
+            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['song', pk])},
         ],
         'edit_url': reverse('dashboard_app:song-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
@@ -694,56 +815,125 @@ def song_segment_delete(request, pk, segment_pk):
 # Media (movies / series / commercials / programs)
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
-def media_list(request):
-    queryset = Media.objects.all()
+def _media_section_or_404(section):
+    mapping = MEDIA_SECTIONS.get(section)
+    if not mapping:
+        raise Http404
+    return mapping
+
+
+_MEDIA_SECTION_CREATE_URLS = {
+    'movies': 'dashboard_app:movie-create',
+    'series': 'dashboard_app:series-create',
+    'commercials': 'dashboard_app:commercial-create',
+    'programs': 'dashboard_app:program-create',
+}
+
+
+def _media_section_list(request, section):
+    media_type, label, list_url_name = _media_section_or_404(section)
+    queryset = Media.objects.filter(media_type=media_type)
     q = request.GET.get('q')
     if q:
         queryset = queryset.filter(Q(title_ar__icontains=q) | Q(title_en__icontains=q))
-    type_filter = request.GET.get('filter')
-    if type_filter:
-        queryset = queryset.filter(media_type=type_filter)
     media_items = _paginate(request, queryset)
     return render(request, 'dashboard/pages/media/all.html', {
         'media_items': media_items,
-        'filter_choices': Media.MediaType.choices,
-        'filter_label': _('كل الأنواع'),
+        'section': section,
+        'section_label': label,
+        'create_url': reverse(_MEDIA_SECTION_CREATE_URLS[section]),
         'querystring': _querystring(request),
     })
 
 
-@login_required(login_url='dashboard_app:login')
-def media_create(request):
+def _media_section_create(request, section):
+    _media_type, label, list_url_name = _media_section_or_404(section)
+    form_class = MEDIA_SECTION_FORMS[section]
     return _save_form(
-        request, MediaForm, None, _('إضافة عمل فني'), reverse('dashboard_app:media'),
-        'dashboard_app:media',
+        request, form_class, None, f'{_("إضافة")}: {label}',
+        reverse(list_url_name), reverse(list_url_name),
     )
+
+
+@login_required(login_url='dashboard_app:login')
+def movies_list(request):
+    return _media_section_list(request, 'movies')
+
+
+@login_required(login_url='dashboard_app:login')
+def movie_create(request):
+    return _media_section_create(request, 'movies')
+
+
+@login_required(login_url='dashboard_app:login')
+def series_list(request):
+    return _media_section_list(request, 'series')
+
+
+@login_required(login_url='dashboard_app:login')
+def series_create(request):
+    return _media_section_create(request, 'series')
+
+
+@login_required(login_url='dashboard_app:login')
+def commercials_list(request):
+    return _media_section_list(request, 'commercials')
+
+
+@login_required(login_url='dashboard_app:login')
+def commercial_create(request):
+    return _media_section_create(request, 'commercials')
+
+
+@login_required(login_url='dashboard_app:login')
+def programs_list(request):
+    return _media_section_list(request, 'programs')
+
+
+@login_required(login_url='dashboard_app:login')
+def program_create(request):
+    return _media_section_create(request, 'programs')
+
+
+_MEDIA_TYPE_TO_SECTION = {media_type: section for section, (media_type, *_rest) in MEDIA_SECTIONS.items()}
 
 
 @login_required(login_url='dashboard_app:login')
 def media_edit(request, pk):
     media = get_object_or_404(Media, pk=pk)
+    section = _MEDIA_TYPE_TO_SECTION[media.media_type]
+    form_class = MEDIA_SECTION_FORMS[section]
+    list_url = reverse(MEDIA_SECTIONS[section][2])
     return _save_form(
-        request, MediaForm, media, f'{_("تعديل")}: {media.title_ar}', reverse('dashboard_app:media'),
-        'dashboard_app:media',
+        request, form_class, media, f'{_("تعديل")}: {media.title_ar}',
+        reverse('dashboard_app:media-view', args=[pk]), list_url,
     )
 
 
 @login_required(login_url='dashboard_app:login')
 def media_view(request, pk):
     media = get_object_or_404(Media, pk=pk)
+    section = _MEDIA_TYPE_TO_SECTION[media.media_type]
+    list_url = reverse(MEDIA_SECTIONS[section][2])
+
     fields = [
         (_('العنوان بالعربية'), media.title_ar),
         (_('العنوان بالإنجليزية'), media.title_en),
         (_('تاريخ الإصدار'), media.release_date),
-        (_('التقييم'), media.rating),
-        (_('جهة الإعلان'), media.advertiser_company),
-        (_('اسم العلامة التجارية'), media.brand_name),
-        (_('فكرة الحملة'), media.campaign_concept),
         (_('حالة الظهور'), _visibility_choices_display(media)),
         (_('موعد النشر'), media.publish_at),
-        (_('القصة'), media.synopsis),
     ]
+    if media.media_type == Media.MediaType.COMMERCIAL:
+        fields += [
+            (_('جهة الإعلان'), media.advertiser_company),
+            (_('اسم العلامة التجارية'), media.brand_name),
+            (_('فكرة الحملة'), media.campaign_concept),
+        ]
+    else:
+        fields += [
+            (_('التقييم'), media.rating),
+            (_('القصة'), media.synopsis),
+        ]
 
     related_sections = [
         {
@@ -786,30 +976,82 @@ def media_view(request, pk):
         'subtitle': media.get_media_type_display(),
         'fields': fields,
         'related_sections': related_sections,
-        'image_url': media.poster_url or None,
+        'image_url': media.display_poster_url or None,
         'stats': _event_counts_for(media),
+        'extra_actions': [
+            {'label': _('طاقم العمل'), 'url': reverse('dashboard_app:media-crew', args=[pk])},
+            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['media', pk])},
+        ],
         'edit_url': reverse('dashboard_app:media-edit', args=[pk]),
-        'back_url': _smart_back_url(request, reverse('dashboard_app:media')),
+        'back_url': _smart_back_url(request, list_url),
     })
 
 
 @login_required(login_url='dashboard_app:login')
 def media_delete(request, pk):
     media = get_object_or_404(Media, pk=pk)
+    section = _MEDIA_TYPE_TO_SECTION[media.media_type]
     if request.method == 'POST':
         media.delete()
-    return redirect('dashboard_app:media')
+    return redirect(MEDIA_SECTIONS[section][2])
 
 
 @login_required(login_url='dashboard_app:login')
 def media_toggle_visibility(request, pk):
     media = get_object_or_404(Media, pk=pk)
+    section = _MEDIA_TYPE_TO_SECTION[media.media_type]
     if request.method == 'POST':
         media.visibility = (
             Media.Visibility.DRAFT if media.visibility != Media.Visibility.DRAFT else Media.Visibility.PUBLISHED
         )
         media.save(update_fields=['visibility'])
-    return redirect('dashboard_app:media')
+    return redirect(MEDIA_SECTIONS[section][2])
+
+
+@login_required(login_url='dashboard_app:login')
+def media_crew(request, pk):
+    media = get_object_or_404(Media, pk=pk)
+    credits_qs = media.credits.select_related('person').all()
+
+    if request.method == 'POST':
+        form = MediaCreditForm(request.POST)
+        if form.is_valid():
+            credit = form.save(commit=False)
+            credit.media = media
+            credit.save()
+            return redirect('dashboard_app:media-crew', pk=pk)
+    else:
+        form = MediaCreditForm()
+
+    return render(request, 'dashboard/pages/media/crew.html', {
+        'media': media,
+        'credits': credits_qs,
+        'form': form,
+        'back_url': _smart_back_url(request, reverse('dashboard_app:media-view', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def media_crew_edit(request, pk, credit_pk):
+    media = get_object_or_404(Media, pk=pk)
+    credit = get_object_or_404(MediaCredit, pk=credit_pk, media=media)
+    form = MediaCreditForm(request.POST or None, instance=credit)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('dashboard_app:media-crew', pk=pk)
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': f'{_("تعديل عضو طاقم العمل")}: {media.title_ar}',
+        'back_url': _smart_back_url(request, reverse('dashboard_app:media-crew', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def media_crew_delete(request, pk, credit_pk):
+    credit = get_object_or_404(MediaCredit, pk=credit_pk, media_id=pk)
+    if request.method == 'POST':
+        credit.delete()
+    return redirect('dashboard_app:media-crew', pk=pk)
 
 
 # ---------------------------------------------------------------------------
@@ -891,6 +1133,9 @@ def concert_view(request, pk):
         'related_sections': related_sections,
         'image_url': concert.poster_url or None,
         'stats': _event_counts_for(concert),
+        'extra_actions': [
+            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['concert', pk])},
+        ],
         'edit_url': reverse('dashboard_app:concert-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:concerts')),
     })
@@ -914,6 +1159,96 @@ def concert_toggle_visibility(request, pk):
         )
         concert.save(update_fields=['visibility'])
     return redirect('dashboard_app:concerts')
+
+
+# ---------------------------------------------------------------------------
+# Advertisements
+# ---------------------------------------------------------------------------
+
+@login_required(login_url='dashboard_app:login')
+def ads_list(request):
+    queryset = Advertisement.objects.select_related('content_type').all()
+    q = request.GET.get('q')
+    if q:
+        queryset = queryset.filter(title__icontains=q)
+    ads = _paginate(request, queryset)
+    for ad in ads:
+        counts = _event_counts_for(ad)
+        ad.views_count = counts[AnalyticsEvent.EventType.VIEW]
+        ad.clicks_count = counts[AnalyticsEvent.EventType.EXTERNAL_CLICK]
+    return render(request, 'dashboard/pages/ads/all.html', {
+        'ads': ads,
+        'querystring': _querystring(request),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def ad_create(request):
+    return _save_form(
+        request, AdvertisementForm, None, _('إضافة إعلان'), reverse('dashboard_app:ads'),
+        'dashboard_app:ads',
+    )
+
+
+@login_required(login_url='dashboard_app:login')
+def ad_edit(request, pk):
+    ad = get_object_or_404(Advertisement, pk=pk)
+    return _save_form(
+        request, AdvertisementForm, ad, f'{_("تعديل إعلان")}: {ad.title}', reverse('dashboard_app:ads'),
+        'dashboard_app:ads',
+    )
+
+
+@login_required(login_url='dashboard_app:login')
+def ad_view(request, pk):
+    ad = get_object_or_404(Advertisement, pk=pk)
+
+    if ad.show_on_all_pages:
+        placement_display = _('كل صفحات الموقع')
+    else:
+        labels = dict(Advertisement.Placement.choices)
+        placement_display = '، '.join(str(labels.get(p, p)) for p in (ad.placements or [])) or '-'
+
+    if ad.content_object is not None:
+        linked_display = f'{ad.content_object} ({ad.content_type.model})'
+    elif ad.external_url:
+        linked_display = ad.external_url
+    else:
+        linked_display = _('غير مرتبط')
+
+    fields = [
+        (_('اسم الإعلان'), ad.title),
+        (_('مفعّل'), _('نعم') if ad.is_active else _('لا')),
+        (_('مرتبط بـ'), linked_display),
+        (_('يظهر في'), placement_display),
+    ]
+
+    return render(request, 'dashboard/pages/_detail_generic.html', {
+        'page_title': ad.title,
+        'subtitle': _('نشط') if ad.is_active else _('متوقف'),
+        'fields': fields,
+        'image_url': ad.image.url if ad.image else None,
+        'stats': _event_counts_for(ad),
+        'edit_url': reverse('dashboard_app:ad-edit', args=[pk]),
+        'back_url': _smart_back_url(request, reverse('dashboard_app:ads')),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def ad_delete(request, pk):
+    ad = get_object_or_404(Advertisement, pk=pk)
+    if request.method == 'POST':
+        ad.delete()
+    return redirect('dashboard_app:ads')
+
+
+@login_required(login_url='dashboard_app:login')
+def ad_toggle_active(request, pk):
+    ad = get_object_or_404(Advertisement, pk=pk)
+    if request.method == 'POST':
+        ad.is_active = not ad.is_active
+        ad.save(update_fields=['is_active'])
+    return redirect('dashboard_app:ads')
 
 
 # ---------------------------------------------------------------------------

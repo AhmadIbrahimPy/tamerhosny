@@ -33,6 +33,8 @@
               <a href="{% url 'dashboard_app:song-view' song.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
                 {% if song.cover_image %}
                   <img src="{{ song.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% elif song.album.cover_image %}
+                  <img src="{{ song.album.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
                 {% elif song.album.cover_art_url %}
                   <img src="{{ song.album.cover_art_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
                 {% else %}

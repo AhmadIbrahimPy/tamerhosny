@@ -1,0 +1,15 @@
+{% load i18n %}
+<div class="th-footer">
+  <div class="container-xl d-flex flex-wrap justify-content-between gap-4">
+    <div>
+      <div class="th-brand mb-2">{% translate "تامر حسني" %}</div>
+      <p class="text-muted small mb-0" style="max-width:380px;">{% translate "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <a href="{% url 'website_app:songs' %}">{% translate "الأغاني" %}</a>
+      <a href="{% url 'website_app:movies' %}">{% translate "الأفلام" %}</a>
+      <a href="{% url 'website_app:series' %}">{% translate "المسلسلات" %}</a>
+      <a href="{% url 'website_app:concerts' %}">{% translate "الحفلات" %}</a>
+    </div>
+  </div>
+</div>

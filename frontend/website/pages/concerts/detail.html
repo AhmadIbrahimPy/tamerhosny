@@ -1,0 +1,89 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{{ concert.title_ar }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+
+  <div class="th-detail-hero">
+    <div class="th-detail-img" style="flex-basis:380px; max-width:380px;">
+      {% if concert.poster_url %}
+        <img src="{{ concert.poster_url }}" alt="{{ concert.title_ar }}">
+      {% else %}
+        <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:16/9; background:#1e2130;">
+          <i class="bi bi-calendar-event icon-fallback" style="font-size:64px;"></i>
+        </div>
+      {% endif %}
+    </div>
+    <div class="th-detail-body">
+      <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
+        {{ concert.get_status_display }}
+      </span>
+      <h1>{{ concert.title_ar }}</h1>
+
+      <div class="th-meta-row">
+        <span><i class="bi bi-calendar"></i> {% if concert.date %}{{ concert.date|date:"Y-m-d H:i" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</span>
+        {% if concert.venue_name %}<span><i class="bi bi-geo-alt"></i> {{ concert.venue_name }}</span>{% endif %}
+        {% if concert.city %}<span><i class="bi bi-pin-map"></i> {{ concert.city }}{% if concert.country %}، {{ concert.country }}{% endif %}</span>{% endif %}
+      </div>
+
+      {% if concert.description %}<p class="mt-2" style="max-width:640px;">{{ concert.description }}</p>{% endif %}
+
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+      </div>
+    </div>
+  </div>
+
+  {% if links %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "فيديوهات وروابط" %}</h2>
+    <div class="d-flex flex-wrap gap-2">
+      {% for link in links %}
+        <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
+           onclick="thTrack('EXTERNAL_CLICK', 'concert', {{ concert.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
+          <i class="bi bi-box-arrow-up-right"></i> {{ link.platform.get_platform_name_display }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if related_concerts %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "حفلات أخرى" %}</h2>
+    <div class="th-grid cols-3">
+      {% for other in related_concerts %}
+      <a href="{% url 'website_app:concert-detail' other.slug %}" class="th-card aspect-wide plain">
+        <div class="th-img-wrap">
+          {% if other.poster_url %}
+            <img src="{{ other.poster_url }}" alt="{{ other.title_ar }}">
+          {% else %}
+            <i class="bi bi-calendar-event icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <span class="th-badge {% if other.status == 'COMPLETED' %}green{% elif other.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
+            {{ other.get_status_display }}
+          </span>
+          <div class="th-title">{{ other.title_ar }}</div>
+          <div class="th-meta">{{ other.city }}{% if other.city and other.country %}، {% endif %}{{ other.country }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>thTrack('VIEW', 'concert', {{ concert.pk }});</script>
+{% endblock %}

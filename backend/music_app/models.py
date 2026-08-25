@@ -3,10 +3,10 @@ from datetime import date
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from backend.links_app.models import ExternalLink, PublishableModel
+from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.media_app.models import Media
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
@@ -22,6 +22,7 @@ class Album(PublishableModel):
     record_label = models.ForeignKey(
         Studio, on_delete=models.SET_NULL, null=True, blank=True, related_name='albums',
     )
+    links = GenericRelation(ExternalLink)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -33,7 +34,7 @@ class Album(PublishableModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title_en or self.title_ar, allow_unicode=True)
+            self.slug = generate_ascii_slug(Album, self.title_en, 'album')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -87,7 +88,7 @@ class Song(PublishableModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title_en or self.title_ar, allow_unicode=True)
+            self.slug = generate_ascii_slug(Song, self.title_en, 'song')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -102,6 +103,8 @@ class SongCredit(models.Model):
         ARRANGER = 'ARRANGER', _('Arranger')
         MUSIC_PRODUCER = 'MUSIC_PRODUCER', _('Music Producer')
         RECORDING_ENGINEER = 'RECORDING_ENGINEER', _('Recording Engineer')
+        MIXING_ENGINEER = 'MIXING_ENGINEER', _('Mixing Engineer')
+        MASTERING_ENGINEER = 'MASTERING_ENGINEER', _('Mastering Engineer')
         MIX_MASTER_ENGINEER = 'MIX_MASTER_ENGINEER', _('Mix & Master Engineer')
         FEATURED_ARTIST = 'FEATURED_ARTIST', _('Featured Artist')
 

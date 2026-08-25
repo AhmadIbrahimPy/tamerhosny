@@ -37,6 +37,7 @@ class AnalyticsEvent(models.Model):
             | Q(app_label='music_app', model='song')
             | Q(app_label='media_app', model='media')
             | Q(app_label='concerts_app', model='concert')
+            | Q(app_label='ads_app', model='advertisement')
         ),
     )
     object_id = models.PositiveIntegerField()

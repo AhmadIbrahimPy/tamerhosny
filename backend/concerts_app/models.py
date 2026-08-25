@@ -2,10 +2,10 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from backend.links_app.models import ExternalLink, PublishableModel
+from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.studios_app.models import Studio
 
 
@@ -48,7 +48,7 @@ class Concert(PublishableModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title_en or self.title_ar, allow_unicode=True)
+            self.slug = generate_ascii_slug(Concert, self.title_en, 'concert')
         super().save(*args, **kwargs)
 
     @property

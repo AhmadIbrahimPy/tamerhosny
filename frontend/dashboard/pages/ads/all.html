@@ -1,0 +1,93 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "بانرات إعلانية" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{% translate "بانرات إعلانية" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ ads.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:ad-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة إعلان" %}</a>
+      </div>
+    </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>{% translate "الإعلان" %}</th>
+            <th>{% translate "يظهر في" %}</th>
+            <th>{% translate "مرتبط بـ" %}</th>
+            <th>{% translate "المشاهدات" %}</th>
+            <th>{% translate "الضغطات" %}</th>
+            <th>{% translate "الحالة" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ad in ads %}
+          <tr>
+            <td>
+              <a href="{% url 'dashboard_app:ad-view' ad.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if ad.image %}
+                  <img src="{{ ad.image.url }}" alt="" class="rounded flex-shrink-0" style="width:44px;height:32px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:44px;height:32px;font-size:12px;">-</span>
+                {% endif %}
+                <span>{{ ad.title }}</span>
+              </a>
+            </td>
+            <td>
+              {% if ad.show_on_all_pages %}
+                <span class="badge bg-info-subtle text-info">{% translate "كل الصفحات" %}</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ ad.placements|length }} {% translate "صفحة محددة" %}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if ad.content_object %}
+                {{ ad.content_object }}
+              {% elif ad.external_url %}
+                <span class="text-truncate d-inline-block" style="max-width:160px;">{{ ad.external_url }}</span>
+              {% else %}
+                <span class="text-muted">{% translate "بدون رابط" %}</span>
+              {% endif %}
+            </td>
+            <td>{{ ad.views_count }}</td>
+            <td>{{ ad.clicks_count }}</td>
+            <td>
+              {% if ad.is_active %}
+                <span class="badge bg-success-subtle text-success">{% translate "مفعّل" %}</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary">{% translate "متوقف" %}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:ad-view' ad.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:ad-edit' ad.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:ad-toggle' ad.pk %}" method="post" class="d-inline">
+                {% csrf_token %}
+                {% if ad.is_active %}
+                  <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إيقاف" %}</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% translate "تفعيل" %}</button>
+                {% endif %}
+              </form>
+              <form action="{% url 'dashboard_app:ad-delete' ad.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center py-5 text-muted">{% translate "لا توجد إعلانات بعد" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=ads %}
+  </div>
+</div>
+{% endblock %}

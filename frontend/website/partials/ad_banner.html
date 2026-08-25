@@ -1,0 +1,11 @@
+{% load i18n %}
+{% if ad %}
+<div class="th-ad-banner-wrap">
+  <a href="{{ ad.get_target_url }}" {% if ad.is_linked_externally %}target="_blank" rel="noopener sponsored"{% endif %}
+     class="th-ad-banner plain" onclick="thTrack('EXTERNAL_CLICK', 'ad', {{ ad.pk }}, {});">
+    <img src="{{ ad.image.url }}" alt="{{ ad.title }}">
+    <span class="th-ad-tag">{% translate "إعلان" %}</span>
+  </a>
+</div>
+<script>thTrack('VIEW', 'ad', {{ ad.pk }});</script>
+{% endif %}

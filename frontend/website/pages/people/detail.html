@@ -1,0 +1,120 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{{ person.full_name_ar }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+
+  <div class="th-detail-hero">
+    {% if person.profile_image %}
+      <img src="{{ person.profile_image.url }}" class="th-detail-avatar" alt="{{ person.full_name_ar }}">
+    {% else %}
+      <div class="th-detail-avatar avatar-fallback d-flex align-items-center justify-content-center" style="font-size:56px;">
+        {{ person.full_name_ar|slice:":1" }}
+      </div>
+    {% endif %}
+    <div class="th-detail-body">
+      <span class="th-badge gold">{{ person.get_primary_role_display }}</span>
+      <h1>{{ person.full_name_ar }}</h1>
+      {% if person.full_name_en %}<p class="th-meta">{{ person.full_name_en }}</p>{% endif %}
+      {% if person.bio %}<p class="mt-3" style="max-width:640px;">{{ person.bio }}</p>{% endif %}
+
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'person', {{ person.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'person', {{ person.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'person', {{ person.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+      </div>
+    </div>
+  </div>
+
+  {% if links %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "روابط المنصات" %}</h2>
+    <div class="d-flex flex-wrap gap-2">
+      {% for link in links %}
+        <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
+           onclick="thTrack('EXTERNAL_CLICK', 'person', {{ person.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
+          <i class="bi bi-box-arrow-up-right"></i> {{ link.platform.get_platform_name_display }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if song_credits %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
+    <div class="th-grid cols-6">
+      {% for credit in song_credits %}
+      <a href="{% url 'website_app:song-detail' credit.song.slug %}" class="th-card aspect-square plain">
+        <div class="th-img-wrap">
+          {% if credit.song.cover_image %}
+            <img src="{{ credit.song.cover_image.url }}" alt="{{ credit.song.title_ar }}">
+          {% elif credit.song.album.cover_image %}
+            <img src="{{ credit.song.album.cover_image.url }}" alt="{{ credit.song.title_ar }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ credit.song.title_ar }}</div>
+          <div class="th-meta">{{ credit.get_role_display }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if media_credits %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "الأفلام والمسلسلات والإعلانات" %}</h2>
+    <div class="th-grid cols-6">
+      {% for credit in media_credits %}
+      <a href="{% url 'website_app:media-detail' credit.media.slug %}" class="th-card aspect-poster plain">
+        <div class="th-img-wrap">
+          {% if credit.media.poster_url %}
+            <img src="{{ credit.media.poster_url }}" alt="{{ credit.media.title_ar }}">
+          {% else %}
+            <i class="bi bi-film icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ credit.media.title_ar }}</div>
+          <div class="th-meta">{{ credit.get_role_display }}{% if credit.character_name %} ({{ credit.character_name }}){% endif %}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if related_people %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "فنانون آخرون" %}</h2>
+    <div class="th-grid cols-6">
+      {% for other in related_people %}
+      <a href="{% url 'website_app:person-detail' other.slug %}" class="th-card th-person-card plain">
+        {% if other.profile_image %}
+          <img src="{{ other.profile_image.url }}" alt="{{ other.full_name_ar }}">
+        {% else %}
+          <div class="avatar-fallback">{{ other.full_name_ar|slice:":1" }}</div>
+        {% endif %}
+        <div class="th-title">{{ other.full_name_ar }}</div>
+        <div class="th-meta">{{ other.get_primary_role_display }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>thTrack('VIEW', 'person', {{ person.pk }});</script>
+{% endblock %}

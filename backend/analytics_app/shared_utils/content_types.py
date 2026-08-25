@@ -10,6 +10,7 @@ KIND_TO_MODEL = {
     'song': ('music_app', 'song'),
     'media': ('media_app', 'media'),
     'concert': ('concerts_app', 'concert'),
+    'ad': ('ads_app', 'advertisement'),
 }
 
 def content_type_for_kind(kind):

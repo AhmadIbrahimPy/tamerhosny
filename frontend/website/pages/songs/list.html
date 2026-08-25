@@ -1,0 +1,35 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "الأغاني" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl th-section">
+  <h1 class="th-section-title">{% translate "الأغاني" %}</h1>
+  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+
+  <div class="th-grid cols-6">
+    {% for song in songs %}
+    <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
+      <div class="th-img-wrap">
+        {% if song.cover_image %}
+          <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+        {% elif song.album.cover_image %}
+          <img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}">
+        {% else %}
+          <i class="bi bi-music-note-beamed icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ song.title_ar }}</div>
+        <div class="th-meta">{{ song.get_song_type_display }}{% if song.release_year %} · {{ song.release_year }}{% endif %}</div>
+      </div>
+    </a>
+    {% empty %}
+    <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+    {% endfor %}
+  </div>
+  <div class="mt-4">
+    {% include "dashboard/partials/pagination.html" with page_obj=songs %}
+  </div>
+</div>
+{% endblock %}

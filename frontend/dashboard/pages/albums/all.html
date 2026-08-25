@@ -29,7 +29,9 @@
           <tr>
             <td>
               <a href="{% url 'dashboard_app:album-view' album.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
-                {% if album.cover_art_url %}
+                {% if album.cover_image %}
+                  <img src="{{ album.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% elif album.cover_art_url %}
                   <img src="{{ album.cover_art_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
                 {% else %}
                   <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ album.title_ar|slice:":1" }}</span>

@@ -1,0 +1,45 @@
+{% load static i18n %}
+<form id="langSwitchForm" action="{% url 'set_language' %}" method="post" class="d-none">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.path }}">
+  <input type="hidden" name="language" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
+</form>
+
+<nav class="th-nav">
+  <div class="container-xl th-nav-inner">
+    <a href="{% url 'website_app:home' %}" class="th-brand plain">
+      <img src="{% static 'images/logos/logo_d.jpeg' %}" alt="{% translate 'تامر حسني' %}">
+    </a>
+    <div class="th-nav-links">
+      <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
+      <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
+      <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
+      <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>
+      <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
+      <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
+      <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
+      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "طاقم العمل" %}</a>
+      <button type="button" class="lang-btn" onclick="document.getElementById('langSwitchForm').submit();">
+        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+      </button>
+    </div>
+    <button type="button" class="th-nav-toggle" onclick="document.getElementById('thMobilePanel').classList.toggle('open');" aria-label="{% translate 'القائمة' %}">
+      <i class="bi bi-list"></i>
+    </button>
+  </div>
+  <div class="container-xl">
+    <div class="th-mobile-panel" id="thMobilePanel">
+      <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
+      <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
+      <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
+      <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>
+      <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
+      <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
+      <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
+      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "طاقم العمل" %}</a>
+      <button type="button" class="lang-btn mt-2" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
+        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+      </button>
+    </div>
+  </div>
+</nav>

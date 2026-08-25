@@ -16,7 +16,7 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
-          <div class="mb-3">
+          <div class="mb-3 {% if field.name == 'publish_at' %}publish-at-field{% endif %}">
             {% if field.field.widget.input_type == 'checkbox' %}
               <div class="form-check">
                 {{ field }}
@@ -39,4 +39,27 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const visibilityField = document.querySelector('select[name="visibility"]');
+  const publishAtField = document.querySelector('.publish-at-field');
+
+  if (visibilityField && publishAtField) {
+    function togglePublishAtField() {
+      if (visibilityField.value === 'SCHEDULED' || visibilityField.value === 'COMING_SOON') {
+        publishAtField.style.display = 'block';
+      } else {
+        publishAtField.style.display = 'none';
+      }
+    }
+
+    // Initial state
+    togglePublishAtField();
+
+    // Listen for changes
+    visibilityField.addEventListener('change', togglePublishAtField);
+  }
+});
+</script>
 {% endblock %}

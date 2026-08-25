@@ -1,0 +1,29 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "طاقم العمل والفنانون" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl th-section">
+  <h1 class="th-section-title">{% translate "طاقم العمل والفنانون" %}</h1>
+  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+
+  <div class="th-grid cols-6">
+    {% for person in people %}
+    <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
+      {% if person.profile_image %}
+        <img src="{{ person.profile_image.url }}" alt="{{ person.full_name_ar }}">
+      {% else %}
+        <div class="avatar-fallback">{{ person.full_name_ar|slice:":1" }}</div>
+      {% endif %}
+      <div class="th-title">{{ person.full_name_ar }}</div>
+      <div class="th-meta">{{ person.get_primary_role_display }}</div>
+    </a>
+    {% empty %}
+    <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+    {% endfor %}
+  </div>
+  <div class="mt-4">
+    {% include "dashboard/partials/pagination.html" with page_obj=people %}
+  </div>
+</div>
+{% endblock %}

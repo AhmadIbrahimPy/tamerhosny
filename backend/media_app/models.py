@@ -1,10 +1,10 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from backend.links_app.models import ExternalLink, PublishableModel
+from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.people_app.models import Person
 
 
@@ -26,6 +26,7 @@ class Media(PublishableModel):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     media_type = models.CharField(max_length=15, choices=MediaType.choices, default=MediaType.MOVIE, db_index=True)
     release_date = models.DateField(null=True, blank=True)
+    poster_image = models.ImageField(upload_to='media/posters/', blank=True, null=True)
     poster_url = models.URLField(blank=True, validators=[URLValidator(schemes=['http', 'https'])])
     synopsis = models.TextField(blank=True)
     rating = models.DecimalField(
@@ -54,8 +55,14 @@ class Media(PublishableModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title_en or self.title_ar, allow_unicode=True)
+            self.slug = generate_ascii_slug(Media, self.title_en, 'media')
         super().save(*args, **kwargs)
+
+    @property
+    def display_poster_url(self):
+        if self.poster_image:
+            return self.poster_image.url
+        return self.poster_url
 
     def __str__(self):
         return f'{self.title_ar} ({self.get_media_type_display()})'
