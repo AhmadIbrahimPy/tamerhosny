@@ -1,34 +1,57 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}منصات البث{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "منصات البث" %}{% endblock %}
 
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">منصات البث</h5>
-      <span class="badge bg-primary-subtle text-primary">{{ platforms|length }}</span>
+      <h5 class="mb-0">{% translate "منصات البث" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ platforms.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:platform-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
     </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
         <thead>
           <tr>
-            <th>المنصة</th>
-            <th>عدد الروابط</th>
+            <th>{% translate "المنصة" %}</th>
+            <th>{% translate "عدد الروابط" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for platform in platforms %}
           <tr>
-            <td>{{ platform.get_platform_name_display }}</td>
+            <td>
+              <a href="{% url 'dashboard_app:platform-view' platform.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if platform.logo_icon_url %}
+                  <img src="{{ platform.logo_icon_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ platform.get_platform_name_display|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ platform.get_platform_name_display }}</span>
+              </a>
+            </td>
             <td>{{ platform.links.count }}</td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:platform-view' platform.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:platform-edit' platform.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:platform-delete' platform.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="2" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=platforms %}
   </div>
 </div>
 {% endblock %}

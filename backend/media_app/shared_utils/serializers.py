@@ -1,4 +1,4 @@
-from backend.links_app.shared_utils.serializers import serialize_link
+from backend.links_app.shared_utils.serializers import serialize_link, serialize_publishable
 
 
 def serialize_media(media, request=None):
@@ -25,4 +25,5 @@ def serialize_media(media, request=None):
             }
             for credit in media.credits.select_related('person').all()
         ],
+        **serialize_publishable(media),
     }

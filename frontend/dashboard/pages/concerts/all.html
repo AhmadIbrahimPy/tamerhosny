@@ -1,41 +1,56 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}الحفلات{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "الحفلات" %}{% endblock %}
 
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">الحفلات</h5>
-      <span class="badge bg-primary-subtle text-primary">{{ concerts|length }}</span>
+      <h5 class="mb-0">{% translate "الحفلات" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ concerts.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:concert-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
     </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
         <thead>
           <tr>
-            <th>الحفلة</th>
-            <th>الحالة</th>
-            <th>التاريخ</th>
-            <th>المكان</th>
-            <th>الفيديوهات</th>
+            <th>{% translate "الحفلة" %}</th>
+            <th>{% translate "الحالة" %}</th>
+            <th>{% translate "التاريخ" %}</th>
+            <th>{% translate "المكان" %}</th>
+            <th>{% translate "الفيديوهات" %}</th>
+            <th>{% translate "الظهور" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for concert in concerts %}
           <tr>
-            <td>{{ concert.title_ar }}</td>
+            <td>
+              <a href="{% url 'dashboard_app:concert-view' concert.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if concert.poster_url %}
+                  <img src="{{ concert.poster_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ concert.title_ar|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ concert.title_ar }}</span>
+              </a>
+            </td>
             <td>
               {% if concert.status == "COMPLETED" %}
-                <span class="badge bg-success-subtle text-success">منتهية</span>
+                <span class="badge bg-success-subtle text-success">{% translate "منتهية" %}</span>
               {% elif concert.status == "UPCOMING" %}
-                <span class="badge bg-info-subtle text-info">قادمة</span>
+                <span class="badge bg-info-subtle text-info">{% translate "قادمة" %}</span>
               {% elif concert.status == "CANCELLED" %}
-                <span class="badge bg-danger-subtle text-danger">ملغاة</span>
+                <span class="badge bg-danger-subtle text-danger">{% translate "ملغاة" %}</span>
               {% else %}
-                <span class="badge bg-warning-subtle text-warning">مؤجلة</span>
+                <span class="badge bg-warning-subtle text-warning">{% translate "مؤجلة" %}</span>
               {% endif %}
             </td>
-            <td>{{ concert.date|default:"سيتم الإعلان لاحقاً" }}</td>
+            <td>{% if concert.date %}{{ concert.date }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</td>
             <td>
               {% if concert.venue_name or concert.city %}
                 {{ concert.venue_name }}{% if concert.city %}، {{ concert.city }}{% endif %}{% if concert.country %}، {{ concert.country }}{% endif %}
@@ -44,13 +59,39 @@
               {% endif %}
             </td>
             <td>{{ concert.links.count }}</td>
+            <td>
+              {% if concert.visibility == "PUBLISHED" %}
+                <span class="badge bg-success-subtle text-success">{{ concert.get_visibility_display }}</span>
+              {% elif concert.visibility == "DRAFT" %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ concert.get_visibility_display }}</span>
+              {% else %}
+                <span class="badge bg-info-subtle text-info">{{ concert.get_visibility_display }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:concert-view' concert.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:concert-edit' concert.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:concert-toggle' concert.pk %}" method="post" class="d-inline">
+                {% csrf_token %}
+                {% if concert.visibility == "DRAFT" %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% translate "إظهار" %}</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إخفاء" %}</button>
+                {% endif %}
+              </form>
+              <form action="{% url 'dashboard_app:concert-delete' concert.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          <tr><td colspan="7" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=concerts %}
   </div>
 </div>
 {% endblock %}

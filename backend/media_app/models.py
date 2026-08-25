@@ -2,12 +2,13 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
-from backend.links_app.models import ExternalLink
+from backend.links_app.models import ExternalLink, PublishableModel
 from backend.people_app.models import Person
 
 
-class Media(models.Model):
+class Media(PublishableModel):
     """Base model for every non-song production: movies, TV series,
     commercials and TV programs/shows. One table with a discriminator
     (media_type) rather than per-type tables, since the shared fields
@@ -15,15 +16,15 @@ class Media(models.Model):
     """
 
     class MediaType(models.TextChoices):
-        MOVIE = 'MOVIE', 'Movie'
-        TV_SERIES = 'TV_SERIES', 'TV Series'
-        COMMERCIAL = 'COMMERCIAL', 'Commercial'
-        PROGRAM = 'PROGRAM', 'Program / Show'
+        MOVIE = 'MOVIE', _('Movie')
+        TV_SERIES = 'TV_SERIES', _('TV Series')
+        COMMERCIAL = 'COMMERCIAL', _('Commercial')
+        PROGRAM = 'PROGRAM', _('Program / Show')
 
     title_ar = models.CharField(max_length=200)
     title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
-    media_type = models.CharField(max_length=15, choices=MediaType.choices, db_index=True)
+    media_type = models.CharField(max_length=15, choices=MediaType.choices, default=MediaType.MOVIE, db_index=True)
     release_date = models.DateField(null=True, blank=True)
     poster_url = models.URLField(blank=True, validators=[URLValidator(schemes=['http', 'https'])])
     synopsis = models.TextField(blank=True)
@@ -48,6 +49,7 @@ class Media(models.Model):
             models.Index(fields=['media_type']),
             models.Index(fields=['release_date']),
             models.Index(fields=['slug']),
+            models.Index(fields=['visibility']),
         ]
 
     def save(self, *args, **kwargs):
@@ -61,13 +63,13 @@ class Media(models.Model):
 
 class MediaCredit(models.Model):
     class Role(models.TextChoices):
-        DIRECTOR = 'DIRECTOR', 'Director'
-        PRODUCER = 'PRODUCER', 'Producer'
-        SCREENWRITER = 'SCREENWRITER', 'Screenwriter'
-        CINEMATOGRAPHER = 'CINEMATOGRAPHER', 'Cinematographer'
-        COMPOSER = 'COMPOSER', 'Composer'
-        ACTOR = 'ACTOR', 'Actor'
-        OTHER = 'OTHER', 'Other'
+        DIRECTOR = 'DIRECTOR', _('Director')
+        PRODUCER = 'PRODUCER', _('Producer')
+        SCREENWRITER = 'SCREENWRITER', _('Screenwriter')
+        CINEMATOGRAPHER = 'CINEMATOGRAPHER', _('Cinematographer')
+        COMPOSER = 'COMPOSER', _('Composer')
+        ACTOR = 'ACTOR', _('Actor')
+        OTHER = 'OTHER', _('Other')
 
     media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='credits')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='media_credits')

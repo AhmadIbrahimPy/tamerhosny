@@ -1,6 +1,7 @@
 from rest_framework import status
 
 from backend.links_app.core.links import sync_links
+from backend.links_app.shared_utils.dates import parse_datetime_field
 from backend.music_app.models import Song, SongCredit
 from backend.music_app.shared_utils.serializers import serialize_song
 
@@ -14,6 +15,8 @@ class SongsHandle:
         song_type = self.request.query_params.get('song_type')
         if song_type:
             queryset = queryset.filter(song_type=song_type)
+        if not self.request.user.is_authenticated:
+            queryset = Song.visible_queryset(queryset)
         data = [serialize_song(song, self.request) for song in queryset]
         return status.HTTP_200_OK, 'Songs fetched successfully.', {'songs': data}
 
@@ -40,6 +43,8 @@ class SongsHandle:
             recording_studio_id=self.request.data.get('recording_studio_id'),
             album_id=self.request.data.get('album_id'),
             related_media_id=self.request.data.get('related_media_id'),
+            visibility=self.request.data.get('visibility', Song.Visibility.PUBLISHED),
+            publish_at=parse_datetime_field(self.request.data.get('publish_at')),
         )
         sync_links(song, self.request.data.get('links'))
         self._sync_credits(song, self.request.data.get('credits'))
@@ -52,10 +57,12 @@ class SongsHandle:
 
         for field in (
             'title_ar', 'title_en', 'song_type', 'duration_seconds', 'lyrics', 'release_year',
-            'is_duet', 'recording_studio_id', 'album_id', 'related_media_id',
+            'is_duet', 'recording_studio_id', 'album_id', 'related_media_id', 'visibility',
         ):
             if field in self.request.data:
                 setattr(song, field, self.request.data[field])
+        if 'publish_at' in self.request.data:
+            song.publish_at = parse_datetime_field(self.request.data.get('publish_at'))
         song.save()
 
         if 'links' in self.request.data:

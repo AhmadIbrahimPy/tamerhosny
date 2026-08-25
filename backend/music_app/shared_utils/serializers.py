@@ -1,4 +1,4 @@
-from backend.links_app.shared_utils.serializers import serialize_link
+from backend.links_app.shared_utils.serializers import serialize_link, serialize_publishable
 
 
 def serialize_album(album, request=None):
@@ -10,17 +10,32 @@ def serialize_album(album, request=None):
         'release_date': album.release_date,
         'cover_art_url': album.cover_art_url,
         'record_label': {'id': album.record_label_id, 'name': album.record_label.name} if album.record_label_id else None,
+        **serialize_publishable(album),
     }
 
 
 def serialize_song(song, request=None):
+    cover_url = song.cover_image.url if song.cover_image else None
+    if cover_url and request:
+        cover_url = request.build_absolute_uri(cover_url)
+
     return {
         'id': song.id,
         'title_ar': song.title_ar,
         'title_en': song.title_en,
         'slug': song.slug,
+        'cover_image': cover_url,
         'duration_seconds': song.duration_seconds,
         'lyrics': song.lyrics,
+        'lyric_segments': [
+            {
+                'start_seconds': segment.start_seconds,
+                'end_seconds': segment.end_seconds,
+                'segment_type': segment.segment_type,
+                'text': segment.text,
+            }
+            for segment in song.lyric_segments.all()
+        ],
         'release_year': song.release_year,
         'song_type': song.song_type,
         'is_duet': song.is_duet,
@@ -38,4 +53,5 @@ def serialize_song(song, request=None):
             {'person_id': credit.person_id, 'person_name': credit.person.full_name_ar, 'role': credit.role}
             for credit in song.credits.select_related('person').all()
         ],
+        **serialize_publishable(song),
     }

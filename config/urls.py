@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from backend.analytics_app import urls as urls_analytics_app
 from backend.concerts_app import urls as urls_concerts_app
 from backend.main_app import urls as urls_main_app
 from backend.media_app import urls as urls_media_app
@@ -11,12 +12,14 @@ from backend.people_app import urls as urls_people_app
 from backend.studios_app import urls as urls_studios_app
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),
     path(f'{settings.ADMIN_URL_PATH}/', admin.site.urls),
 
-    # Server-rendered internal dashboard (session auth). Must come before
-    # the versioned API patterns below, otherwise Django's <str:version>
-    # catch-all would swallow /dashboard/... as version='dashboard'.
-    path('dashboard/', include('backend.dashboard_app.urls')),
+    # Server-rendered internal dashboard (session auth), on an obfuscated
+    # path — never /dashboard/. Must come before the versioned API
+    # patterns below, otherwise Django's <str:version> catch-all could
+    # swallow a guessed prefix.
+    path(f'{settings.DASHBOARD_URL_PATH}/', include('backend.dashboard_app.urls')),
 
     # JSON API — <version>/ is captured by DRF's URLPathVersioning (see
     # REST_FRAMEWORK settings). One path prefix per app, no nesting.
@@ -26,6 +29,7 @@ urlpatterns = [
     path('<str:version>/music/', include((urls_music_app, 'music_app'))),
     path('<str:version>/media/', include((urls_media_app, 'media_app'))),
     path('<str:version>/concerts/', include((urls_concerts_app, 'concerts_app'))),
+    path('<str:version>/analytics/', include((urls_analytics_app, 'analytics_app'))),
 ]
 
 if settings.DEBUG:

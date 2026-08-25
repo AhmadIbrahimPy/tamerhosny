@@ -1,6 +1,7 @@
 from rest_framework import status
 
 from backend.links_app.core.links import sync_links
+from backend.links_app.shared_utils.dates import parse_datetime_field
 from backend.media_app.models import Media, MediaCredit
 from backend.media_app.shared_utils.serializers import serialize_media
 
@@ -14,6 +15,8 @@ class MediaHandle:
         media_type = self.request.query_params.get('media_type')
         if media_type:
             queryset = queryset.filter(media_type=media_type)
+        if not self.request.user.is_authenticated:
+            queryset = Media.visible_queryset(queryset)
         data = [serialize_media(item, self.request) for item in queryset]
         return status.HTTP_200_OK, 'Media fetched successfully.', {'media': data}
 
@@ -40,6 +43,8 @@ class MediaHandle:
             advertiser_company=self.request.data.get('advertiser_company', ''),
             brand_name=self.request.data.get('brand_name', ''),
             campaign_concept=self.request.data.get('campaign_concept', ''),
+            visibility=self.request.data.get('visibility', Media.Visibility.PUBLISHED),
+            publish_at=parse_datetime_field(self.request.data.get('publish_at')),
         )
         sync_links(media, self.request.data.get('links'))
         self._sync_credits(media, self.request.data.get('credits'))
@@ -52,10 +57,12 @@ class MediaHandle:
 
         for field in (
             'title_ar', 'title_en', 'media_type', 'release_date', 'poster_url', 'synopsis',
-            'rating', 'advertiser_company', 'brand_name', 'campaign_concept',
+            'rating', 'advertiser_company', 'brand_name', 'campaign_concept', 'visibility',
         ):
             if field in self.request.data:
                 setattr(media, field, self.request.data[field])
+        if 'publish_at' in self.request.data:
+            media.publish_at = parse_datetime_field(self.request.data.get('publish_at'))
         media.save()
 
         if 'links' in self.request.data:

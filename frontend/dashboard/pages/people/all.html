@@ -1,36 +1,59 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}الفنانون وطاقم العمل{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "الفنانون وطاقم العمل" %}{% endblock %}
 
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">الفنانون وطاقم العمل</h5>
-      <span class="badge bg-primary-subtle text-primary">{{ people|length }}</span>
+      <h5 class="mb-0">{% translate "الفنانون وطاقم العمل" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ people.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:person-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
     </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
         <thead>
           <tr>
-            <th>الاسم</th>
-            <th>الاسم بالإنجليزية</th>
-            <th>الدور الأساسي</th>
+            <th>{% translate "الاسم" %}</th>
+            <th>{% translate "الاسم بالإنجليزية" %}</th>
+            <th>{% translate "الدور الأساسي" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for person in people %}
           <tr>
-            <td>{{ person.full_name_ar }}</td>
+            <td>
+              <a href="{% url 'dashboard_app:person-view' person.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if person.profile_image %}
+                  <img src="{{ person.profile_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ person.full_name_ar|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ person.full_name_ar }}</span>
+              </a>
+            </td>
             <td>{{ person.full_name_en|default:"-" }}</td>
             <td><span class="badge bg-secondary-subtle text-secondary">{{ person.get_primary_role_display }}</span></td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:person-view' person.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:person-edit' person.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:person-delete' person.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="3" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=people %}
   </div>
 </div>
 {% endblock %}

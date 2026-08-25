@@ -10,7 +10,7 @@ class MediaCreditInline(admin.TabularInline):
 
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
-    list_display = ('title_ar', 'media_type', 'release_date', 'rating')
+    list_display = ('title_ar', 'media_type', 'release_date', 'rating', 'visibility')
     list_filter = ('media_type',)
     search_fields = ('title_ar', 'title_en')
     prepopulated_fields = {'slug': ('title_ar',)}

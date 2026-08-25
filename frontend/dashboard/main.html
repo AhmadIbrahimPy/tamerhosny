@@ -1,6 +1,6 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}الرئيسية{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "الرئيسية" %}{% endblock %}
 {% block extra_css %}{% endblock %}
 
 {% block content %}
@@ -8,8 +8,8 @@
   <div class="row mb-6 g-6">
     <div class="col-12">
       <div class="bg-gradient-mixed p-8 py-10 rounded-3 p-lg-7">
-        <h1 class="fs-3">مرحباً بك 👋</h1>
-        <p class="mb-0">أرشيف تامر حسني الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات.</p>
+        <h1 class="fs-3">{% translate "مرحباً بك" %} 👋</h1>
+        <p class="mb-0">{% translate "أرشيف تامر حسني الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
       </div>
     </div>
   </div>
@@ -18,7 +18,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الفنانون وطاقم العمل</span>
+          <span class="text-muted">{% translate "الفنانون وطاقم العمل" %}</span>
           <span class="fs-3 fw-bold">{{ stats.people }}</span>
         </div>
       </div></div>
@@ -26,7 +26,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الاستوديوهات والشركات</span>
+          <span class="text-muted">{% translate "الاستوديوهات والشركات" %}</span>
           <span class="fs-3 fw-bold">{{ stats.studios }}</span>
         </div>
       </div></div>
@@ -34,7 +34,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الألبومات</span>
+          <span class="text-muted">{% translate "الألبومات" %}</span>
           <span class="fs-3 fw-bold">{{ stats.albums }}</span>
         </div>
       </div></div>
@@ -42,7 +42,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الأغاني</span>
+          <span class="text-muted">{% translate "الأغاني" %}</span>
           <span class="fs-3 fw-bold">{{ stats.songs }}</span>
         </div>
       </div></div>
@@ -50,7 +50,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الأفلام والمسلسلات والإعلانات</span>
+          <span class="text-muted">{% translate "الأفلام والمسلسلات والإعلانات" %}</span>
           <span class="fs-3 fw-bold">{{ stats.media }}</span>
         </div>
       </div></div>
@@ -58,7 +58,7 @@
     <div class="col-xl-4 col-md-6">
       <div class="card card-lg"><div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted">الحفلات</span>
+          <span class="text-muted">{% translate "الحفلات" %}</span>
           <span class="fs-3 fw-bold">{{ stats.concerts }}</span>
         </div>
       </div></div>

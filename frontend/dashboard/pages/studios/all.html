@@ -1,34 +1,57 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}الاستوديوهات والشركات{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "الاستوديوهات والشركات" %}{% endblock %}
 
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">الاستوديوهات وشركات الإنتاج</h5>
-      <span class="badge bg-primary-subtle text-primary">{{ studios|length }}</span>
+      <h5 class="mb-0">{% translate "الاستوديوهات وشركات الإنتاج" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ studios.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:studio-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
     </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
         <thead>
           <tr>
-            <th>الاسم</th>
-            <th>النوع</th>
+            <th>{% translate "الاسم" %}</th>
+            <th>{% translate "النوع" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for studio in studios %}
           <tr>
-            <td>{{ studio.name }}</td>
+            <td>
+              <a href="{% url 'dashboard_app:studio-view' studio.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if studio.logo %}
+                  <img src="{{ studio.logo.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ studio.name|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ studio.name }}</span>
+              </a>
+            </td>
             <td><span class="badge bg-secondary-subtle text-secondary">{{ studio.get_entity_type_display }}</span></td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:studio-view' studio.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:studio-edit' studio.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:studio-delete' studio.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="2" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=studios %}
   </div>
 </div>
 {% endblock %}

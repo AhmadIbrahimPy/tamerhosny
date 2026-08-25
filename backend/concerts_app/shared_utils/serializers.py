@@ -1,4 +1,4 @@
-from backend.links_app.shared_utils.serializers import serialize_link
+from backend.links_app.shared_utils.serializers import serialize_link, serialize_publishable
 
 
 def serialize_concert(concert, request=None):
@@ -17,4 +17,5 @@ def serialize_concert(concert, request=None):
         'poster_url': concert.poster_url,
         'organizer': {'id': concert.organizer_id, 'name': concert.organizer.name} if concert.organizer_id else None,
         'links': [serialize_link(link) for link in concert.links.select_related('platform').all()],
+        **serialize_publishable(concert),
     }

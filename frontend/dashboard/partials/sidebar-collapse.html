@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 <div id="miniSidebar">
   <div class="brand-logo">
     <a class="d-none d-md-flex align-items-center gap-2" href="{% url 'dashboard_app:home' %}">
@@ -8,120 +8,132 @@
   </div>
   <ul class="navbar-nav flex-column">
     <li class="nav-item">
-      <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard_app:home' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard_app:home' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-histogram">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M3 3v18h18" /><path d="M20 18v3" /><path d="M16 16v5" /><path d="M12 13v8" /><path d="M8 16v5" /><path d="M3 11c6 0 5 -5 9 -5s3 5 9 5" />
           </svg>
         </span>
-        <span class="text">الرئيسية</span>
+        <span class="text">{% translate "الرئيسية" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <div class="nav-heading">الأرشيف الفني</div>
+      <a class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" href="{% url 'dashboard_app:analytics' %}">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-line">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 19h16" /><path d="M4 15l4 -6l4 2l4 -5l4 4" />
+          </svg>
+        </span>
+        <span class="text">{% translate "التحليلات" %}</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <div class="nav-heading">{% translate "الأرشيف الفني" %}</div>
       <hr class="mx-5 nav-line mb-1" />
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/people/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:people' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'people' %}active{% endif %}" href="{% url 'dashboard_app:people' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
           </svg>
         </span>
-        <span class="text">الفنانون وطاقم العمل</span>
+        <span class="text">{% translate "الفنانون وطاقم العمل" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/studios/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:studios' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'studios' %}active{% endif %}" href="{% url 'dashboard_app:studios' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-map">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M3 7l6 -3l6 3l6 -3v13l-6 3l-6 -3l-6 3v-13" /><path d="M9 4v13" /><path d="M15 7v13" />
           </svg>
         </span>
-        <span class="text">الاستوديوهات والشركات</span>
+        <span class="text">{% translate "الاستوديوهات والشركات" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/albums/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:albums' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'albums' %}active{% endif %}" href="{% url 'dashboard_app:albums' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-disc">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
           </svg>
         </span>
-        <span class="text">الألبومات</span>
+        <span class="text">{% translate "الألبومات" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/songs/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:songs' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'songs' %}active{% endif %}" href="{% url 'dashboard_app:songs' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-music">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M13 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M9 17v-13h10v13" /><path d="M9 8h10" />
           </svg>
         </span>
-        <span class="text">الأغاني</span>
+        <span class="text">{% translate "الأغاني" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/media/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:media' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'media' %}active{% endif %}" href="{% url 'dashboard_app:media' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-movie">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M8 4v16" /><path d="M16 4v16" /><path d="M4 8h4" /><path d="M4 16h4" /><path d="M4 12h16" /><path d="M16 8h4" /><path d="M16 16h4" />
           </svg>
         </span>
-        <span class="text">الأفلام والمسلسلات والإعلانات</span>
+        <span class="text">{% translate "الأفلام والمسلسلات والإعلانات" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/concerts/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:concerts' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'concerts' %}active{% endif %}" href="{% url 'dashboard_app:concerts' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-event">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M8 15h2v2h-2z" />
           </svg>
         </span>
-        <span class="text">الحفلات</span>
+        <span class="text">{% translate "الحفلات" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/platforms/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:platforms' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'platforms' %}active{% endif %}" href="{% url 'dashboard_app:platforms' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" />
           </svg>
         </span>
-        <span class="text">منصات البث</span>
+        <span class="text">{% translate "منصات البث" %}</span>
       </a>
     </li>
 
     <li class="nav-item">
-      <div class="nav-heading">الإدارة</div>
+      <div class="nav-heading">{% translate "الإدارة" %}</div>
       <hr class="mx-5 nav-line mb-1" />
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {% if '/dashboard/users/' in request.path %}active{% endif %}" href="{% url 'dashboard_app:users' %}">
+      <a class="nav-link {% if request.resolver_match.url_name == 'users' %}active{% endif %}" href="{% url 'dashboard_app:users' %}">
         <span class="nav-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-lock">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" />
           </svg>
         </span>
-        <span class="text">المستخدمون</span>
+        <span class="text">{% translate "المستخدمون" %}</span>
       </a>
     </li>
 
@@ -133,7 +145,7 @@
             <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /><path d="M9 12h12l-3 -3" /><path d="M18 15l3 -3" />
           </svg>
         </span>
-        <span class="text">تسجيل الخروج</span>
+        <span class="text">{% translate "تسجيل الخروج" %}</span>
       </a>
     </li>
   </ul>
@@ -150,16 +162,17 @@
   <div class="offcanvas-body p-0">
     <!-- Mirrors the desktop nav above for small screens. -->
     <ul class="navbar-nav flex-column">
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:home' %}"><span class="text">الرئيسية</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:people' %}"><span class="text">الفنانون وطاقم العمل</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:studios' %}"><span class="text">الاستوديوهات والشركات</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:albums' %}"><span class="text">الألبومات</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:songs' %}"><span class="text">الأغاني</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:media' %}"><span class="text">الأفلام والمسلسلات والإعلانات</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:concerts' %}"><span class="text">الحفلات</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:platforms' %}"><span class="text">منصات البث</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:users' %}"><span class="text">المستخدمون</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:logout' %}"><span class="text">تسجيل الخروج</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:home' %}"><span class="text">{% translate "الرئيسية" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:analytics' %}"><span class="text">{% translate "التحليلات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:people' %}"><span class="text">{% translate "الفنانون وطاقم العمل" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:studios' %}"><span class="text">{% translate "الاستوديوهات والشركات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:albums' %}"><span class="text">{% translate "الألبومات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:songs' %}"><span class="text">{% translate "الأغاني" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:media' %}"><span class="text">{% translate "الأفلام والمسلسلات والإعلانات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:concerts' %}"><span class="text">{% translate "الحفلات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:platforms' %}"><span class="text">{% translate "منصات البث" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:users' %}"><span class="text">{% translate "المستخدمون" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:logout' %}"><span class="text">{% translate "تسجيل الخروج" %}</span></a></li>
     </ul>
   </div>
 </div>

@@ -37,8 +37,9 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', required=True)
 DEBUG = env_bool('DJANGO_DEBUG', False)
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
-# Obfuscated, non-guessable admin path (never the default 'admin/').
+# Obfuscated, non-guessable admin/dashboard paths (never the defaults).
 ADMIN_URL_PATH = env('DJANGO_ADMIN_URL_PATH', required=True)
+DASHBOARD_URL_PATH = env('DASHBOARD_URL_PATH', required=True)
 
 # Symmetric key used to encrypt/decrypt the auth cookies (must be exactly 32 bytes).
 COOKIE_ENCRYPTION_KEY = env('COOKIE_ENCRYPTION_KEY', required=True)
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.forms',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -69,6 +71,7 @@ INSTALLED_APPS = [
     'backend.media_app',
     'backend.concerts_app',
     'backend.dashboard_app',
+    'backend.analytics_app',
 ]
 
 LOGIN_URL = 'dashboard_app:login'
@@ -77,6 +80,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'config.custom_packages.cookies.DynamicCSRFMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,6 +93,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+# Widget templates (e.g. the custom circular avatar upload widget) live
+# under frontend/, same as every other dashboard template — route form
+# rendering through the project's own TEMPLATES config instead of the
+# forms renderer's isolated default engine so that DIRS applies.
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -97,6 +107,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
+                'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -136,6 +147,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 
 LANGUAGE_CODE = 'ar'
+LANGUAGES = [
+    ('ar', 'العربية'),
+    ('en', 'English'),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True

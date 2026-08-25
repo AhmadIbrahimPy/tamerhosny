@@ -37,5 +37,9 @@
 
 <!-- Theme CSS -->
 <!-- build:css {% static 'dashboard/assets/css/theme.min.css' %} -->
+{% if LANGUAGE_BIDI %}
+<link rel="stylesheet" href="{% static 'dashboard/assets/css/theme.rtl.css' %}" />
+{% else %}
 <link rel="stylesheet" href="{% static 'dashboard/assets/css/theme.css' %}" />
+{% endif %}
 <!-- endbuild -->

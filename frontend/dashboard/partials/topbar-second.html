@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 <!-- navbar -->
 <div class="navbar-glass navbar navbar-expand-lg px-0 px-lg-4">
   <div class="container-fluid px-lg-0">
@@ -56,6 +56,26 @@
 
     <!-- Navbar nav -->
     <ul class="list-unstyled d-flex align-items-center mb-0 gap-2">
+      <!-- Language switch -->
+      <li>
+        <form id="langSwitchForm" action="{% url 'set_language' %}" method="post" class="d-none">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <input type="hidden" name="language" id="langSwitchInput" value="">
+        </form>
+        <button type="button" class="btn btn-ghost btn-icon rounded-circle d-flex align-items-center gap-1 px-3"
+          aria-label="{% translate 'تبديل اللغة' %}"
+          onclick="document.getElementById('langSwitchInput').value='{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}';document.getElementById('langSwitchForm').submit();">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-language">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 5h7" /><path d="M9 3v2c0 4.418 -2.239 8 -5 8" /><path d="M5 9c0 2.144 2.952 3.908 6.7 4" />
+            <path d="M12 20l4 -9l4 9" /><path d="M19.1 18h-6.2" />
+          </svg>
+          <small class="fw-semibold">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}AR{% endif %}</small>
+        </button>
+      </li>
       <!-- Pages link -->
       <li>
         <button type="button" class="btn btn-white" data-bs-toggle="modal" data-bs-target="#searchModal">

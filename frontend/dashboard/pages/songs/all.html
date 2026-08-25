@@ -1,40 +1,83 @@
 {% extends "dashboard/index.html" %}
-{% load static %}
-{% block title %}الأغاني{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "الأغاني" %}{% endblock %}
 
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">الأغاني</h5>
-      <span class="badge bg-primary-subtle text-primary">{{ songs|length }}</span>
+      <h5 class="mb-0">{% translate "الأغاني" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ songs.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:song-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
     </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
         <thead>
           <tr>
-            <th>العنوان</th>
-            <th>النوع</th>
-            <th>الألبوم</th>
-            <th>سنة الإصدار</th>
-            <th>دويتو</th>
+            <th>{% translate "العنوان" %}</th>
+            <th>{% translate "النوع" %}</th>
+            <th>{% translate "الألبوم" %}</th>
+            <th>{% translate "سنة الإصدار" %}</th>
+            <th>{% translate "دويتو" %}</th>
+            <th>{% translate "الحالة" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
         </thead>
         <tbody>
           {% for song in songs %}
           <tr>
-            <td>{{ song.title_ar }}</td>
+            <td>
+              <a href="{% url 'dashboard_app:song-view' song.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if song.cover_image %}
+                  <img src="{{ song.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% elif song.album.cover_art_url %}
+                  <img src="{{ song.album.cover_art_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ song.title_ar|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ song.title_ar }}</span>
+              </a>
+            </td>
             <td><span class="badge bg-secondary-subtle text-secondary">{{ song.get_song_type_display }}</span></td>
             <td>{{ song.album.title_ar|default:"-" }}</td>
             <td>{{ song.release_year|default:"-" }}</td>
-            <td>{% if song.is_duet %}<span class="badge bg-success-subtle text-success">نعم</span>{% else %}-{% endif %}</td>
+            <td>{% if song.is_duet %}<span class="badge bg-success-subtle text-success">{% translate "نعم" %}</span>{% else %}-{% endif %}</td>
+            <td>
+              {% if song.visibility == "PUBLISHED" %}
+                <span class="badge bg-success-subtle text-success">{{ song.get_visibility_display }}</span>
+              {% elif song.visibility == "DRAFT" %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ song.get_visibility_display }}</span>
+              {% else %}
+                <span class="badge bg-info-subtle text-info">{{ song.get_visibility_display }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:song-view' song.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:song-edit' song.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:song-toggle' song.pk %}" method="post" class="d-inline">
+                {% csrf_token %}
+                {% if song.visibility == "DRAFT" %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% translate "إظهار" %}</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إخفاء" %}</button>
+                {% endif %}
+              </form>
+              <form action="{% url 'dashboard_app:song-delete' song.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          <tr><td colspan="7" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=songs %}
   </div>
 </div>
 {% endblock %}

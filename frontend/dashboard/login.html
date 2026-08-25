@@ -4,34 +4,136 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تسجيل الدخول | لوحة تحكم تامر حسني</title>
-  {% include "dashboard/partials/head/head-links.html" %}
+  <title>تسجيل الدخول | أرشيف تامر حسني</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#0b0c14; --bg-2:#171224; --accent:#d4af37; --accent-2:#8a5cff;
+      --card-bg:rgba(255,255,255,.04); --border:rgba(255,255,255,.08);
+      --text:#f2f1f6; --muted:#9a97ab;
+    }
+    *{box-sizing:border-box;}
+    html,body{height:100%;margin:0;}
+    body{
+      font-family:'Cairo', system-ui, sans-serif;
+      background:
+        radial-gradient(1100px 600px at 15% 10%, rgba(138,92,255,.25), transparent 60%),
+        radial-gradient(900px 500px at 90% 85%, rgba(212,175,55,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      position:relative;
+      overflow:hidden;
+    }
+    .noise{position:absolute;inset:0;opacity:.035;pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+    .glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;pointer-events:none;}
+    .glow-1{width:340px;height:340px;background:var(--accent-2);top:-120px;right:-100px;}
+    .glow-2{width:260px;height:260px;background:var(--accent);bottom:-100px;left:-80px;}
+
+    .wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+    .brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:28px;text-align:center;}
+    .brand .mark{
+      width:56px;height:56px;border-radius:16px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:20px;color:#0b0c14;
+      box-shadow:0 10px 30px -8px rgba(212,175,55,.5);
+    }
+    .brand h1{font-size:20px;font-weight:800;margin:0;}
+    .brand p{font-size:13px;color:var(--muted);margin:2px 0 0;}
+
+    .card{
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:34px 30px;
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      box-shadow:0 24px 60px -20px rgba(0,0,0,.6);
+    }
+    .card h2{font-size:17px;font-weight:700;margin:0 0 4px;}
+    .card .sub{font-size:13px;color:var(--muted);margin:0 0 24px;}
+
+    .field{margin-bottom:16px;}
+    .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+    .field input{
+      width:100%;padding:12px 14px;border-radius:10px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      color:var(--text);font-family:inherit;font-size:14px;
+      transition:border-color .15s, background .15s;
+    }
+    .field input::placeholder{color:#5c5972;}
+    .field input:focus{
+      outline:none;border-color:var(--accent);
+      background:rgba(255,255,255,.06);
+    }
+
+    .btn{
+      width:100%;padding:13px;border:none;border-radius:10px;
+      background:linear-gradient(135deg, var(--accent), #b98f2e);
+      color:#0b0c14;font-weight:800;font-size:14.5px;cursor:pointer;
+      transition:filter .15s, transform .05s;
+      margin-top:6px;
+    }
+    .btn:hover{filter:brightness(1.08);}
+    .btn:active{transform:translateY(1px);}
+
+    .alert{
+      background:rgba(220,53,69,.12);
+      border:1px solid rgba(220,53,69,.35);
+      color:#ff9aa5;
+      font-size:13px;
+      padding:10px 14px;
+      border-radius:10px;
+      margin-bottom:18px;
+    }
+
+    .footer-note{text-align:center;font-size:11.5px;color:#514e63;margin-top:22px;}
+  </style>
 </head>
 <body>
-  <div class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background: #f5f6fa;">
-    <div class="card card-lg" style="width: 100%; max-width: 380px;">
-      <div class="card-body p-6">
-        <h4 class="mb-1">لوحة تحكم تامر حسني</h4>
-        <p class="text-muted mb-4">سجّل دخولك للوصول إلى اللوحة</p>
+  <div class="noise"></div>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
 
-        {% if error %}
-          <div class="alert alert-danger py-2">{{ error }}</div>
-        {% endif %}
-
-        <form method="post">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="form-label">اسم المستخدم</label>
-            <input type="text" name="username" class="form-control" required autofocus>
-          </div>
-          <div class="mb-4">
-            <label class="form-label">كلمة المرور</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">دخول</button>
-        </form>
-      </div>
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">TH</div>
+      <h1>أرشيف تامر حسني</h1>
+      <p>لوحة تحكم إدارة المحتوى الفني</p>
     </div>
+
+    <div class="card">
+      <h2>تسجيل الدخول</h2>
+      <p class="sub">أدخل بياناتك للوصول إلى لوحة التحكم</p>
+
+      {% if error %}
+        <div class="alert">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="field">
+          <label for="id_username">اسم المستخدم</label>
+          <input type="text" id="id_username" name="username" placeholder="ادخل اسم المستخدم" required autofocus>
+        </div>
+        <div class="field">
+          <label for="id_password">كلمة المرور</label>
+          <input type="password" id="id_password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn">دخول</button>
+      </form>
+    </div>
+
+    <p class="footer-note">وصول مقيّد للمصرح لهم فقط</p>
   </div>
 </body>
 </html>

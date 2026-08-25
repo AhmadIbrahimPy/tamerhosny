@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 
 <head>
   {% include "dashboard/partials/head/head-meta.html" %}
-  <title>WD | {% block title %}Dashboard{% endblock %}</title>
+  <title>{% translate "أرشيف تامر حسني" %} | {% block title %}{% translate "لوحة التحكم" %}{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10.0.0/swiper-bundle.min.css" />
   {% include "dashboard/partials/head/head-links.html" %}
   {% block extra_css %}{% endblock %}

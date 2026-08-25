@@ -1,28 +1,29 @@
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 
 class Person(models.Model):
     class Role(models.TextChoices):
-        SINGER = 'SINGER', 'Singer'
-        POET = 'POET', 'Poet / Lyricist'
-        COMPOSER = 'COMPOSER', 'Composer'
-        ARRANGER = 'ARRANGER', 'Arranger'
-        MUSIC_PRODUCER = 'MUSIC_PRODUCER', 'Music Producer'
-        RECORDING_ENGINEER = 'RECORDING_ENGINEER', 'Recording Engineer'
-        MIX_MASTER_ENGINEER = 'MIX_MASTER_ENGINEER', 'Mix & Master Engineer'
-        DIRECTOR = 'DIRECTOR', 'Director'
-        PRODUCER = 'PRODUCER', 'Producer'
-        SCREENWRITER = 'SCREENWRITER', 'Screenwriter'
-        CINEMATOGRAPHER = 'CINEMATOGRAPHER', 'Cinematographer'
-        ACTOR = 'ACTOR', 'Actor'
-        CO_ARTIST = 'CO_ARTIST', 'Co-Artist / Featured Artist'
-        OTHER = 'OTHER', 'Other'
+        SINGER = 'SINGER', _('Singer')
+        POET = 'POET', _('Poet / Lyricist')
+        COMPOSER = 'COMPOSER', _('Composer')
+        ARRANGER = 'ARRANGER', _('Arranger')
+        MUSIC_PRODUCER = 'MUSIC_PRODUCER', _('Music Producer')
+        RECORDING_ENGINEER = 'RECORDING_ENGINEER', _('Recording Engineer')
+        MIX_MASTER_ENGINEER = 'MIX_MASTER_ENGINEER', _('Mix & Master Engineer')
+        DIRECTOR = 'DIRECTOR', _('Director')
+        PRODUCER = 'PRODUCER', _('Producer')
+        SCREENWRITER = 'SCREENWRITER', _('Screenwriter')
+        CINEMATOGRAPHER = 'CINEMATOGRAPHER', _('Cinematographer')
+        ACTOR = 'ACTOR', _('Actor')
+        CO_ARTIST = 'CO_ARTIST', _('Co-Artist / Featured Artist')
+        OTHER = 'OTHER', _('Other')
 
     full_name_ar = models.CharField(max_length=200)
     full_name_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
-    primary_role = models.CharField(max_length=30, choices=Role.choices, db_index=True)
+    primary_role = models.CharField(max_length=30, choices=Role.choices, default=Role.OTHER, db_index=True)
     bio = models.TextField(blank=True)
     profile_image = models.ImageField(upload_to='people/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

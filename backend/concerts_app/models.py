@@ -3,17 +3,18 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
-from backend.links_app.models import ExternalLink
+from backend.links_app.models import ExternalLink, PublishableModel
 from backend.studios_app.models import Studio
 
 
-class Concert(models.Model):
+class Concert(PublishableModel):
     class Status(models.TextChoices):
-        UPCOMING = 'UPCOMING', 'Upcoming'
-        COMPLETED = 'COMPLETED', 'Completed'
-        CANCELLED = 'CANCELLED', 'Cancelled'
-        POSTPONED = 'POSTPONED', 'Postponed'
+        UPCOMING = 'UPCOMING', _('Upcoming')
+        COMPLETED = 'COMPLETED', _('Completed')
+        CANCELLED = 'CANCELLED', _('Cancelled')
+        POSTPONED = 'POSTPONED', _('Postponed')
 
     title_ar = models.CharField(max_length=200)
     title_en = models.CharField(max_length=200, blank=True)
@@ -42,6 +43,7 @@ class Concert(models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['date']),
             models.Index(fields=['slug']),
+            models.Index(fields=['visibility']),
         ]
 
     def save(self, *args, **kwargs):

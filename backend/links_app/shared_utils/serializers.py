@@ -7,3 +7,12 @@ def serialize_link(link):
         'embed_code': link.embed_code,
         'access_type': link.access_type,
     }
+
+
+def serialize_publishable(obj):
+    return {
+        'visibility': obj.visibility,
+        'visibility_label': obj.get_visibility_display(),
+        'publish_at': obj.publish_at,
+        'is_live': obj.is_live,
+    }
