@@ -63,10 +63,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'backend.main_app',
     'backend.people_app',
+    'backend.studios_app',
     'backend.links_app',
     'backend.music_app',
-    'backend.filmography_app',
+    'backend.media_app',
+    'backend.concerts_app',
+    'backend.dashboard_app',
 ]
+
+LOGIN_URL = 'dashboard_app:login'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -87,7 +92,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'frontend'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

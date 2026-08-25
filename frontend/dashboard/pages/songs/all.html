@@ -1,0 +1,40 @@
+{% extends "dashboard/index.html" %}
+{% load static %}
+{% block title %}الأغاني{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">الأغاني</h5>
+      <span class="badge bg-primary-subtle text-primary">{{ songs|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>العنوان</th>
+            <th>النوع</th>
+            <th>الألبوم</th>
+            <th>سنة الإصدار</th>
+            <th>دويتو</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for song in songs %}
+          <tr>
+            <td>{{ song.title_ar }}</td>
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ song.get_song_type_display }}</span></td>
+            <td>{{ song.album.title_ar|default:"-" }}</td>
+            <td>{{ song.release_year|default:"-" }}</td>
+            <td>{% if song.is_duet %}<span class="badge bg-success-subtle text-success">نعم</span>{% else %}-{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

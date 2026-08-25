@@ -1,0 +1,42 @@
+{% extends "dashboard/index.html" %}
+{% load static %}
+{% block title %}المستخدمون{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">مستخدمو لوحة التحكم</h5>
+      <span class="badge bg-primary-subtle text-primary">{{ accounts|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>اسم المستخدم</th>
+            <th>الدور</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in accounts %}
+          <tr>
+            <td>{{ account.username }}</td>
+            <td>{{ account.get_role_display }}</td>
+            <td>
+              {% if account.is_active %}
+                <span class="badge bg-success-subtle text-success">مفعّل</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger">موقوف</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

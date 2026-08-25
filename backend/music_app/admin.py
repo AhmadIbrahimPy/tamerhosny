@@ -10,15 +10,16 @@ class SongCreditInline(admin.TabularInline):
 
 @admin.register(Album)
 class AlbumAdmin(admin.ModelAdmin):
-    list_display = ('title', 'release_date')
-    search_fields = ('title',)
-    prepopulated_fields = {'slug': ('title',)}
+    list_display = ('title_ar', 'release_date', 'record_label')
+    list_filter = ('record_label',)
+    search_fields = ('title_ar', 'title_en')
+    prepopulated_fields = {'slug': ('title_ar',)}
 
 
 @admin.register(Song)
 class SongAdmin(admin.ModelAdmin):
-    list_display = ('title', 'album', 'release_date')
-    search_fields = ('title',)
-    list_filter = ('album',)
-    prepopulated_fields = {'slug': ('title',)}
+    list_display = ('title_ar', 'song_type', 'album', 'release_year', 'is_duet')
+    search_fields = ('title_ar', 'title_en')
+    list_filter = ('song_type', 'album', 'is_duet')
+    prepopulated_fields = {'slug': ('title_ar',)}
     inlines = [SongCreditInline]

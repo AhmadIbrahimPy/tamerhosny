@@ -9,8 +9,11 @@ class PeopleHandle:
         self.request = request
 
     def all(self):
-        people = Person.objects.all()
-        data = [serialize_person(person, self.request) for person in people]
+        queryset = Person.objects.all()
+        role = self.request.query_params.get('role')
+        if role:
+            queryset = queryset.filter(primary_role=role)
+        data = [serialize_person(person, self.request) for person in queryset]
         return status.HTTP_200_OK, 'People fetched successfully.', {'people': data}
 
     def view(self, pk):
@@ -20,12 +23,15 @@ class PeopleHandle:
         return status.HTTP_200_OK, 'Person fetched successfully.', {'person': serialize_person(person, self.request)}
 
     def create(self):
-        name = self.request.data.get('name')
-        if not name:
-            return status.HTTP_400_BAD_REQUEST, 'name is required.', None
+        full_name_ar = self.request.data.get('full_name_ar')
+        primary_role = self.request.data.get('primary_role')
+        if not full_name_ar or primary_role not in Person.Role.values:
+            return status.HTTP_400_BAD_REQUEST, 'full_name_ar and a valid primary_role are required.', None
 
         person = Person.objects.create(
-            name=name,
+            full_name_ar=full_name_ar,
+            full_name_en=self.request.data.get('full_name_en', ''),
+            primary_role=primary_role,
             bio=self.request.data.get('bio', ''),
         )
         return status.HTTP_201_CREATED, 'Person created successfully.', {'person': serialize_person(person, self.request)}
@@ -35,7 +41,7 @@ class PeopleHandle:
         if not person:
             return status.HTTP_404_NOT_FOUND, 'Person not found.', None
 
-        for field in ('name', 'bio'):
+        for field in ('full_name_ar', 'full_name_en', 'primary_role', 'bio'):
             if field in self.request.data:
                 setattr(person, field, self.request.data[field])
         person.save()

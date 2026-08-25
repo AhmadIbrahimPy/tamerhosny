@@ -1,0 +1,56 @@
+{% extends "dashboard/index.html" %}
+{% load static %}
+{% block title %}الحفلات{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">الحفلات</h5>
+      <span class="badge bg-primary-subtle text-primary">{{ concerts|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>الحفلة</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+            <th>المكان</th>
+            <th>الفيديوهات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for concert in concerts %}
+          <tr>
+            <td>{{ concert.title_ar }}</td>
+            <td>
+              {% if concert.status == "COMPLETED" %}
+                <span class="badge bg-success-subtle text-success">منتهية</span>
+              {% elif concert.status == "UPCOMING" %}
+                <span class="badge bg-info-subtle text-info">قادمة</span>
+              {% elif concert.status == "CANCELLED" %}
+                <span class="badge bg-danger-subtle text-danger">ملغاة</span>
+              {% else %}
+                <span class="badge bg-warning-subtle text-warning">مؤجلة</span>
+              {% endif %}
+            </td>
+            <td>{{ concert.date|default:"سيتم الإعلان لاحقاً" }}</td>
+            <td>
+              {% if concert.venue_name or concert.city %}
+                {{ concert.venue_name }}{% if concert.city %}، {{ concert.city }}{% endif %}{% if concert.country %}، {{ concert.country }}{% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ concert.links.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-5 text-muted">لا توجد بيانات متاحة حالياً</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
