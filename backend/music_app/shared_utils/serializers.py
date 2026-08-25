@@ -1,0 +1,41 @@
+from backend.links_app.shared_utils.serializers import serialize_link
+
+
+def serialize_album(album, request=None):
+    return {
+        'id': album.id,
+        'title_ar': album.title_ar,
+        'title_en': album.title_en,
+        'slug': album.slug,
+        'release_date': album.release_date,
+        'cover_art_url': album.cover_art_url,
+        'record_label': {'id': album.record_label_id, 'name': album.record_label.name} if album.record_label_id else None,
+    }
+
+
+def serialize_song(song, request=None):
+    return {
+        'id': song.id,
+        'title_ar': song.title_ar,
+        'title_en': song.title_en,
+        'slug': song.slug,
+        'duration_seconds': song.duration_seconds,
+        'lyrics': song.lyrics,
+        'release_year': song.release_year,
+        'song_type': song.song_type,
+        'is_duet': song.is_duet,
+        'recording_studio': (
+            {'id': song.recording_studio_id, 'name': song.recording_studio.name}
+            if song.recording_studio_id else None
+        ),
+        'album': {'id': song.album_id, 'title_ar': song.album.title_ar} if song.album_id else None,
+        'related_media': (
+            {'id': song.related_media_id, 'title_ar': song.related_media.title_ar}
+            if song.related_media_id else None
+        ),
+        'links': [serialize_link(link) for link in song.links.select_related('platform').all()],
+        'credits': [
+            {'person_id': credit.person_id, 'person_name': credit.person.full_name_ar, 'role': credit.role}
+            for credit in song.credits.select_related('person').all()
+        ],
+    }

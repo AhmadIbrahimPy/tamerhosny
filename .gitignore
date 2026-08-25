@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+credentials/.env
+staticfiles/
+media/
+.idea/

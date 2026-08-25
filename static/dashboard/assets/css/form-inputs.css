@@ -1,0 +1,13 @@
+/* Form input styling for better visibility */
+.form-control {
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Dark mode styling - application-specific */
+body.dark .form-control,
+[data-theme="dark"] .form-control,
+.dark-mode .form-control {
+  color: #e9ecef !important;
+  background-color: #2d3748 !important;
+}

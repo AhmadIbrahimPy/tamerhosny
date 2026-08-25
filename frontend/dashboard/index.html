@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include "dashboard/partials/head/head-meta.html" %}
+  <title>WD | {% block title %}Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10.0.0/swiper-bundle.min.css" />
+  {% include "dashboard/partials/head/head-links.html" %}
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <!-- Vertical Sidebar -->
+  <div>
+    {% include "dashboard/partials/sidebar-collapse.html" %}
+
+    <!-- Main Content -->
+    <div id="content" class="position-relative h-100">
+      {% include "dashboard/partials/topbar-second.html" %}
+      <!-- container -->
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.0/dist/simplebar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@10.0.0/swiper-bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.42.0/dist/apexcharts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world-merc.js"></script>
+  <!-- Custom scripts -->
+  <script src="{% static 'dashboard/assets/js/vendors/sidebarnav.js' %}"></script>
+  <script src="{% static 'dashboard/assets/js/vendors/chart.js' %}"></script>
+  <script src="{% static 'dashboard/assets/js/vendors/choice.js' %}"></script>
+  <script src="{% static 'dashboard/assets/js/vendors/swiper.js' %}"></script>
+  {% include "dashboard/partials/scripts.html" %}
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>
