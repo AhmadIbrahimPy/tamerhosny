@@ -1,0 +1,80 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "توقيت كلمات الأغنية" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container d-flex justify-content-center">
+  <div class="w-100" style="max-width: 780px;">
+
+    <div class="card card-lg mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% translate "توقيت الكلمات" %} — {{ song.title_ar }}</h5>
+        <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table text-nowrap mb-0 table-centered table-hover">
+          <thead>
+            <tr>
+              <th>{% translate "من (ثانية)" %}</th>
+              <th>{% translate "إلى (ثانية)" %}</th>
+              <th>{% translate "النوع" %}</th>
+              <th>{% translate "النص" %}</th>
+              <th class="text-end">{% translate "إجراءات" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for segment in segments %}
+            <tr>
+              <td>{{ segment.start_seconds }}</td>
+              <td>{{ segment.end_seconds }}</td>
+              <td>
+                {% if segment.segment_type == "LYRICS" %}
+                  <span class="badge bg-primary-subtle text-primary">{{ segment.get_segment_type_display }}</span>
+                {% elif segment.segment_type == "MUSIC" %}
+                  <span class="badge bg-info-subtle text-info">{{ segment.get_segment_type_display }}</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">{{ segment.get_segment_type_display }}</span>
+                {% endif %}
+              </td>
+              <td class="text-wrap" style="max-width: 260px;">{{ segment.text|default:"-" }}</td>
+              <td class="text-end">
+                <a href="{% url 'dashboard_app:song-segment-edit' song.pk segment.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+                <form action="{% url 'dashboard_app:song-segment-delete' song.pk segment.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-lg">
+      <div class="card-header"><h6 class="mb-0">{% translate "إضافة مقطع جديد" %}</h6></div>
+      <div class="card-body">
+        <p class="text-muted small">{% translate "وقت البداية بيتحدد تلقائياً من نهاية آخر مقطع، وممكن تعدّله." %}</p>
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">{% translate "إضافة المقطع" %}</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

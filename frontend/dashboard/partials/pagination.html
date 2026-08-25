@@ -1,0 +1,33 @@
+{% load i18n %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+  <span class="text-muted small">
+    {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}عرض {{ start }}–{{ end }} من {{ total }}{% endblocktranslate %}
+  </span>
+  <ul class="pagination pagination-sm mb-0">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?{{ querystring }}page={{ page_obj.previous_page_number }}">{% translate "السابق" %}</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">{% translate "السابق" %}</span></li>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+        <li class="page-item"><a class="page-link" href="?{{ querystring }}page={{ num }}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?{{ querystring }}page={{ page_obj.next_page_number }}">{% translate "التالي" %}</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">{% translate "التالي" %}</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}

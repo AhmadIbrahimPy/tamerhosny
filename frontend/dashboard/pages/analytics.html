@@ -1,0 +1,184 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "التحليلات" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+
+  <div class="row g-6 mb-6">
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="text-muted small mb-1">{% translate "المشاهدات (٣٠ يوم)" %}</div>
+        <div class="fs-3 fw-bold">{{ totals_30d.VIEW }}</div>
+        <div class="text-muted small">{% translate "الإجمالي" %}: {{ totals_all_time.VIEW }}</div>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="text-muted small mb-1">{% translate "التشغيل (٣٠ يوم)" %}</div>
+        <div class="fs-3 fw-bold">{{ totals_30d.PLAY }}</div>
+        <div class="text-muted small">{% translate "الإجمالي" %}: {{ totals_all_time.PLAY }}</div>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="text-muted small mb-1">{% translate "المشاركات (٣٠ يوم)" %}</div>
+        <div class="fs-3 fw-bold">{{ totals_30d.SHARE }}</div>
+        <div class="text-muted small">{% translate "الإجمالي" %}: {{ totals_all_time.SHARE }}</div>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="text-muted small mb-1">{% translate "ضغطات المنصات الخارجية (٣٠ يوم)" %}</div>
+        <div class="fs-3 fw-bold">{{ totals_30d.EXTERNAL_CLICK }}</div>
+        <div class="text-muted small">{% translate "الإجمالي" %}: {{ totals_all_time.EXTERNAL_CLICK }}</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="card card-lg mb-6">
+    <div class="card-header"><h6 class="mb-0">{% translate "المشاهدات اليومية (آخر ٣٠ يوم)" %}</h6></div>
+    <div class="card-body">
+      <div id="dailyViewsChart"></div>
+    </div>
+  </div>
+
+  <div class="row g-6 mb-6">
+    <div class="col-xl-6">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "الأكثر مشاهدة: الفنانون وطاقم العمل" %}</h6></div>
+        <div class="list-group list-group-flush">
+          {% for row in top_people %}
+            <a href="{{ row.url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span>{{ row.label }}</span>
+              <span class="badge bg-primary-subtle text-primary">{{ row.views }}</span>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا توجد بيانات بعد" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "الأكثر مشاهدة: الأغاني" %}</h6></div>
+        <div class="list-group list-group-flush">
+          {% for row in top_songs %}
+            <a href="{{ row.url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span>{{ row.label }}</span>
+              <span class="badge bg-primary-subtle text-primary">{{ row.views }}</span>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا توجد بيانات بعد" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-6 mb-6">
+    <div class="col-xl-4">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "الأكثر مشاهدة: الأعمال الفنية" %}</h6></div>
+        <div class="list-group list-group-flush">
+          {% for row in top_media %}
+            <a href="{{ row.url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span>{{ row.label }}</span>
+              <span class="badge bg-primary-subtle text-primary">{{ row.views }}</span>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا توجد بيانات بعد" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "الأكثر مشاهدة: الألبومات" %}</h6></div>
+        <div class="list-group list-group-flush">
+          {% for row in top_albums %}
+            <a href="{{ row.url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span>{{ row.label }}</span>
+              <span class="badge bg-primary-subtle text-primary">{{ row.views }}</span>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا توجد بيانات بعد" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "الأكثر مشاهدة: الحفلات" %}</h6></div>
+        <div class="list-group list-group-flush">
+          {% for row in top_concerts %}
+            <a href="{{ row.url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span>{{ row.label }}</span>
+              <span class="badge bg-primary-subtle text-primary">{{ row.views }}</span>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا توجد بيانات بعد" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-6 mb-6">
+    <div class="col-xl-6">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "ضغطات المنصات الخارجية حسب المنصة" %}</h6></div>
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead><tr><th>{% translate "المنصة" %}</th><th>{% translate "عدد الضغطات" %}</th></tr></thead>
+            <tbody>
+              {% for row in platform_breakdown %}
+              <tr><td>{{ row.platform__platform_name }}</td><td>{{ row.total }}</td></tr>
+              {% empty %}
+              <tr><td colspan="2" class="text-center text-muted py-4">{% translate "لا توجد بيانات بعد" %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "المشاركات حسب القناة" %}</h6></div>
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead><tr><th>{% translate "القناة" %}</th><th>{% translate "عدد المشاركات" %}</th></tr></thead>
+            <tbody>
+              {% for row in share_breakdown %}
+              <tr><td>{{ row.share_channel }}</td><td>{{ row.total }}</td></tr>
+              {% empty %}
+              <tr><td colspan="2" class="text-center text-muted py-4">{% translate "لا توجد بيانات بعد" %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var labels = {{ daily_views_labels|safe }};
+    var data = {{ daily_views_data|safe }};
+    if (typeof ApexCharts !== 'undefined') {
+      var chart = new ApexCharts(document.querySelector('#dailyViewsChart'), {
+        chart: { type: 'area', height: 260, toolbar: { show: false } },
+        series: [{ name: '{% translate "المشاهدات" %}', data: data }],
+        xaxis: { categories: labels },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+      });
+      chart.render();
+    }
+  })();
+</script>
+{% endblock %}

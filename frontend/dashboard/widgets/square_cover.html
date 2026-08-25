@@ -1,0 +1,87 @@
+{% load i18n %}
+<div class="cover-upload" id="wrap_{{ widget.attrs.id }}">
+  <div class="cover-square" id="circle_{{ widget.attrs.id }}">
+    <a href="{% if widget.is_initial %}{{ widget.value.url }}{% endif %}" target="_blank" rel="noopener"
+       class="cover-square-link {% if not widget.is_initial %}d-none{% endif %}" id="link_{{ widget.attrs.id }}">
+      <img src="{% if widget.is_initial %}{{ widget.value.url }}{% endif %}" alt="" id="img_{{ widget.attrs.id }}">
+    </a>
+    <label for="{{ widget.attrs.id }}" class="cover-add-btn {% if widget.is_initial %}d-none{% endif %}" id="add_{{ widget.attrs.id }}">
+      <span>+</span>
+    </label>
+    <button type="button" class="cover-remove-btn {% if not widget.is_initial %}d-none{% endif %}"
+            id="remove_{{ widget.attrs.id }}" title="{% translate "حذف الصورة" %}"
+            onclick="__avatarClear('{{ widget.attrs.id }}', '{{ widget.checkbox_id }}')">×</button>
+  </div>
+
+  {% if widget.is_initial %}
+    <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}" class="d-none">
+  {% endif %}
+  <input type="file" name="{{ widget.name }}" id="{{ widget.attrs.id }}" accept="image/*" class="d-none"
+         onchange="__avatarPreview(this, '{{ widget.attrs.id }}', '{{ widget.checkbox_id }}')">
+</div>
+
+<style>
+  .cover-upload { display: flex; justify-content: center; }
+  .cover-square {
+    position: relative; width: 120px; height: 120px; border-radius: 14px;
+    background: #f1f2f6; border: 1px solid rgba(0,0,0,.08); overflow: visible;
+  }
+  .cover-square-link, .cover-add-btn {
+    position: absolute; inset: 0; border-radius: 14px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cover-square-link img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-add-btn { cursor: pointer; font-size: 32px; color: #9a97ab; }
+  .cover-add-btn:hover { background: #e9eaf0; }
+  .cover-remove-btn {
+    position: absolute; bottom: -6px; left: -6px; width: 28px; height: 28px;
+    border-radius: 50%; border: 2px solid #fff; background: #dc3545; color: #fff;
+    font-size: 15px; line-height: 1; padding: 0; cursor: pointer;
+  }
+</style>
+
+<script>
+  if (typeof __avatarPreview === 'undefined') {
+    function __avatarPreview(input, id, checkboxId) {
+      const file = input.files && input.files[0];
+      const link = document.getElementById('link_' + id);
+      const img = document.getElementById('img_' + id);
+      const addBtn = document.getElementById('add_' + id);
+      const removeBtn = document.getElementById('remove_' + id);
+      if (!file) return;
+
+      if (checkboxId) {
+        const clearCheckbox = document.getElementById(checkboxId);
+        if (clearCheckbox) clearCheckbox.checked = false;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+        link.href = e.target.result;
+        link.classList.remove('d-none');
+        addBtn.classList.add('d-none');
+        removeBtn.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  if (typeof __avatarClear === 'undefined') {
+    function __avatarClear(id, checkboxId) {
+      const fileInput = document.getElementById(id);
+      const link = document.getElementById('link_' + id);
+      const addBtn = document.getElementById('add_' + id);
+      const removeBtn = document.getElementById('remove_' + id);
+
+      fileInput.value = '';
+      if (checkboxId) {
+        const clearCheckbox = document.getElementById(checkboxId);
+        if (clearCheckbox) clearCheckbox.checked = true;
+      }
+      link.classList.add('d-none');
+      addBtn.classList.remove('d-none');
+      removeBtn.classList.add('d-none');
+    }
+  }
+</script>

@@ -1,0 +1,17 @@
+{% load i18n %}
+<form method="get" class="d-flex flex-wrap gap-2 align-items-center px-4 py-3 border-bottom">
+  <input type="text" name="q" value="{{ request.GET.q }}" class="form-control form-control-sm" style="max-width: 260px;"
+         placeholder="{% translate "بحث..." %}">
+  {% if filter_choices %}
+    <select name="filter" class="form-select form-select-sm" style="max-width: 220px;">
+      <option value="">{{ filter_label }}</option>
+      {% for value, label in filter_choices %}
+        <option value="{{ value }}" {% if request.GET.filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  {% endif %}
+  <button type="submit" class="btn btn-sm btn-primary">{% translate "بحث" %}</button>
+  {% if request.GET.q or request.GET.filter %}
+    <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">{% translate "مسح" %}</a>
+  {% endif %}
+</form>
