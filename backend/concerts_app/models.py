@@ -4,12 +4,12 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from backend.links_app.models import ExternalLink, PublishableModel
+from backend.links_app.models import ExternalLink, HeroMediaMixin, PublishableModel
 from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.studios_app.models import Studio
 
 
-class Concert(PublishableModel):
+class Concert(PublishableModel, HeroMediaMixin):
     class Status(models.TextChoices):
         UPCOMING = 'UPCOMING', _('Upcoming')
         COMPLETED = 'COMPLETED', _('Completed')
@@ -27,10 +27,14 @@ class Concert(PublishableModel):
     country = models.CharField(max_length=120, blank=True)
 
     description = models.TextField(blank=True)
+    poster_image = models.ImageField(upload_to='concerts/posters/', blank=True, null=True)
     poster_url = models.URLField(blank=True, validators=[URLValidator(schemes=['http', 'https'])])
     organizer = models.ForeignKey(
         Studio, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_concerts',
     )
+
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     links = GenericRelation(ExternalLink)
 
@@ -54,6 +58,16 @@ class Concert(PublishableModel):
     @property
     def is_upcoming(self):
         return self.status == self.Status.UPCOMING or (self.date and self.date >= timezone.now())
+
+    @property
+    def display_poster_url(self):
+        if self.poster_image:
+            return self.poster_image.url
+        return self.poster_url
+
+    @property
+    def has_location(self):
+        return self.latitude is not None and self.longitude is not None
 
     def __str__(self):
         return f'{self.title_ar} - {self.city or "TBA"}'

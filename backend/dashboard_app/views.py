@@ -20,13 +20,15 @@ from django.utils.translation import gettext_lazy as _
 from backend.ads_app.models import Advertisement
 from backend.analytics_app.models import AnalyticsEvent
 from backend.concerts_app.models import Concert
+from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.dashboard_app.forms import (
-    AdvertisementForm, AlbumForm, ConcertForm, ExternalLinkForm, MediaCreditForm, MEDIA_SECTION_FORMS, PersonForm,
-    PlatformForm, SongCreditForm, SongForm, SongLyricSegmentForm, StudioForm, UserAccountForm,
+    AdvertisementForm, AlbumForm, CinemaVenueForm, ConcertForm, ExternalLinkForm, MediaCreditForm,
+    MEDIA_SECTION_FORMS, PersonForm, PlatformForm, ScreeningForm, SongCreditForm, SongForm, SongLyricSegmentForm,
+    StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
-from backend.media_app.models import Media, MediaCredit
+from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
@@ -350,11 +352,13 @@ def person_view(request, pk):
         (_('نبذة'), person.bio),
     ]
 
-    song_credits = person.song_credits.select_related('song', 'song__album').order_by('-song__release_year')
-    media_credits = person.media_credits.select_related('media').order_by('-media__release_date')
+    song_credits_qs = person.song_credits.select_related('song', 'song__album').order_by('-song__release_year')
+    media_credits_qs = person.media_credits.select_related('media').order_by('-media__release_date')
+    song_credits = dedupe_credits(song_credits_qs, 'song')
+    media_credits = dedupe_credits(media_credits_qs, 'media', extra_label=lambda credit: credit.character_name)
 
     albums = {}
-    for credit in song_credits:
+    for credit in song_credits_qs:
         if credit.song.album_id and credit.song.album_id not in albums:
             albums[credit.song.album_id] = credit.song.album
 
@@ -370,25 +374,22 @@ def person_view(request, pk):
             'title': _('الأغاني'),
             'items': [
                 {
-                    'label': credit.song.title_ar,
-                    'url': reverse('dashboard_app:song-view', args=[credit.song_id]),
-                    'meta': credit.get_role_display(),
+                    'label': entry['song'].title_ar,
+                    'url': reverse('dashboard_app:song-view', args=[entry['song'].pk]),
+                    'meta': '، '.join(entry['roles']),
                 }
-                for credit in song_credits
+                for entry in song_credits
             ],
         },
         {
             'title': _('الأفلام والمسلسلات والإعلانات'),
             'items': [
                 {
-                    'label': credit.media.title_ar,
-                    'url': reverse('dashboard_app:media-view', args=[credit.media_id]),
-                    'meta': (
-                        f'{credit.get_role_display()} ({credit.character_name})'
-                        if credit.character_name else credit.get_role_display()
-                    ),
+                    'label': entry['media'].title_ar,
+                    'url': reverse('dashboard_app:media-view', args=[entry['media'].pk]),
+                    'meta': '، '.join(entry['roles']),
                 }
-                for credit in media_credits
+                for entry in media_credits
             ],
         },
         {
@@ -709,11 +710,11 @@ def song_view(request, pk):
             'title': _('المشاركون في الأغنية'),
             'items': [
                 {
-                    'label': credit.person.full_name_ar,
-                    'url': reverse('dashboard_app:person-view', args=[credit.person_id]),
-                    'meta': credit.get_role_display(),
+                    'label': entry['person'].full_name_ar,
+                    'url': reverse('dashboard_app:person-view', args=[entry['person'].pk]),
+                    'meta': '، '.join(entry['roles']),
                 }
-                for credit in song.credits.select_related('person').all()
+                for entry in dedupe_credits(song.credits.select_related('person').all(), 'person')
             ],
         },
         {
@@ -1002,17 +1003,17 @@ def media_view(request, pk):
 
     related_sections = [
         {
-            'title': _('طاقم العمل والتمثيل'),
+            'title': _('الفنانون والتمثيل'),
             'items': [
                 {
-                    'label': credit.person.full_name_ar,
-                    'url': reverse('dashboard_app:person-view', args=[credit.person_id]),
-                    'meta': (
-                        f'{credit.get_role_display()} ({credit.character_name})'
-                        if credit.character_name else credit.get_role_display()
-                    ),
+                    'label': entry['person'].full_name_ar,
+                    'url': reverse('dashboard_app:person-view', args=[entry['person'].pk]),
+                    'meta': '، '.join(entry['roles']),
                 }
-                for credit in media.credits.select_related('person').all()
+                for entry in dedupe_credits(
+                    media.credits.select_related('person').all(), 'person',
+                    extra_label=lambda credit: credit.character_name,
+                )
             ],
         },
         {
@@ -1034,6 +1035,17 @@ def media_view(request, pk):
                 for link in media.links.select_related('platform').all()
             ],
         },
+        {
+            'title': _('دور العرض'),
+            'items': [
+                {
+                    'label': str(screening.venue),
+                    'url': reverse('dashboard_app:media-screening-edit', args=[pk, screening.pk]),
+                    'meta': f'{screening.ticket_price} ج.م' if screening.ticket_price else None,
+                }
+                for screening in media.screenings.select_related('venue').all()
+            ],
+        },
     ]
 
     return render(request, 'dashboard/pages/_detail_generic.html', {
@@ -1044,7 +1056,8 @@ def media_view(request, pk):
         'image_url': media.display_poster_url or None,
         'stats': _event_counts_for(media),
         'extra_actions': [
-            {'label': _('طاقم العمل'), 'url': reverse('dashboard_app:media-crew', args=[pk])},
+            {'label': _('الفنانون'), 'url': reverse('dashboard_app:media-crew', args=[pk])},
+            {'label': _('دور العرض'), 'url': reverse('dashboard_app:media-screenings', args=[pk])},
             {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['media', pk])},
         ],
         'edit_url': reverse('dashboard_app:media-edit', args=[pk]),
@@ -1106,7 +1119,7 @@ def media_crew_edit(request, pk, credit_pk):
         return redirect('dashboard_app:media-crew', pk=pk)
     return render(request, 'dashboard/pages/_form_generic.html', {
         'form': form,
-        'page_title': f'{_("تعديل عضو طاقم العمل")}: {media.title_ar}',
+        'page_title': f'{_("تعديل فنان")}: {media.title_ar}',
         'back_url': _smart_back_url(request, reverse('dashboard_app:media-crew', args=[pk])),
     })
 
@@ -1117,6 +1130,52 @@ def media_crew_delete(request, pk, credit_pk):
     if request.method == 'POST':
         credit.delete()
     return redirect('dashboard_app:media-crew', pk=pk)
+
+
+@login_required(login_url='dashboard_app:login')
+def media_screenings(request, pk):
+    media = get_object_or_404(Media, pk=pk)
+    screenings = media.screenings.select_related('venue').all()
+
+    if request.method == 'POST':
+        form = ScreeningForm(request.POST)
+        if form.is_valid():
+            screening = form.save(commit=False)
+            screening.media = media
+            screening.save()
+            return redirect('dashboard_app:media-screenings', pk=pk)
+    else:
+        form = ScreeningForm()
+
+    return render(request, 'dashboard/pages/media/screenings.html', {
+        'media': media,
+        'screenings': screenings,
+        'form': form,
+        'back_url': _smart_back_url(request, reverse('dashboard_app:media-view', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def media_screening_edit(request, pk, screening_pk):
+    media = get_object_or_404(Media, pk=pk)
+    screening = get_object_or_404(CinemaScreening, pk=screening_pk, media=media)
+    form = ScreeningForm(request.POST or None, instance=screening)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('dashboard_app:media-screenings', pk=pk)
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': f'{_("تعديل دار عرض")}: {media.title_ar}',
+        'back_url': _smart_back_url(request, reverse('dashboard_app:media-screenings', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def media_screening_delete(request, pk, screening_pk):
+    screening = get_object_or_404(CinemaScreening, pk=screening_pk, media_id=pk)
+    if request.method == 'POST':
+        screening.delete()
+    return redirect('dashboard_app:media-screenings', pk=pk)
 
 
 # ---------------------------------------------------------------------------
@@ -1178,7 +1237,7 @@ def concert_view(request, pk):
 
     related_sections = [
         {
-            'title': _('الفيديوهات والروابط'),
+            'title': _('مواقع الحجز'),
             'items': [
                 {
                     'label': link.platform.get_platform_name_display(),
@@ -1196,7 +1255,7 @@ def concert_view(request, pk):
         'subtitle': concert.get_status_display(),
         'fields': fields,
         'related_sections': related_sections,
-        'image_url': concert.poster_url or None,
+        'image_url': concert.display_poster_url or None,
         'stats': _event_counts_for(concert),
         'extra_actions': [
             {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['concert', pk])},
@@ -1379,6 +1438,7 @@ def platform_view(request, pk):
         'page_title': platform.get_platform_name_display(),
         'fields': fields,
         'related_sections': related_sections,
+        'image_url': platform.logo_icon_url or None,
         'edit_url': reverse('dashboard_app:platform-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:platforms')),
     })
@@ -1390,6 +1450,49 @@ def platform_delete(request, pk):
     if request.method == 'POST':
         platform.delete()
     return redirect('dashboard_app:platforms')
+
+
+# ---------------------------------------------------------------------------
+# Cinema venues — a shared master list (like Platforms), managed once and
+# picked per movie via "دور العرض" instead of retyping name/city each time.
+# ---------------------------------------------------------------------------
+
+@login_required(login_url='dashboard_app:login')
+def cinema_venues_list(request):
+    queryset = CinemaVenue.objects.all()
+    q = request.GET.get('q')
+    if q:
+        queryset = queryset.filter(Q(name__icontains=q) | Q(city__icontains=q))
+    venues = _paginate(request, queryset)
+    return render(request, 'dashboard/pages/cinema_venues/all.html', {
+        'venues': venues,
+        'querystring': _querystring(request),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def cinema_venue_create(request):
+    return _save_form(
+        request, CinemaVenueForm, None, _('إضافة دار عرض'), reverse('dashboard_app:cinema-venues'),
+        'dashboard_app:cinema-venues',
+    )
+
+
+@login_required(login_url='dashboard_app:login')
+def cinema_venue_edit(request, pk):
+    venue = get_object_or_404(CinemaVenue, pk=pk)
+    return _save_form(
+        request, CinemaVenueForm, venue, f'{_("تعديل")}: {venue.name}', reverse('dashboard_app:cinema-venues'),
+        'dashboard_app:cinema-venues',
+    )
+
+
+@login_required(login_url='dashboard_app:login')
+def cinema_venue_delete(request, pk):
+    venue = get_object_or_404(CinemaVenue, pk=pk)
+    if request.method == 'POST':
+        venue.delete()
+    return redirect('dashboard_app:cinema-venues')
 
 
 # ---------------------------------------------------------------------------

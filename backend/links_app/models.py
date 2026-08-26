@@ -7,6 +7,22 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+def _hero_video_upload_path(instance, filename):
+    return f'{instance._meta.model_name}/covers/videos/{filename}'
+
+
+class HeroMediaMixin(models.Model):
+    """An optional full-width hero background for a detail page: an
+    uploaded video, or (checked second, via the model's own image field) a
+    static image.
+    """
+
+    cover_video = models.FileField(upload_to=_hero_video_upload_path, blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
 class PublishableModel(models.Model):
     """Shared visibility/scheduling behaviour for public content items
     (songs, albums, media, concerts): a record can be hidden entirely, be
@@ -72,6 +88,8 @@ class Platform(models.Model):
         NETFLIX = 'NETFLIX', _('Netflix')
         SHAHID = 'SHAHID', _('Shahid')
         WATCH_IT = 'WATCH_IT', _('WATCH IT')
+        TAZKARTI = 'TAZKARTI', _('Tazkarti')
+        TICKETMASTER = 'TICKETMASTER', _('Ticketmaster')
         OTHER = 'OTHER', _('Other')
 
     platform_name = models.CharField(max_length=20, choices=Name.choices, default=Name.OTHER, unique=True)

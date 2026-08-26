@@ -68,6 +68,15 @@ urlpatterns = [
     path('media/<int:pk>/crew/', views.media_crew, name='media-crew'),
     path('media/<int:pk>/crew/<int:credit_pk>/edit/', views.media_crew_edit, name='media-crew-edit'),
     path('media/<int:pk>/crew/<int:credit_pk>/delete/', views.media_crew_delete, name='media-crew-delete'),
+    path('media/<int:pk>/screenings/', views.media_screenings, name='media-screenings'),
+    path(
+        'media/<int:pk>/screenings/<int:screening_pk>/edit/', views.media_screening_edit,
+        name='media-screening-edit',
+    ),
+    path(
+        'media/<int:pk>/screenings/<int:screening_pk>/delete/', views.media_screening_delete,
+        name='media-screening-delete',
+    ),
 
     # Concerts
     path('concerts/', views.concerts_list, name='concerts'),
@@ -91,6 +100,12 @@ urlpatterns = [
     path('platforms/<int:pk>/', views.platform_view, name='platform-view'),
     path('platforms/<int:pk>/edit/', views.platform_edit, name='platform-edit'),
     path('platforms/<int:pk>/delete/', views.platform_delete, name='platform-delete'),
+
+    # Cinema venues (shared master list, used by movies' "دور العرض")
+    path('cinema-venues/', views.cinema_venues_list, name='cinema-venues'),
+    path('cinema-venues/create/', views.cinema_venue_create, name='cinema-venue-create'),
+    path('cinema-venues/<int:pk>/edit/', views.cinema_venue_edit, name='cinema-venue-edit'),
+    path('cinema-venues/<int:pk>/delete/', views.cinema_venue_delete, name='cinema-venue-delete'),
 
     # Users
     path('users/', views.users_list, name='users'),

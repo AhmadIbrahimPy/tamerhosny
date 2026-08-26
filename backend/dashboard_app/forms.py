@@ -7,7 +7,7 @@ from backend.concerts_app.models import Concert
 from backend.dashboard_app.widgets import CircularAvatarWidget, SquareCoverWidget
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
-from backend.media_app.models import Media, MediaCredit
+from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
@@ -66,8 +66,8 @@ class AlbumForm(forms.ModelForm):
     class Meta:
         model = Album
         fields = [
-            'title_ar', 'title_en', 'release_date', 'cover_image', 'cover_art_url', 'record_label',
-            'visibility', 'publish_at',
+            'title_ar', 'title_en', 'release_date', 'cover_image', 'cover_art_url', 'cover_video',
+            'record_label', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
@@ -75,6 +75,7 @@ class AlbumForm(forms.ModelForm):
             'release_date': _('تاريخ الإصدار'),
             'cover_image': _('صورة الغلاف'),
             'cover_art_url': _('رابط صورة الغلاف (اختياري)'),
+            'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'record_label': _('شركة الإنتاج'),
             'visibility': _('حالة الظهور'),
             'publish_at': _('موعد النشر'),
@@ -85,6 +86,7 @@ class AlbumForm(forms.ModelForm):
             'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
             'cover_image': SquareCoverWidget(),
             'cover_art_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'record_label': forms.Select(attrs=SELECT_ATTRS),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
             'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
@@ -99,13 +101,15 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         fields = [
-            'title_ar', 'title_en', 'cover_image', 'song_type', 'duration_seconds', 'release_year',
-            'is_duet', 'recording_studio', 'album', 'related_media', 'visibility', 'publish_at',
+            'title_ar', 'title_en', 'cover_image', 'cover_video', 'song_type',
+            'duration_seconds', 'release_year', 'is_duet', 'recording_studio', 'album', 'related_media',
+            'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'cover_image': _('صورة الأغنية'),
+            'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'song_type': _('النوع'),
             'duration_seconds': _('المدة (بالثواني)'),
             'release_year': _('سنة الإصدار'),
@@ -120,6 +124,7 @@ class SongForm(forms.ModelForm):
             'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'cover_image': SquareCoverWidget(),
+            'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'song_type': forms.Select(attrs=SELECT_ATTRS),
             'duration_seconds': forms.NumberInput(attrs=WIDGET_ATTRS),
             'release_year': forms.NumberInput(attrs={**WIDGET_ATTRS, 'id': 'id_release_year'}),
@@ -167,14 +172,15 @@ class _BaseWorkForm(forms.ModelForm):
     class Meta:
         model = Media
         fields = [
-            'title_ar', 'title_en', 'poster_image', 'poster_url', 'release_date', 'synopsis', 'rating',
-            'visibility', 'publish_at',
+            'title_ar', 'title_en', 'poster_image', 'poster_url', 'cover_video',
+            'release_date', 'synopsis', 'rating', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'poster_image': _('صورة العمل'),
             'poster_url': _('رابط بوستر بديل (اختياري)'),
+            'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'release_date': _('تاريخ الإصدار'),
             'synopsis': _('القصة'),
             'rating': _('التقييم'),
@@ -186,6 +192,7 @@ class _BaseWorkForm(forms.ModelForm):
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'poster_image': SquareCoverWidget(),
             'poster_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
             'synopsis': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 4}),
             'rating': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.1', 'min': 0, 'max': 10}),
@@ -219,14 +226,15 @@ class CommercialForm(forms.ModelForm):
     class Meta:
         model = Media
         fields = [
-            'title_ar', 'title_en', 'poster_image', 'poster_url', 'release_date',
-            'advertiser_company', 'brand_name', 'campaign_concept', 'visibility', 'publish_at',
+            'title_ar', 'title_en', 'poster_image', 'poster_url', 'cover_video',
+            'release_date', 'advertiser_company', 'brand_name', 'campaign_concept', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'poster_image': _('صورة الإعلان'),
             'poster_url': _('رابط صورة بديل (اختياري)'),
+            'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'release_date': _('تاريخ الإصدار'),
             'advertiser_company': _('جهة الإعلان'),
             'brand_name': _('اسم العلامة التجارية'),
@@ -239,6 +247,7 @@ class CommercialForm(forms.ModelForm):
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'poster_image': SquareCoverWidget(),
             'poster_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'release_date': forms.DateInput(attrs={**WIDGET_ATTRS, 'type': 'date'}),
             'advertiser_company': forms.TextInput(attrs=WIDGET_ATTRS),
             'brand_name': forms.TextInput(attrs=WIDGET_ATTRS),
@@ -279,12 +288,43 @@ class MediaCreditForm(forms.ModelForm):
         }
 
 
+class CinemaVenueForm(forms.ModelForm):
+    class Meta:
+        model = CinemaVenue
+        fields = ['name', 'city']
+        labels = {
+            'name': _('اسم دار العرض'),
+            'city': _('المدينة'),
+        }
+        widgets = {
+            'name': forms.TextInput(attrs=WIDGET_ATTRS),
+            'city': forms.TextInput(attrs=WIDGET_ATTRS),
+        }
+
+
+class ScreeningForm(forms.ModelForm):
+    class Meta:
+        model = CinemaScreening
+        fields = ['venue', 'ticket_price', 'booking_url']
+        labels = {
+            'venue': _('دار العرض'),
+            'ticket_price': _('سعر التذكرة'),
+            'booking_url': _('رابط الحجز (اختياري)'),
+        }
+        widgets = {
+            'venue': forms.Select(attrs=SELECT_ATTRS),
+            'ticket_price': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.01', 'min': 0}),
+            'booking_url': forms.URLInput(attrs=WIDGET_ATTRS),
+        }
+
+
 class ConcertForm(forms.ModelForm):
     class Meta:
         model = Concert
         fields = [
             'title_ar', 'title_en', 'status', 'date', 'venue_name', 'city', 'country',
-            'description', 'poster_url', 'organizer', 'visibility', 'publish_at',
+            'description', 'poster_image', 'poster_url', 'cover_video',
+            'latitude', 'longitude', 'organizer', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
@@ -295,7 +335,11 @@ class ConcertForm(forms.ModelForm):
             'city': _('المدينة'),
             'country': _('الدولة'),
             'description': _('الوصف'),
-            'poster_url': _('رابط البوستر'),
+            'poster_image': _('صورة الحفلة'),
+            'poster_url': _('رابط بوستر بديل (اختياري)'),
+            'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
+            'latitude': _('خط العرض'),
+            'longitude': _('خط الطول'),
             'organizer': _('الجهة المنظمة'),
             'visibility': _('حالة الظهور'),
             'publish_at': _('موعد النشر'),
@@ -309,7 +353,11 @@ class ConcertForm(forms.ModelForm):
             'city': forms.TextInput(attrs=WIDGET_ATTRS),
             'country': forms.TextInput(attrs=WIDGET_ATTRS),
             'description': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 4}),
+            'poster_image': SquareCoverWidget(),
             'poster_url': forms.URLInput(attrs=WIDGET_ATTRS),
+            'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
+            'latitude': forms.HiddenInput(attrs={'id': 'id_latitude'}),
+            'longitude': forms.HiddenInput(attrs={'id': 'id_longitude'}),
             'organizer': forms.Select(attrs=SELECT_ATTRS),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
             'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
@@ -318,6 +366,10 @@ class ConcertForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['organizer'].empty_label = NONE_CHOICE
+        # Plain decimal notation always (never locale-formatted with a
+        # comma decimal separator), since these feed a JS map picker.
+        self.fields['latitude'].localize = False
+        self.fields['longitude'].localize = False
 
 
 class SongLyricSegmentForm(forms.ModelForm):
@@ -372,7 +424,13 @@ class PlatformForm(forms.ModelForm):
         fields = ['platform_name', 'logo_icon_url']
         labels = {
             'platform_name': _('المنصة'),
-            'logo_icon_url': _('رابط الأيقونة'),
+            'logo_icon_url': _('رابط صورة الأيقونة'),
+        }
+        help_texts = {
+            'logo_icon_url': _(
+                'رابط مباشر لصورة الأيقونة (لازم ينتهي بامتداد صورة زي .png أو .jpg أو .svg)، '
+                'مش رابط صفحة عادية زي رابط تطبيق أو موقع.'
+            ),
         }
         widgets = {
             'platform_name': forms.Select(attrs=SELECT_ATTRS),

@@ -3,6 +3,39 @@
 {% block title %}{{ album.title_ar }}{% endblock %}
 
 {% block content %}
+
+{% if album.cover_video %}
+<div class="th-hero-banner">
+  {% if album.cover_image %}
+    <div class="th-hero-poster-box"><img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}"></div>
+  {% elif album.cover_art_url %}
+    <div class="th-hero-poster-box"><img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}"></div>
+  {% endif %}
+  <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
+    <source src="{{ album.cover_video.url }}">
+  </video>
+  <div class="th-hero-overlay"></div>
+
+  <div class="th-hero-inner container-xl">
+    <h1>{{ album.title_ar }}</h1>
+    {% if album.title_en %}<p class="th-meta">{{ album.title_en }}</p>{% endif %}
+    <div class="th-meta-row">
+      {% if album.release_date %}<span><i class="bi bi-calendar"></i> {{ album.release_date|date:"Y-m-d" }}</span>{% endif %}
+      {% if album.record_label %}<span><i class="bi bi-building"></i> {{ album.record_label.name }}</span>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'album', {{ album.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+      <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+         onclick="thTrack('SHARE', 'album', {{ album.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+         onclick="thTrack('SHARE', 'album', {{ album.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xl">
+
+{% else %}
 <div class="container-xl">
 
   <div class="th-detail-hero">
@@ -33,6 +66,7 @@
       </div>
     </div>
   </div>
+{% endif %}
 
   {% if links %}
   <div class="th-section">
@@ -41,7 +75,7 @@
       {% for link in links %}
         <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
            onclick="thTrack('EXTERNAL_CLICK', 'album', {{ album.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
-          <i class="bi bi-box-arrow-up-right"></i> {{ link.platform.get_platform_name_display }}
+          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
         </a>
       {% endfor %}
     </div>
@@ -50,50 +84,58 @@
 
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
-    <div class="th-grid cols-6">
-      {% for song in songs %}
-      <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
-        <div class="th-img-wrap">
-          {% if song.cover_image %}
-            <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
-          {% elif album.cover_image %}
-            <img src="{{ album.cover_image.url }}" alt="{{ song.title_ar }}">
-          {% else %}
-            <i class="bi bi-music-note-beamed icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body">
-          <div class="th-title">{{ song.title_ar }}</div>
-          {% if song.duration_seconds %}<div class="th-meta">{{ song.duration_seconds }}s</div>{% endif %}
-        </div>
-      </a>
-      {% empty %}
-      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for song in songs %}
+        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
+          <div class="th-img-wrap">
+            {% if song.cover_image %}
+              <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+            {% elif album.cover_image %}
+              <img src="{{ album.cover_image.url }}" alt="{{ song.title_ar }}">
+            {% else %}
+              <i class="bi bi-music-note-beamed icon-fallback"></i>
+            {% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ song.title_ar }}</div>
+            {% if song.duration_seconds %}<div class="th-meta">{{ song.duration_seconds }}s</div>{% endif %}
+          </div>
+        </a>
+        {% empty %}
+        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
 
   {% if related_albums %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "ألبومات أخرى" %}</h2>
-    <div class="th-grid cols-6">
-      {% for other in related_albums %}
-      <a href="{% url 'website_app:album-detail' other.slug %}" class="th-card aspect-square plain">
-        <div class="th-img-wrap">
-          {% if other.cover_image %}
-            <img src="{{ other.cover_image.url }}" alt="{{ other.title_ar }}">
-          {% elif other.cover_art_url %}
-            <img src="{{ other.cover_art_url }}" alt="{{ other.title_ar }}">
-          {% else %}
-            <i class="bi bi-disc icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body">
-          <div class="th-title">{{ other.title_ar }}</div>
-          {% if other.release_date %}<div class="th-meta">{{ other.release_date|date:"Y" }}</div>{% endif %}
-        </div>
-      </a>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for other in related_albums %}
+        <a href="{% url 'website_app:album-detail' other.slug %}" class="th-card aspect-square plain">
+          <div class="th-img-wrap">
+            {% if other.cover_image %}
+              <img src="{{ other.cover_image.url }}" alt="{{ other.title_ar }}">
+            {% elif other.cover_art_url %}
+              <img src="{{ other.cover_art_url }}" alt="{{ other.title_ar }}">
+            {% else %}
+              <i class="bi bi-disc icon-fallback"></i>
+            {% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ other.title_ar }}</div>
+            {% if other.release_date %}<div class="th-meta">{{ other.release_date|date:"Y" }}</div>{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}

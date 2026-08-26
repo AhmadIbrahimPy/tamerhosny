@@ -4,9 +4,10 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext_lazy as _
 
 from backend.ads_app.models import Advertisement
+from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
-from backend.music_app.models import Album, Song
+from backend.music_app.models import Album, Song, SongCredit
 from backend.people_app.models import Person
 
 PAGE_SIZE = 12
@@ -66,8 +67,13 @@ def people_list(request):
 
 def person_detail(request, slug):
     person = get_object_or_404(Person, slug=slug)
-    song_credits = person.song_credits.select_related('song', 'song__album').order_by('-song__release_year')
-    media_credits = person.media_credits.select_related('media').order_by('-media__release_date')
+    song_credits = dedupe_credits(
+        person.song_credits.select_related('song', 'song__album').order_by('-song__release_year'), 'song',
+    )
+    media_credits = dedupe_credits(
+        person.media_credits.select_related('media').order_by('-media__release_date'), 'media',
+        extra_label=lambda credit: credit.character_name,
+    )
     related_people = Person.objects.exclude(pk=person.pk).order_by('?')[:6]
     return render(request, 'website/pages/people/detail.html', {
         'person': person,
@@ -111,9 +117,15 @@ def song_detail(request, slug):
         other_qs = other_qs.filter(song_type=song.song_type)
     other_songs = Song.visible_queryset(other_qs)[:12]
     
+    vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+    all_credits = song.credits.select_related('person').all()
+    singers = [credit for credit in all_credits if credit.role in vocal_roles]
+    crew_credits = [credit for credit in all_credits if credit.role not in vocal_roles]
+
     return render(request, 'website/pages/songs/detail.html', {
         'song': song,
-        'credits': song.credits.select_related('person').all(),
+        'singers': singers,
+        'credits': dedupe_credits(crew_credits, 'person'),
         'links': song.links.select_related('platform').all(),
         'album_songs': album_songs,
         'other_songs': other_songs,
@@ -184,9 +196,13 @@ def media_detail(request, slug):
     ).order_by('-release_date')[:6]
     return render(request, 'website/pages/media/detail.html', {
         'media': media,
-        'credits': media.credits.select_related('person').all(),
+        'credits': dedupe_credits(
+            media.credits.select_related('person').all(), 'person',
+            extra_label=lambda credit: credit.character_name,
+        ),
         'links': media.links.select_related('platform').all(),
         'theme_songs': Song.visible_queryset(media.theme_songs.all()),
+        'screenings': media.screenings.select_related('venue').all(),
         'related_media': related_media,
         'page_ad': _ad_for(Advertisement.Placement.MEDIA),
     })

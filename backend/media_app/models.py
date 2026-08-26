@@ -3,12 +3,12 @@ from django.core.validators import MaxValueValidator, MinValueValidator, URLVali
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from backend.links_app.models import ExternalLink, PublishableModel
+from backend.links_app.models import ExternalLink, HeroMediaMixin, PublishableModel
 from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.people_app.models import Person
 
 
-class Media(PublishableModel):
+class Media(PublishableModel, HeroMediaMixin):
     """Base model for every non-song production: movies, TV series,
     commercials and TV programs/shows. One table with a discriminator
     (media_type) rather than per-type tables, since the shared fields
@@ -88,3 +88,37 @@ class MediaCredit(models.Model):
 
     def __str__(self):
         return f'{self.person} - {self.role} - {self.media}'
+
+
+class CinemaVenue(models.Model):
+    """A physical cinema (e.g. 'Mahatet Al Raml', 'Manshia'), managed once
+    in a shared master list — like Platform — instead of retyping the same
+    cinema's name/city on every movie it screens.
+    """
+
+    name = models.CharField(max_length=200, unique=True)
+    city = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        ordering = ('city', 'name')
+
+    def __str__(self):
+        return f'{self.name} ({self.city})' if self.city else self.name
+
+
+class CinemaScreening(models.Model):
+    """Links a movie to one of the shared cinema venues, with per-movie
+    details (ticket price, booking link).
+    """
+
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='screenings')
+    venue = models.ForeignKey(CinemaVenue, on_delete=models.CASCADE, related_name='screenings')
+    ticket_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    booking_url = models.URLField(blank=True, validators=[URLValidator(schemes=['http', 'https'])])
+
+    class Meta:
+        unique_together = ('media', 'venue')
+        ordering = ('venue__city', 'venue__name')
+
+    def __str__(self):
+        return f'{self.venue} - {self.media}'

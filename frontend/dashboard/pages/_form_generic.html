@@ -16,6 +16,9 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
+          {% if field.field.widget.input_type == 'hidden' %}
+            {{ field }}
+          {% else %}
           <div class="mb-3 {% if field.name == 'publish_at' %}publish-at-field{% endif %}">
             {% if field.field.widget.input_type == 'checkbox' %}
               <div class="form-check">
@@ -32,7 +35,17 @@
             {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
             {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
           </div>
+          {% endif %}
         {% endfor %}
+
+        {% if form.latitude %}
+        <div class="mb-3">
+          <label class="form-label">{% translate "حدد مكان الحفلة على الخريطة" %}</label>
+          <div id="concertMap" style="height:320px; border-radius:8px;"></div>
+          <div class="form-text">{% translate "دوس على أي مكان بالخريطة عشان تحدد الموقع." %}</div>
+        </div>
+        {% endif %}
+
         <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
         <a href="{{ back_url }}" class="btn btn-light">{% translate "إلغاء" %}</a>
       </form>
@@ -62,6 +75,44 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+{% if form.latitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const mapEl = document.getElementById('concertMap');
+  const latField = document.getElementById('id_latitude');
+  const lngField = document.getElementById('id_longitude');
+  if (!mapEl || !latField || !lngField || typeof L === 'undefined') return;
+
+  const defaultLat = 30.0444, defaultLng = 31.2357; // Cairo, Egypt
+  const startLat = parseFloat(latField.value) || defaultLat;
+  const startLng = parseFloat(lngField.value) || defaultLng;
+
+  const map = L.map('concertMap').setView([startLat, startLng], latField.value ? 12 : 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(map);
+
+  let marker = null;
+  if (latField.value && lngField.value) {
+    marker = L.marker([startLat, startLng]).addTo(map);
+  }
+
+  map.on('click', function(e) {
+    const { lat, lng } = e.latlng;
+    latField.value = lat.toFixed(6);
+    lngField.value = lng.toFixed(6);
+    if (marker) {
+      marker.setLatLng(e.latlng);
+    } else {
+      marker = L.marker(e.latlng).addTo(map);
+    }
+  });
+});
+</script>
+{% endif %}
 
 {% if album_years_json %}
 <script>

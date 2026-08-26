@@ -1,0 +1,49 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "دور العرض" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{% translate "دور العرض" %}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ venues.paginator.count }}</span>
+        <a href="{% url 'dashboard_app:cinema-venue-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
+    </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>{% translate "اسم دار العرض" %}</th>
+            <th>{% translate "المدينة" %}</th>
+            <th>{% translate "الأفلام" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for venue in venues %}
+          <tr>
+            <td>{{ venue.name }}</td>
+            <td>{{ venue.city|default:"-" }}</td>
+            <td>{{ venue.screenings.count }}</td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:cinema-venue-edit' venue.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:cinema-venue-delete' venue.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=venues %}
+  </div>
+</div>
+{% endblock %}

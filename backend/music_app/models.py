@@ -5,14 +5,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator, URLVali
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from backend.links_app.models import ExternalLink, PublishableModel
+from backend.links_app.models import ExternalLink, HeroMediaMixin, PublishableModel
 from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.media_app.models import Media
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
 
 
-class Album(PublishableModel):
+class Album(PublishableModel, HeroMediaMixin):
     title_ar = models.CharField(max_length=200)
     title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
@@ -41,7 +41,7 @@ class Album(PublishableModel):
         return self.title_ar
 
 
-class Song(PublishableModel):
+class Song(PublishableModel, HeroMediaMixin):
     class SongType(models.TextChoices):
         SINGLE = 'SINGLE', _('Single')
         ALBUM_TRACK = 'ALBUM_TRACK', _('Album Track')

@@ -11,8 +11,8 @@
     {% for concert in concerts %}
     <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
       <div class="th-img-wrap">
-        {% if concert.poster_url %}
-          <img src="{{ concert.poster_url }}" alt="{{ concert.title_ar }}">
+        {% if concert.display_poster_url %}
+          <img src="{{ concert.display_poster_url }}" alt="{{ concert.title_ar }}">
         {% else %}
           <i class="bi bi-calendar-event icon-fallback"></i>
         {% endif %}

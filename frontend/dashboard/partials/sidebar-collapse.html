@@ -44,7 +44,7 @@
             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
           </svg>
         </span>
-        <span class="text">{% translate "الفنانون وطاقم العمل" %}</span>
+        <span class="text">{% translate "الفنانون" %}</span>
       </a>
     </li>
 
@@ -157,6 +157,18 @@
     </li>
 
     <li class="nav-item">
+      <a class="nav-link {% if 'cinema_venue' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'dashboard_app:cinema-venues' %}">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-building-arch">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 21v-9a8 8 0 1 1 16 0v9" /><path d="M4 21h16" /><path d="M9 21v-4a3 3 0 0 1 6 0v4" />
+          </svg>
+        </span>
+        <span class="text">{% translate "دور العرض" %}</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
       <div class="nav-heading">{% translate "الإدارة" %}</div>
       <hr class="mx-5 nav-line mb-1" />
     </li>
@@ -200,7 +212,7 @@
     <ul class="navbar-nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:home' %}"><span class="text">{% translate "الرئيسية" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:analytics' %}"><span class="text">{% translate "التحليلات" %}</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:people' %}"><span class="text">{% translate "الفنانون وطاقم العمل" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:people' %}"><span class="text">{% translate "الفنانون" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:studios' %}"><span class="text">{% translate "الاستوديوهات والشركات" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:albums' %}"><span class="text">{% translate "الألبومات" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:songs' %}"><span class="text">{% translate "الأغاني" %}</span></a></li>
@@ -210,6 +222,7 @@
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:concerts' %}"><span class="text">{% translate "الحفلات" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:ads' %}"><span class="text">{% translate "بانرات إعلانية" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:platforms' %}"><span class="text">{% translate "منصات البث" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:cinema-venues' %}"><span class="text">{% translate "دور العرض" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:users' %}"><span class="text">{% translate "المستخدمون" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:logout' %}"><span class="text">{% translate "تسجيل الخروج" %}</span></a></li>
     </ul>

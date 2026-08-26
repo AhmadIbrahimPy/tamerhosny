@@ -36,7 +36,7 @@
       {% for link in links %}
         <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
            onclick="thTrack('EXTERNAL_CLICK', 'person', {{ person.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
-          <i class="bi bi-box-arrow-up-right"></i> {{ link.platform.get_platform_name_display }}
+          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
         </a>
       {% endfor %}
     </div>
@@ -46,24 +46,28 @@
   {% if song_credits %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
-    <div class="th-grid cols-6">
-      {% for credit in song_credits %}
-      <a href="{% url 'website_app:song-detail' credit.song.slug %}" class="th-card aspect-square plain">
-        <div class="th-img-wrap">
-          {% if credit.song.cover_image %}
-            <img src="{{ credit.song.cover_image.url }}" alt="{{ credit.song.title_ar }}">
-          {% elif credit.song.album.cover_image %}
-            <img src="{{ credit.song.album.cover_image.url }}" alt="{{ credit.song.title_ar }}">
-          {% else %}
-            <i class="bi bi-music-note-beamed icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body">
-          <div class="th-title">{{ credit.song.title_ar }}</div>
-          <div class="th-meta">{{ credit.get_role_display }}</div>
-        </div>
-      </a>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for entry in song_credits %}
+        <a href="{% url 'website_app:song-detail' entry.song.slug %}" class="th-card aspect-square plain">
+          <div class="th-img-wrap">
+            {% if entry.song.cover_image %}
+              <img src="{{ entry.song.cover_image.url }}" alt="{{ entry.song.title_ar }}">
+            {% elif entry.song.album.cover_image %}
+              <img src="{{ entry.song.album.cover_image.url }}" alt="{{ entry.song.title_ar }}">
+            {% else %}
+              <i class="bi bi-music-note-beamed icon-fallback"></i>
+            {% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ entry.song.title_ar }}</div>
+            <div class="th-meta">{{ entry.roles|join:"، " }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}
@@ -71,22 +75,26 @@
   {% if media_credits %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الأفلام والمسلسلات والإعلانات" %}</h2>
-    <div class="th-grid cols-6">
-      {% for credit in media_credits %}
-      <a href="{% url 'website_app:media-detail' credit.media.slug %}" class="th-card aspect-poster plain">
-        <div class="th-img-wrap">
-          {% if credit.media.poster_url %}
-            <img src="{{ credit.media.poster_url }}" alt="{{ credit.media.title_ar }}">
-          {% else %}
-            <i class="bi bi-film icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body">
-          <div class="th-title">{{ credit.media.title_ar }}</div>
-          <div class="th-meta">{{ credit.get_role_display }}{% if credit.character_name %} ({{ credit.character_name }}){% endif %}</div>
-        </div>
-      </a>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for entry in media_credits %}
+        <a href="{% url 'website_app:media-detail' entry.media.slug %}" class="th-card aspect-poster plain">
+          <div class="th-img-wrap">
+            {% if entry.media.display_poster_url %}
+              <img src="{{ entry.media.display_poster_url }}" alt="{{ entry.media.title_ar }}">
+            {% else %}
+              <i class="bi bi-film icon-fallback"></i>
+            {% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ entry.media.title_ar }}</div>
+            <div class="th-meta">{{ entry.roles|join:"، " }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}
@@ -94,18 +102,22 @@
   {% if related_people %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "فنانون آخرون" %}</h2>
-    <div class="th-grid cols-6">
-      {% for other in related_people %}
-      <a href="{% url 'website_app:person-detail' other.slug %}" class="th-card th-person-card plain">
-        {% if other.profile_image %}
-          <img src="{{ other.profile_image.url }}" alt="{{ other.full_name_ar }}">
-        {% else %}
-          <div class="avatar-fallback">{{ other.full_name_ar|slice:":1" }}</div>
-        {% endif %}
-        <div class="th-title">{{ other.full_name_ar }}</div>
-        <div class="th-meta">{{ other.get_primary_role_display }}</div>
-      </a>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for other in related_people %}
+        <a href="{% url 'website_app:person-detail' other.slug %}" class="th-card th-person-card plain">
+          {% if other.profile_image %}
+            <img src="{{ other.profile_image.url }}" alt="{{ other.full_name_ar }}">
+          {% else %}
+            <div class="avatar-fallback">{{ other.full_name_ar|slice:":1" }}</div>
+          {% endif %}
+          <div class="th-title">{{ other.full_name_ar }}</div>
+          <div class="th-meta">{{ other.get_primary_role_display }}</div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}

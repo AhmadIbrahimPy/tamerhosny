@@ -18,7 +18,7 @@
       <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
       <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
-      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "طاقم العمل" %}</a>
+      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
       <button type="button" class="lang-btn" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
@@ -36,7 +36,7 @@
       <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
       <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
-      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "طاقم العمل" %}</a>
+      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
       <button type="button" class="lang-btn mt-2" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
