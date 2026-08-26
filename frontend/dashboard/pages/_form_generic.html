@@ -62,4 +62,22 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+{% if album_years_json %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const albumYears = {{ album_years_json|safe }};
+  const albumField = document.getElementById('id_album');
+  const releaseYearField = document.getElementById('id_release_year');
+  if (!albumField || !releaseYearField) return;
+
+  albumField.addEventListener('change', function() {
+    const year = albumYears[albumField.value];
+    if (year && !releaseYearField.value) {
+      releaseYearField.value = year;
+    }
+  });
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -4,9 +4,9 @@
 
 {% block content %}
 
-{% if page_ad %}
+{% if home_ads %}
 <div class="container-xl">
-  {% include "website/partials/ad_banner.html" with ad=page_ad %}
+  {% include "website/partials/ad_slider.html" with ads=home_ads %}
 </div>
 {% else %}
 <div class="th-hero">
@@ -80,6 +80,32 @@
     </div>
     <div class="th-grid cols-6">
       {% for item in series %}
+      <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
+        <div class="th-img-wrap">
+          {% if item.display_poster_url %}
+            <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+          {% else %}
+            <i class="bi bi-film icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ item.title_ar }}</div>
+          {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
+        </div>
+      </a>
+      {% empty %}
+      <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الإعلانات والحملات الترويجية" %}</h2>
+      <a href="{% url 'website_app:commercials' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-grid cols-6">
+      {% for item in commercials %}
       <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
         <div class="th-img-wrap">
           {% if item.display_poster_url %}

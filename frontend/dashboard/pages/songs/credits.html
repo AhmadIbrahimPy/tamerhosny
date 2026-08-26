@@ -1,0 +1,67 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "المشاركون في الأغنية" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container d-flex justify-content-center">
+  <div class="w-100" style="max-width: 780px;">
+
+    <div class="card card-lg mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% translate "المشاركون في الأغنية" %} — {{ song.title_ar }}</h5>
+        <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table text-nowrap mb-0 table-centered table-hover">
+          <thead>
+            <tr>
+              <th>{% translate "الشخص" %}</th>
+              <th>{% translate "الدور" %}</th>
+              <th class="text-end">{% translate "إجراءات" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for credit in credits %}
+            <tr>
+              <td>{{ credit.person.full_name_ar }}</td>
+              <td><span class="badge bg-secondary-subtle text-secondary">{{ credit.get_role_display }}</span></td>
+              <td class="text-end">
+                <a href="{% url 'dashboard_app:song-credit-edit' song.pk credit.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+                <form action="{% url 'dashboard_app:song-credit-delete' song.pk credit.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا يوجد مشاركون بعد" %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-lg">
+      <div class="card-header"><h6 class="mb-0">{% translate "إضافة مشارك" %}</h6></div>
+      <div class="card-body">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">{% translate "إضافة" %}</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

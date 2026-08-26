@@ -16,33 +16,39 @@ def _paginate(request, queryset):
     return Paginator(queryset, PAGE_SIZE).get_page(request.GET.get('page'))
 
 
-def _ad_for(placement):
-    """The banner ad to show on a given public page, if any (either
-    targeted at this placement specifically, or set to show everywhere).
+def _ads_for(placement):
+    """Every active ad eligible for a given public page (targeted at this
+    placement specifically, or set to show everywhere).
     """
     return (
         Advertisement.objects.filter(is_active=True)
         .filter(Q(show_on_all_pages=True) | Q(placements__contains=[placement]))
         .order_by('?')
-        .first()
     )
 
 
+def _ad_for(placement):
+    """A single banner ad for pages that only show one at a time."""
+    return _ads_for(placement).first()
+
+
 def home(request):
-    songs = Song.visible_queryset(Song.objects.select_related('album'))[:8]
-    movies = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.MOVIE))[:6]
-    series = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.TV_SERIES))[:6]
-    albums = Album.visible_queryset(Album.objects.all())[:6]
+    songs = Song.visible_queryset(Song.objects.select_related('album'))[:7]
+    movies = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.MOVIE))[:7]
+    series = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.TV_SERIES))[:7]
+    commercials = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.COMMERCIAL))[:7]
+    albums = Album.visible_queryset(Album.objects.all())[:7]
     concerts = Concert.visible_queryset(Concert.objects.all())[:4]
     people = Person.objects.all()[:8]
     return render(request, 'website/pages/home.html', {
         'songs': songs,
         'movies': movies,
         'series': series,
+        'commercials': commercials,
         'albums': albums,
         'concerts': concerts,
         'people': people,
-        'page_ad': _ad_for(Advertisement.Placement.HOME),
+        'home_ads': list(_ads_for(Advertisement.Placement.HOME)[:8]),
     })
 
 
@@ -90,17 +96,27 @@ def song_detail(request, slug):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), slug=slug,
     )
-    related_qs = Song.objects.select_related('album')
+    album_songs = []
+    other_songs = []
+    
     if song.album_id:
-        related_qs = related_qs.filter(album_id=song.album_id)
+        album_songs = Song.visible_queryset(
+            Song.objects.filter(album_id=song.album_id).select_related('album')
+        ).exclude(pk=song.pk)[:12]
+    
+    other_qs = Song.objects.select_related('album').exclude(pk=song.pk)
+    if song.album_id:
+        other_qs = other_qs.exclude(album_id=song.album_id)
     else:
-        related_qs = related_qs.filter(song_type=song.song_type)
-    related_songs = Song.visible_queryset(related_qs).exclude(pk=song.pk)[:6]
+        other_qs = other_qs.filter(song_type=song.song_type)
+    other_songs = Song.visible_queryset(other_qs)[:12]
+    
     return render(request, 'website/pages/songs/detail.html', {
         'song': song,
         'credits': song.credits.select_related('person').all(),
         'links': song.links.select_related('platform').all(),
-        'related_songs': related_songs,
+        'album_songs': album_songs,
+        'other_songs': other_songs,
         'page_ad': _ad_for(Advertisement.Placement.SONGS),
     })
 
@@ -139,7 +155,10 @@ def album_detail(request, slug):
 def _media_section_list(request, media_type, template_title):
     queryset = Media.visible_queryset(Media.objects.filter(media_type=media_type)).order_by('-release_date')
     media_items = _paginate(request, queryset)
-    return render(request, 'website/pages/media/list.html', {
+    template = 'website/pages/media/list.html'
+    if media_type == Media.MediaType.COMMERCIAL:
+        template = 'website/pages/media/commercials_list.html'
+    return render(request, template, {
         'media_items': media_items,
         'list_title': template_title,
         'page_ad': _ad_for(Advertisement.Placement.MEDIA),

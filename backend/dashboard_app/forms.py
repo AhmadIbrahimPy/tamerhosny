@@ -8,7 +8,7 @@ from backend.dashboard_app.widgets import CircularAvatarWidget, SquareCoverWidge
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
 from backend.media_app.models import Media, MediaCredit
-from backend.music_app.models import Album, Song, SongLyricSegment
+from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
 
@@ -99,7 +99,7 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         fields = [
-            'title_ar', 'title_en', 'cover_image', 'song_type', 'duration_seconds', 'lyrics', 'release_year',
+            'title_ar', 'title_en', 'cover_image', 'song_type', 'duration_seconds', 'release_year',
             'is_duet', 'recording_studio', 'album', 'related_media', 'visibility', 'publish_at',
         ]
         labels = {
@@ -108,7 +108,6 @@ class SongForm(forms.ModelForm):
             'cover_image': _('صورة الأغنية'),
             'song_type': _('النوع'),
             'duration_seconds': _('المدة (بالثواني)'),
-            'lyrics': _('الكلمات'),
             'release_year': _('سنة الإصدار'),
             'is_duet': _('دويتو'),
             'recording_studio': _('استوديو التسجيل'),
@@ -123,11 +122,10 @@ class SongForm(forms.ModelForm):
             'cover_image': SquareCoverWidget(),
             'song_type': forms.Select(attrs=SELECT_ATTRS),
             'duration_seconds': forms.NumberInput(attrs=WIDGET_ATTRS),
-            'lyrics': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 5}),
-            'release_year': forms.NumberInput(attrs=WIDGET_ATTRS),
+            'release_year': forms.NumberInput(attrs={**WIDGET_ATTRS, 'id': 'id_release_year'}),
             'is_duet': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'recording_studio': forms.Select(attrs=SELECT_ATTRS),
-            'album': forms.Select(attrs=SELECT_ATTRS),
+            'album': forms.Select(attrs={**SELECT_ATTRS, 'id': 'id_album'}),
             'related_media': forms.Select(attrs=SELECT_ATTRS),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
             'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
@@ -137,6 +135,26 @@ class SongForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name in ('recording_studio', 'album', 'related_media'):
             self.fields[field_name].empty_label = NONE_CHOICE
+        self.fields['release_year'].help_text = _(
+            'بيتحدد تلقائيًا من سنة إصدار الألبوم لو اخترت ألبوم، وتقدر تعدّله يدويًا.'
+        )
+        self.fields['is_duet'].help_text = _(
+            'بعد حفظ الأغنية، زوّد المشارك التاني من قسم "طقم العمل والمشاركين" في صفحة الأغنية.'
+        )
+
+
+class SongCreditForm(forms.ModelForm):
+    class Meta:
+        model = SongCredit
+        fields = ['person', 'role']
+        labels = {
+            'person': _('الشخص'),
+            'role': _('الدور'),
+        }
+        widgets = {
+            'person': forms.Select(attrs=SELECT_ATTRS),
+            'role': forms.Select(attrs=SELECT_ATTRS),
+        }
 
 
 class _BaseWorkForm(forms.ModelForm):

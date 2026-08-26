@@ -22,12 +22,12 @@ from backend.analytics_app.models import AnalyticsEvent
 from backend.concerts_app.models import Concert
 from backend.dashboard_app.forms import (
     AdvertisementForm, AlbumForm, ConcertForm, ExternalLinkForm, MediaCreditForm, MEDIA_SECTION_FORMS, PersonForm,
-    PlatformForm, SongForm, SongLyricSegmentForm, StudioForm, UserAccountForm,
+    PlatformForm, SongCreditForm, SongForm, SongLyricSegmentForm, StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import UserAccount
 from backend.media_app.models import Media, MediaCredit
-from backend.music_app.models import Album, Song, SongLyricSegment
+from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
 
@@ -649,21 +649,40 @@ def songs_list(request):
     })
 
 
+def _album_years_json():
+    return json.dumps({
+        album.pk: album.release_date.year
+        for album in Album.objects.exclude(release_date=None)
+    })
+
+
 @login_required(login_url='dashboard_app:login')
 def song_create(request):
-    return _save_form(
-        request, SongForm, None, _('إضافة أغنية'), reverse('dashboard_app:songs'),
-        'dashboard_app:songs',
-    )
+    form = SongForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        song = form.save()
+        return redirect('dashboard_app:song-view', pk=song.pk)
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': _('إضافة أغنية'),
+        'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
+        'album_years_json': _album_years_json(),
+    })
 
 
 @login_required(login_url='dashboard_app:login')
 def song_edit(request, pk):
     song = get_object_or_404(Song, pk=pk)
-    return _save_form(
-        request, SongForm, song, f'{_("تعديل")}: {song.title_ar}', reverse('dashboard_app:songs'),
-        'dashboard_app:songs',
-    )
+    form = SongForm(request.POST or None, request.FILES or None, instance=song)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('dashboard_app:songs')
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': f'{_("تعديل")}: {song.title_ar}',
+        'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
+        'album_years_json': _album_years_json(),
+    })
 
 
 @login_required(login_url='dashboard_app:login')
@@ -683,7 +702,6 @@ def song_view(request, pk):
         (_('دويتو'), _('نعم') if song.is_duet else _('لا')),
         (_('حالة الظهور'), _visibility_choices_display(song)),
         (_('موعد النشر'), song.publish_at),
-        (_('الكلمات'), song.lyrics),
     ]
 
     related_sections = [
@@ -737,6 +755,7 @@ def song_view(request, pk):
         'image_url': image_url,
         'stats': _event_counts_for(song),
         'extra_actions': [
+            {'label': _('المشاركون في الأغنية'), 'url': reverse('dashboard_app:song-credits', args=[pk])},
             {'label': _('إدارة توقيت الكلمات'), 'url': reverse('dashboard_app:song-segments', args=[pk])},
             {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['song', pk])},
         ],
@@ -762,6 +781,52 @@ def song_toggle_visibility(request, pk):
         )
         song.save(update_fields=['visibility'])
     return redirect('dashboard_app:songs')
+
+
+@login_required(login_url='dashboard_app:login')
+def song_credits(request, pk):
+    song = get_object_or_404(Song, pk=pk)
+    credits_qs = song.credits.select_related('person').all()
+
+    if request.method == 'POST':
+        form = SongCreditForm(request.POST)
+        if form.is_valid():
+            credit = form.save(commit=False)
+            credit.song = song
+            credit.save()
+            return redirect('dashboard_app:song-credits', pk=pk)
+    else:
+        form = SongCreditForm()
+
+    return render(request, 'dashboard/pages/songs/credits.html', {
+        'song': song,
+        'credits': credits_qs,
+        'form': form,
+        'back_url': _smart_back_url(request, reverse('dashboard_app:song-view', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def song_credit_edit(request, pk, credit_pk):
+    song = get_object_or_404(Song, pk=pk)
+    credit = get_object_or_404(SongCredit, pk=credit_pk, song=song)
+    form = SongCreditForm(request.POST or None, instance=credit)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('dashboard_app:song-credits', pk=pk)
+    return render(request, 'dashboard/pages/_form_generic.html', {
+        'form': form,
+        'page_title': f'{_("تعديل مشارك")}: {song.title_ar}',
+        'back_url': _smart_back_url(request, reverse('dashboard_app:song-credits', args=[pk])),
+    })
+
+
+@login_required(login_url='dashboard_app:login')
+def song_credit_delete(request, pk, credit_pk):
+    credit = get_object_or_404(SongCredit, pk=credit_pk, song_id=pk)
+    if request.method == 'POST':
+        credit.delete()
+    return redirect('dashboard_app:song-credits', pk=pk)
 
 
 @login_required(login_url='dashboard_app:login')

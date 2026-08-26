@@ -1,0 +1,53 @@
+{% load i18n %}
+{% if ads %}
+<div class="th-ad-slider" id="thAdSlider" data-interval="5000">
+  <div class="th-ad-slides">
+    {% for ad in ads %}
+    <div class="th-ad-slide {% if forloop.first %}active{% endif %}">
+      <a href="{{ ad.get_target_url }}" {% if ad.is_linked_externally %}target="_blank" rel="noopener sponsored"{% endif %}
+         class="th-ad-banner plain" onclick="thTrack('EXTERNAL_CLICK', 'ad', {{ ad.pk }}, {});">
+        <img src="{{ ad.image.url }}" alt="{{ ad.title }}">
+        <span class="th-ad-tag">{% translate "إعلان" %}</span>
+      </a>
+      <script>document.addEventListener('DOMContentLoaded', function(){ thTrack('VIEW', 'ad', {{ ad.pk }}); });</script>
+    </div>
+    {% endfor %}
+  </div>
+  {% if ads|length > 1 %}
+  <div class="th-ad-dots">
+    {% for ad in ads %}
+      <button type="button" class="th-ad-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}" aria-label="{{ forloop.counter }}"></button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+<script>
+(function(){
+  var root = document.getElementById('thAdSlider');
+  if (!root) return;
+  var slides = root.querySelectorAll('.th-ad-slide');
+  var dots = root.querySelectorAll('.th-ad-dot');
+  if (slides.length < 2) return;
+  var current = 0;
+  var interval = parseInt(root.dataset.interval, 10) || 5000;
+
+  function show(index) {
+    slides[current].classList.remove('active');
+    if (dots[current]) dots[current].classList.remove('active');
+    current = (index + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    if (dots[current]) dots[current].classList.add('active');
+  }
+
+  var timer = setInterval(function(){ show(current + 1); }, interval);
+
+  dots.forEach(function(dot){
+    dot.addEventListener('click', function(){
+      clearInterval(timer);
+      show(parseInt(dot.dataset.index, 10));
+      timer = setInterval(function(){ show(current + 1); }, interval);
+    });
+  });
+})();
+</script>
+{% endif %}

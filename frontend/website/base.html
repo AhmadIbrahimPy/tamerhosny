@@ -70,7 +70,18 @@
     .th-ad-banner{position:relative; display:block; border-radius:16px; overflow:hidden; border:1px solid var(--border);}
     .th-ad-banner img{width:100%; max-height:280px; object-fit:cover; display:block;}
     .th-ad-tag{position:absolute; top:10px; inset-inline-start:10px; background:rgba(0,0,0,.55); color:#fff;
-      font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; backdrop-filter:blur(4px);}
+      font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; backdrop-filter:blur(4px); z-index:2;}
+
+    /* Ad slider (rotating, used on the homepage) */
+    .th-ad-slider{position:relative; padding-block:20px 0;}
+    .th-ad-slides{position:relative;}
+    .th-ad-slide{display:none;}
+    .th-ad-slide.active{display:block; animation:thFade .5s ease;}
+    .th-ad-slide .th-ad-banner{margin:0;}
+    @keyframes thFade{from{opacity:0;} to{opacity:1;}}
+    .th-ad-dots{display:flex; justify-content:center; gap:8px; margin-top:12px;}
+    .th-ad-dot{width:8px; height:8px; border-radius:50%; border:none; background:var(--border); cursor:pointer; padding:0;}
+    .th-ad-dot.active{background:var(--accent); width:20px; border-radius:4px; transition:width .2s ease;}
 
     /* Section */
     .th-section{padding-block:36px;}
@@ -191,6 +202,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ver': '1.0.0', 'plat': 'WEBSITE' },
         body: JSON.stringify(payload),
+        keepalive: true,
       }).catch(function () {});
     }
   </script>
