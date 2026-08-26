@@ -179,6 +179,8 @@
     </div>
   </div>
 
+  {% if mid_ad %}{% include "website/partials/ad_banner.html" with ad=mid_ad %}{% endif %}
+
   <div class="th-section">
     <div class="th-section-head">
       <h2 class="th-section-title">{% translate "الحفلات" %}</h2>
@@ -243,6 +245,8 @@
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
+
+  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 
 </div>
 {% endblock %}

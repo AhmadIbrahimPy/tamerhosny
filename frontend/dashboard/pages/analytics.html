@@ -5,6 +5,68 @@
 {% block content %}
 <div class="custom-container">
 
+  {% if stats %}
+  <div class="row mb-6 g-6">
+    <div class="col-12">
+      <div class="bg-gradient-mixed p-8 py-10 rounded-3 p-lg-7">
+        <h1 class="fs-3">{% translate "مرحباً بك" %} 👋</h1>
+        <p class="mb-0">{% translate "أرشيف تامر حسني الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-6 mb-6">
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الفنانون" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.people }}</span>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الاستوديوهات" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.studios }}</span>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الألبومات" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.albums }}</span>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الأغاني" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.songs }}</span>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الأفلام والمسلسلات" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.media }}</span>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="card card-lg"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">{% translate "الحفلات" %}</span>
+          <span class="fs-3 fw-bold">{{ stats.concerts }}</span>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="card card-lg mb-6">
     <div class="card-body">
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3">

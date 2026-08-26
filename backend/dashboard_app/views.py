@@ -94,7 +94,9 @@ def home(request):
         'media': Media.objects.count(),
         'concerts': Concert.objects.count(),
     }
-    return render(request, 'dashboard/main.html', {'stats': stats})
+    context = _build_analytics_context(request)
+    context['stats'] = stats
+    return render(request, 'dashboard/pages/analytics.html', context)
 
 
 # ---------------------------------------------------------------------------
@@ -234,8 +236,7 @@ _CONTENT_TYPE_LABELS = {
 # Analytics
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
-def analytics_overview(request):
+def _build_analytics_context(request):
     range_key, start, end = _analytics_date_range(request)
 
     events = AnalyticsEvent.objects.all()
@@ -287,7 +288,7 @@ def analytics_overview(request):
     top_concerts = _top_viewed(Concert, 'title_ar', 'dashboard_app:concert-view', events)
     top_ads = _top_viewed(Advertisement, 'title', 'dashboard_app:ad-view', events)
 
-    return render(request, 'dashboard/pages/analytics.html', {
+    return {
         'range_key': range_key,
         'range_start': request.GET.get('start', ''),
         'range_end': request.GET.get('end', ''),
@@ -304,7 +305,12 @@ def analytics_overview(request):
         'top_albums': top_albums,
         'top_concerts': top_concerts,
         'top_ads': top_ads,
-    })
+    }
+
+
+@login_required(login_url='dashboard_app:login')
+def analytics_overview(request):
+    return render(request, 'dashboard/pages/analytics.html', _build_analytics_context(request))
 
 
 # ---------------------------------------------------------------------------

@@ -138,6 +138,8 @@
   </div>
 {% endif %}
 
+  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
+
   {% if links %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "استمع الآن" %}</h2>
@@ -239,7 +241,7 @@
   </div>
   {% endif %}
 
-  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 
 </div>
 {% endblock %}

@@ -33,6 +33,19 @@ def _ad_for(placement):
     return _ads_for(placement).first()
 
 
+def _ad_slots(placement):
+    """Two ad banners for pages that show one near the top and one near the
+    bottom — a different ad in each slot when more than one is eligible,
+    otherwise the same ad repeated.
+    """
+    ads = list(_ads_for(placement)[:2])
+    if not ads:
+        return None, None
+    top = ads[0]
+    bottom = ads[1] if len(ads) > 1 else ads[0]
+    return top, bottom
+
+
 def home(request):
     songs = Song.visible_queryset(Song.objects.select_related('album'))[:7]
     movies = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.MOVIE))[:7]
@@ -41,6 +54,7 @@ def home(request):
     albums = Album.visible_queryset(Album.objects.all())[:7]
     concerts = Concert.visible_queryset(Concert.objects.all())[:4]
     people = Person.objects.all()[:8]
+    home_ads = list(_ads_for(Advertisement.Placement.HOME)[:8])
     return render(request, 'website/pages/home.html', {
         'songs': songs,
         'movies': movies,
@@ -49,7 +63,9 @@ def home(request):
         'albums': albums,
         'concerts': concerts,
         'people': people,
-        'home_ads': list(_ads_for(Advertisement.Placement.HOME)[:8]),
+        'home_ads': home_ads,
+        'mid_ad': home_ads[1] if len(home_ads) > 1 else (home_ads[0] if home_ads else None),
+        'bottom_ad': home_ads[-1] if home_ads else None,
     })
 
 
@@ -59,9 +75,11 @@ def home(request):
 
 def people_list(request):
     people = _paginate(request, Person.objects.all())
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.PEOPLE)
     return render(request, 'website/pages/people/list.html', {
         'people': people,
-        'page_ad': _ad_for(Advertisement.Placement.PEOPLE),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -75,13 +93,15 @@ def person_detail(request, slug):
         extra_label=lambda credit: credit.character_name,
     )
     related_people = Person.objects.exclude(pk=person.pk).order_by('?')[:6]
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.PEOPLE)
     return render(request, 'website/pages/people/detail.html', {
         'person': person,
         'song_credits': song_credits,
         'media_credits': media_credits,
         'links': person.links.select_related('platform').all(),
         'related_people': related_people,
-        'page_ad': _ad_for(Advertisement.Placement.PEOPLE),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -92,9 +112,11 @@ def person_detail(request, slug):
 def songs_list(request):
     queryset = Song.visible_queryset(Song.objects.select_related('album')).order_by('-release_year')
     songs = _paginate(request, queryset)
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.SONGS)
     return render(request, 'website/pages/songs/list.html', {
         'songs': songs,
-        'page_ad': _ad_for(Advertisement.Placement.SONGS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -121,6 +143,7 @@ def song_detail(request, slug):
     singers = [credit for credit in all_credits if credit.role in vocal_roles]
     crew_credits = [credit for credit in all_credits if credit.role not in vocal_roles]
 
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.SONGS)
     return render(request, 'website/pages/songs/detail.html', {
         'song': song,
         'singers': singers,
@@ -128,7 +151,8 @@ def song_detail(request, slug):
         'links': song.links.select_related('platform').all(),
         'album_songs': album_songs,
         'other_songs': other_songs,
-        'page_ad': _ad_for(Advertisement.Placement.SONGS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -139,9 +163,11 @@ def song_detail(request, slug):
 def albums_list(request):
     queryset = Album.visible_queryset(Album.objects.all()).order_by('-release_date')
     albums = _paginate(request, queryset)
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.ALBUMS)
     return render(request, 'website/pages/albums/list.html', {
         'albums': albums,
-        'page_ad': _ad_for(Advertisement.Placement.ALBUMS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -149,12 +175,14 @@ def album_detail(request, slug):
     album = get_object_or_404(Album, slug=slug)
     songs = Song.visible_queryset(album.songs.all())
     related_albums = Album.visible_queryset(Album.objects.exclude(pk=album.pk)).order_by('?')[:6]
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.ALBUMS)
     return render(request, 'website/pages/albums/detail.html', {
         'album': album,
         'songs': songs,
         'links': album.links.select_related('platform').all(),
         'related_albums': related_albums,
-        'page_ad': _ad_for(Advertisement.Placement.ALBUMS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -169,10 +197,12 @@ def _media_section_list(request, media_type, template_title):
     template = 'website/pages/media/list.html'
     if media_type == Media.MediaType.COMMERCIAL:
         template = 'website/pages/media/commercials_list.html'
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.MEDIA)
     return render(request, template, {
         'media_items': media_items,
         'list_title': template_title,
-        'page_ad': _ad_for(Advertisement.Placement.MEDIA),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -193,6 +223,7 @@ def media_detail(request, slug):
     related_media = Media.visible_queryset(
         Media.objects.filter(media_type=media.media_type).exclude(pk=media.pk)
     ).order_by('?')[:6]
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.MEDIA)
     return render(request, 'website/pages/media/detail.html', {
         'media': media,
         'credits': dedupe_credits(
@@ -203,7 +234,8 @@ def media_detail(request, slug):
         'theme_songs': Song.visible_queryset(media.theme_songs.all()),
         'screenings': media.screenings.select_related('venue').all(),
         'related_media': related_media,
-        'page_ad': _ad_for(Advertisement.Placement.MEDIA),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -214,9 +246,11 @@ def media_detail(request, slug):
 def concerts_list(request):
     queryset = Concert.visible_queryset(Concert.objects.select_related('organizer')).order_by('-date')
     concerts = _paginate(request, queryset)
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.CONCERTS)
     return render(request, 'website/pages/concerts/list.html', {
         'concerts': concerts,
-        'page_ad': _ad_for(Advertisement.Placement.CONCERTS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })
 
 
@@ -225,9 +259,11 @@ def concert_detail(request, slug):
     related_concerts = Concert.visible_queryset(
         Concert.objects.exclude(pk=concert.pk)
     ).order_by('?')[:6]
+    top_ad, bottom_ad = _ad_slots(Advertisement.Placement.CONCERTS)
     return render(request, 'website/pages/concerts/detail.html', {
         'concert': concert,
         'links': concert.links.select_related('platform').all(),
         'related_concerts': related_concerts,
-        'page_ad': _ad_for(Advertisement.Placement.CONCERTS),
+        'top_ad': top_ad,
+        'bottom_ad': bottom_ad,
     })

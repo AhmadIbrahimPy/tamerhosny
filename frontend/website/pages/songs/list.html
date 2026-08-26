@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container-xl th-section">
   <h1 class="th-section-title">{% translate "الأغاني" %}</h1>
-  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
   <div class="th-grid cols-6">
     {% for song in songs %}
@@ -32,5 +32,7 @@
   <div class="mt-4">
     {% include "dashboard/partials/pagination.html" with page_obj=songs %}
   </div>
+
+  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 </div>
 {% endblock %}

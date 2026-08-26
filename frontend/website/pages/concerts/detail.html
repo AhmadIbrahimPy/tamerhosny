@@ -12,7 +12,10 @@
   .th-concert-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
   .th-concert-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 8%, rgba(11,12,18,.6) 50%, rgba(11,12,18,.2) 100%);}
   .th-concert-header-inner{position:relative; z-index:1; display:flex; gap:28px; align-items:center; padding:44px 28px; flex-wrap:wrap;}
-  .th-ticket-stub{flex:0 0 118px; text-align:center; background:rgba(255,255,255,.06); backdrop-filter:blur(4px); border:2px dashed var(--accent); border-radius:14px; padding:16px 8px;}
+  .th-concert-poster{flex:0 0 200px; width:200px; aspect-ratio:3/4; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6); border:1px solid var(--border); background:#1e2130;}
+  .th-concert-poster img{width:100%; height:100%; object-fit:cover; display:block;}
+  .th-concert-poster .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:56px;}
+  .th-ticket-stub{flex:0 0 110px; align-self:flex-start; margin-inline-start:auto; text-align:center; background:rgba(255,255,255,.06); backdrop-filter:blur(4px); border:2px dashed var(--accent); border-radius:14px; padding:16px 8px;}
   .th-ticket-month{font-size:12.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px;}
   .th-ticket-day{font-size:36px; font-weight:900; line-height:1; margin-block:4px; color:var(--text);}
   .th-ticket-time{font-size:12.5px; color:var(--muted);}
@@ -71,17 +74,13 @@
     {% endif %}
     <div class="th-concert-header-shade"></div>
     <div class="th-concert-header-inner">
-      {% if concert.date %}
-      <div class="th-ticket-stub">
-        <div class="th-ticket-month">{{ concert.date|date:"M" }}</div>
-        <div class="th-ticket-day">{{ concert.date|date:"d" }}</div>
-        <div class="th-ticket-time">{{ concert.date|date:"H:i" }}</div>
+      <div class="th-concert-poster">
+        {% if concert.display_poster_url %}
+          <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-calendar-event icon-fallback"></i>
+        {% endif %}
       </div>
-      {% else %}
-      <div class="th-ticket-stub">
-        <div class="th-ticket-tba"><i class="bi bi-hourglass-split"></i><br>{% translate "قريباً" %}</div>
-      </div>
-      {% endif %}
       <div class="th-concert-meta">
         <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
           {{ concert.get_status_display }}
@@ -103,21 +102,22 @@
              onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
         </div>
       </div>
+      {% if concert.date %}
+      <div class="th-ticket-stub">
+        <div class="th-ticket-month">{{ concert.date|date:"M" }}</div>
+        <div class="th-ticket-day">{{ concert.date|date:"d" }}</div>
+        <div class="th-ticket-time">{{ concert.date|date:"H:i" }}</div>
+      </div>
+      {% else %}
+      <div class="th-ticket-stub">
+        <div class="th-ticket-tba"><i class="bi bi-hourglass-split"></i><br>{% translate "قريباً" %}</div>
+      </div>
+      {% endif %}
     </div>
   </div>
 {% endif %}
 
-  {% if concert.has_location %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "الموقع" %}</h2>
-    <div id="concertLocationMap" style="height:320px; border-radius:16px; overflow:hidden;"></div>
-    <a href="https://www.google.com/maps?q={{ concert.latitude|unlocalize }},{{ concert.longitude|unlocalize }}" target="_blank" rel="noopener" class="th-platform-btn mt-3">
-      <i class="bi bi-geo-alt-fill"></i> {% translate "فتح في خرائط جوجل" %}
-    </a>
-  </div>
-  {% endif %}
-
-  {% if links %}
+ {% if links %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "مواقع الحجز" %}</h2>
     <div class="d-flex flex-wrap gap-2">
@@ -130,6 +130,20 @@
     </div>
   </div>
   {% endif %}
+
+  {% if concert.has_location %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "الموقع" %}</h2>
+    <div id="concertLocationMap" style="height:320px; border-radius:16px; overflow:hidden;"></div>
+    <a href="https://www.google.com/maps?q={{ concert.latitude|unlocalize }},{{ concert.longitude|unlocalize }}" target="_blank" rel="noopener" class="th-platform-btn mt-3">
+      <i class="bi bi-geo-alt-fill"></i> {% translate "فتح في خرائط جوجل" %}
+    </a>
+  </div>
+  {% endif %}
+
+
+
+  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
   {% if related_concerts %}
   <div class="th-section">
@@ -167,7 +181,7 @@
   </div>
   {% endif %}
 
-  {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
+  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 
 </div>
 {% endblock %}
