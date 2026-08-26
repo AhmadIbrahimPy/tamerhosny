@@ -18,3 +18,13 @@ def localized_field(obj, field_prefix):
     if get_language() == 'en':
         return en_value or ar_value
     return ar_value or en_value
+
+
+@register.filter(name='floordiv')
+def floordiv(value, arg):
+    return int(value) // int(arg)
+
+
+@register.filter(name='modulo')
+def modulo(value, arg):
+    return int(value) % int(arg)

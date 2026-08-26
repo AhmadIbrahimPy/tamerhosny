@@ -28,7 +28,7 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
         {% for song in songs %}
-        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
+        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
           <div class="th-img-wrap">
             {% if song.cover_image %}
               <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
@@ -37,6 +37,7 @@
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ song|localized_field:'title' }}</div>
@@ -67,6 +68,8 @@
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
+            <span class="th-poster-type-badge"><i class="bi bi-film"></i></span>
+            {% if item.rating %}<span class="th-poster-rating-badge"><i class="bi bi-star-fill"></i> {{ item.rating }}</span>{% endif %}
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -97,6 +100,8 @@
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
+            <span class="th-poster-type-badge"><i class="bi bi-tv"></i></span>
+            {% if item.rating %}<span class="th-poster-rating-badge"><i class="bi bi-star-fill"></i> {{ item.rating }}</span>{% endif %}
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -127,6 +132,7 @@
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
+            <span class="th-poster-type-badge"><i class="bi bi-megaphone"></i></span>
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -150,7 +156,7 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
         {% for album in albums %}
-        <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card aspect-square plain">
+        <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
           <div class="th-img-wrap">
             {% if album.cover_image %}
               <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
@@ -188,6 +194,12 @@
               <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-calendar-event icon-fallback"></i>
+            {% endif %}
+            {% if concert.date %}
+            <span class="th-ticket-mini">
+              <span class="month">{{ concert.date|date:"M" }}</span>
+              <span class="day">{{ concert.date|date:"d" }}</span>
+            </span>
             {% endif %}
           </div>
           <div class="th-body">

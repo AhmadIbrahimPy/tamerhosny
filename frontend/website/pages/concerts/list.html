@@ -16,6 +16,12 @@
         {% else %}
           <i class="bi bi-calendar-event icon-fallback"></i>
         {% endif %}
+        {% if concert.date %}
+        <span class="th-ticket-mini">
+          <span class="month">{{ concert.date|date:"M" }}</span>
+          <span class="day">{{ concert.date|date:"d" }}</span>
+        </span>
+        {% endif %}
       </div>
       <div class="th-body">
         <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">

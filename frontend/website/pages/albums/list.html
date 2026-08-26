@@ -9,7 +9,7 @@
 
   <div class="th-grid cols-6">
     {% for album in albums %}
-    <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card aspect-square plain">
+    <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
       <div class="th-img-wrap">
         {% if album.cover_image %}
           <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">

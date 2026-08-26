@@ -114,7 +114,7 @@ def song_detail(request, slug):
         other_qs = other_qs.exclude(album_id=song.album_id)
     else:
         other_qs = other_qs.filter(song_type=song.song_type)
-    other_songs = Song.visible_queryset(other_qs)[:12]
+    other_songs = Song.visible_queryset(other_qs).order_by('?')[:12]
     
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     all_credits = song.credits.select_related('person').all()
@@ -148,7 +148,7 @@ def albums_list(request):
 def album_detail(request, slug):
     album = get_object_or_404(Album, slug=slug)
     songs = Song.visible_queryset(album.songs.all())
-    related_albums = Album.visible_queryset(Album.objects.exclude(pk=album.pk)).order_by('-release_date')[:6]
+    related_albums = Album.visible_queryset(Album.objects.exclude(pk=album.pk)).order_by('?')[:6]
     return render(request, 'website/pages/albums/detail.html', {
         'album': album,
         'songs': songs,
@@ -192,7 +192,7 @@ def media_detail(request, slug):
     media = get_object_or_404(Media, slug=slug)
     related_media = Media.visible_queryset(
         Media.objects.filter(media_type=media.media_type).exclude(pk=media.pk)
-    ).order_by('-release_date')[:6]
+    ).order_by('?')[:6]
     return render(request, 'website/pages/media/detail.html', {
         'media': media,
         'credits': dedupe_credits(
@@ -224,7 +224,7 @@ def concert_detail(request, slug):
     concert = get_object_or_404(Concert, slug=slug)
     related_concerts = Concert.visible_queryset(
         Concert.objects.exclude(pk=concert.pk)
-    ).order_by('-date')[:6]
+    ).order_by('?')[:6]
     return render(request, 'website/pages/concerts/detail.html', {
         'concert': concert,
         'links': concert.links.select_related('platform').all(),

@@ -136,7 +136,7 @@
       display:block; height:100%;
     }
     .th-card:hover{transform:translateY(-5px); border-color:rgba(212,175,55,.4); background:var(--card-hover);}
-    .th-card .th-img-wrap{width:100%; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+    .th-card .th-img-wrap{width:100%; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
     .th-card .th-img-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
     .th-card.aspect-square .th-img-wrap{aspect-ratio:1/1;}
     .th-card.aspect-poster .th-img-wrap{aspect-ratio:2/3;}
@@ -151,9 +151,54 @@
     .th-person-card{text-align:center; padding:20px 14px;}
     .th-person-card img, .th-person-card .avatar-fallback{
       width:100px; height:100px; border-radius:50%; object-fit:cover; margin-inline:auto; margin-bottom:12px; display:block;
-      border:2px solid var(--border);
+      border:2px solid var(--border); transition:border-color .18s ease;
     }
     .th-person-card .avatar-fallback{background:#22263a; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; color:var(--accent);}
+    .th-person-card:hover img, .th-person-card:hover .avatar-fallback{border-color:var(--accent);}
+
+    /* Song card — play affordance on hover */
+    .th-card-song .th-play-badge{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(11,12,18,.4); opacity:0; transition:opacity .2s ease;
+    }
+    .th-card-song:hover .th-play-badge{opacity:1;}
+    .th-card-song .th-play-icon{
+      width:44px; height:44px; border-radius:50%; background:var(--accent); color:#171a26;
+      display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 18px rgba(0,0,0,.4);
+    }
+
+    /* Album card — vinyl-style circular cover */
+    .th-card-album{text-align:center; padding-top:18px;}
+    .th-card-album .th-img-wrap{
+      width:78%; aspect-ratio:1/1; border-radius:50%; margin-inline:auto; position:relative;
+      box-shadow:0 8px 22px rgba(0,0,0,.4); transition:transform 1.2s linear;
+    }
+    .th-card-album .th-img-wrap::after{
+      content:""; position:absolute; top:50%; inset-inline-start:50%; width:20%; aspect-ratio:1/1;
+      background:var(--bg); border-radius:50%; transform:translate(-50%,-50%);
+      box-shadow:0 0 0 3px rgba(255,255,255,.15); z-index:1;
+    }
+    .th-card-album:hover .th-img-wrap{transform:rotate(25deg);}
+
+    /* Media (movie/series/commercial) poster — type ribbon */
+    .th-poster-type-badge{
+      position:absolute; top:8px; inset-inline-start:8px; width:28px; height:28px; border-radius:8px;
+      background:rgba(11,12,18,.65); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center;
+      font-size:13px; color:var(--accent); border:1px solid rgba(255,255,255,.12);
+    }
+    .th-poster-rating-badge{
+      position:absolute; top:8px; inset-inline-end:8px; padding:3px 8px; border-radius:999px;
+      background:rgba(11,12,18,.65); backdrop-filter:blur(4px); font-size:11.5px; font-weight:800; color:var(--accent);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    /* Concert card — mini ticket-stub badge */
+    .th-ticket-mini{
+      position:absolute; top:8px; inset-inline-start:8px; background:rgba(11,12,18,.65); backdrop-filter:blur(4px);
+      border:1px dashed var(--accent); border-radius:8px; padding:3px 9px; text-align:center; line-height:1.15;
+    }
+    .th-ticket-mini .month{font-size:9px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:.5px;}
+    .th-ticket-mini .day{font-size:16px; font-weight:900; color:var(--text);}
 
     /* Badges */
     .th-badge{display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700;}

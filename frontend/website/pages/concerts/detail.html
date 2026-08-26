@@ -2,6 +2,26 @@
 {% load static i18n l10n bilingual %}
 {% block title %}{{ concert|localized_field:'title' }}{% endblock %}
 
+{% block extra_css %}
+{% if concert.has_location %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endif %}
+<style>
+  .th-concert-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:var(--card);}
+  .th-concert-header-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(45px) brightness(.4) saturate(1.3); transform:scale(1.2);}
+  .th-concert-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
+  .th-concert-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 8%, rgba(11,12,18,.6) 50%, rgba(11,12,18,.2) 100%);}
+  .th-concert-header-inner{position:relative; z-index:1; display:flex; gap:28px; align-items:center; padding:44px 28px; flex-wrap:wrap;}
+  .th-ticket-stub{flex:0 0 118px; text-align:center; background:rgba(255,255,255,.06); backdrop-filter:blur(4px); border:2px dashed var(--accent); border-radius:14px; padding:16px 8px;}
+  .th-ticket-month{font-size:12.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px;}
+  .th-ticket-day{font-size:36px; font-weight:900; line-height:1; margin-block:4px; color:var(--text);}
+  .th-ticket-time{font-size:12.5px; color:var(--muted);}
+  .th-ticket-tba{font-size:13px; font-weight:700; color:var(--muted); padding-block:22px;}
+  .th-concert-meta{flex:1; min-width:260px;}
+  .th-concert-meta h1{font-size:36px; font-weight:900; margin-block:10px 6px;}
+</style>
+{% endblock %}
+
 {% block content %}
 
 {% if concert.cover_video %}
@@ -43,36 +63,45 @@
 {% else %}
 <div class="container-xl">
 
-  <div class="th-detail-hero">
-    <div class="th-detail-img" style="flex-basis:380px; max-width:380px;">
-      {% if concert.display_poster_url %}
-        <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
-      {% else %}
-        <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:16/9; background:#1e2130;">
-          <i class="bi bi-calendar-event icon-fallback" style="font-size:64px;"></i>
-        </div>
-      {% endif %}
-    </div>
-    <div class="th-detail-body">
-      <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
-        {{ concert.get_status_display }}
-      </span>
-      <h1>{{ concert|localized_field:'title' }}</h1>
-
-      <div class="th-meta-row">
-        <span><i class="bi bi-calendar"></i> {% if concert.date %}{{ concert.date|date:"Y-m-d H:i" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</span>
-        {% if concert.venue_name %}<span><i class="bi bi-geo-alt"></i> {{ concert.venue_name }}</span>{% endif %}
-        {% if concert.city %}<span><i class="bi bi-pin-map"></i> {{ concert.city }}{% if concert.country %}، {{ concert.country }}{% endif %}</span>{% endif %}
+  <div class="th-concert-header">
+    {% if concert.display_poster_url %}
+      <div class="th-concert-header-bg" style="background-image:url('{{ concert.display_poster_url }}');"></div>
+    {% else %}
+      <div class="th-concert-header-fallback"></div>
+    {% endif %}
+    <div class="th-concert-header-shade"></div>
+    <div class="th-concert-header-inner">
+      {% if concert.date %}
+      <div class="th-ticket-stub">
+        <div class="th-ticket-month">{{ concert.date|date:"M" }}</div>
+        <div class="th-ticket-day">{{ concert.date|date:"d" }}</div>
+        <div class="th-ticket-time">{{ concert.date|date:"H:i" }}</div>
       </div>
+      {% else %}
+      <div class="th-ticket-stub">
+        <div class="th-ticket-tba"><i class="bi bi-hourglass-split"></i><br>{% translate "قريباً" %}</div>
+      </div>
+      {% endif %}
+      <div class="th-concert-meta">
+        <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
+          {{ concert.get_status_display }}
+        </span>
+        <h1>{{ concert|localized_field:'title' }}</h1>
 
-      {% if concert.description %}<p class="mt-2" style="max-width:640px;">{{ concert.description }}</p>{% endif %}
+        <div class="th-meta-row">
+          {% if concert.venue_name %}<span><i class="bi bi-geo-alt"></i> {{ concert.venue_name }}</span>{% endif %}
+          {% if concert.city %}<span><i class="bi bi-pin-map"></i> {{ concert.city }}{% if concert.country %}، {{ concert.country }}{% endif %}</span>{% endif %}
+        </div>
 
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        {% if concert.description %}<p class="mt-2" style="max-width:640px;">{{ concert.description }}</p>{% endif %}
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+          <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        </div>
       </div>
     </div>
   </div>
@@ -116,6 +145,12 @@
             {% else %}
               <i class="bi bi-calendar-event icon-fallback"></i>
             {% endif %}
+            {% if other.date %}
+            <span class="th-ticket-mini">
+              <span class="month">{{ other.date|date:"M" }}</span>
+              <span class="day">{{ other.date|date:"d" }}</span>
+            </span>
+            {% endif %}
           </div>
           <div class="th-body">
             <span class="th-badge {% if other.status == 'COMPLETED' %}green{% elif other.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
@@ -135,12 +170,6 @@
   {% if page_ad %}{% include "website/partials/ad_banner.html" with ad=page_ad %}{% endif %}
 
 </div>
-{% endblock %}
-
-{% block extra_css %}
-{% if concert.has_location %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

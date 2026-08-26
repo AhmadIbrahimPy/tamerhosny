@@ -2,6 +2,36 @@
 {% load static i18n bilingual %}
 {% block title %}{{ song|localized_field:'title' }}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .th-song-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:var(--card);}
+  .th-song-header-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(50px) brightness(.45) saturate(1.3); transform:scale(1.25);}
+  .th-song-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
+  .th-song-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 5%, rgba(11,12,18,.55) 55%, rgba(11,12,18,.25) 100%);}
+  .th-song-header-inner{position:relative; z-index:1; display:flex; gap:32px; align-items:flex-end; padding:48px 28px 32px; flex-wrap:wrap;}
+  .th-song-cover{flex:0 0 220px; width:220px; height:220px; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6); border:1px solid var(--border); background:#1e2130;}
+  .th-song-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+  .th-song-cover .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:56px;}
+  .th-song-meta{flex:1; min-width:260px;}
+  .th-song-meta h1{font-size:38px; font-weight:900; margin-block:10px 6px;}
+  .th-singer-row{display:flex; flex-wrap:wrap; gap:10px; margin-block:12px;}
+  .th-singer-chip{display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:999px; padding:5px 14px 5px 5px; font-weight:700; font-size:13.5px;}
+  .th-singer-chip:hover{border-color:var(--accent); color:var(--accent);}
+  .th-singer-avatar{width:30px; height:30px; border-radius:50%; object-fit:cover;}
+  .th-singer-avatar-fallback{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:13px;}
+  .th-lyrics-card{position:relative; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:32px 28px 32px 40px; max-width:760px; margin-inline:auto;}
+  .th-lyrics-card::before{content:"\201C"; position:absolute; top:8px; inset-inline-start:16px; font-size:64px; font-family:Georgia, serif; color:var(--accent); opacity:.35; line-height:1;}
+  .th-lyrics-card p{position:relative; z-index:1; white-space:pre-line; line-height:2.2; font-size:16.5px;}
+  .th-cast-row{display:flex; gap:20px; overflow-x:auto; padding-block:6px 10px;}
+  .th-cast-item{flex:0 0 92px; text-align:center; text-decoration:none; color:var(--text);}
+  .th-cast-avatar{width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--border); margin-inline:auto; display:block;}
+  .th-cast-avatar-fallback{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:24px; margin-inline:auto;}
+  .th-cast-name{font-size:12.5px; font-weight:700; margin-top:8px;}
+  .th-cast-role{font-size:11px; color:var(--muted);}
+  .th-cast-item:hover .th-cast-avatar, .th-cast-item:hover .th-cast-avatar-fallback{border-color:var(--accent);}
+</style>
+{% endblock %}
+
 {% block content %}
 
 {% if song.cover_video %}
@@ -22,17 +52,20 @@
     {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
 
     {% if singers %}
-    <div class="th-meta-row">
-      <span><i class="bi bi-mic-fill"></i>
-        {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person|localized_field:'full_name' }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
-      </span>
+    <div class="th-singer-row">
+      {% for credit in singers %}
+      <a href="{% url 'website_app:person-detail' credit.person.slug %}" class="th-singer-chip">
+        {% if credit.person.profile_image %}<img src="{{ credit.person.profile_image.url }}" class="th-singer-avatar" alt="">{% else %}<span class="th-singer-avatar-fallback">{{ credit.person|localized_field:'full_name'|slice:":1" }}</span>{% endif %}
+        {{ credit.person|localized_field:'full_name' }}
+      </a>
+      {% endfor %}
     </div>
     {% endif %}
 
     <div class="th-meta-row">
       {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
       {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
-      {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds }}s</span>{% endif %}
+      {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>{% endif %}
       {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
     </div>
 
@@ -51,44 +84,55 @@
 {% else %}
 <div class="container-xl">
 
-  <div class="th-detail-hero">
-    <div class="th-detail-img">
-      {% if song.cover_image %}
-        <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-      {% elif song.album.cover_image %}
-        <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-      {% else %}
-        <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:1/1; background:#1e2130;">
-          <i class="bi bi-music-note-beamed icon-fallback" style="font-size:64px;"></i>
+  <div class="th-song-header">
+    {% if song.cover_image %}
+      <div class="th-song-header-bg" style="background-image:url('{{ song.cover_image.url }}');"></div>
+    {% elif song.album.cover_image %}
+      <div class="th-song-header-bg" style="background-image:url('{{ song.album.cover_image.url }}');"></div>
+    {% else %}
+      <div class="th-song-header-fallback"></div>
+    {% endif %}
+    <div class="th-song-header-shade"></div>
+    <div class="th-song-header-inner">
+      <div class="th-song-cover">
+        {% if song.cover_image %}
+          <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% elif song.album.cover_image %}
+          <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-music-note-beamed icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-song-meta">
+        <span class="th-badge gold">{{ song.get_song_type_display }}</span>
+        <h1>{{ song|localized_field:'title' }}</h1>
+        {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
+
+        {% if singers %}
+        <div class="th-singer-row">
+          {% for credit in singers %}
+          <a href="{% url 'website_app:person-detail' credit.person.slug %}" class="th-singer-chip">
+            {% if credit.person.profile_image %}<img src="{{ credit.person.profile_image.url }}" class="th-singer-avatar" alt="">{% else %}<span class="th-singer-avatar-fallback">{{ credit.person|localized_field:'full_name'|slice:":1" }}</span>{% endif %}
+            {{ credit.person|localized_field:'full_name' }}
+          </a>
+          {% endfor %}
         </div>
-      {% endif %}
-    </div>
-    <div class="th-detail-body">
-      <span class="th-badge gold">{{ song.get_song_type_display }}</span>
-      <h1>{{ song|localized_field:'title' }}</h1>
-      {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
+        {% endif %}
 
-      {% if singers %}
-      <div class="th-meta-row">
-        <span><i class="bi bi-mic-fill"></i>
-          {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person|localized_field:'full_name' }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
-        </span>
-      </div>
-      {% endif %}
+        <div class="th-meta-row">
+          {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
+          {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
+          {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>{% endif %}
+          {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
+        </div>
 
-      <div class="th-meta-row">
-        {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
-        {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
-        {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds }}s</span>{% endif %}
-        {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
-      </div>
-
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+          <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        </div>
       </div>
     </div>
   </div>
@@ -111,7 +155,28 @@
   {% if song.lyrics %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الكلمات" %}</h2>
-    <p style="white-space: pre-line; line-height:2;">{{ song.lyrics }}</p>
+    <div class="th-lyrics-card">
+      <p>{{ song.lyrics }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if credits %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "المشاركون" %}</h2>
+    <div class="th-cast-row">
+      {% for entry in credits %}
+        <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-cast-item">
+          {% if entry.person.profile_image %}
+            <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="th-cast-avatar">
+          {% else %}
+            <span class="th-cast-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+          {% endif %}
+          <div class="th-cast-name">{{ entry.person|localized_field:'full_name' }}</div>
+          <div class="th-cast-role">{{ entry.roles|join:"، " }}</div>
+        </a>
+      {% endfor %}
+    </div>
   </div>
   {% endif %}
 
@@ -122,7 +187,7 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
         {% for other in album_songs %}
-        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square plain">
+        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain">
           <div class="th-img-wrap">
             {% if other.cover_image %}
               <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
@@ -131,6 +196,7 @@
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ other|localized_field:'title' }}</div>
@@ -150,7 +216,7 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
         {% for other in other_songs %}
-        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square plain">
+        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain">
           <div class="th-img-wrap">
             {% if other.cover_image %}
               <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
@@ -159,35 +225,13 @@
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ other|localized_field:'title' }}</div>
             <div class="th-meta">{{ other.get_song_type_display }}</div>
           </div>
         </a>
-        {% endfor %}
-      </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if credits %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "المشاركون" %}</h2>
-    <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
-      <div class="th-slider">
-        {% for entry in credits %}
-          <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-card th-person-card plain">
-            {% if entry.person.profile_image %}
-              <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}">
-            {% else %}
-              <div class="avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</div>
-            {% endif %}
-            <div class="th-title">{{ entry.person|localized_field:'full_name' }}</div>
-            <div class="th-meta">{{ entry.roles|join:"، " }}</div>
-          </a>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
