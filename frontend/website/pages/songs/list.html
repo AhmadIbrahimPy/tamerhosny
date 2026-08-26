@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n bilingual %}
 {% block title %}{% translate "الأغاني" %}{% endblock %}
 
 {% block content %}
@@ -12,15 +12,15 @@
     <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
       <div class="th-img-wrap">
         {% if song.cover_image %}
-          <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+          <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
         {% elif song.album.cover_image %}
-          <img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}">
+          <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
         {% else %}
           <i class="bi bi-music-note-beamed icon-fallback"></i>
         {% endif %}
       </div>
       <div class="th-body">
-        <div class="th-title">{{ song.title_ar }}</div>
+        <div class="th-title">{{ song|localized_field:'title' }}</div>
         <div class="th-meta">{{ song.get_song_type_display }}{% if song.release_year %} · {{ song.release_year }}{% endif %}</div>
       </div>
     </a>

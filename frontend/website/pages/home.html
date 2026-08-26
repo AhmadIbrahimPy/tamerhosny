@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n bilingual %}
 {% block title %}{% translate "الرئيسية" %}{% endblock %}
 
 {% block content %}
@@ -31,15 +31,15 @@
         <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if song.cover_image %}
-              <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
             {% elif song.album.cover_image %}
-              <img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}">
+              <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ song.title_ar }}</div>
+            <div class="th-title">{{ song|localized_field:'title' }}</div>
             <div class="th-meta">{{ song.get_song_type_display }}</div>
           </div>
         </a>
@@ -63,13 +63,13 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ item.title_ar }}</div>
+            <div class="th-title">{{ item|localized_field:'title' }}</div>
             {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>
@@ -93,13 +93,13 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ item.title_ar }}</div>
+            <div class="th-title">{{ item|localized_field:'title' }}</div>
             {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>
@@ -123,13 +123,13 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item.title_ar }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ item.title_ar }}</div>
+            <div class="th-title">{{ item|localized_field:'title' }}</div>
             {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>
@@ -153,15 +153,15 @@
         <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if album.cover_image %}
-              <img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}">
+              <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
             {% elif album.cover_art_url %}
-              <img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}">
+              <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-disc icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ album.title_ar }}</div>
+            <div class="th-title">{{ album|localized_field:'title' }}</div>
             {% if album.release_date %}<div class="th-meta">{{ album.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>
@@ -185,7 +185,7 @@
         <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
           <div class="th-img-wrap">
             {% if concert.display_poster_url %}
-              <img src="{{ concert.display_poster_url }}" alt="{{ concert.title_ar }}">
+              <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-calendar-event icon-fallback"></i>
             {% endif %}
@@ -194,7 +194,7 @@
             <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
               {{ concert.get_status_display }}
             </span>
-            <div class="th-title">{{ concert.title_ar }}</div>
+            <div class="th-title">{{ concert|localized_field:'title' }}</div>
             <div class="th-meta">{{ concert.city }}{% if concert.city and concert.country %}، {% endif %}{{ concert.country }}</div>
           </div>
         </a>
@@ -217,11 +217,11 @@
         {% for person in people %}
         <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
           {% if person.profile_image %}
-            <img src="{{ person.profile_image.url }}" alt="{{ person.full_name_ar }}">
+            <img src="{{ person.profile_image.url }}" alt="{{ person|localized_field:'full_name' }}">
           {% else %}
-            <div class="avatar-fallback">{{ person.full_name_ar|slice:":1" }}</div>
+            <div class="avatar-fallback">{{ person|localized_field:'full_name'|slice:":1" }}</div>
           {% endif %}
-          <div class="th-title">{{ person.full_name_ar }}</div>
+          <div class="th-title">{{ person|localized_field:'full_name' }}</div>
           <div class="th-meta">{{ person.get_primary_role_display }}</div>
         </a>
         {% empty %}

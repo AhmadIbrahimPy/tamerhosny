@@ -1,15 +1,15 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
-{% block title %}{{ album.title_ar }}{% endblock %}
+{% load static i18n bilingual %}
+{% block title %}{{ album|localized_field:'title' }}{% endblock %}
 
 {% block content %}
 
 {% if album.cover_video %}
 <div class="th-hero-banner">
   {% if album.cover_image %}
-    <div class="th-hero-poster-box"><img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}"></div>
+    <div class="th-hero-poster-box"><img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}"></div>
   {% elif album.cover_art_url %}
-    <div class="th-hero-poster-box"><img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}"></div>
+    <div class="th-hero-poster-box"><img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}"></div>
   {% endif %}
   <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
     <source src="{{ album.cover_video.url }}">
@@ -17,8 +17,8 @@
   <div class="th-hero-overlay"></div>
 
   <div class="th-hero-inner container-xl">
-    <h1>{{ album.title_ar }}</h1>
-    {% if album.title_en %}<p class="th-meta">{{ album.title_en }}</p>{% endif %}
+    <h1>{{ album|localized_field:'title' }}</h1>
+    {% if LANGUAGE_CODE == 'ar' %}{% if album.title_en %}<p class="th-meta">{{ album.title_en }}</p>{% endif %}{% else %}{% if album.title_ar %}<p class="th-meta">{{ album.title_ar }}</p>{% endif %}{% endif %}
     <div class="th-meta-row">
       {% if album.release_date %}<span><i class="bi bi-calendar"></i> {{ album.release_date|date:"Y-m-d" }}</span>{% endif %}
       {% if album.record_label %}<span><i class="bi bi-building"></i> {{ album.record_label.name }}</span>{% endif %}
@@ -41,9 +41,9 @@
   <div class="th-detail-hero">
     <div class="th-detail-img">
       {% if album.cover_image %}
-        <img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}">
+        <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
       {% elif album.cover_art_url %}
-        <img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}">
+        <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
       {% else %}
         <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:1/1; background:#1e2130;">
           <i class="bi bi-disc icon-fallback" style="font-size:64px;"></i>
@@ -51,8 +51,8 @@
       {% endif %}
     </div>
     <div class="th-detail-body">
-      <h1>{{ album.title_ar }}</h1>
-      {% if album.title_en %}<p class="th-meta">{{ album.title_en }}</p>{% endif %}
+      <h1>{{ album|localized_field:'title' }}</h1>
+      {% if LANGUAGE_CODE == 'ar' %}{% if album.title_en %}<p class="th-meta">{{ album.title_en }}</p>{% endif %}{% else %}{% if album.title_ar %}<p class="th-meta">{{ album.title_ar }}</p>{% endif %}{% endif %}
       <div class="th-meta-row">
         {% if album.release_date %}<span><i class="bi bi-calendar"></i> {{ album.release_date|date:"Y-m-d" }}</span>{% endif %}
         {% if album.record_label %}<span><i class="bi bi-building"></i> {{ album.record_label.name }}</span>{% endif %}
@@ -91,15 +91,15 @@
         <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if song.cover_image %}
-              <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
             {% elif album.cover_image %}
-              <img src="{{ album.cover_image.url }}" alt="{{ song.title_ar }}">
+              <img src="{{ album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ song.title_ar }}</div>
+            <div class="th-title">{{ song|localized_field:'title' }}</div>
             {% if song.duration_seconds %}<div class="th-meta">{{ song.duration_seconds }}s</div>{% endif %}
           </div>
         </a>
@@ -121,15 +121,15 @@
         <a href="{% url 'website_app:album-detail' other.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if other.cover_image %}
-              <img src="{{ other.cover_image.url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
             {% elif other.cover_art_url %}
-              <img src="{{ other.cover_art_url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.cover_art_url }}" alt="{{ other|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-disc icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ other.title_ar }}</div>
+            <div class="th-title">{{ other|localized_field:'title' }}</div>
             {% if other.release_date %}<div class="th-meta">{{ other.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>

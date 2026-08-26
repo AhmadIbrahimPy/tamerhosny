@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n bilingual %}
 {% block title %}{% translate "الفنانون" %}{% endblock %}
 
 {% block content %}
@@ -11,11 +11,11 @@
     {% for person in people %}
     <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
       {% if person.profile_image %}
-        <img src="{{ person.profile_image.url }}" alt="{{ person.full_name_ar }}">
+        <img src="{{ person.profile_image.url }}" alt="{{ person|localized_field:'full_name' }}">
       {% else %}
-        <div class="avatar-fallback">{{ person.full_name_ar|slice:":1" }}</div>
+        <div class="avatar-fallback">{{ person|localized_field:'full_name'|slice:":1" }}</div>
       {% endif %}
-      <div class="th-title">{{ person.full_name_ar }}</div>
+      <div class="th-title">{{ person|localized_field:'full_name' }}</div>
       <div class="th-meta">{{ person.get_primary_role_display }}</div>
     </a>
     {% empty %}

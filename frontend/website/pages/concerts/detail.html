@@ -1,13 +1,13 @@
 {% extends "website/base.html" %}
-{% load static i18n l10n %}
-{% block title %}{{ concert.title_ar }}{% endblock %}
+{% load static i18n l10n bilingual %}
+{% block title %}{{ concert|localized_field:'title' }}{% endblock %}
 
 {% block content %}
 
 {% if concert.cover_video %}
 <div class="th-hero-banner">
   {% if concert.display_poster_url %}
-    <div class="th-hero-poster-box"><img src="{{ concert.display_poster_url }}" alt="{{ concert.title_ar }}"></div>
+    <div class="th-hero-poster-box"><img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}"></div>
   {% endif %}
   <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
     <source src="{{ concert.cover_video.url }}">
@@ -18,7 +18,7 @@
     <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
       {{ concert.get_status_display }}
     </span>
-    <h1>{{ concert.title_ar }}</h1>
+    <h1>{{ concert|localized_field:'title' }}</h1>
 
     <div class="th-meta-row">
       <span><i class="bi bi-calendar"></i> {% if concert.date %}{{ concert.date|date:"Y-m-d H:i" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</span>
@@ -46,7 +46,7 @@
   <div class="th-detail-hero">
     <div class="th-detail-img" style="flex-basis:380px; max-width:380px;">
       {% if concert.display_poster_url %}
-        <img src="{{ concert.display_poster_url }}" alt="{{ concert.title_ar }}">
+        <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
       {% else %}
         <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:16/9; background:#1e2130;">
           <i class="bi bi-calendar-event icon-fallback" style="font-size:64px;"></i>
@@ -57,7 +57,7 @@
       <span class="th-badge {% if concert.status == 'COMPLETED' %}green{% elif concert.status == 'UPCOMING' %}purple{% else %}gray{% endif %}">
         {{ concert.get_status_display }}
       </span>
-      <h1>{{ concert.title_ar }}</h1>
+      <h1>{{ concert|localized_field:'title' }}</h1>
 
       <div class="th-meta-row">
         <span><i class="bi bi-calendar"></i> {% if concert.date %}{{ concert.date|date:"Y-m-d H:i" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</span>
@@ -112,7 +112,7 @@
         <a href="{% url 'website_app:concert-detail' other.slug %}" class="th-card aspect-wide plain">
           <div class="th-img-wrap">
             {% if other.display_poster_url %}
-              <img src="{{ other.display_poster_url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.display_poster_url }}" alt="{{ other|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-calendar-event icon-fallback"></i>
             {% endif %}
@@ -121,7 +121,7 @@
             <span class="th-badge {% if other.status == 'COMPLETED' %}green{% elif other.status == 'UPCOMING' %}purple{% else %}gray{% endif %} mb-2">
               {{ other.get_status_display }}
             </span>
-            <div class="th-title">{{ other.title_ar }}</div>
+            <div class="th-title">{{ other|localized_field:'title' }}</div>
             <div class="th-meta">{{ other.city }}{% if other.city and other.country %}، {% endif %}{{ other.country }}</div>
           </div>
         </a>

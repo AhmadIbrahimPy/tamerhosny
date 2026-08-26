@@ -1,15 +1,15 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
-{% block title %}{{ song.title_ar }}{% endblock %}
+{% load static i18n bilingual %}
+{% block title %}{{ song|localized_field:'title' }}{% endblock %}
 
 {% block content %}
 
 {% if song.cover_video %}
 <div class="th-hero-banner">
   {% if song.cover_image %}
-    <div class="th-hero-poster-box"><img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}"></div>
+    <div class="th-hero-poster-box"><img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}"></div>
   {% elif song.album.cover_image %}
-    <div class="th-hero-poster-box"><img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}"></div>
+    <div class="th-hero-poster-box"><img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}"></div>
   {% endif %}
   <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
     <source src="{{ song.cover_video.url }}">
@@ -18,19 +18,19 @@
 
   <div class="th-hero-inner container-xl">
     <span class="th-badge gold">{{ song.get_song_type_display }}</span>
-    <h1>{{ song.title_ar }}</h1>
-    {% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}
+    <h1>{{ song|localized_field:'title' }}</h1>
+    {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
 
     {% if singers %}
     <div class="th-meta-row">
       <span><i class="bi bi-mic-fill"></i>
-        {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person.full_name_ar }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
+        {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person|localized_field:'full_name' }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
       </span>
     </div>
     {% endif %}
 
     <div class="th-meta-row">
-      {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album.title_ar }}</a></span>{% endif %}
+      {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
       {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
       {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds }}s</span>{% endif %}
       {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
@@ -54,9 +54,9 @@
   <div class="th-detail-hero">
     <div class="th-detail-img">
       {% if song.cover_image %}
-        <img src="{{ song.cover_image.url }}" alt="{{ song.title_ar }}">
+        <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
       {% elif song.album.cover_image %}
-        <img src="{{ song.album.cover_image.url }}" alt="{{ song.title_ar }}">
+        <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
       {% else %}
         <div class="d-flex align-items-center justify-content-center" style="aspect-ratio:1/1; background:#1e2130;">
           <i class="bi bi-music-note-beamed icon-fallback" style="font-size:64px;"></i>
@@ -65,19 +65,19 @@
     </div>
     <div class="th-detail-body">
       <span class="th-badge gold">{{ song.get_song_type_display }}</span>
-      <h1>{{ song.title_ar }}</h1>
-      {% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}
+      <h1>{{ song|localized_field:'title' }}</h1>
+      {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
 
       {% if singers %}
       <div class="th-meta-row">
         <span><i class="bi bi-mic-fill"></i>
-          {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person.full_name_ar }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
+          {% for credit in singers %}<a href="{% url 'website_app:person-detail' credit.person.slug %}" class="plain" style="text-decoration:underline;">{{ credit.person|localized_field:'full_name' }}</a>{% if not forloop.last %}، {% endif %}{% endfor %}
         </span>
       </div>
       {% endif %}
 
       <div class="th-meta-row">
-        {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album.title_ar }}</a></span>{% endif %}
+        {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
         {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
         {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds }}s</span>{% endif %}
         {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
@@ -117,7 +117,7 @@
 
   {% if album_songs %}
   <div class="th-section">
-    <h2 class="th-section-title">{% translate "أغاني ألبوم" %} {{ song.album.title_ar }}</h2>
+    <h2 class="th-section-title">{% translate "أغاني ألبوم" %} {{ song.album|localized_field:'title' }}</h2>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
@@ -125,15 +125,15 @@
         <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if other.cover_image %}
-              <img src="{{ other.cover_image.url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
             {% elif other.album.cover_image %}
-              <img src="{{ other.album.cover_image.url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ other.title_ar }}</div>
+            <div class="th-title">{{ other|localized_field:'title' }}</div>
           </div>
         </a>
         {% endfor %}
@@ -153,15 +153,15 @@
         <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
             {% if other.cover_image %}
-              <img src="{{ other.cover_image.url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
             {% elif other.album.cover_image %}
-              <img src="{{ other.album.cover_image.url }}" alt="{{ other.title_ar }}">
+              <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
           </div>
           <div class="th-body">
-            <div class="th-title">{{ other.title_ar }}</div>
+            <div class="th-title">{{ other|localized_field:'title' }}</div>
             <div class="th-meta">{{ other.get_song_type_display }}</div>
           </div>
         </a>
@@ -181,11 +181,11 @@
         {% for entry in credits %}
           <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-card th-person-card plain">
             {% if entry.person.profile_image %}
-              <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person.full_name_ar }}">
+              <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}">
             {% else %}
-              <div class="avatar-fallback">{{ entry.person.full_name_ar|slice:":1" }}</div>
+              <div class="avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</div>
             {% endif %}
-            <div class="th-title">{{ entry.person.full_name_ar }}</div>
+            <div class="th-title">{{ entry.person|localized_field:'full_name' }}</div>
             <div class="th-meta">{{ entry.roles|join:"، " }}</div>
           </a>
         {% endfor %}

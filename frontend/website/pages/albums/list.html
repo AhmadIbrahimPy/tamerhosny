@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n bilingual %}
 {% block title %}{% translate "الألبومات" %}{% endblock %}
 
 {% block content %}
@@ -12,15 +12,15 @@
     <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card aspect-square plain">
       <div class="th-img-wrap">
         {% if album.cover_image %}
-          <img src="{{ album.cover_image.url }}" alt="{{ album.title_ar }}">
+          <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
         {% elif album.cover_art_url %}
-          <img src="{{ album.cover_art_url }}" alt="{{ album.title_ar }}">
+          <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
         {% else %}
           <i class="bi bi-disc icon-fallback"></i>
         {% endif %}
       </div>
       <div class="th-body">
-        <div class="th-title">{{ album.title_ar }}</div>
+        <div class="th-title">{{ album|localized_field:'title' }}</div>
         <div class="th-meta">{% if album.release_date %}{{ album.release_date|date:"Y" }}{% endif %}</div>
       </div>
     </a>

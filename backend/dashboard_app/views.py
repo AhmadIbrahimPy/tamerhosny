@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncHour
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -157,10 +157,10 @@ def _event_counts_for(instance):
     return counts
 
 
-def _top_viewed(model, name_field, url_name, limit=10):
+def _top_viewed(model, name_field, url_name, events_qs, limit=10):
     ct = ContentType.objects.get_for_model(model)
     ranked = (
-        AnalyticsEvent.objects.filter(event_type=AnalyticsEvent.EventType.VIEW, content_type=ct)
+        events_qs.filter(event_type=AnalyticsEvent.EventType.VIEW, content_type=ct)
         .values('object_id').annotate(views=Count('id')).order_by('-views')[:limit]
     )
     views_by_id = {row['object_id']: row['views'] for row in ranked}
@@ -178,51 +178,122 @@ def _top_viewed(model, name_field, url_name, limit=10):
     ]
 
 
+# Date-range filter choices for the analytics page.
+_ANALYTICS_RANGES = ('today', 'yesterday', 'week', 'month', 'all', 'custom')
+
+
+def _analytics_date_range(request):
+    """Resolve the selected range filter (?range=... plus ?start=&end= for
+    custom) into (range_key, start_datetime_or_None, end_datetime).
+    """
+    range_key = request.GET.get('range', 'month')
+    if range_key not in _ANALYTICS_RANGES:
+        range_key = 'month'
+
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if range_key == 'today':
+        return range_key, today_start, now
+    if range_key == 'yesterday':
+        return range_key, today_start - timedelta(days=1), today_start
+    if range_key == 'week':
+        return range_key, today_start - timedelta(days=7), now
+    if range_key == 'all':
+        return range_key, None, now
+    if range_key == 'custom':
+        start_str = request.GET.get('start', '')
+        end_str = request.GET.get('end', '')
+        start = end = None
+        try:
+            if start_str:
+                start = timezone.make_aware(datetime.strptime(start_str, '%Y-%m-%d'))
+            if end_str:
+                end = timezone.make_aware(datetime.strptime(end_str, '%Y-%m-%d')) + timedelta(days=1)
+        except ValueError:
+            pass
+        if not start and not end:
+            return 'month', today_start - timedelta(days=30), now
+        return range_key, start, (end or now)
+    # month (default)
+    return 'month', today_start - timedelta(days=30), now
+
+
+_CONTENT_TYPE_LABELS = {
+    'person': _('الفنانون'),
+    'album': _('الألبومات'),
+    'song': _('الأغاني'),
+    'media': _('الأفلام والمسلسلات والإعلانات'),
+    'concert': _('الحفلات'),
+    'advertisement': _('البانرات الإعلانية'),
+    'studio': _('الاستوديوهات والشركات'),
+}
+
+
 # ---------------------------------------------------------------------------
 # Analytics
 # ---------------------------------------------------------------------------
 
 @login_required(login_url='dashboard_app:login')
 def analytics_overview(request):
-    now = timezone.now()
-    last_30_days = now - timedelta(days=30)
+    range_key, start, end = _analytics_date_range(request)
+
+    events = AnalyticsEvent.objects.all()
+    if start:
+        events = events.filter(created_at__gte=start)
+    events = events.filter(created_at__lte=end)
 
     totals_all_time = dict.fromkeys(AnalyticsEvent.EventType.values, 0)
     for row in AnalyticsEvent.objects.values('event_type').annotate(total=Count('id')):
         totals_all_time[row['event_type']] = row['total']
 
-    totals_30d = dict.fromkeys(AnalyticsEvent.EventType.values, 0)
-    for row in (
-        AnalyticsEvent.objects.filter(created_at__gte=last_30_days)
-        .values('event_type').annotate(total=Count('id'))
-    ):
-        totals_30d[row['event_type']] = row['total']
+    totals_range = dict.fromkeys(AnalyticsEvent.EventType.values, 0)
+    for row in events.values('event_type').annotate(total=Count('id')):
+        totals_range[row['event_type']] = row['total']
+
+    content_type_breakdown = [
+        {
+            'label': _CONTENT_TYPE_LABELS.get(row['content_type__model'], row['content_type__model']),
+            'total': row['total'],
+        }
+        for row in (
+            events.filter(event_type=AnalyticsEvent.EventType.VIEW)
+            .values('content_type__model').annotate(total=Count('id')).order_by('-total')
+        )
+    ]
 
     platform_breakdown = list(
-        AnalyticsEvent.objects.filter(event_type=AnalyticsEvent.EventType.EXTERNAL_CLICK, platform__isnull=False)
+        events.filter(event_type=AnalyticsEvent.EventType.EXTERNAL_CLICK, platform__isnull=False)
         .values('platform__platform_name').annotate(total=Count('id')).order_by('-total')
     )
     share_breakdown = list(
-        AnalyticsEvent.objects.filter(event_type=AnalyticsEvent.EventType.SHARE)
+        events.filter(event_type=AnalyticsEvent.EventType.SHARE)
         .values('share_channel').annotate(total=Count('id')).order_by('-total')
     )
 
-    daily_views = (
-        AnalyticsEvent.objects.filter(event_type=AnalyticsEvent.EventType.VIEW, created_at__gte=last_30_days)
-        .annotate(day=TruncDate('created_at')).values('day').annotate(total=Count('id')).order_by('day')
+    bucket = TruncHour('created_at') if range_key in ('today', 'yesterday') else TruncDate('created_at')
+    label_format = '%Y-%m-%d %H:00' if range_key in ('today', 'yesterday') else '%Y-%m-%d'
+    timeline = (
+        events.filter(event_type=AnalyticsEvent.EventType.VIEW)
+        .annotate(bucket=bucket).values('bucket').annotate(total=Count('id')).order_by('bucket')
     )
-    daily_views_labels = json.dumps([row['day'].strftime('%Y-%m-%d') for row in daily_views])
-    daily_views_data = json.dumps([row['total'] for row in daily_views])
+    daily_views_labels = json.dumps([row['bucket'].strftime(label_format) for row in timeline])
+    daily_views_data = json.dumps([row['total'] for row in timeline])
 
-    top_people = _top_viewed(Person, 'full_name_ar', 'dashboard_app:person-view')
-    top_songs = _top_viewed(Song, 'title_ar', 'dashboard_app:song-view')
-    top_media = _top_viewed(Media, 'title_ar', 'dashboard_app:media-view')
-    top_albums = _top_viewed(Album, 'title_ar', 'dashboard_app:album-view')
-    top_concerts = _top_viewed(Concert, 'title_ar', 'dashboard_app:concert-view')
+    top_people = _top_viewed(Person, 'full_name_ar', 'dashboard_app:person-view', events)
+    top_songs = _top_viewed(Song, 'title_ar', 'dashboard_app:song-view', events)
+    top_media = _top_viewed(Media, 'title_ar', 'dashboard_app:media-view', events)
+    top_albums = _top_viewed(Album, 'title_ar', 'dashboard_app:album-view', events)
+    top_concerts = _top_viewed(Concert, 'title_ar', 'dashboard_app:concert-view', events)
+    top_ads = _top_viewed(Advertisement, 'title', 'dashboard_app:ad-view', events)
 
     return render(request, 'dashboard/pages/analytics.html', {
+        'range_key': range_key,
+        'range_start': request.GET.get('start', ''),
+        'range_end': request.GET.get('end', ''),
         'totals_all_time': totals_all_time,
-        'totals_30d': totals_30d,
+        'totals_range': totals_range,
+        'content_type_breakdown': content_type_breakdown,
         'platform_breakdown': platform_breakdown,
         'share_breakdown': share_breakdown,
         'daily_views_labels': daily_views_labels,
@@ -232,6 +303,7 @@ def analytics_overview(request):
         'top_media': top_media,
         'top_albums': top_albums,
         'top_concerts': top_concerts,
+        'top_ads': top_ads,
     })
 
 

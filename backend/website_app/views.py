@@ -103,7 +103,6 @@ def song_detail(request, slug):
         Song.objects.select_related('album', 'related_media', 'recording_studio'), slug=slug,
     )
     album_songs = []
-    other_songs = []
     
     if song.album_id:
         album_songs = Song.visible_queryset(
