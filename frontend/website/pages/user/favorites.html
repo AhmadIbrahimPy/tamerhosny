@@ -1,0 +1,93 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "الإعجاب" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "الإعجاب" %}</h1>
+
+  {% if songs %}
+  <div class="th-section-head">
+    <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
+  </div>
+  <div class="th-grid">
+    {% for song in songs %}
+    <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card th-card-song">
+      <div class="th-img-wrap aspect-square">
+        {% if song.cover_image %}
+          <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% elif song.album.cover_image %}
+          <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-music-note-beamed icon-fallback"></i>
+        {% endif %}
+        <div class="th-play-badge">
+          <div class="th-play-icon"><i class="bi bi-play-fill"></i></div>
+        </div>
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ song|localized_field:'title' }}</div>
+        <div class="th-meta">{{ song.album|localized_field:'title' }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if media_items %}
+  <div class="th-section-head" style="margin-top: 40px;">
+    <h2 class="th-section-title">{% translate "الأفلام والمسلسلات" %}</h2>
+  </div>
+  <div class="th-grid">
+    {% for media in media_items %}
+    <a href="{% url 'website_app:media-detail' media.slug %}" class="th-card aspect-poster">
+      <div class="th-img-wrap aspect-poster">
+        {% if media.poster_image %}
+          <img src="{{ media.poster_image.url }}" alt="{{ media|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-film icon-fallback"></i>
+        {% endif %}
+        <div class="th-poster-type-badge">
+          <i class="bi bi-{% if media.media_type == 'MOVIE' %}film{% elif media.media_type == 'TV_SERIES' %}tv{% else %}megaphone{% endif %}"></i>
+        </div>
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ media|localized_field:'title' }}</div>
+        <div class="th-meta">{{ media.release_year }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if concerts %}
+  <div class="th-section-head" style="margin-top: 40px;">
+    <h2 class="th-section-title">{% translate "الحفلات" %}</h2>
+  </div>
+  <div class="th-grid">
+    {% for concert in concerts %}
+    <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-poster">
+      <div class="th-img-wrap aspect-poster">
+        {% if concert.poster_image %}
+          <img src="{{ concert.poster_image.url }}" alt="{{ concert|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-calendar-event icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ concert|localized_field:'title' }}</div>
+        <div class="th-meta">{{ concert.date|date:"Y" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if not songs and not media_items and not concerts %}
+  <div class="th-empty">
+    <i class="bi bi-heart" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لم تقم بالإعجاب بأي محتوى بعد" %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

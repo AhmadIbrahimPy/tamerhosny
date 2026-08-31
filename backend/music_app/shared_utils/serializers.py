@@ -58,5 +58,11 @@ def serialize_song(song, request=None):
             {'person_id': credit.person_id, 'person_name': credit.person.full_name_ar, 'role': credit.role}
             for credit in song.credits.select_related('person').all()
         ],
+        'audio_bpm': song.audio_bpm,
+        'audio_key': song.audio_key,
+        'audio_mood': song.audio_mood,
+        'audio_energy': song.audio_energy,
+        'audio_danceability': song.audio_danceability,
+        'audio_analysis_data': song.audio_analysis_data,
         **serialize_publishable(song),
     }

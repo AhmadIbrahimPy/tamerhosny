@@ -1,4 +1,5 @@
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -40,6 +41,7 @@ class Media(PublishableModel, HeroMediaMixin):
     campaign_concept = models.TextField(blank=True)
 
     links = GenericRelation(ExternalLink)
+    favorites = GenericRelation('main_app.Like')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

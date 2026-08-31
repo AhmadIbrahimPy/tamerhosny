@@ -14,6 +14,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
     :root{
@@ -49,6 +50,49 @@
       border:1px solid var(--border); background:transparent; color:var(--text); font-size:13px; font-weight:700; cursor:pointer;
     }
     .lang-btn:hover{background:rgba(255,255,255,.06);}
+    .th-login-btn{
+      display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:999px; flex-shrink:0;
+      border:1px solid var(--accent); background:rgba(212,175,55,.1); color:var(--accent); font-size:13px; font-weight:700; cursor:pointer;
+      text-decoration:none; transition:all .2s ease;
+    }
+    .th-login-btn:hover{background:rgba(212,175,55,.2); border-color:var(--accent);}
+    .th-user-menu{position:relative;}
+    .th-user-btn{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; flex-shrink:0;
+      border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text); font-size:13px; font-weight:700; cursor:pointer;
+      transition:all .2s ease;
+    }
+    .th-user-btn:hover{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15);}
+    .th-user-avatar, .th-user-avatar-fallback{
+      width:32px; height:32px; border-radius:50%; object-fit:cover; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color:#fff; font-size:14px; font-weight:800;
+    }
+    .th-user-name{max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .th-user-dropdown{
+      position:absolute; top:calc(100% + 8px); inset-inline-end:0; min-width:240px;
+      background:var(--card); border:1px solid var(--border); border-radius:12px;
+      box-shadow:0 12px 40px rgba(0,0,0,.4); opacity:0; visibility:hidden; transform:translateY(-8px);
+      transition:all .2s ease; z-index:100;
+    }
+    .th-user-dropdown.show{opacity:1; visibility:visible; transform:translateY(0);}
+    .th-user-dropdown-header{display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--border);}
+    .th-dropdown-avatar, .th-dropdown-avatar-fallback{
+      width:44px; height:44px; border-radius:50%; object-fit:cover; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color:#fff; font-size:18px; font-weight:800;
+    }
+    .th-dropdown-info{flex:1; min-width:0;}
+    .th-dropdown-name{font-size:14px; font-weight:700; color:var(--text); margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .th-dropdown-email{font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .th-user-dropdown-divider{height:1px; background:var(--border); margin:4px 0;}
+    .th-dropdown-item{
+      display:flex; align-items:center; gap:10px; padding:10px 16px; color:var(--text); font-size:13px; font-weight:600;
+      text-decoration:none; transition:background .15s ease; border:none; background:none; width:100%; text-align:start; cursor:pointer;
+    }
+    .th-dropdown-item:hover{background:rgba(255,255,255,.06); color:var(--accent);}
+    .th-dropdown-item i{font-size:15px; color:var(--muted); transition:color .15s ease;}
+    .th-dropdown-item:hover i{color:var(--accent);}
+    .th-dropdown-btn{display:flex; align-items:center; gap:10px; padding:0; border:none; background:none; color:var(--text); font-size:13px; font-weight:600; cursor:pointer; width:100%; text-align:start;}
+    .th-dropdown-btn:hover{color:var(--accent);}
     .th-nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:22px; flex-shrink:0; cursor:pointer;}
     .th-mobile-panel{display:none; flex-direction:column; gap:2px; padding:8px 0 16px;}
     .th-mobile-panel a{font-size:14.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:10px 4px; border-bottom:1px solid var(--border);}
@@ -136,15 +180,16 @@
       display:block; height:100%;
     }
     .th-card:hover{transform:translateY(-5px); border-color:rgba(212,175,55,.4); background:var(--card-hover);}
-    .th-card .th-img-wrap{width:100%; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
-    .th-card .th-img-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
+    .th-card .th-img-wrap{width:100%; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; direction: rtl; text-align: center; transition: border-color 0.18s ease; border: 3px solid transparent;}
+    .th-card .th-img-wrap img{width:100%; height:100%; object-fit:cover; display:block; text-align: center;}
+    .th-card:hover .th-img-wrap{border-color: var(--accent);}
     .th-card.aspect-square .th-img-wrap{aspect-ratio:1/1;}
     .th-card.aspect-poster .th-img-wrap{aspect-ratio:2/3;}
     .th-card.aspect-wide .th-img-wrap{aspect-ratio:16/9;}
-    .th-card .th-body{padding:14px 16px;}
+    .th-card .th-body{padding:14px 16px; direction: rtl; text-align: center;}
     .th-card .th-title{font-weight:700; font-size:15px; margin-bottom:4px;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-    .th-card .th-meta{color:var(--muted); font-size:12.5px;}
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction: rtl; text-align: center;}
+    .th-card .th-meta{color:var(--muted); font-size:12.5px; direction: rtl; text-align: center;}
     .th-card .icon-fallback{font-size:40px; color:#3a3d52;}
 
     /* Person card (circular) */
@@ -174,7 +219,7 @@
       box-shadow:0 8px 22px rgba(0,0,0,.4); transition:transform 1.2s linear;
     }
     .th-card-album .th-img-wrap::after{
-      content:""; position:absolute; top:50%; inset-inline-start:50%; width:20%; aspect-ratio:1/1;
+      content:""; position:absolute; top:50%; inset-inline-start:30%; width:20%; aspect-ratio:1/1;
       background:var(--bg); border-radius:50%; transform:translate(-50%,-50%);
       box-shadow:0 0 0 3px rgba(255,255,255,.15); z-index:1;
     }
@@ -306,6 +351,200 @@
       }).catch(function () {});
     }
 
+    function toggleUserMenu() {
+      var dropdown = document.getElementById('thUserDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('show');
+      }
+    }
+
+    // Global Audio Player
+    var globalAudio = null;
+    var currentPlayBtn = null;
+    var isManualPause = false;
+
+    // Initialize audio element when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      globalAudio = document.getElementById('globalAudioElement');
+      if (!globalAudio) {
+        console.error('Audio element not found');
+      }
+    });
+
+    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
+      // Stop current audio if playing
+      if (globalAudio.src) {
+        globalAudio.pause();
+        globalAudio.currentTime = 0;
+        if (currentPlayBtn) {
+          currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        }
+      }
+
+      // Set new audio source
+      globalAudio.src = url;
+      currentPlayBtn = playBtn;
+      currentSongId = songId;
+
+      // Update play button icon
+      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+
+      // Show player bar and set title
+      document.getElementById('globalAudioPlayer').style.display = 'block';
+      if (title) {
+        document.getElementById('playerTitle').textContent = title;
+      }
+      
+      // Handle artist and album
+      if (artist) {
+        document.getElementById('playerArtist').textContent = artist;
+        document.getElementById('playerArtist').style.display = 'block';
+      } else {
+        document.getElementById('playerArtist').style.display = 'none';
+      }
+      
+      if (album) {
+        document.getElementById('playerAlbum').textContent = album;
+        document.getElementById('playerAlbum').style.display = 'block';
+      } else {
+        document.getElementById('playerAlbum').style.display = 'none';
+      }
+      
+      // For Mix - show songs count instead of album
+      if (isMix && songs) {
+        document.getElementById('playerAlbum').textContent = songs;
+        document.getElementById('playerAlbum').style.display = 'block';
+      }
+      
+      // Check if song is liked
+      if (songId) {
+        fetch('/likes/toggle/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'content_type=song&object_id=' + songId + '&check_only=true'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            isLiked = data.liked;
+            updateLikeButton();
+          }
+        })
+        .catch(error => {
+          console.error('Error checking like status:', error);
+        });
+      }
+      
+      // Handle image - single image for normal songs, grid for mix
+      if (image) {
+        if (isMix && Array.isArray(image) && image.length > 0) {
+          // Mix with multiple images - show grid
+          var imageHTML = '';
+          for (var i = 0; i < Math.min(image.length, 4); i++) {
+            if (image[i]) {
+              imageHTML += '<div style="flex:1; border-radius:6px; overflow:hidden; background:#1e2130;"><img src="' + image[i] + '" alt="" style="width:100%; height:100%; object-fit:cover;"></div>';
+            } else {
+              imageHTML += '<div style="flex:1; border-radius:6px; overflow:hidden; background:#1e2130; display:flex; align-items:center; justify-content:center;"><i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:16px;"></i></div>';
+            }
+          }
+          document.getElementById('playerImage').innerHTML = imageHTML;
+          document.getElementById('playerImage').style.display = 'flex';
+          document.getElementById('playerImage').style.gap = '2px';
+          document.getElementById('playerImage').style.padding = '2px';
+        } else if (Array.isArray(image) && image.length > 0 && image[0]) {
+          // Normal song with array - use first image
+          document.getElementById('playerImageImg').src = image[0];
+          document.getElementById('playerImageImg').style.display = 'block';
+          document.getElementById('playerImageIcon').style.display = 'none';
+          document.getElementById('playerImage').classList.add('has-image');
+          document.getElementById('playerImage').innerHTML = '<img id="playerImageImg" src="' + image[0] + '" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"><i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px; display:none;" id="playerImageIcon"></i>';
+        } else if (typeof image === 'string' && image) {
+          // Normal song with string image
+          document.getElementById('playerImageImg').src = image;
+          document.getElementById('playerImageImg').style.display = 'block';
+          document.getElementById('playerImageIcon').style.display = 'none';
+          document.getElementById('playerImage').classList.add('has-image');
+          document.getElementById('playerImage').innerHTML = '<img id="playerImageImg" src="' + image + '" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"><i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px; display:none;" id="playerImageIcon"></i>';
+        } else {
+          // No image - show icon
+          document.getElementById('playerImageImg').style.display = 'none';
+          document.getElementById('playerImageIcon').style.display = 'block';
+          document.getElementById('playerImage').classList.remove('has-image');
+          document.getElementById('playerImage').innerHTML = '<i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px;" id="playerImageIcon"></i>';
+        }
+      } else {
+        document.getElementById('playerImageImg').style.display = 'none';
+        document.getElementById('playerImageIcon').style.display = 'block';
+        document.getElementById('playerImage').classList.remove('has-image');
+        document.getElementById('playerImage').innerHTML = '<i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px;" id="playerImageIcon"></i>';
+      }
+      
+      if (link) {
+        document.getElementById('playerLink').href = link;
+      }
+
+      // Play audio
+      globalAudio.play().catch(function(error) {
+        console.error('Error playing audio:', error);
+        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+      });
+
+      // Update play button when audio ends
+      globalAudio.addEventListener('ended', function() {
+        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+      });
+
+      // Update play button when audio is paused
+      globalAudio.addEventListener('pause', function() {
+        if (!globalAudio.ended && isManualPause) {
+          playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+          isManualPause = false;
+        }
+      });
+
+      // Update play button when audio is playing
+      globalAudio.addEventListener('play', function() {
+        playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>';
+      });
+
+      // Update progress bar using timeupdate event
+      globalAudio.addEventListener('timeupdate', function() {
+        if (globalAudio.duration) {
+          var progress = (globalAudio.currentTime / globalAudio.duration) * 100;
+          document.getElementById('playerProgressBar').style.width = progress + '%';
+          document.getElementById('playerCurrentTime').textContent = formatTime(globalAudio.currentTime);
+          document.getElementById('playerDuration').textContent = formatTime(globalAudio.duration);
+          console.log('Timeupdate - currentTime:', globalAudio.currentTime, 'duration:', globalAudio.duration, 'progress:', progress + '%');
+        }
+      });
+
+      // Log when currentTime changes due to seek
+      globalAudio.addEventListener('seeking', function() {
+        console.log('Seeking to:', globalAudio.currentTime);
+      });
+
+      globalAudio.addEventListener('seeked', function() {
+        console.log('Seeked to:', globalAudio.currentTime);
+      });
+    }
+
+    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
+      if (globalAudio && globalAudio.src === url && !globalAudio.paused) {
+        isManualPause = true;
+        globalAudio.pause();
+        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+      } else {
+        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       var isRtl = document.documentElement.getAttribute('dir') === 'rtl';
       document.querySelectorAll('.th-slider-arrow').forEach(function (btn) {
@@ -327,8 +566,419 @@
           if (poster) poster.classList.add('is-hidden');
         }, { once: true });
       });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function (e) {
+        var userMenu = document.querySelector('.th-user-menu');
+        var dropdown = document.getElementById('thUserDropdown');
+        if (userMenu && dropdown && !userMenu.contains(e.target)) {
+          dropdown.classList.remove('show');
+        }
+      });
     });
   </script>
+
+  <!-- Global Audio Player Bar -->
+  <div id="globalAudioPlayer" style="display:none; position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:8px 16px; z-index:1000; box-shadow:0 -4px 20px rgba(0,0,0,.3);">
+    <audio id="globalAudioElement" preload="auto" style="display:none;"></audio>
+    <div class="container-xl" style="display:flex; align-items:center; gap:16px; height:56px;">
+      
+      <!-- Left Controls -->
+      <div class="player-left-controls" style="display:flex; align-items:center; gap:8px; width:280px;" dir="ltr">
+        <button onclick="playPrevious()" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:background 0.2s ease;">
+          <i class="bi bi-skip-start-fill"></i>
+        </button>
+        <button id="playerPlayBtn" onclick="toggleGlobalAudio()" style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#111; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:transform 0.2s ease;">
+          <i class="bi bi-play-fill"></i>
+        </button>
+        <button onclick="playNext()" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:background 0.2s ease;">
+          <i class="bi bi-skip-end-fill"></i>
+        </button>
+      </div>
+
+      <!-- Middle Controls -->
+      <div class="player-middle-controls" style="flex:1; display:flex; align-items:center; gap:12px; min-width:0;">
+        <div id="playerImage" style="width:56px; height:56px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#1e2130; display:flex; align-items:center; justify-content:center;">
+          <img id="playerImageImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
+          <i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px;" id="playerImageIcon"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <a id="playerLink" href="#" style="text-decoration:none; color:inherit;">
+            <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
+          </a>
+        </div>
+        <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-heart"></i>
+        </button>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="player-right-controls" style="display:flex; align-items:center; gap:8px; width:280px;">
+        <button onclick="toggleRepeat()" id="playerRepeatBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-repeat"></i>
+        </button>
+        <button onclick="toggleShuffle()" id="playerShuffleBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-shuffle"></i>
+        </button>
+        <div style="display:flex; align-items:center; gap:8px; flex:1;">
+          <span id="playerCurrentTime" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+          <div id="playerProgress" style="flex:1; height:4px; background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer; position:relative; direction:ltr;">
+            <div id="playerProgressBar" style="height:100%; background:var(--accent); border-radius:2px; width:0%;"></div>
+          </div>
+          <span id="playerDuration" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+        </div>
+        <button onclick="toggleMute()" id="playerMuteBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-volume-up"></i>
+        </button>
+        <button onclick="closeGlobalPlayer()" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #playerProgress:hover #playerProgressBar{background:var(--accent-2);}
+    
+    /* Player button hover effects */
+    .player-left-controls button:hover,
+    .player-right-controls button:hover,
+    #playerLikeBtn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    #playerPlayBtn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Active states for repeat and shuffle */
+    #playerRepeatBtn.active,
+    #playerShuffleBtn.active {
+      color: var(--accent) !important;
+    }
+    
+    /* Progress bar styling */
+    #playerProgress {
+      transition: height 0.2s ease;
+    }
+    
+    #playerProgress:hover {
+      height: 6px;
+    }
+    
+    /* Image styling */
+    #playerImage img {
+      display: none;
+    }
+    
+    #playerImage.has-image #playerImageImg {
+      display: block;
+    }
+    
+    #playerImage.has-image #playerImageIcon {
+      display: none;
+    }
+    
+    /* Title hover effects */
+    #playerTitle:hover,
+    #playerArtist:hover,
+    #playerAlbum:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+  </style>
+
+  <script>
+    // Player state
+    let isRepeat = false;
+    let isShuffle = false;
+    let isMuted = false;
+    let previousVolume = 1;
+    let currentSongId = null;
+    let isLiked = false;
+
+    function toggleGlobalAudio() {
+      if (globalAudio) {
+        if (globalAudio.paused) {
+          globalAudio.play();
+          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>';
+          if (currentPlayBtn) {
+            currentPlayBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+          }
+        } else {
+          isManualPause = true;
+          globalAudio.pause();
+          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+          if (currentPlayBtn) {
+            currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+          }
+        }
+      }
+    }
+
+    function playPrevious() {
+      // Implement previous song logic
+      console.log('Previous song');
+    }
+
+    function playNext() {
+      // Implement next song logic
+      console.log('Next song');
+    }
+
+    function toggleLike() {
+      if (!currentSongId) {
+        console.log('No song loaded');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('content_type', 'song');
+      formData.append('object_id', currentSongId);
+
+      fetch('/likes/toggle/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': getCSRFToken()
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          isLiked = data.liked;
+          updateLikeButton();
+          if (window.showToast) {
+            showToast(isLiked ? '{% translate "تمت الإضافة إلى المفضلة" %}' : '{% translate "تمت الإزالة من المفضلة" %}', 'success');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error toggling like:', error);
+        if (window.showToast) {
+          showToast('{% translate "حدث خطأ" %}', 'error');
+        }
+      });
+    }
+
+    function updateLikeButton() {
+      const likeBtn = document.getElementById('playerLikeBtn');
+      const icon = likeBtn.querySelector('i');
+      if (isLiked) {
+        icon.classList.remove('bi-heart');
+        icon.classList.add('bi-heart-fill');
+        likeBtn.style.color = '#ef4444';
+      } else {
+        icon.classList.remove('bi-heart-fill');
+        icon.classList.add('bi-heart');
+        likeBtn.style.color = 'var(--text)';
+      }
+    }
+
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      const repeatBtn = document.getElementById('playerRepeatBtn');
+      repeatBtn.style.color = isRepeat ? 'var(--accent)' : 'var(--muted)';
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      const shuffleBtn = document.getElementById('playerShuffleBtn');
+      shuffleBtn.style.color = isShuffle ? 'var(--accent)' : 'var(--muted)';
+    }
+
+    function toggleMute() {
+      if (globalAudio) {
+        if (isMuted) {
+          globalAudio.volume = previousVolume;
+          isMuted = false;
+        } else {
+          previousVolume = globalAudio.volume;
+          globalAudio.volume = 0;
+          isMuted = true;
+        }
+        updateMuteIcon();
+      }
+    }
+
+    function updateMuteIcon() {
+      const muteBtn = document.getElementById('playerMuteBtn');
+      const icon = muteBtn.querySelector('i');
+      icon.classList.remove('bi-volume-up', 'bi-volume-mute');
+      if (isMuted || globalAudio.volume === 0) {
+        icon.classList.add('bi-volume-mute');
+      } else {
+        icon.classList.add('bi-volume-up');
+      }
+    }
+
+    function closeGlobalPlayer() {
+      if (globalAudio) {
+        globalAudio.pause();
+        globalAudio.currentTime = 0;
+      }
+      document.getElementById('globalAudioPlayer').style.display = 'none';
+    }
+
+    function formatTime(seconds) {
+      var mins = Math.floor(seconds / 60);
+      var secs = Math.floor(seconds % 60);
+      return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    // Seek functionality - add once
+    document.addEventListener('DOMContentLoaded', function() {
+      var progressEl = document.getElementById('playerProgress');
+      if (progressEl) {
+        progressEl.onclick = function(e) {
+          console.log('Progress bar clicked');
+          if (globalAudio && globalAudio.duration) {
+            var rect = progressEl.getBoundingClientRect();
+            var clickX = e.clientX - rect.left;
+            var percent = clickX / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            var newTime = percent * globalAudio.duration;
+            console.log('Seek calculation - clickX:', clickX, 'rect.width:', rect.width, 'percent:', percent, 'newTime:', newTime);
+            globalAudio.currentTime = newTime;
+            console.log('After setting currentTime:', globalAudio.currentTime);
+          } else {
+            console.log('Cannot seek - globalAudio:', globalAudio, 'duration:', globalAudio ? globalAudio.duration : 'N/A');
+          }
+          return false;
+        };
+      }
+    });
+  </script>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+  <style>
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: slideIn 0.3s ease;
+      min-width: 300px;
+      max-width: 400px;
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .toast.info {
+      border-left: 4px solid #3b82f6;
+    }
+
+    .toast-icon {
+      font-size: 20px;
+    }
+
+    .toast.success .toast-icon {
+      color: #10b981;
+    }
+
+    .toast.error .toast-icon {
+      color: #ef4444;
+    }
+
+    .toast.info .toast-icon {
+      color: #3b82f6;
+    }
+
+    .toast-message {
+      flex: 1;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 16px;
+      transition: color 0.2s ease;
+    }
+
+    .toast-close:hover {
+      color: var(--text);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+  </style>
+
+  <script>
+    window.showToast = function(message, type = 'success') {
+      console.log('showToast called with:', message, type);
+      const container = document.getElementById('toastContainer');
+      if (!container) {
+        console.error('Toast container not found');
+        return;
+      }
+      console.log('Container found:', container);
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      let icon = 'bi-check-circle';
+      if (type === 'error') icon = 'bi-x-circle';
+      if (type === 'info') icon = 'bi-info-circle';
+      
+      toast.innerHTML = `
+        <i class="bi ${icon} toast-icon"></i>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+          <i class="bi bi-x"></i>
+        </button>
+      `;
+      
+      console.log('Toast element created:', toast);
+      container.appendChild(toast);
+      console.log('Toast appended to container');
+      
+      // Auto remove after 4 seconds
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 

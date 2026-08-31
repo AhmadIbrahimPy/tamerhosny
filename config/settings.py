@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'backend.dashboard_app',
     'backend.analytics_app',
     'backend.website_app',
+    'backend.ai_remix_app',
 ]
 
 LOGIN_URL = 'dashboard_app:login'
@@ -197,7 +198,10 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSION': 'v1',
     'VERSION_PARAM': 'version',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 35,
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
 }
 
 SIMPLE_JWT = {

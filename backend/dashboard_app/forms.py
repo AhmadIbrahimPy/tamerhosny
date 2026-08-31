@@ -101,16 +101,19 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         fields = [
-            'title_ar', 'title_en', 'cover_image', 'cover_video', 'song_type',
-            'duration_seconds', 'release_year', 'is_duet', 'recording_studio', 'album', 'related_media',
+            'title_ar', 'title_en', 'cover_image', 'audio_file', 'cover_video', 'song_type',
+            'genre', 'mood', 'duration_seconds', 'release_year', 'is_duet', 'recording_studio', 'album', 'related_media',
             'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'cover_image': _('صورة الأغنية'),
+            'audio_file': _('ملف الصوت'),
             'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'song_type': _('النوع'),
+            'genre': _('النوع الموسيقي'),
+            'mood': _('الحالة المزاجية'),
             'duration_seconds': _('المدة (بالثواني)'),
             'release_year': _('سنة الإصدار'),
             'is_duet': _('دويتو'),
@@ -124,8 +127,11 @@ class SongForm(forms.ModelForm):
             'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'cover_image': SquareCoverWidget(),
+            'audio_file': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'audio/*'}),
             'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'song_type': forms.Select(attrs=SELECT_ATTRS),
+            'genre': forms.Select(attrs=SELECT_ATTRS),
+            'mood': forms.Select(attrs=SELECT_ATTRS),
             'duration_seconds': forms.NumberInput(attrs=WIDGET_ATTRS),
             'release_year': forms.NumberInput(attrs={**WIDGET_ATTRS, 'id': 'id_release_year'}),
             'is_duet': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

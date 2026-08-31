@@ -1,0 +1,341 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "قوائم التشغيل" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <div class="th-section-head">
+    <h1 class="th-section-title">{% translate "قوائم التشغيل" %}</h1>
+    <button type="button" class="th-action-btn primary" onclick="openCreatePlaylistModal()">
+      <i class="bi bi-plus-lg"></i> {% translate "إنشاء قائمة جديدة" %}
+    </button>
+  </div>
+
+  {% if playlists %}
+  <div class="th-grid cols-4">
+    {% for playlist in playlists %}
+    <a href="{% url 'website_app:playlist-detail' playlist.pk %}" class="th-card">
+      <div class="th-img-wrap aspect-square">
+        {% if playlist.random_images %}
+          <div class="th-playlist-images {% if playlist.random_images|length == 1 %}single{% elif playlist.random_images|length == 2 %}double{% else %}grid{% endif %}">
+            {% for image in playlist.random_images %}
+              <img src="{{ image }}" alt="{{ playlist.name }}">
+            {% endfor %}
+          </div>
+        {% elif playlist.cover_image %}
+          <img src="{{ playlist.cover_image.url }}" alt="{{ playlist.name }}">
+        {% else %}
+          <i class="bi bi-music-note-list icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ playlist.name }}</div>
+        <div class="th-meta">{{ playlist.items.count }} {% translate "أغنية" %}</div>
+      </div>
+      <div class="th-card-badge">
+        {% if playlist.is_public %}
+          <i class="bi bi-globe" title="{% translate 'عام' %}"></i>
+        {% else %}
+          <i class="bi bi-lock" title="{% translate 'خاص' %}"></i>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-list-music" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لم تقم بإنشاء أي قائمة تشغيل بعد" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Create Playlist Modal -->
+<div id="createPlaylistModal" class="th-modal" style="display: none;">
+  <div class="th-modal-content">
+    <div class="th-modal-header">
+      <h3>{% translate "إنشاء قائمة تشغيل جديدة" %}</h3>
+      <button type="button" class="th-modal-close" onclick="closeCreatePlaylistModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="th-modal-body">
+      <form id="createPlaylistForm" method="post">
+        {% csrf_token %}
+        <div class="th-form-group">
+          <label for="playlistName">{% translate "اسم القائمة" %}</label>
+          <input type="text" id="playlistName" name="name" required placeholder="{% translate 'أدخل اسم القائمة' %}">
+        </div>
+        <div class="th-form-group">
+          <label for="playlistDescription">{% translate "الوصف" %}</label>
+          <textarea id="playlistDescription" name="description" placeholder="{% translate 'أدخل وصف القائمة (اختياري)' %}"></textarea>
+        </div>
+        <div class="th-form-group">
+          <label for="playlistMode">{% translate "الوضع" %}</label>
+          <select id="playlistMode" name="mode">
+            <option value="public">{% translate "عام" %}</option>
+            <option value="private">{% translate "خاص" %}</option>
+          </select>
+        </div>
+        <button type="submit" class="th-btn primary">
+          <i class="bi bi-plus-lg"></i> {% translate "إنشاء" %}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.th-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.th-section-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.th-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.th-action-btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.th-action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.th-action-btn i {
+  font-size: 16px;
+}
+
+.th-playlist-images {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.th-playlist-images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* 1 image: fill entire space */
+.th-playlist-images.single {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* 2 images: side by side */
+.th-playlist-images.double {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* 3 or 4 images: 2x2 grid */
+.th-playlist-images.grid {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.th-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.th-modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.th-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.th-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.th-modal-close {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.th-modal-body {
+  padding: 20px;
+}
+
+.th-form-group {
+  margin-bottom: 20px;
+}
+
+.th-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.th-form-group input,
+.th-form-group select,
+.th-form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.th-form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.th-form-group input:focus,
+.th-form-group select:focus,
+.th-form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.th-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.th-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.th-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.th-card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.th-card-badge i {
+  font-size: 16px;
+}
+</style>
+
+<script>
+function openCreatePlaylistModal() {
+  document.getElementById('createPlaylistModal').style.display = 'flex';
+}
+
+function closeCreatePlaylistModal() {
+  document.getElementById('createPlaylistModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('createPlaylistModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeCreatePlaylistModal();
+  }
+});
+
+// Handle form submission
+document.getElementById('createPlaylistForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  
+  fetch('/playlists/create/', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      closeCreatePlaylistModal();
+      showToast('{% translate "تم إنشاء القائمة بنجاح" %}', 'success');
+      location.reload();
+    } else {
+      showToast(data.message || '{% translate "حدث خطأ أثناء إنشاء القائمة" %}', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error creating playlist:', error);
+    showToast('{% translate "حدث خطأ أثناء إنشاء القائمة" %}', 'error');
+  });
+});
+
+function getCSRFToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') return decodeURIComponent(value);
+  }
+  return '';
+}
+</script>
+{% endblock %}

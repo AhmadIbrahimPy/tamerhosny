@@ -1,4 +1,5 @@
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
@@ -37,6 +38,7 @@ class Concert(PublishableModel, HeroMediaMixin):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     links = GenericRelation(ExternalLink)
+    favorites = GenericRelation('main_app.Like')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

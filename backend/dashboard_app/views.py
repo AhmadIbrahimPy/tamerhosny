@@ -52,7 +52,7 @@ MEDIA_SECTIONS = {
     'programs': (Media.MediaType.PROGRAM, _('البرامج'), 'dashboard_app:programs'),
 }
 
-PAGE_SIZE = 20
+PAGE_SIZE = 35
 
 
 # ---------------------------------------------------------------------------
@@ -773,6 +773,8 @@ def song_view(request, pk):
         (_('العنوان بالعربية'), song.title_ar),
         (_('العنوان بالإنجليزية'), song.title_en),
         (_('النوع'), song.get_song_type_display()),
+        (_('النوع الموسيقي'), song.get_genre_display() if song.genre and song.genre != 'UNSPECIFIED' else None),
+        (_('الحالة المزاجية'), song.get_mood_display() if song.mood and song.mood != 'UNSPECIFIED' else None),
         (_('الألبوم'), song.album.title_ar if song.album else None),
         (_('العمل المرتبط'), song.related_media.title_ar if song.related_media else None),
         (_('استوديو التسجيل'), song.recording_studio.name if song.recording_studio else None),
@@ -782,6 +784,8 @@ def song_view(request, pk):
         (_('حالة الظهور'), _visibility_choices_display(song)),
         (_('موعد النشر'), song.publish_at),
     ]
+
+    audio_url = song.audio_file.url if song.audio_file else None
 
     related_sections = [
         {
@@ -832,6 +836,7 @@ def song_view(request, pk):
         'fields': fields,
         'related_sections': related_sections,
         'image_url': image_url,
+        'audio_url': audio_url,
         'stats': _event_counts_for(song),
         'extra_actions': [
             {'label': _('المشاركون في الأغنية'), 'url': reverse('dashboard_app:song-credits', args=[pk])},

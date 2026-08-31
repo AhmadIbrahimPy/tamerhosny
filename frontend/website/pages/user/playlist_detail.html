@@ -1,0 +1,351 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{{ playlist.name }}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <div class="th-section-head">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <h1 class="th-section-title">{{ playlist.name }}</h1>
+      {% if playlist.is_public %}
+        <i class="bi bi-globe" style="color: var(--muted); font-size: 20px;" title="{% translate 'عام' %}"></i>
+      {% else %}
+        <i class="bi bi-lock" style="color: var(--muted); font-size: 20px;" title="{% translate 'خاص' %}"></i>
+      {% endif %}
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button type="button" class="th-action-btn secondary" onclick="openEditPlaylistModal()">
+        <i class="bi bi-pencil"></i> {% translate "تعديل" %}
+      </button>
+      <a href="{% url 'website_app:playlists' %}" class="th-see-all">
+        <i class="bi bi-arrow-left"></i> {% translate "العودة للقوائم" %}
+      </a>
+    </div>
+  </div>
+
+  {% if playlist.description %}
+  <p class="th-meta" style="margin-bottom: 24px;">{{ playlist.description }}</p>
+  {% endif %}
+
+  {% if items %}
+  <div class="th-grid">
+    {% for item in items %}
+    <div class="th-card th-card-song">
+      <div class="th-img-wrap aspect-square">
+        <a href="{% url 'website_app:song-detail' item.song.slug %}">
+          {% if item.song.cover_image %}
+            <img src="{{ item.song.cover_image.url }}" alt="{{ item.song|localized_field:'title' }}">
+          {% elif item.song.album.cover_image %}
+            <img src="{{ item.song.album.cover_image.url }}" alt="{{ item.song|localized_field:'title' }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+          <div class="th-play-badge">
+            <div class="th-play-icon"><i class="bi bi-play-fill"></i></div>
+          </div>
+        </a>
+        <button type="button" class="th-delete-song-btn" onclick="removeSongFromPlaylist({{ item.pk }})" title="{% translate 'حذف من القائمة' %}">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+      <div class="th-body">
+        <a href="{% url 'website_app:song-detail' item.song.slug %}" class="th-title">{{ item.song|localized_field:'title' }}</a>
+        <div class="th-meta">{{ item.song.album|localized_field:'title' }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-music-note" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "هذه القائمة فارغة" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Edit Playlist Modal -->
+<div id="editPlaylistModal" class="th-modal" style="display: none;">
+  <div class="th-modal-content">
+    <div class="th-modal-header">
+      <h3>{% translate "تعديل القائمة" %}</h3>
+      <button type="button" class="th-modal-close" onclick="closeEditPlaylistModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="th-modal-body">
+      <div class="th-form-group">
+        <label>{% translate "اسم القائمة" %}</label>
+        <input type="text" id="editPlaylistName" value="{{ playlist.name }}">
+      </div>
+      <div class="th-form-group">
+        <label>{% translate "الوصف" %}</label>
+        <textarea id="editPlaylistDescription">{{ playlist.description }}</textarea>
+      </div>
+      <div class="th-form-group">
+        <label>{% translate "الوضع" %}</label>
+        <select id="editPlaylistMode">
+          <option value="private" {% if not playlist.is_public %}selected{% endif %}>{% translate "خاص" %}</option>
+          <option value="public" {% if playlist.is_public %}selected{% endif %}>{% translate "عام" %}</option>
+        </select>
+      </div>
+      <button type="button" class="th-btn primary" onclick="updatePlaylist()">
+        {% translate "حفظ التغييرات" %}
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.th-delete-song-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.th-card:hover .th-delete-song-btn {
+  opacity: 1;
+}
+
+.th-delete-song-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+.th-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.th-modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.th-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.th-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.th-modal-close {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.th-modal-body {
+  padding: 20px;
+}
+
+.th-form-group {
+  margin-bottom: 16px;
+}
+
+.th-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.th-form-group input,
+.th-form-group textarea,
+.th-form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.th-form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.th-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.th-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.th-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.th-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.th-action-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.th-action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.th-action-btn.secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.th-action-btn.secondary:hover {
+  background: var(--border);
+}
+</style>
+
+<script>
+const playlistId = {{ playlist.pk }};
+
+function openEditPlaylistModal() {
+  document.getElementById('editPlaylistModal').style.display = 'flex';
+}
+
+function closeEditPlaylistModal() {
+  document.getElementById('editPlaylistModal').style.display = 'none';
+}
+
+function updatePlaylist() {
+  const name = document.getElementById('editPlaylistName').value;
+  const description = document.getElementById('editPlaylistDescription').value;
+  const mode = document.getElementById('editPlaylistMode').value;
+  
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('description', description);
+  formData.append('mode', mode);
+  
+  fetch(`/playlists/${playlistId}/update/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      closeEditPlaylistModal();
+      showToast('{% translate "تم تحديث القائمة بنجاح" %}', 'success');
+      location.reload();
+    } else {
+      showToast(data.message || '{% translate "حدث خطأ" %}', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error updating playlist:', error);
+    showToast('{% translate "حدث خطأ" %}', 'error');
+  });
+}
+
+function removeSongFromPlaylist(itemId) {
+  if (!confirm('{% translate "هل أنت متأكد من حذف هذه الأغنية من القائمة؟" %}')) {
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('item_id', itemId);
+  
+  fetch(`/playlists/${playlistId}/remove-song/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      showToast('{% translate "تم حذف الأغنية من القائمة" %}', 'success');
+      location.reload();
+    } else {
+      showToast(data.message || '{% translate "حدث خطأ" %}', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error removing song:', error);
+    showToast('{% translate "حدث خطأ" %}', 'error');
+  });
+}
+
+function getCSRFToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') return decodeURIComponent(value);
+  }
+  return '';
+}
+
+// Close modal when clicking outside
+document.getElementById('editPlaylistModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeEditPlaylistModal();
+  }
+});
+</script>
+{% endblock %}

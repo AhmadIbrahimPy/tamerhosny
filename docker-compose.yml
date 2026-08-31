@@ -7,36 +7,12 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - tamerhosny_postgres_data:/var/lib/postgresql/data
     env_file:
-      - credentials/.env
-
-  web:
-    build: .
-    restart: unless-stopped
-    depends_on:
-      - db
-    env_file:
-      - credentials/.env
-    environment:
-      DB_HOST: db
-    volumes:
-      - ./media:/app/media
-      - ./staticfiles:/app/staticfiles
-    expose:
-      - "8000"
-
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    depends_on:
-      - web
+      - ./credentials/.env
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./staticfiles:/app/staticfiles:ro
-      - ./media:/app/media:ro
+      - "5433:5432"
 
 volumes:
-  postgres_data:
+  tamerhosny_postgres_data:
+    external: true

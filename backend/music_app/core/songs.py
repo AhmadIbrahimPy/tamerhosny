@@ -1,4 +1,5 @@
 from rest_framework import status
+from django.db.models import Q
 
 from backend.links_app.core.links import sync_links
 from backend.links_app.shared_utils.dates import parse_datetime_field
@@ -13,10 +14,20 @@ class SongsHandle:
     def all(self):
         queryset = Song.objects.select_related('album', 'recording_studio', 'related_media')
         song_type = self.request.query_params.get('song_type')
+        search = self.request.query_params.get('search')
+        
         if song_type:
             queryset = queryset.filter(song_type=song_type)
+        
+        if search:
+            # البحث في العنوان العربي والإنجليزي
+            queryset = queryset.filter(
+                Q(title_ar__icontains=search) | Q(title_en__icontains=search)
+            )
+        
         if not self.request.user.is_authenticated:
             queryset = Song.visible_queryset(queryset)
+        
         data = [serialize_song(song, self.request) for song in queryset]
         return status.HTTP_200_OK, 'Songs fetched successfully.', {'songs': data}
 

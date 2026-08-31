@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from backend.ads_app import urls as urls_ads_app
+from backend.ai_remix_app import urls as urls_ai_remix_app
 from backend.analytics_app import urls as urls_analytics_app
 from backend.concerts_app import urls as urls_concerts_app
 from backend.main_app import urls as urls_main_app
@@ -32,6 +33,7 @@ urlpatterns = [
     path('<str:version>/concerts/', include((urls_concerts_app, 'concerts_app'))),
     path('<str:version>/ads/', include((urls_ads_app, 'ads_app'))),
     path('<str:version>/analytics/', include((urls_analytics_app, 'analytics_app'))),
+    path('<str:version>/ai-remix/', include((urls_ai_remix_app, 'ai_remix_app'))),
 
     # Public website — root path, server-rendered, no auth.
     path('', include('backend.website_app.urls')),

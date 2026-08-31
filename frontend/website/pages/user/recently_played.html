@@ -1,0 +1,41 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "استمعت مؤخراً" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "استمعت مؤخراً" %}</h1>
+
+  {% if songs %}
+  <div class="th-grid">
+    {% for song in songs %}
+    <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card th-card-song">
+      <div class="th-img-wrap aspect-square">
+        {% if song.cover_image %}
+          <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% elif song.album.cover_image %}
+          <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-music-note-beamed icon-fallback"></i>
+        {% endif %}
+        <div class="th-play-badge">
+          <div class="th-play-icon"><i class="bi bi-play-fill"></i></div>
+        </div>
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ song|localized_field:'title' }}</div>
+        <div class="th-meta">{{ song.album|localized_field:'title' }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if not songs %}
+  <div class="th-empty">
+    <i class="bi bi-clock-history" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لم تستمع إلى أي أغاني بعد" %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

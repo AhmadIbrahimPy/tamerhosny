@@ -19,6 +19,8 @@
           <tr>
             <th>{% translate "العنوان" %}</th>
             <th>{% translate "النوع" %}</th>
+            <th>{% translate "النوع الموسيقي" %}</th>
+            <th>{% translate "الحالة المزاجية" %}</th>
             <th>{% translate "الألبوم" %}</th>
             <th>{% translate "سنة الإصدار" %}</th>
             <th>{% translate "دويتو" %}</th>
@@ -44,6 +46,8 @@
               </a>
             </td>
             <td><span class="badge bg-secondary-subtle text-secondary">{{ song.get_song_type_display }}</span></td>
+            <td>{% if song.genre and song.genre != 'UNSPECIFIED' %}<span class="badge bg-primary-subtle text-primary">{{ song.get_genre_display }}</span>{% else %}-{% endif %}</td>
+            <td>{% if song.mood and song.mood != 'UNSPECIFIED' %}<span class="badge bg-success-subtle text-success">{{ song.get_mood_display }}</span>{% else %}-{% endif %}</td>
             <td>{{ song.album.title_ar|default:"-" }}</td>
             <td>{{ song.release_year|default:"-" }}</td>
             <td>{% if song.is_duet %}<span class="badge bg-success-subtle text-success">{% translate "نعم" %}</span>{% else %}-{% endif %}</td>
@@ -74,7 +78,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="7" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          <tr><td colspan="9" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

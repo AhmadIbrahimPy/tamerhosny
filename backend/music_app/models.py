@@ -50,10 +50,33 @@ class Song(PublishableModel, HeroMediaMixin):
         COMMERCIAL_JINGLE = 'COMMERCIAL_JINGLE', _('Commercial Jingle')
         RELIGIOUS = 'RELIGIOUS', _('Religious / Duaa')
 
+    class Genre(models.TextChoices):
+        UNSPECIFIED = 'UNSPECIFIED', _('غير محدد / Auto')
+        POP = 'POP', _('Pop / بوب')
+        EGYPTIAN_POP = 'EGYPTIAN_POP', _('Egyptian Pop / بوب مصري')
+        ARABIC_POP = 'ARABIC_POP', _('Arabic Pop / بوب عربي')
+        ORIENTAL_TARAB = 'ORIENTAL_TARAB', _('Oriental & Tarab / شرقي وطربي')
+        RNB = 'RNB', _('R&B / آر أند بي')
+        BALLAD = 'BALLAD', _('Ballad / بالاد')
+        DANCE_ELECTRONIC = 'DANCE_ELECTRONIC', _('Dance / Electronic / دانس وإلكترونيك')
+        ACOUSTIC = 'ACOUSTIC', _('Acoustic / أكوستيك')
+        SOFT_ROCK = 'SOFT_ROCK', _('Soft Rock / روك خفيف')
+
+    class Mood(models.TextChoices):
+        UNSPECIFIED = 'UNSPECIFIED', _('غير محدد / Auto')
+        ROMANTIC = 'ROMANTIC', _('Romantic / رومانسي')
+        SAD_HEARTBREAK = 'SAD_HEARTBREAK', _('Sad & Heartbreak / حزين / دراما / جرح')
+        ENERGETIC_UPBEAT = 'ENERGETIC_UPBEAT', _('Energetic & Upbeat / حماسي / طاقة عالية / أفراح')
+        MOTIVATIONAL_HOPEFUL = 'MOTIVATIONAL_HOPEFUL', _('Motivational & Hopeful / تحفيزي / أمل وتفاؤل')
+        CHILL_RELAXING = 'CHILL_RELAXING', _('Chill & Relaxing / رايق / هادئ للاسترخاء')
+        NOSTALGIC = 'NOSTALGIC', _('Nostalgic / ذكريات وحنين')
+        CONFIDENT_PLAYFUL = 'CONFIDENT_PLAYFUL', _('Confident & Playful / واثق / فريش')
+
     title_ar = models.CharField(max_length=200)
     title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     cover_image = models.ImageField(upload_to='songs/covers/', blank=True, null=True)
+    audio_file = models.FileField(upload_to='songs/audio/', blank=True, null=True)
     duration_seconds = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
     lyrics = models.TextField(blank=True)
     release_year = models.PositiveSmallIntegerField(
@@ -61,6 +84,8 @@ class Song(PublishableModel, HeroMediaMixin):
         validators=[MinValueValidator(1900), MaxValueValidator(date.today().year + 1)],
     )
     song_type = models.CharField(max_length=20, choices=SongType.choices, default=SongType.SINGLE, db_index=True)
+    genre = models.CharField(max_length=25, choices=Genre.choices, blank=True, db_index=True, help_text=_('Musical genre'))
+    mood = models.CharField(max_length=25, choices=Mood.choices, blank=True, db_index=True, help_text=_('Song mood/vibe'))
     is_duet = models.BooleanField(default=False)
 
     recording_studio = models.ForeignKey(
@@ -73,6 +98,17 @@ class Song(PublishableModel, HeroMediaMixin):
     )
 
     links = GenericRelation(ExternalLink)
+    favorites = GenericRelation('main_app.Like')
+
+    play_count = models.PositiveIntegerField(default=0, verbose_name=_('عدد مرات التشغيل'))
+
+    # تحليل الصوت
+    audio_bpm = models.FloatField(null=True, blank=True, help_text=_('Beats per minute'))
+    audio_key = models.CharField(max_length=10, blank=True, help_text=_('Musical key (e.g., C, Am, F#m)'))
+    audio_mood = models.CharField(max_length=50, blank=True, help_text=_('Mood of the song (e.g., happy, sad, energetic)'))
+    audio_energy = models.FloatField(null=True, blank=True, help_text=_('Energy level (0.0 to 1.0)'))
+    audio_danceability = models.FloatField(null=True, blank=True, help_text=_('Danceability (0.0 to 1.0)'))
+    audio_analysis_data = models.JSONField(null=True, blank=True, help_text=_('Detailed audio analysis data'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -82,6 +118,8 @@ class Song(PublishableModel, HeroMediaMixin):
         indexes = [
             models.Index(fields=['release_year']),
             models.Index(fields=['song_type']),
+            models.Index(fields=['genre']),
+            models.Index(fields=['mood']),
             models.Index(fields=['slug']),
             models.Index(fields=['visibility']),
         ]

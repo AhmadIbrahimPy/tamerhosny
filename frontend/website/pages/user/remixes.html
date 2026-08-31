@@ -1,0 +1,166 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "الريمكسات" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .th-remix-grid{display:grid; gap:20px; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); margin-top:24px;}
+  .th-remix-card{background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:transform .18s ease, border-color .18s ease, background .18s ease; display:block; height:100%;}
+  .th-remix-card:hover{transform:translateY(-5px); border-color:rgba(212,175,55,.4); background:var(--card-hover);}
+  .th-remix-cover{position:relative; aspect-ratio:16/9; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .th-remix-cover img{width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .th-remix-songs{display:flex; gap:8px; position:absolute; inset:0; padding:8px; z-index:1; width:100%; height:100%;}
+  .th-remix-songs > div{flex:0 0 calc(50% - 4px); height:100%; border-radius:8px; border:1px solid var(--border); overflow:hidden; position:relative;}
+  .th-remix-songs img{width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .th-remix-songs > div > div{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#1e2130;}
+  .th-remix-merge-icon{position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,.7); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:24px; z-index:5; border:2px solid var(--accent); box-shadow:0 4px 16px rgba(0,0,0,.5);}
+  .th-remix-play-overlay{position:absolute; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s ease; z-index:10;}
+  .th-remix-card:hover .th-remix-play-overlay{opacity:1;}
+  .th-remix-play-btn{width:56px; height:56px; border-radius:50%; background:var(--accent); color:#111; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; box-shadow:0 8px 24px rgba(212,175,55,.4);}
+  .th-remix-play-btn:hover{transform:scale(1.1); box-shadow:0 12px 32px rgba(212,175,55,.5);}
+  .th-remix-body{padding:16px;}
+  .th-remix-title{font-weight:700; font-size:16px; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .th-remix-meta{color:var(--muted); font-size:13px; margin-bottom:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .th-remix-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .th-remix-btn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 12px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:all .2s ease; cursor:pointer; border:none;}
+  .th-remix-btn.primary{background:var(--accent); color:#111;}
+  .th-remix-btn.primary:hover{background:#f4d47a;}
+  .th-remix-btn.secondary{background:rgba(255,255,255,.08); color:var(--text); border:1px solid var(--border);}
+  .th-remix-btn.secondary:hover{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.2);}
+  .th-search-box{display:flex; gap:10px; margin-bottom:20px;}
+  .th-search-input{flex:1; padding:12px 16px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); font-size:14px; outline:none; transition:border-color .2s ease;}
+  .th-search-input:focus{border-color:var(--accent);}
+  .th-search-input::placeholder{color:var(--muted);}
+  .th-pagination{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:32px; flex-wrap:wrap;}
+  .th-page-link{display:flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:600; text-decoration:none; transition:all .2s ease;}
+  .th-page-link:hover{background:var(--card-hover); border-color:var(--accent); color:var(--accent);}
+  .th-page-link.active{background:var(--accent); color:#111; border-color:var(--accent);}
+  .th-page-link.disabled{opacity:.5; pointer-events:none;}
+  html[dir="rtl"] .th-pagination{flex-direction:row-reverse;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "الريمكسات" %}</h1>
+
+  <div class="th-search-box">
+    <input type="text" class="th-search-input" id="searchInput" placeholder="{% translate 'ابحث في الريمكسات...' %}">
+  </div>
+
+  {% if projects %}
+  <div class="th-remix-grid" id="remixGrid">
+    {% for project in projects %}
+    <div class="th-remix-card" data-name="{{ project.name }}" data-songs="{{ project.song_names }}">
+      <div class="th-remix-cover">
+        {% if project.song_images %}
+        <div class="th-remix-songs">
+          {% for image in project.song_images %}
+          <div>
+            {% if image %}
+            <img src="{{ image }}" alt="">
+            {% else %}
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+              <i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:20px;"></i>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <i class="bi bi-music-note-beamed icon-fallback" style="font-size:48px;"></i>
+        {% endif %}
+        <div class="th-remix-merge-icon">
+          <i class="bi bi-layers"></i>
+        </div>
+        <div class="th-remix-play-overlay">
+          {% if project.outputs.first %}
+          <button class="th-remix-play-btn" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}')">
+            <i class="bi bi-play-fill"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="th-remix-body">
+        <div class="th-remix-title">{{ project.name }}</div>
+        <div class="th-remix-meta">{{ project.song_names }}</div>
+        <div class="th-remix-actions">
+          {% if project.outputs.first %}
+          <button class="th-remix-btn primary" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}')">
+            <i class="bi bi-play-fill"></i> {% translate "تشغيل" %}
+          </button>
+          <a href="{{ project.outputs.first.output_file.url }}" class="th-remix-btn secondary" download>
+            <i class="bi bi-download"></i> {% translate "تحميل" %}
+          </a>
+          {% endif %}
+          <a href="{% url 'website_app:remix-result' project.id %}" class="th-remix-btn secondary">
+            <i class="bi bi-eye"></i> {% translate "عرض" %}
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if projects.has_other_pages %}
+  <div class="th-pagination">
+    {% if projects.has_previous %}
+    <a href="?page=1" class="th-page-link">
+      <i class="bi bi-chevron-double-{% if LANGUAGE_CODE == 'ar' %}right{% else %}left{% endif %}"></i>
+    </a>
+    <a href="?page={{ projects.previous_page_number }}" class="th-page-link">
+      {% if LANGUAGE_CODE == 'ar' %}السابق{% else %}Previous{% endif %}
+    </a>
+    {% endif %}
+    {% for page_num in projects.paginator.page_range %}
+    {% if projects.number == page_num %}
+    <span class="th-page-link active">{{ page_num }}</span>
+    {% else %}
+    <a href="?page={{ page_num }}" class="th-page-link">{{ page_num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if projects.has_next %}
+    <a href="?page={{ projects.next_page_number }}" class="th-page-link">
+      {% if LANGUAGE_CODE == 'ar' %}التالي{% else %}Next{% endif %}
+    </a>
+    <a href="?page={{ projects.paginator.num_pages }}" class="th-page-link">
+      <i class="bi bi-chevron-double-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %}"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-music-note-beamed" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لم تقم بإنشاء أي ريمكس بعد" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function playRemix(url) {
+  var audio = new Audio(url);
+  audio.play();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var searchInput = document.getElementById('searchInput');
+  var remixGrid = document.getElementById('remixGrid');
+  var cards = remixGrid.querySelectorAll('.th-remix-card');
+
+  searchInput.addEventListener('input', function() {
+    var query = this.value.toLowerCase();
+
+    cards.forEach(function(card) {
+      var name = card.getAttribute('data-name').toLowerCase();
+      var songs = card.getAttribute('data-songs').toLowerCase();
+      if (name.includes(query) || songs.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

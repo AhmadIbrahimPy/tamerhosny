@@ -1,0 +1,273 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "نتيجة الريمكس" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .th-remix-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 50%, rgba(236,72,153,0.1) 100%); border:1px solid rgba(99,102,241,0.2); backdrop-filter:blur(20px);}
+  .th-remix-header-bg{position:absolute; inset:0; background:radial-gradient(circle at 20% 30%, rgba(99,102,241,0.2) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(236,72,153,0.2) 0%, transparent 40%); animation:gradientShift 8s ease-in-out infinite;}
+  .th-remix-header-inner{position:relative; z-index:1; padding:20px 24px; display:flex; align-items:center; gap:20px;}
+  .th-remix-success-icon{width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #10b981 0%, #059669 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 8px 24px rgba(16,185,129,0.4), 0 0 0 3px rgba(16,185,129,0.1); animation:successPulse 2s ease-in-out infinite;}
+  .th-remix-success-icon i{font-size:28px; color:#fff;}
+  .th-remix-header-text{flex:1; text-align:right;}
+  .th-remix-header-text h1{font-size:28px; font-weight:900; margin-bottom:8px; color:var(--text);}
+  .th-remix-header-text p{color:var(--muted); font-size:15px; margin:0;}
+  
+  .th-songs-container{display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; max-width:700px; margin:0 auto 32px;}
+  .th-song-card{background:linear-gradient(135deg, var(--card) 0%, rgba(255,255,255,0.02) 100%); border:1px solid var(--border); border-radius:20px; padding:24px; display:flex; align-items:center; gap:16px; transition:all .3s cubic-bezier(.4,0,.2,1); box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+  .th-song-card:hover{transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,0,0,0.1); border-color:rgba(99,102,241,0.3);}
+  .th-song-card-cover{width:100px; height:100px; border-radius:16px; overflow:hidden; flex-shrink:0; box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+  .th-song-card-cover img{width:100%; height:100%; object-fit:cover; transition:transform .3s ease;}
+  .th-song-card:hover .th-song-card-cover img{transform:scale(1.05);}
+  .th-song-card-cover .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 100%); font-size:40px; color:var(--accent);}
+  .th-song-card-info{flex:1; min-width:0;}
+  .th-song-card-title{font-size:20px; font-weight:700; color:var(--text); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .th-song-card-meta{font-size:14px; color:var(--muted); opacity:0.8;}
+  
+  .th-plus-icon{width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 100%); border:2px solid rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:20px; flex-shrink:0;}
+  
+  .th-audio-player-large{position:relative; background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(168,85,247,0.05) 100%); border:1px solid rgba(99,102,241,0.2); border-radius:20px; padding:20px; margin-top:24px; backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(99,102,241,0.1);}
+  .th-audio-player-large::before{content:''; position:absolute; top:-50%; right:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 60%); pointer-events:none; animation:gradientShift 10s ease-in-out infinite;}
+  .th-audio-player-inner{position:relative; z-index:1;}
+  .th-play-btn-large{width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--accent) 0%, #6366f1 100%); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:24px; transition:all .3s cubic-bezier(.4,0,.2,1); box-shadow:0 6px 24px rgba(99,102,241,0.4), 0 0 0 0 rgba(99,102,241,0.3); flex-shrink:0;}
+  .th-play-btn-large:hover{transform:scale(1.08); box-shadow:0 8px 28px rgba(99,102,241,0.5), 0 0 0 6px rgba(99,102,241,0.1);}
+  .th-play-btn-large:active{transform:scale(.95);}
+  .th-play-btn-large.playing{background:linear-gradient(135deg, #6366f1 0%, var(--accent) 100%); animation:playPulse 2s ease-in-out infinite;}
+  
+  .th-progress-container-large{position:relative; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; overflow:hidden; margin-top:16px; box-shadow:inset 0 2px 6px rgba(0,0,0,0.1);}
+  .th-progress-bar-large{position:absolute; top:0; left:0; height:100%; background:linear-gradient(90deg, var(--accent) 0%, #6366f1 50%, #a855f7 100%); border-radius:4px; width:0%; transition:width .1s linear; box-shadow:0 0 15px rgba(99,102,241,0.5);}
+  .th-time-display-large{display:flex; justify-content:space-between; margin-top:10px; font-size:14px; color:var(--muted); font-weight:500;}
+  
+  .th-download-btn{display:inline-flex; align-items:center; gap:6px; padding:10px 20px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; border-radius:10px; color:#fff; font-weight:600; font-size:14px; cursor:pointer; transition:all .3s cubic-bezier(.4,0,.2,1); text-decoration:none; box-shadow:0 4px 16px rgba(16,185,129,0.3), 0 0 0 0 rgba(16,185,129,0.2); flex-shrink:0;}
+  .th-download-btn:hover{transform:translateY(-1px); box-shadow:0 6px 20px rgba(16,185,129,0.4), 0 0 0 4px rgba(16,185,129,0.1);}
+  .th-download-btn:active{transform:translateY(0);}
+  
+  .th-waveform-large{display:flex; align-items:center; gap:2px; height:18px; margin-top:12px; opacity:.7;}
+  .th-waveform-large span{width:3px; background:linear-gradient(180deg, var(--accent) 0%, #6366f1 100%); border-radius:2px; animation:wave 1.2s ease-in-out infinite;}
+  .th-waveform-large span:nth-child(1){height:8px; animation-delay:0s;}
+  .th-waveform-large span:nth-child(2){height:14px; animation-delay:.1s;}
+  .th-waveform-large span:nth-child(3){height:10px; animation-delay:.2s;}
+  .th-waveform-large span:nth-child(4){height:16px; animation-delay:.3s;}
+  .th-waveform-large span:nth-child(5){height:12px; animation-delay:.4s;}
+  .th-waveform-large span:nth-child(6){height:14px; animation-delay:.5s;}
+  .th-waveform-large span:nth-child(7){height:10px; animation-delay:.6s;}
+  .th-waveform-large span:nth-child(8){height:14px; animation-delay:.7s;}
+  .th-waveform-large span:nth-child(9){height:12px; animation-delay:.8s;}
+  .th-waveform-large span:nth-child(10){height:10px; animation-delay:.9s;}
+  .th-waveform-large span:nth-child(11){height:12px; animation-delay:.1s;}
+  .th-waveform-large span:nth-child(12){height:14px; animation-delay:.2s;}
+  .th-waveform-large span:nth-child(13){height:10px; animation-delay:.3s;}
+  .th-waveform-large span:nth-child(14){height:14px; animation-delay:.4s;}
+  .th-waveform-large span:nth-child(15){height:12px; animation-delay:.5s;}
+  
+  @keyframes wave{0%,100%{transform:scaleY(1);}50%{transform:scaleY(.4);}}
+  @keyframes gradientShift{0%,100%{opacity:1;}50%{opacity:0.7;}}
+  @keyframes successPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+  @keyframes playPulse{0%,100%{box-shadow:0 8px 32px rgba(99,102,241,0.4), 0 0 0 0 rgba(99,102,241,0.3);}50%{box-shadow:0 8px 32px rgba(99,102,241,0.4), 0 0 0 12px rgba(99,102,241,0.1);}}
+  .th-waveform-large.paused span{animation-play-state:paused;}
+  
+  @media (max-width:768px){
+    .th-songs-container{grid-template-columns:1fr; gap:16px;}
+    .th-plus-icon{margin:8px auto; transform:rotate(90deg);}
+    .th-remix-header-inner{padding:28px 20px;}
+    .th-audio-player-large{padding:24px 20px;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+  <div class="th-remix-header">
+    <div class="th-remix-header-bg"></div>
+    <div class="th-remix-header-inner">
+      <div class="th-remix-success-icon">
+        <i class="bi bi-check-lg"></i>
+      </div>
+      <div class="th-remix-header-text">
+        <h1>{% trans "تم إنشاء الريمكس بنجاح!" %}</h1>
+        <p>{% trans "يمكنك الآن الاستماع إلى الريمكس وتحميله" %}</p>
+      </div>
+    </div>
+  </div>
+  
+  {% if project %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% trans "الأغاني المستخدمة" %}</h2>
+    
+    <div class="th-songs-container">
+      {% if song1 %}
+      <div class="th-song-card">
+        <div class="th-song-card-cover">
+          {% if song1.cover_image %}
+            <img src="{{ song1.cover_image.url }}" alt="{{ song1.title_ar }}">
+          {% elif song1.album.cover_image %}
+            <img src="{{ song1.album.cover_image.url }}" alt="{{ song1.title_ar }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-song-card-info">
+          <div class="th-song-card-title">{{ song1.title_ar }}</div>
+          <div class="th-song-card-meta">{% trans "الخلفية الموسيقية" %}</div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <div class="th-plus-icon">
+        <i class="bi bi-plus-lg"></i>
+      </div>
+      
+      {% if song2 %}
+      <div class="th-song-card">
+        <div class="th-song-card-cover">
+          {% if song2.cover_image %}
+            <img src="{{ song2.cover_image.url }}" alt="{{ song2.title_ar }}">
+          {% elif song2.album.cover_image %}
+            <img src="{{ song2.album.cover_image.url }}" alt="{{ song2.title_ar }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-song-card-info">
+          <div class="th-song-card-title">{{ song2.title_ar }}</div>
+          <div class="th-song-card-meta">{% trans "الصوت" %}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  
+  {% if output %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% trans "الريمكس" %}</h2>
+    
+    <div class="th-audio-player-large">
+      <div class="th-audio-player-inner">
+        <div class="d-flex align-items-center gap-4">
+          <button type="button" class="th-play-btn-large" id="audioPlayBtn" onclick="toggleAudio()">
+            <i class="bi bi-play-fill" id="playIcon"></i>
+          </button>
+          <div class="flex-1">
+            <div class="th-song-card-title">{{ project.name }}</div>
+            <div class="th-song-card-meta">
+              {% trans "المدة" %}: {{ output.duration|floatformat:0 }} {% trans "ثانية" %} | 
+              {% trans "الحجم" %}: {{ output.file_size|filesizeformat }} |
+              {{ output.format|upper }}
+            </div>
+          </div>
+          <a href="{{ output.output_file.url }}" download class="th-download-btn">
+            <i class="bi bi-download"></i> {% trans "تحميل" %}
+          </a>
+        </div>
+        
+        <div class="th-progress-container-large" id="progressContainer">
+          <input type="range" id="progressSlider" min="0" max="100" value="0" step="0.1" style="width: 100%; height: 100%; opacity: 0; position: absolute; top: 0; left: 0; cursor: pointer;">
+          <div class="th-progress-bar-large" id="progressBar"></div>
+        </div>
+        
+        <div class="th-time-display-large">
+          <span id="currentTime">0:00</span>
+          <span id="totalTime">--:--</span>
+        </div>
+        
+        <div class="th-waveform-large paused" id="waveform">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <audio id="audioElement" src="{{ output.output_file.url }}" preload="auto"></audio>
+    </div>
+  </div>
+  {% endif %}
+  
+  <div class="th-section">
+    <div class="text-center">
+      <a href="{% url 'website_app:song-detail' song1.slug %}" class="btn btn-outline-primary" style="border:1px solid rgba(99,102,241,0.3); color:var(--text); background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(168,85,247,0.05) 100%); padding:12px 28px; border-radius:12px; font-weight:600; transition:all .3s cubic-bezier(.4,0,.2,1);">
+        <i class="bi bi-arrow-right"></i> {% trans "العودة للأغنية" %}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const audio = document.getElementById('audioElement');
+const playBtn = document.getElementById('audioPlayBtn');
+const playIcon = document.getElementById('playIcon');
+const progressBar = document.getElementById('progressBar');
+const progressContainer = document.getElementById('progressContainer');
+const progressSlider = document.getElementById('progressSlider');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
+const waveform = document.getElementById('waveform');
+
+let isPlaying = false;
+
+function toggleAudio() {
+  if (isPlaying) {
+    audio.pause();
+    playIcon.className = 'bi bi-play-fill';
+    playBtn.classList.remove('playing');
+    waveform.classList.add('paused');
+  } else {
+    audio.play();
+    playIcon.className = 'bi bi-pause-fill';
+    playBtn.classList.add('playing');
+    waveform.classList.remove('paused');
+  }
+  isPlaying = !isPlaying;
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateProgress() {
+  const progress = (audio.currentTime / audio.duration) * 100;
+  progressBar.style.width = `${progress}%`;
+  progressSlider.value = progress;
+  currentTimeEl.textContent = formatTime(audio.currentTime);
+}
+
+function seekAudio(e) {
+  const percentage = parseFloat(e.target.value);
+  
+  if (!audio.duration || isNaN(audio.duration)) {
+    return;
+  }
+  
+  const wasPlaying = !audio.paused;
+  const newTime = (percentage / 100) * audio.duration;
+  
+  audio.pause();
+  audio.currentTime = newTime;
+  
+  setTimeout(() => {
+    if (wasPlaying) {
+      audio.play();
+    }
+  }, 100);
+}
+
+audio.addEventListener('timeupdate', updateProgress);
+audio.addEventListener('loadedmetadata', () => {
+  totalTimeEl.textContent = formatTime(audio.duration);
+});
+audio.addEventListener('ended', () => {
+  isPlaying = false;
+  playIcon.className = 'bi bi-play-fill';
+  playBtn.classList.remove('playing');
+  waveform.classList.add('paused');
+});
+
+if (progressSlider) {
+  progressSlider.addEventListener('input', seekAudio);
+}
+</script>
+{% endblock %}

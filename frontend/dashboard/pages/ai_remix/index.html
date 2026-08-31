@@ -1,0 +1,832 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "AI Remix Generator" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-music"></i> {% trans "AI Remix Generator" %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="remixTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects" type="button" role="tab">
+                                <i class="fas fa-folder"></i> {% trans "Projects" %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sources-tab" data-bs-toggle="tab" data-bs-target="#sources" type="button" role="tab">
+                                <i class="fas fa-file-audio"></i> {% trans "Audio Sources" %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
+                                <i class="fas fa-plus-circle"></i> {% trans "Create Remix" %}
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="remixTabsContent">
+                        <!-- Projects Tab -->
+                        <div class="tab-pane fade show active" id="projects" role="tabpanel">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>{% trans "Remix Projects" %}</h5>
+                                <button class="btn btn-primary" onclick="showCreateProjectModal()">
+                                    <i class="fas fa-plus"></i> {% trans "New Project" %}
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="projectsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Name" %}</th>
+                                            <th>{% trans "Status" %}</th>
+                                            <th>{% trans "Target BPM" %}</th>
+                                            <th>{% trans "Target Key" %}</th>
+                                            <th>{% trans "Created" %}</th>
+                                            <th>{% trans "Actions" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="projectsTableBody">
+                                        <!-- Projects will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Audio Sources Tab -->
+                        <div class="tab-pane fade" id="sources" role="tabpanel">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>{% trans "Audio Sources" %}</h5>
+                                <button class="btn btn-primary" onclick="showUploadModal()">
+                                    <i class="fas fa-upload"></i> {% trans "Upload Audio" %}
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="sourcesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Name" %}</th>
+                                            <th>{% trans "Type" %}</th>
+                                            <th>{% trans "BPM" %}</th>
+                                            <th>{% trans "Key" %}</th>
+                                            <th>{% trans "Duration" %}</th>
+                                            <th>{% trans "Uploaded" %}</th>
+                                            <th>{% trans "Actions" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sourcesTableBody">
+                                        <!-- Sources will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Create Remix Tab -->
+                        <div class="tab-pane fade" id="create" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>{% trans "Project Settings" %}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="remixForm">
+                                                <div class="mb-3">
+                                                    <label class="form-label">{% trans "Select Project" %}</label>
+                                                    <select class="form-select" id="projectSelect" required>
+                                                        <option value="">{% trans "Choose a project..." %}</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">{% trans "Target BPM" %}</label>
+                                                    <input type="number" class="form-control" id="targetBpm" placeholder="e.g., 120">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">{% trans "Target Key" %}</label>
+                                                    <select class="form-select" id="targetKey">
+                                                        <option value="">{% trans "Keep original" %}</option>
+                                                        <option value="C maj">C maj</option>
+                                                        <option value="C min">C min</option>
+                                                        <option value="D maj">D maj</option>
+                                                        <option value="D min">D min</option>
+                                                        <option value="E maj">E maj</option>
+                                                        <option value="E min">E min</option>
+                                                        <option value="F maj">F maj</option>
+                                                        <option value="F min">F min</option>
+                                                        <option value="G maj">G maj</option>
+                                                        <option value="G min">G min</option>
+                                                        <option value="A maj">A maj</option>
+                                                        <option value="A min">A min</option>
+                                                        <option value="B maj">B maj</option>
+                                                        <option value="B min">B min</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="autoArrange">
+                                                        <label class="form-check-label" for="autoArrange">
+                                                            {% trans "Auto Arrange Sources" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="intelligentMix">
+                                                        <label class="form-check-label" for="intelligentMix">
+                                                            {% trans "Intelligent Mix" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <hr>
+                                                
+                                                <h6>{% trans "Audio Effects" %}</h6>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="useCompressor">
+                                                        <label class="form-check-label" for="useCompressor">
+                                                            {% trans "Compressor" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="useReverb">
+                                                        <label class="form-check-label" for="useReverb">
+                                                            {% trans "Reverb" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="useDelay">
+                                                        <label class="form-check-label" for="useDelay">
+                                                            {% trans "Delay" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="useLimiter">
+                                                        <label class="form-check-label" for="useLimiter">
+                                                            {% trans "Limiter" %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="d-grid gap-2">
+                                                    <button type="button" class="btn btn-success" onclick="generateRemix()">
+                                                        <i class="fas fa-magic"></i> {% trans "Generate Remix" %}
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary" onclick="generateNeuralRemix()">
+                                                        <i class="fas fa-brain"></i> {% trans "Neural AI Remix" %}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>{% trans "Project Sources" %}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="projectSources">
+                                                <p class="text-muted">{% trans "Select a project to view its sources" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h5>{% trans "Output" %}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="remixOutput">
+                                                <p class="text-muted">{% trans "Generated remix will appear here" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Upload Audio Source" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Name" %}</label>
+                        <input type="text" class="form-control" id="sourceName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Audio File" %}</label>
+                        <input type="file" class="form-control" id="audioFile" accept=".mp3,.wav,.flac,.m4a,.ogg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Source Type" %}</label>
+                        <select class="form-select" id="sourceType">
+                            <option value="OTHER">Other</option>
+                            <option value="VOCAL">Vocal Track</option>
+                            <option value="INSTRUMENTAL">Instrumental</option>
+                            <option value="DRUMS">Drums</option>
+                            <option value="BASS">Bass</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="uploadAudio()">{% trans "Upload" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Project Modal -->
+<div class="modal fade" id="createProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Create New Project" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createProjectForm">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Project Name" %}</label>
+                        <input type="text" class="form-control" id="projectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Description" %}</label>
+                        <textarea class="form-control" id="projectDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Target BPM" %}</label>
+                        <input type="number" class="form-control" id="projectTargetBpm" placeholder="e.g., 120">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Target Key" %}</label>
+                        <select class="form-select" id="projectTargetKey">
+                            <option value="">{% trans "Not specified" %}</option>
+                            <option value="C maj">C maj</option>
+                            <option value="C min">C min</option>
+                            <option value="D maj">D maj</option>
+                            <option value="D min">D min</option>
+                            <option value="E maj">E maj</option>
+                            <option value="E min">E min</option>
+                            <option value="F maj">F maj</option>
+                            <option value="F min">F min</option>
+                            <option value="G maj">G maj</option>
+                            <option value="G min">G min</option>
+                            <option value="A maj">A maj</option>
+                            <option value="A min">A min</option>
+                            <option value="B maj">B maj</option>
+                            <option value="B min">B min</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="createProject()">{% trans "Create" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Source to Project Modal -->
+<div class="modal fade" id="addSourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Add Source to Project" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSourceForm">
+                    <input type="hidden" id="addSourceProjectId">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Audio Source" %}</label>
+                        <select class="form-select" id="addSourceSelect" required>
+                            <option value="">{% trans "Choose a source..." %}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Volume" %}</label>
+                        <input type="range" class="form-range" id="addSourceVolume" min="0" max="2" step="0.1" value="1">
+                        <span id="volumeValue">1.0</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Start Time (seconds)" %}</label>
+                        <input type="number" class="form-control" id="addSourceStartTime" value="0" min="0" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "End Time (seconds)" %}</label>
+                        <input type="number" class="form-control" id="addSourceEndTime" placeholder="Optional" min="0" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Fade In (seconds)" %}</label>
+                        <input type="number" class="form-control" id="addSourceFadeIn" value="0" min="0" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Fade Out (seconds)" %}</label>
+                        <input type="number" class="form-control" id="addSourceFadeOut" value="0" min="0" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="addSourceLoop">
+                            <label class="form-check-label" for="addSourceLoop">
+                                {% trans "Loop" %}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Order" %}</label>
+                        <input type="number" class="form-control" id="addSourceOrder" value="0" min="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="addSourceToProject()">{% trans "Add" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api/v1/ai-remix';
+
+// Load projects on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+    loadSources();
+    loadProjectsSelect();
+    
+    // Volume slider update
+    document.getElementById('addSourceVolume').addEventListener('input', function() {
+        document.getElementById('volumeValue').textContent = this.value;
+    });
+    
+    // Project select change
+    document.getElementById('projectSelect').addEventListener('change', function() {
+        if (this.value) {
+            loadProjectSources(this.value);
+        }
+    });
+});
+
+async function loadProjects() {
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/`);
+        const data = await response.json();
+        
+        const tbody = document.getElementById('projectsTableBody');
+        tbody.innerHTML = '';
+        
+        data.results.forEach(project => {
+            const statusClass = getStatusClass(project.status);
+            const row = `
+                <tr>
+                    <td>${project.name}</td>
+                    <td><span class="badge ${statusClass}">${project.status}</span></td>
+                    <td>${project.target_bpm || '-'}</td>
+                    <td>${project.target_key || '-'}</td>
+                    <td>${new Date(project.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewProject(${project.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="editProject(${project.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProject(${project.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+async function loadSources() {
+    try {
+        const response = await fetch(`${API_BASE}/audio-sources/`);
+        const data = await response.json();
+        
+        const tbody = document.getElementById('sourcesTableBody');
+        tbody.innerHTML = '';
+        
+        data.results.forEach(source => {
+            const row = `
+                <tr>
+                    <td>${source.name}</td>
+                    <td>${source.source_type}</td>
+                    <td>${source.bpm || '-'}</td>
+                    <td>${source.key || '-'}</td>
+                    <td>${source.duration ? Math.round(source.duration) + 's' : '-'}</td>
+                    <td>${new Date(source.uploaded_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="analyzeSource(${source.id})">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSource(${source.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error('Error loading sources:', error);
+    }
+}
+
+async function loadProjectsSelect() {
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/`);
+        const data = await response.json();
+        
+        const select = document.getElementById('projectSelect');
+        select.innerHTML = '<option value="">{% trans "Choose a project..." %}</option>';
+        
+        data.results.forEach(project => {
+            select.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading projects select:', error);
+    }
+}
+
+async function loadProjectSources(projectId) {
+    try {
+        const response = await fetch(`${API_BASE}/remix-sources/?project_id=${projectId}`);
+        const data = await response.json();
+        
+        const container = document.getElementById('projectSources');
+        
+        if (data.results.length === 0) {
+            container.innerHTML = '<p class="text-muted">{% trans "No sources in this project" %}</p>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        data.results.forEach(source => {
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${source.audio_source_details.name}</h6>
+                            <small class="text-muted">
+                                Volume: ${source.volume} | 
+                                Start: ${source.start_time}s | 
+                                Fade In: ${source.fade_in}s | 
+                                Fade Out: ${source.fade_out}s
+                            </small>
+                        </div>
+                        <button class="btn btn-sm btn-danger" onclick="removeSourceFromProject(${projectId}, ${source.audio_source})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        html += '<button class="btn btn-primary mt-3" onclick="showAddSourceModal(' + projectId + ')">{% trans "Add Source" %}</button>';
+        
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading project sources:', error);
+    }
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'COMPLETED': return 'bg-success';
+        case 'PROCESSING': return 'bg-warning';
+        case 'FAILED': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+
+function showUploadModal() {
+    new bootstrap.Modal(document.getElementById('uploadModal')).show();
+}
+
+function showCreateProjectModal() {
+    new bootstrap.Modal(document.getElementById('createProjectModal')).show();
+}
+
+function showAddSourceModal(projectId) {
+    document.getElementById('addSourceProjectId').value = projectId;
+    loadSourcesSelect();
+    new bootstrap.Modal(document.getElementById('addSourceModal')).show();
+}
+
+async function loadSourcesSelect() {
+    try {
+        const response = await fetch(`${API_BASE}/audio-sources/`);
+        const data = await response.json();
+        
+        const select = document.getElementById('addSourceSelect');
+        select.innerHTML = '<option value="">{% trans "Choose a source..." %}</option>';
+        
+        data.results.forEach(source => {
+            select.innerHTML += `<option value="${source.id}">${source.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading sources select:', error);
+    }
+}
+
+async function uploadAudio() {
+    const formData = new FormData();
+    formData.append('name', document.getElementById('sourceName').value);
+    formData.append('audio_file', document.getElementById('audioFile').files[0]);
+    formData.append('source_type', document.getElementById('sourceType').value);
+    
+    try {
+        const response = await fetch(`${API_BASE}/audio-sources/`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+            loadSources();
+            alert('{% trans "Audio uploaded successfully!" %}');
+        } else {
+            alert('{% trans "Error uploading audio" %}');
+        }
+    } catch (error) {
+        console.error('Error uploading audio:', error);
+        alert('{% trans "Error uploading audio" %}');
+    }
+}
+
+async function createProject() {
+    const data = {
+        name: document.getElementById('projectName').value,
+        description: document.getElementById('projectDescription').value,
+        target_bpm: document.getElementById('projectTargetBpm').value || null,
+        target_key: document.getElementById('projectTargetKey').value || null
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('createProjectModal')).hide();
+            loadProjects();
+            loadProjectsSelect();
+            alert('{% trans "Project created successfully!" %}');
+        } else {
+            alert('{% trans "Error creating project" %}');
+        }
+    } catch (error) {
+        console.error('Error creating project:', error);
+        alert('{% trans "Error creating project" %}');
+    }
+}
+
+async function addSourceToProject() {
+    const projectId = document.getElementById('addSourceProjectId').value;
+    const data = {
+        audio_source_id: document.getElementById('addSourceSelect').value,
+        volume: parseFloat(document.getElementById('addSourceVolume').value),
+        start_time: parseFloat(document.getElementById('addSourceStartTime').value),
+        end_time: document.getElementById('addSourceEndTime').value || null,
+        fade_in: parseFloat(document.getElementById('addSourceFadeIn').value),
+        fade_out: parseFloat(document.getElementById('addSourceFadeOut').value),
+        is_loop: document.getElementById('addSourceLoop').checked,
+        order: parseInt(document.getElementById('addSourceOrder').value)
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/${projectId}/add_source/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('addSourceModal')).hide();
+            loadProjectSources(projectId);
+            alert('{% trans "Source added successfully!" %}');
+        } else {
+            alert('{% trans "Error adding source" %}');
+        }
+    } catch (error) {
+        console.error('Error adding source:', error);
+        alert('{% trans "Error adding source" %}');
+    }
+}
+
+async function removeSourceFromProject(projectId, sourceId) {
+    if (!confirm('{% trans "Are you sure you want to remove this source?" %}')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/${projectId}/remove_source/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audio_source_id: sourceId })
+        });
+        
+        if (response.ok) {
+            loadProjectSources(projectId);
+        } else {
+            alert('{% trans "Error removing source" %}');
+        }
+    } catch (error) {
+        console.error('Error removing source:', error);
+    }
+}
+
+async function generateRemix() {
+    const projectId = document.getElementById('projectSelect').value;
+    if (!projectId) {
+        alert('{% trans "Please select a project" %}');
+        return;
+    }
+    
+    const effects = {};
+    if (document.getElementById('useCompressor').checked) effects.compressor = true;
+    if (document.getElementById('useReverb').checked) effects.reverb = true;
+    if (document.getElementById('useDelay').checked) effects.delay = true;
+    if (document.getElementById('useLimiter').checked) effects.limiter = true;
+    
+    const data = {
+        project_id: parseInt(projectId),
+        target_bpm: document.getElementById('targetBpm').value || null,
+        target_key: document.getElementById('targetKey').value || null,
+        effects: Object.keys(effects).length > 0 ? effects : null,
+        auto_arrange: document.getElementById('autoArrange').checked,
+        intelligent_mix: document.getElementById('intelligentMix').checked
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/${projectId}/generate_remix/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            displayOutput(result);
+            alert('{% trans "Remix generated successfully!" %}');
+        } else {
+            const error = await response.json();
+            alert('{% trans "Error generating remix: " %}' + error.message);
+        }
+    } catch (error) {
+        console.error('Error generating remix:', error);
+        alert('{% trans "Error generating remix" %}');
+    }
+}
+
+async function generateNeuralRemix() {
+    const projectId = document.getElementById('projectSelect').value;
+    if (!projectId) {
+        alert('{% trans "Please select a project" %}');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/${projectId}/neural_generate/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            displayOutput(result);
+            alert('{% trans "Neural remix generated successfully!" %}');
+        } else {
+            const error = await response.json();
+            alert('{% trans "Error generating neural remix: " %}' + error.message);
+        }
+    } catch (error) {
+        console.error('Error generating neural remix:', error);
+        alert('{% trans "Error generating neural remix" %}');
+    }
+}
+
+function displayOutput(output) {
+    const container = document.getElementById('remixOutput');
+    container.innerHTML = `
+        <div class="alert alert-success">
+            <h6>{% trans "Remix Generated!" %}</h6>
+            <p>{% trans "Duration" %}: ${Math.round(output.duration)}s</p>
+            <p>{% trans "Format" %}: ${output.format}</p>
+            <audio controls class="w-100 mt-2">
+                <source src="${output.output_file}" type="audio/wav">
+            </audio>
+            <a href="${output.output_file}" download class="btn btn-primary mt-2">
+                <i class="fas fa-download"></i> {% trans "Download" %}
+            </a>
+        </div>
+    `;
+}
+
+async function analyzeSource(sourceId) {
+    try {
+        const response = await fetch(`${API_BASE}/audio-sources/${sourceId}/analyze/`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            alert(`
+BPM: ${result.analysis.bpm}
+Key: ${result.analysis.key}
+Duration: ${Math.round(result.analysis.duration)}s
+Spectral Centroid: ${result.analysis.spectral_centroid.toFixed(2)}
+            `);
+        } else {
+            alert('{% trans "Error analyzing source" %}');
+        }
+    } catch (error) {
+        console.error('Error analyzing source:', error);
+    }
+}
+
+async function deleteProject(projectId) {
+    if (!confirm('{% trans "Are you sure you want to delete this project?" %}')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/remix-projects/${projectId}/`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadProjects();
+            loadProjectsSelect();
+        } else {
+            alert('{% trans "Error deleting project" %}');
+        }
+    } catch (error) {
+        console.error('Error deleting project:', error);
+    }
+}
+
+async function deleteSource(sourceId) {
+    if (!confirm('{% trans "Are you sure you want to delete this source?" %}')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/audio-sources/${sourceId}/`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadSources();
+        } else {
+            alert('{% trans "Error deleting source" %}');
+        }
+    } catch (error) {
+        console.error('Error deleting source:', error);
+    }
+}
+</script>
+{% endblock %}
