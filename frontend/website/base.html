@@ -358,6 +358,17 @@
       }
     }
 
+    function getCSRFToken() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+          return decodeURIComponent(value);
+        }
+      }
+      return '';
+    }
+
     // Global Audio Player
     var globalAudio = null;
     var currentPlayBtn = null;
@@ -394,7 +405,7 @@
       if (title) {
         document.getElementById('playerTitle').textContent = title;
       }
-      
+
       // Handle artist and album
       if (artist) {
         document.getElementById('playerArtist').textContent = artist;
@@ -402,19 +413,32 @@
       } else {
         document.getElementById('playerArtist').style.display = 'none';
       }
-      
+
       if (album) {
         document.getElementById('playerAlbum').textContent = album;
         document.getElementById('playerAlbum').style.display = 'block';
       } else {
         document.getElementById('playerAlbum').style.display = 'none';
       }
-      
+
       // For Mix - show songs count instead of album
       if (isMix && songs) {
         document.getElementById('playerAlbum').textContent = songs;
         document.getElementById('playerAlbum').style.display = 'block';
       }
+
+      // Store basic song data for player page (don't overwrite if more detailed data exists)
+      const existingData = JSON.parse(localStorage.getItem('currentSongData') || '{}');
+      const songData = {
+        ...existingData, // Preserve existing detailed data
+        title: title || '',
+        artist: artist || '',
+        album: album || '',
+        image: image && image[0] ? image[0] : '',
+        songId: songId || null,
+        url: url || ''
+      };
+      localStorage.setItem('currentSongData', JSON.stringify(songData));
       
       // Check if song is liked
       if (songId) {
@@ -545,6 +569,11 @@
       }
     }
 
+    function openPlayerPage() {
+      // Navigate to player page
+      window.location.href = '/player/';
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       var isRtl = document.documentElement.getAttribute('dir') === 'rtl';
       document.querySelectorAll('.th-slider-arrow').forEach(function (btn) {
@@ -598,7 +627,7 @@
 
       <!-- Middle Controls -->
       <div class="player-middle-controls" style="flex:1; display:flex; align-items:center; gap:12px; min-width:0;">
-        <div id="playerImage" style="width:56px; height:56px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#1e2130; display:flex; align-items:center; justify-content:center;">
+        <div id="playerImage" style="width:56px; height:56px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#1e2130; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="openPlayerPage()">
           <img id="playerImageImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
           <i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px;" id="playerImageIcon"></i>
         </div>
@@ -698,6 +727,11 @@
     let previousVolume = 1;
     let currentSongId = null;
     let isLiked = false;
+
+    // Function to safely set currentSongId (called from detail pages)
+    function setCurrentSongId(songId) {
+      currentSongId = songId;
+    }
 
     function toggleGlobalAudio() {
       if (globalAudio) {

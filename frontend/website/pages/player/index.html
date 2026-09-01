@@ -1,0 +1,652 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+
+{% block title %}{% translate "المشغل" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .player-page {
+    display: flex;
+    gap: 32px;
+    padding: 24px;
+    min-height: calc(100vh - 100px);
+  }
+
+  .player-sidebar {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .player-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .player-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .player-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .player-info h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .player-info .artist {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .player-info .album {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .player-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .player-tab-btn {
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .player-tab-btn:hover {
+    color: var(--text);
+    background: var(--card-hover);
+  }
+
+  .player-tab-btn.active {
+    color: var(--accent);
+    background: var(--card);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .player-tab-content {
+    display: none;
+  }
+
+  .player-tab-content.active {
+    display: block;
+  }
+
+  .th-tracklist {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  .th-track-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s ease;
+  }
+
+  .th-track-row:hover {
+    background: var(--card-hover);
+  }
+
+  .th-track-num {
+    width: 26px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .th-track-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #1e2130;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .th-track-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .th-track-title {
+    flex: 1;
+    font-weight: 700;
+    font-size: 15px;
+    min-width: 0;
+  }
+
+  .th-track-duration {
+    color: var(--muted);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .th-track-arrow {
+    color: var(--muted);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .th-track-row:hover .th-track-arrow {
+    color: var(--accent);
+  }
+
+  .credits-wrap {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+
+  .credit-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--card);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    min-width: 200px;
+    transition: background 0.2s ease;
+  }
+
+  .credit-card:hover {
+    background: var(--card-hover);
+  }
+
+  .credit-card img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .credit-avatar-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .credit-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .credit-role {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .streaming-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .streaming-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--card);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.2s ease;
+  }
+
+  .streaming-link:hover {
+    background: var(--card-hover);
+  }
+
+  .streaming-link img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .th-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+  }
+
+  .lyric-line {
+    position: relative;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .lyric-line:hover {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+  }
+
+  .timestamp-badge {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+
+  .music-segment {
+    color: #a78bfa;
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .silence-segment {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="player-page">
+  <!-- Sidebar: Song Info -->
+  <div class="player-sidebar">
+    <div class="player-cover">
+      <img id="playerPageCover" src="" alt="">
+    </div>
+    <div class="player-info">
+      <h1 id="playerPageTitle"></h1>
+      <div class="artist" id="playerPageArtist"></div>
+      <div class="album" id="playerPageAlbum"></div>
+    </div>
+  </div>
+
+  <!-- Main Content: Tabs -->
+  <div class="player-main">
+    <div class="player-tabs">
+      <button class="player-tab-btn active" data-tab="songs" onclick="switchPlayerTab('songs')">{% translate "أغاني أخرى" %}</button>
+      <button class="player-tab-btn" data-tab="lyrics" onclick="switchPlayerTab('lyrics')">{% translate "الكلمات" %}</button>
+      <button class="player-tab-btn" data-tab="credits" onclick="switchPlayerTab('credits')">{% translate "فريق العمل" %}</button>
+      <button class="player-tab-btn" data-tab="platforms" onclick="switchPlayerTab('platforms')">{% translate "المنصات" %}</button>
+    </div>
+
+    <!-- Tab Contents -->
+    <div id="tab-songs" class="player-tab-content active">
+      <div id="otherSongsContainer">
+        <p class="th-empty">{% translate "لا توجد أغاني أخرى" %}</p>
+      </div>
+    </div>
+
+    <div id="tab-lyrics" class="player-tab-content">
+      <div id="lyricsContainer">
+        <p class="th-empty">{% translate "لا توجد كلمات متاحة" %}</p>
+      </div>
+    </div>
+
+    <div id="tab-credits" class="player-tab-content">
+      <div id="creditsContainer">
+        <p class="th-empty">{% translate "لا توجد معلومات عن فريق العمل" %}</p>
+      </div>
+    </div>
+
+    <div id="tab-platforms" class="player-tab-content">
+      <div id="platformsContainer">
+        <p class="th-empty">{% translate "لا توجد روابط منصات متاحة" %}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get current song data from localStorage
+let currentSongData = JSON.parse(localStorage.getItem('currentSongData') || '{}');
+
+// Ensure player bar is always visible on this page
+document.addEventListener('DOMContentLoaded', function() {
+  const playerBar = document.getElementById('globalAudioPlayer');
+  if (playerBar) {
+    playerBar.style.display = 'block';
+  }
+
+  // Load song data from localStorage
+  if (currentSongData.title) {
+    loadPlayerPageData();
+    updatePlayerBar();
+  } else {
+    // No song data available - redirect to songs page
+    window.location.href = '/songs/';
+  }
+});
+
+function updatePlayerBar() {
+  // Update player bar elements directly
+  if (currentSongData.title) {
+    document.getElementById('playerTitle').textContent = currentSongData.title;
+  }
+  if (currentSongData.artist) {
+    document.getElementById('playerArtist').textContent = currentSongData.artist;
+    document.getElementById('playerArtist').style.display = 'block';
+  }
+  if (currentSongData.album) {
+    document.getElementById('playerAlbum').textContent = currentSongData.album;
+    document.getElementById('playerAlbum').style.display = 'block';
+  }
+  if (currentSongData.image) {
+    const playerImageImg = document.getElementById('playerImageImg');
+    const playerImageIcon = document.getElementById('playerImageIcon');
+    playerImageImg.src = currentSongData.image;
+    playerImageImg.style.display = 'block';
+    playerImageIcon.style.display = 'none';
+  }
+
+  // Restore audio if URL is available
+  if (currentSongData.url) {
+    const audio = document.getElementById('globalAudioElement');
+    if (audio && audio.src !== currentSongData.url) {
+      audio.src = currentSongData.url;
+      // Auto-play the song
+      audio.play().then(() => {
+        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>';
+      }).catch(error => {
+        console.log('Auto-play prevented by browser:', error);
+        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+      });
+    }
+  }
+}
+
+function loadPlayerPageData() {
+  console.log('Loading player page data:', currentSongData);
+
+  if (currentSongData.title) {
+    document.getElementById('playerPageTitle').textContent = currentSongData.title;
+  }
+  if (currentSongData.artist) {
+    document.getElementById('playerPageArtist').textContent = currentSongData.artist;
+  }
+  if (currentSongData.album) {
+    document.getElementById('playerPageAlbum').textContent = currentSongData.album;
+  }
+  if (currentSongData.image) {
+    document.getElementById('playerPageCover').src = currentSongData.image;
+  }
+
+  // Load other songs if available
+  if (currentSongData.otherSongs && currentSongData.otherSongs.length > 0) {
+    console.log('Loading other songs:', currentSongData.otherSongs);
+    loadOtherSongs(currentSongData.otherSongs, currentSongData.songId);
+  } else {
+    console.log('No other songs found in localStorage, will fetch from API if songId available');
+    // Fetch from API if songId is available
+    if (currentSongData.songId) {
+      fetchSongDataFromAPI(currentSongData.songId);
+    }
+  }
+
+  // Also fetch from API if image is missing
+  if (!currentSongData.image && currentSongData.songId) {
+    console.log('Image is missing, fetching from API');
+    fetchSongDataFromAPI(currentSongData.songId);
+  }
+
+  // Load lyrics if available
+  if (currentSongData.songId) {
+    loadLyrics(currentSongData.songId);
+  }
+
+  // Load credits if available
+  if (currentSongData.credits && currentSongData.credits.length > 0) {
+    loadCredits(currentSongData.credits);
+  } else {
+    console.log('No credits found in localStorage');
+  }
+
+  // Load platforms if available
+  if (currentSongData.platforms && currentSongData.platforms.length > 0) {
+    loadPlatforms(currentSongData.platforms);
+  } else {
+    console.log('No platforms found in localStorage');
+  }
+}
+
+function fetchSongDataFromAPI(songId) {
+  console.log('Fetching song data from API for songId:', songId);
+
+  const url = `/player/song-data/?song_id=${songId}&current_song_id=${currentSongData.songId}`;
+
+  fetch(url)
+  .then(response => response.json())
+  .then(data => {
+    console.log('Received song data from API:', data);
+    console.log('Image from API:', data.image);
+    console.log('First other song image:', data.otherSongs[0]?.image);
+
+    if (data.error) {
+      console.error('Error fetching song data:', data.error);
+      return;
+    }
+
+    // Update currentSongData with API data
+    currentSongData = {
+      ...currentSongData,
+      ...data
+    };
+    localStorage.setItem('currentSongData', JSON.stringify(currentSongData));
+
+    // Reload the page data with the new data
+    loadPlayerPageData();
+    updatePlayerBar();
+
+    // Load the data
+    if (data.otherSongs && data.otherSongs.length > 0) {
+      loadOtherSongs(data.otherSongs, data.currentSongId);
+    }
+    if (data.credits && data.credits.length > 0) {
+      loadCredits(data.credits);
+    }
+    if (data.platforms && data.platforms.length > 0) {
+      loadPlatforms(data.platforms);
+    }
+  })
+  .catch(error => {
+    console.error('Error fetching song data:', error);
+  });
+}
+
+function getCSRFToken() {
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
+  return cookieValue || '';
+}
+
+function loadOtherSongs(songs, currentSongId = null) {
+  const container = document.getElementById('otherSongsContainer');
+  container.innerHTML = '<div class="th-tracklist">' + songs.map((song, index) => `
+    <a href="${song.link}" class="th-track-row">
+      <span class="th-track-num">${index + 1}</span>
+      <span class="th-track-thumb">
+        ${song.image ? `<img src="${song.image}" alt="">` : '<i class="bi bi-music-note-beamed" style="font-size:16px;"></i>'}
+      </span>
+      <span class="th-track-title">${song.title}</span>
+      ${song.duration ? `<span class="th-track-duration">${song.duration}</span>` : ''}
+      ${song.songId === currentSongId ? '<i class="bi bi-volume-up-fill" style="color:var(--accent); font-size:16px;"></i>' : '<i class="bi bi-chevron-left th-track-arrow"></i>'}
+    </a>
+  `).join('') + '</div>';
+}
+
+function loadLyrics(songId) {
+  const container = document.getElementById('lyricsContainer');
+  container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+  fetch(`/v1/music/songs/${songId}/lyrics-segments/`)
+    .then(response => response.json())
+    .then(data => {
+      if (!data.results || data.results.length === 0) {
+        container.innerHTML = '<p class="th-empty">{% translate "لا توجد كلمات متاحة" %}</p>';
+        return;
+      }
+
+      container.innerHTML = data.results.map(segment => {
+        let typeLabel = '';
+        let typeClass = '';
+        let icon = '';
+
+        if (segment.segment_type === 'LYRICS') {
+          typeLabel = segment.text || '';
+        } else if (segment.segment_type === 'MUSIC') {
+          typeClass = 'music-segment';
+          icon = '<i class="bi bi-music-note-beamed me-2"></i>';
+          typeLabel = '{% translate "موسيقى" %}';
+        } else {
+          typeClass = 'silence-segment';
+          icon = '<i class="bi bi-slash-circle me-2"></i>';
+          typeLabel = '{% translate "صمت" %}';
+        }
+
+        const startSeconds = parseFloat(segment.start_seconds);
+        const endSeconds = parseFloat(segment.end_seconds);
+        const startTime = formatTime(startSeconds);
+        const endTime = formatTime(endSeconds);
+
+        return `
+          <div class="lyric-line" data-start="${startSeconds}" data-end="${endSeconds}">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span class="timestamp-badge">${startTime} - ${endTime}</span>
+              <span class="${typeClass} flex-grow-1">${icon}${typeLabel}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers for seeking
+      container.querySelectorAll('.lyric-line').forEach(line => {
+        line.addEventListener('click', function() {
+          const start = parseFloat(this.dataset.start);
+          const audio = document.querySelector('audio');
+          if (audio) {
+            audio.currentTime = start;
+            if (audio.paused) {
+              audio.play();
+            }
+          }
+        });
+      });
+    })
+    .catch(error => {
+      console.error('Error loading lyrics:', error);
+      container.innerHTML = '<p class="th-empty">{% translate "حدث خطأ في تحميل الكلمات" %}</p>';
+    });
+}
+
+function loadCredits(credits) {
+  const container = document.getElementById('creditsContainer');
+  container.innerHTML = '<div class="credits-wrap">' + credits.map(credit => `
+    <a href="/people/${credit.personSlug}/" class="credit-card">
+      ${credit.personImage ? `<img src="${credit.personImage}" alt="${credit.personName}">` : `<div class="credit-avatar-fallback">${credit.personName.slice(0, 2)}</div>`}
+      <div>
+        <div class="credit-name">${credit.personName}</div>
+        <div class="credit-role">${credit.role}</div>
+      </div>
+    </a>
+  `).join('') + '</div>';
+}
+
+function loadPlatforms(platforms) {
+  const container = document.getElementById('platformsContainer');
+  container.innerHTML = '<div class="streaming-links">' + platforms.map(platform => `
+    <a href="${platform.url}" target="_blank" rel="noopener" class="streaming-link">
+      ${platform.logo ? `<img src="${platform.logo}" alt="">` : '<i class="bi bi-box-arrow-up-right"></i>'}
+      ${platform.name}
+    </a>
+  `).join('') + '</div>';
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function switchPlayerTab(tabName) {
+  // Hide all tab contents
+  document.querySelectorAll('.player-tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+
+  // Remove active class from all tab buttons
+  document.querySelectorAll('.player-tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  // Show selected tab content
+  document.getElementById('tab-' + tabName).classList.add('active');
+
+  // Add active class to selected tab button
+  document.querySelector(`.player-tab-btn[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', loadPlayerPageData);
+</script>
+{% endblock %}

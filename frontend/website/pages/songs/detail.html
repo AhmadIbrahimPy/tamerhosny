@@ -1,428 +1,1248 @@
 {% extends "website/base.html" %}
 {% load static i18n bilingual %}
+
 {% block title %}{{ song|localized_field:'title' }}{% endblock %}
 
 {% block extra_css %}
 <style>
-  .th-song-header{position:relative; overflow:hidden; border-radius:20px; margin-block:20px; background:var(--card);}
-  .th-song-header-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(50px) brightness(.45) saturate(1.3); transform:scale(1.25);}
-  .th-song-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
-  .th-song-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 5%, rgba(11,12,18,.55) 55%, rgba(11,12,18,.25) 100%);}
-  .th-song-header-inner{position:relative; z-index:1; display:grid; grid-template-columns: auto 1fr; gap:32px; align-items:center; padding:32px 28px;}
-  .th-song-cover{width:200px; height:200px; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); border:1px solid var(--border); background:#1e2130; flex-shrink:0;}
-  .th-song-cover img{width:100%; height:100%; object-fit:cover; display:block;}
-  .th-song-cover .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:48px;}
-  .th-song-meta{display:flex; flex-direction:column; gap:12px; min-width:0;}
-  .th-song-meta h1{font-size:28px; font-weight:900; margin:0; line-height:1.2;}
-  .th-song-meta p.th-meta{margin:0; font-size:15px; color:var(--muted); font-weight:500;}
-  .th-action-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px;}
-  .th-action-btn{display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s ease; border:none; flex-shrink:0;}
-  .th-action-btn.primary{background:linear-gradient(315deg, var(--accent) 0%, #ff6b6b 100%); color:#fff;}
-  .th-action-btn.primary:hover{transform:scale(1.02); box-shadow:0 4px 16px rgba(255,107,107,.3);}
-  .th-action-btn.secondary{background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text);}
-  .th-action-btn.secondary:hover{background:rgba(255,255,255,.12); border-color:var(--accent); color:var(--accent);}
-  .th-action-btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.1); color:var(--text);}
-  .th-action-btn.ghost:hover{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.2);}
-  .th-action-btn i{font-size:16px;}
-  .th-action-btn.liked{color:#ff4757;}
-  .th-action-btn.liked i{animation:heartBeat .3s ease-in-out;}
-  @keyframes heartBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.3);}}
-  .th-share-buttons{display:flex; gap:8px; flex-wrap:wrap;}
-  .th-singer-row{display:flex; flex-wrap:wrap; gap:8px;}
-  .th-singer-chip{display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); background:rgba(255,255,255,.08); border:1px solid var(--border); border-radius:999px; padding:6px 14px 6px 6px; font-weight:700; font-size:13px; transition:all .2s ease;}
-  .th-singer-chip:hover{border-color:var(--accent); color:var(--accent); background:rgba(255,255,255,.12);}
-  .th-singer-avatar{width:28px; height:28px; border-radius:50%; object-fit:cover;}
-  .th-singer-avatar-fallback{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:12px;}
-  .th-meta-row{display:flex; flex-wrap:wrap; gap:12px; align-items:center; font-size:14px; color:var(--muted);}
-  .th-meta-row i{margin-inline-end:6px; color:var(--accent);}
-  .th-meta-row a{color:var(--text); text-decoration:none; transition:color .2s ease;}
-  .th-meta-row a:hover{color:var(--accent);}
-  .th-badges-row{font-size:13px;}
-  .th-badge{display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap;}
-  .th-badge.gold{background:linear-gradient(135deg, rgba(255,193,7,.2) 0%, rgba(255,152,0,.2) 100%); color:#ffd700; border:1px solid rgba(255,193,7,.3);}
-  .th-badge.blue{background:linear-gradient(135deg, rgba(59,130,246,.2) 0%, rgba(37,99,235,.2) 100%); color:#60a5fa; border:1px solid rgba(59,130,246,.3);}
-  .th-badge.green{background:linear-gradient(135deg, rgba(34,197,94,.2) 0%, rgba(22,163,74,.2) 100%); color:#4ade80; border:1px solid rgba(34,197,94,.3);}
-  .th-badge.purple{background:linear-gradient(135deg, rgba(168,85,247,.2) 0%, rgba(147,51,234,.2) 100%); color:#c084fc; border:1px solid rgba(168,85,247,.3);}
-  .th-lyrics-card{position:relative; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:32px 28px 32px 40px; max-width:760px; margin-inline:auto;}
-  .th-lyrics-card::before{content:"\201C"; position:absolute; top:8px; inset-inline-start:16px; font-size:64px; font-family:Georgia, serif; color:var(--accent); opacity:.35; line-height:1;}
-  .th-lyrics-card p{position:relative; z-index:1; white-space:pre-line; line-height:2.2; font-size:16.5px;}
-  .th-cast-row{display:flex; gap:20px; overflow-x:auto; padding-block:6px 10px;}
-  .th-cast-item{flex:0 0 92px; text-align:center; text-decoration:none; color:var(--text);}
-  .th-cast-avatar{width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--border); margin-inline:auto; display:block;}
-  .th-cast-avatar-fallback{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:24px; margin-inline:auto;}
-  .th-cast-name{font-size:12.5px; font-weight:700; margin-top:8px;}
-  .th-cast-role{font-size:11px; color:var(--muted);}
-  .th-cast-item:hover .th-cast-avatar, .th-cast-item:hover .th-cast-avatar-fallback{border-color:var(--accent);}
+  :root {
+    --song-radius: 20px;
+    --song-gap: 20px;
+  }
 
-  /* Custom Audio Player - Compact */
-  .th-audio-player{position:relative; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-top:12px;}
-  .th-audio-player-inner{position:relative; z-index:1;}
-  .th-audio-controls{display:flex; align-items:center; gap:10px;}
-  .th-play-btn{width:40px; height:40px; border-radius:50%; background:linear-gradient(315deg, var(--accent) 0%, #ff6b6b 100%); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all .2s ease; flex-shrink:0;}
-  .th-play-btn:hover{transform:scale(1.05); box-shadow:0 4px 12px rgba(255,107,107,.3);}
-  .th-play-btn:active{transform:scale(.95);}
-  .th-play-btn.playing{background:linear-gradient(315deg, #ff6b6b 0%, var(--accent) 100%); animation:pulse 2s ease-in-out infinite;}
-  .th-remix-btn{display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; background:rgba(168,85,247,.15); border:1px solid rgba(168,85,247,.25); color:#c084fc; cursor:pointer; font-size:13px; font-weight:600; transition:all .2s ease; flex-shrink:0;}
-  .th-remix-btn i{font-size:14px;}
-  .th-remix-btn:hover{background:rgba(168,85,247,.25); border-color:rgba(168,85,247,.4); transform:scale(1.02);}
-  .th-remix-btn:active{transform:scale(.98);}
-  @keyframes pulse{0%,100%{box-shadow:0 4px 12px rgba(255,107,107,.2);}50%{box-shadow:0 4px 16px rgba(255,107,107,.3);}}
-  .th-audio-info{flex:1; min-width:0;}
-  .th-audio-title{font-size:14px; font-weight:600; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .th-audio-duration{font-size:11px; color:var(--muted);}
-  .th-progress-container{position:relative; height:5px; background:rgba(255,255,255,.06); border-radius:3px; cursor:pointer; overflow:hidden; margin-top:8px;}
-  .th-progress-bar{position:absolute; top:0; left:0; height:100%; background:linear-gradient(90deg, var(--accent) 0%, #ff6b6b 100%); border-radius:3px; width:0%; transition:width .1s linear;}
-  .th-progress-container:hover .th-progress-bar{background:linear-gradient(90deg, var(--accent) 0%, #ff6b6b 100%); box-shadow:0 0 8px rgba(255,107,107,.3);}
-  .th-time-display{display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--muted); font-weight:500;}
+  .song-detail-page {
+    padding-bottom: 64px;
+    color: var(--text);
+  }
+
+  .song-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-inline: 24px;
+  }
+
+  /* --- Hero Section --- */
+  .song-hero {
+    position: relative;
+    margin: 28px 0 36px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    background: var(--card);
+    isolation: isolate;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .song-hero-bg,
+  .song-hero-video {
+    position: absolute;
+    inset: -40px;
+    z-index: -3;
+    width: calc(100% + 80px);
+    height: calc(100% + 80px);
+    object-fit: cover;
+    filter: blur(50px) saturate(1.3) brightness(0.25);
+    transform: scale(1.1);
+  }
+
+  .song-hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(135deg, rgba(12, 14, 22, 0.94) 0%, rgba(12, 14, 22, 0.82) 100%);
+  }
+
+  .song-hero-inner {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+    padding: 40px;
+  }
+
+  /* حاوية عمود الصورة والإحصائيات معاً */
+  .song-hero-media {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 280px;
+  }
+
+  .song-cover {
+    position: relative;
+    width: 280px;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 22px;
+    background: var(--bg-2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  }
+
+  .song-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .song-cover-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25), transparent 70%);
+  }
+
+  .song-cover-fallback i {
+    font-size: 64px;
+    color: var(--accent);
+  }
+
+  /* --- Song Info & Meta --- */
+  .song-content {
+    min-width: 0;
+  }
+
+  .song-topline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .song-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    color: #ffd76a;
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .song-title {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+
+  .song-alt-title {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .song-artists {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .song-artist {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 6px;
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+    font-weight: 700;
+    transition: 0.2s ease;
+  }
+
+  .song-artist:hover {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--accent);
+  }
+
+  .song-artist img,
+  .song-artist-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .song-artist-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-2);
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .song-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    margin-bottom: 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .song-info-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .song-info-item i {
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  .song-info-item a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .song-info-item a:hover {
+    color: var(--accent);
+  }
+
+  /* --- Actions & Pills --- */
+  .song-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .song-pill {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .song-pill.blue { color: #72b7ff; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); }
+  .song-pill.green { color: #65e69a; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
+  .song-pill.purple { color: #d09aff; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); }
+
+  .song-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .song-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: 0.2s ease;
+  }
+
+  .song-action-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), #ff6b6b);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.25);
+  }
+  .song-action-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(255, 107, 107, 0.35);
+  }
+
+  .song-action-secondary {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .song-action-secondary:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .song-action-danger {
+    color: #ff6474;
+    border-color: rgba(255, 100, 116, 0.3);
+    background: rgba(255, 100, 116, 0.1);
+  }
+
+  .song-share {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .song-share-label {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .song-share-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--muted);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    transition: 0.2s;
+    text-decoration: none;
+  }
+  .song-share-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* --- Stats Bar (Under Cover) --- */
+  .song-hero-media .song-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+  }
+
+  .song-hero-media .song-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+  }
+
+  .song-hero-media .song-stat-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 14px;
+  }
+
+  .song-hero-media .song-stat-value {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .song-hero-media .song-stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    margin: 0;
+  }
+
+  /* --- Sections Layout --- */
+  .song-section {
+    margin-bottom: 36px;
+  }
+
+  .song-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .song-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 850;
+  }
+
+  .song-section-title i {
+    color: var(--accent);
+  }
+
+  .song-see-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .song-see-all:hover {
+    color: var(--accent);
+  }
+
+  /* --- Streaming Links --- */
+  .streaming-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .streaming-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    transition: 0.2s ease;
+  }
+  .streaming-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .streaming-link img {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    object-fit: contain;
+  }
+
+  /* --- Analysis Grid --- */
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .analysis-item {
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .analysis-item-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 16px;
+  }
+
+  .analysis-label {
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .analysis-value {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 850;
+  }
+
+  /* --- Lyrics Card --- */
+  .lyrics-card {
+    position: relative;
+    padding: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--song-radius);
+    background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.08), transparent 40%), var(--card);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+
+  .lyrics-text {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 2.4;
+    white-space: pre-line;
+    text-align: center;
+  }
+
+  /* --- Lyrics Modal --- */
+  #lyricsContainer {
+    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  }
+
+  .lyric-line {
+    position: relative;
+    border: 1px solid var(--border) !important;
+    background: var(--card) !important;
+    color: var(--text);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .lyric-line:hover {
+    border-color: var(--accent) !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+  }
+
+  .timestamp-badge {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6) !important;
+    color: white !important;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  }
+
+  .music-segment {
+    color: #a78bfa !important;
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .music-segment i {
+    color: #c4b5fd;
+    font-size: 1.1em;
+  }
+
+  .silence-segment {
+    color: #94a3b8 !important;
+    font-weight: 500;
+  }
+
+  .silence-segment i {
+    color: #64748b;
+    font-size: 1.1em;
+  }
+
+  /* --- Credits --- */
+  .credits-wrap {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+
+  .credit-card {
+    width: 110px;
+    min-width: 110px;
+    padding: 14px 10px;
+    text-align: center;
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--card);
+    transition: 0.2s ease;
+  }
+  .credit-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+  }
+
+  .credit-avatar,
+  .credit-avatar-fallback {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+  }
+
+  .credit-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-2);
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 900;
+  }
+
+  .credit-name {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .credit-role {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  /* --- Sliders --- */
+  .slider-wrap {
+    position: relative;
+  }
+
+  .slider-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .slider-track::-webkit-scrollbar { display: none; }
+
+  .slider-item {
+    flex: 0 0 190px;
+    width: 190px;
+  }
+
+  .slider-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text);
+    border: 1px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    transition: 0.2s;
+  }
+  .slider-control:hover { color: var(--accent); border-color: var(--accent); }
+  .slider-control-prev { inset-inline-start: -14px; }
+  .slider-control-next { inset-inline-end: -14px; }
+
+  /* --- Modals Customization --- */
+  .remix-modal .modal-content,
+  .playlist-dialog {
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 24px;
+    background: var(--card);
+    box-shadow: 0 32px 90px rgba(0, 0, 0, 0.6);
+  }
+
+  .playlist-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+  }
+
+  .playlist-dialog {
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow: hidden;
+  }
+
+  .playlist-header,
+  .playlist-body {
+    padding: 20px;
+  }
+
+  .playlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .playlist-search,
+  .remix-search {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    outline: none;
+    font-size: 13px;
+  }
+  .playlist-search:focus,
+  .remix-search:focus {
+    border-color: var(--accent);
+  }
+
+  .playlist-list,
+  .remix-results {
+    max-height: 320px;
+    overflow-y: auto;
+    margin: 12px 0;
+  }
+
+  .playlist-item,
+  .remix-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: start;
+    color: var(--text);
+  }
+  .playlist-item:hover:not(.disabled),
+  .remix-result:hover {
+    border-color: var(--accent);
+    background: rgba(255,255,255,0.06);
+  }
+  .playlist-item.disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .playlist-cover,
+  .remix-result-cover,
+  .remix-cover {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--bg-2);
+    overflow: hidden;
+    color: var(--accent);
+  }
+  .playlist-cover img,
+  .remix-result-cover img,
+  .remix-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .playlist-info,
+  .remix-result-info,
+  .remix-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .playlist-name,
+  .remix-result-title,
+  .remix-title {
+    font-size: 13px;
+    font-weight: 750;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .playlist-count,
+  .playlist-status,
+  .remix-result-type,
+  .remix-type {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .playlist-status { color: #42d890; font-weight: 700; }
+
+  .remix-composition {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 44px minmax(0,1fr);
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .remix-song {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+  .remix-song.selected {
+    border-color: rgba(99,102,241,0.4);
+    background: rgba(99,102,241,0.06);
+  }
+
+  .remix-plus {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--accent);
+    border: 1px solid rgba(99,102,241,0.25);
+    background: rgba(99,102,241,0.1);
+  }
+
+  .modal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+  .modal-btn-primary { color: #fff; background: var(--accent); border: none; }
+  .modal-btn-secondary { color: var(--text); background: var(--bg); border: 1px solid var(--border); }
+
+  /* --- Responsive Styles --- */
+  @media (max-width: 992px) {
+    .song-hero-inner {
+      grid-template-columns: 1fr;
+      padding: 28px;
+      text-align: center;
+    }
+    .song-hero-media {
+      width: 100%;
+      align-items: center;
+    }
+    .song-cover {
+      width: 220px;
+      margin: 0 auto;
+    }
+    .song-hero-media .song-stats {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    .song-topline,
+    .song-artists,
+    .song-info-row,
+    .song-pills,
+    .song-actions,
+    .song-share {
+      justify-content: center;
+    }
+    .slider-control {
+      display: none;
+    }
+    .remix-composition {
+      grid-template-columns: 1fr;
+    }
+    .remix-plus {
+      transform: rotate(90deg);
+      margin: -6px auto;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .song-container { padding-inline: 16px; }
+    .song-hero { border-radius: 20px; margin-top: 16px; }
+    .song-hero-inner { padding: 20px; }
+    .song-actions { display: grid; grid-template-columns: repeat(2, 1fr); }
+    .song-action { width: 100%; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="song-detail-page">
+  <div class="song-container">
 
-{% if song.cover_video %}
-<div class="th-hero-banner">
-  {% if song.cover_image %}
-    <div class="th-hero-poster-box"><img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}"></div>
-  {% elif song.album.cover_image %}
-    <div class="th-hero-poster-box"><img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}"></div>
-  {% endif %}
-  <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
-    <source src="{{ song.cover_video.url }}">
-  </video>
-  <div class="th-hero-overlay"></div>
+    <!-- Hero Section -->
+    <div class="song-hero">
+        <div class="song-hero-bg" style="background-image:url('{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}');"></div>
+        <div class="song-hero-overlay"></div>
 
-  <div class="th-hero-inner container-xl">
-    <span class="th-badge gold">{{ song.get_song_type_display }}</span>
-    <h1>{{ song|localized_field:'title' }}</h1>
-    {% if LANGUAGE_CODE == 'ar' %}{% if song.title_en %}<p class="th-meta">{{ song.title_en }}</p>{% endif %}{% else %}{% if song.title_ar %}<p class="th-meta">{{ song.title_ar }}</p>{% endif %}{% endif %}
+        <div class="song-hero-inner">
 
-    {% if singers %}
-    <div class="th-singer-row">
-      {% for credit in singers %}
-      <a href="{% url 'website_app:person-detail' credit.person.slug %}" class="th-singer-chip">
-        {% if credit.person.profile_image %}<img src="{{ credit.person.profile_image.url }}" class="th-singer-avatar" alt="">{% else %}<span class="th-singer-avatar-fallback">{{ credit.person|localized_field:'full_name'|slice:":1" }}</span>{% endif %}
-        {{ credit.person|localized_field:'full_name' }}
-      </a>
-      {% endfor %}
-    </div>
-    {% endif %}
+            <!-- العمود الأول: الصورة وتحت منها الإحصائيات -->
+            <div class="song-hero-media">
+                <div class="song-cover">
+                    <img src="{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}" alt="{{ song|localized_field:'title' }}">
+                </div>
 
-    {% if song.album or song.release_year or song.duration_seconds or song.is_duet %}
-    <div class="th-meta-row">
-      {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain" style="text-decoration:underline;">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
-      {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
-      {% if song.duration_seconds %}<span><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>{% endif %}
-      {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
-    </div>
-    {% endif %}
+                <!-- تم نقل الإحصائيات هنا لتكون تحت الصورة مباشرة -->
+                <div class="song-stats">
+                    <div class="song-stat">
+                        <div class="song-stat-icon"><i class="bi bi-play-circle"></i></div>
+                        <div>
+                            <div class="song-stat-value" data-play-count="">0</div>
+                            <div class="song-stat-label">تشغيل</div>
+                        </div>
+                    </div>
+                    <div class="song-stat">
+                        <div class="song-stat-icon"><i class="bi bi-heart"></i></div>
+                        <div>
+                            <div class="song-stat-value" data-like-count="">1</div>
+                            <div class="song-stat-label">إعجاب</div>
+                        </div>
+                    </div>
+                    <div class="song-stat">
+                        <div class="song-stat-icon"><i class="bi bi-headphones"></i></div>
+                        <div>
+                            <div class="song-stat-value" data-listener-count="">0</div>
+                            <div class="song-stat-label">يستمع الآن</div>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="d-flex flex-wrap gap-2 mt-3">
-      <button type="button" class="th-share-btn" onclick="showRemixModal()" title="{% translate 'عمل ريمكس' %}"><i class="bi bi-music-note-beamed"></i></button>
-      <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-      <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-         onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-         onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
-    </div>
-  </div>
-</div>
+                {% if song.audio_file %}
+                <button id="audioPlayBtn" class="song-action song-action-primary" onclick="toggleGlobalSongAudio(this)">
+                    <i class="bi bi-play-fill" id="playIcon"></i>
+                    <span>{% translate "تشغيل" %}</span>
+                </button>
+                {% endif %}
+            </div>
 
-<div class="container-xl">
+            <!-- العمود الثاني: المحتوى والبيانات وأزرار التفاعل -->
+            <div class="song-content">
+                <div class="song-topline">
+                    <span class="song-type">{% if song.album %}أغنية من ألبوم{% else %}أغنية{% endif %}</span>
+                </div>
 
-{% else %}
-<div class="container-xl">
+                <h1 class="song-title">{{ song|localized_field:'title' }}</h1>
+                <p class="song-alt-title">{{ song.title_en }}</p>
 
-  <div class="th-song-header">
-    {% if song.cover_image %}
-      <div class="th-song-header-bg" style="background-image:url('{{ song.cover_image.url }}');"></div>
-    {% elif song.album.cover_image %}
-      <div class="th-song-header-bg" style="background-image:url('{{ song.album.cover_image.url }}');"></div>
-    {% else %}
-      <div class="th-song-header-fallback"></div>
-    {% endif %}
-    <div class="th-song-header-shade"></div>
-    <div class="th-song-header-inner">
-      <div class="th-song-cover">
-        {% if song.cover_image %}
-          <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-        {% elif song.album.cover_image %}
-          <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-        {% else %}
-          <i class="bi bi-music-note-beamed icon-fallback"></i>
-        {% endif %}
-      </div>
-      <div class="th-song-meta">
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <h1>{{ song|localized_field:'title' }}</h1>
-          <span class="th-badge gold">{{ song.get_song_type_display }}</span>
-          <span style="display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); margin-inline-start:auto;">
-            <i class="bi bi-play-circle"></i>
-            <span>{% translate "تشغيل" %}</span>
-            <span data-play-count>{{ song.play_count }}</span>
-          </span>
-          <span style="display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted);">
-            <i class="bi bi-heart"></i>
-            <span>{% translate "إعجاب" %}</span>
-            <span data-like-count>{{ like_count }}</span>
-          </span>
-          <span style="display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted);">
-            <i class="bi bi-headphones"></i>
-            <span>{% translate "يستمع الآن" %}</span>
-            <span data-listener-count>0</span>
-          </span>
+                <div class="song-artists">
+                    {% for singer in singers %}
+                    <a href="/people/{{ singer.person.slug }}/" class="song-artist">
+                        {% if singer.person.profile_image %}
+                        <img src="{{ singer.person.profile_image.url }}" alt="{{ singer.person.name }}">
+                        {% else %}
+                        <div class="song-artist-fallback">{{ singer.person.name|slice:":2" }}</div>
+                        {% endif %}
+                        <span>{{ singer.person.name }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <div class="song-info-row">
+                    {% if song.album %}
+                    <span class="song-info-item">
+                        <i class="bi bi-disc"></i>
+                        <a href="/albums/{{ song.album.slug }}/">{{ song.album|localized_field:'title' }}</a>
+                    </span>
+                    {% endif %}
+                    {% if song.release_year %}
+                    <span class="song-info-item">
+                        <i class="bi bi-calendar3"></i>
+                        {{ song.release_year }}
+                    </span>
+                    {% endif %}
+                    {% if song.duration_seconds %}
+                    <span class="song-info-item">
+                        <i class="bi bi-clock"></i>
+                        {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if song.genres.all %}
+                <div class="song-pills">
+                    {% for genre in song.genres.all %}
+                    <span class="song-pill blue">{{ genre.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="song-actions">
+                    <button type="button" class="song-action song-action-secondary song-action-danger" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}">
+                        <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
+                        <span>{% if is_liked %}أعجبتني{% else %}أعجبني{% endif %}</span>
+                    </button>
+
+                    <button type="button" class="song-action song-action-secondary" onclick="showPlaylistModal()">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>قائمة التشغيل</span>
+                    </button>
+
+                    <button type="button" class="song-action song-action-secondary" onclick="showRemixModal()">
+                        <i class="bi bi-music-note-beamed"></i>
+                        <span>ريمكس</span>
+                    </button>
+
+                    {% if song.lyric_segments.exists %}
+                    <button type="button" class="song-action song-action-secondary" onclick="showLyricsModal()">
+                        <i class="bi bi-file-text"></i>
+                        <span>الكلمات</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <div class="song-share">
+                    <span class="song-share-label">مشاركة</span>
+                    <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="نسخ الرابط">
+                        <i class="bi bi-link-45deg"></i>
+                    </button>
+                    <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                </div>
+
+            </div>
         </div>
+    </div>
 
-        {% if LANGUAGE_CODE == 'ar' and song.title_en or LANGUAGE_CODE != 'ar' and song.title_ar %}
-        <p class="th-meta">
-          {% if LANGUAGE_CODE == 'ar' %}{{ song.title_en }}{% else %}{{ song.title_ar }}{% endif %}
-        </p>
-        {% endif %}
+    <!-- Top Ad -->
+    {% if top_ad %}
+      {% include "website/partials/ad_banner.html" with ad=top_ad %}
+    {% endif %}
 
-        {% if singers %}
-        <div class="th-singer-row">
-          {% for credit in singers %}
-          <a href="{% url 'website_app:person-detail' credit.person.slug %}" class="th-singer-chip">
-            {% if credit.person.profile_image %}
-              <img src="{{ credit.person.profile_image.url }}" class="th-singer-avatar" alt="">
-            {% else %}
-              <span class="th-singer-avatar-fallback">{{ credit.person|localized_field:'full_name'|slice:":1" }}</span>
-            {% endif %}
-            {{ credit.person|localized_field:'full_name' }}
-          </a>
+    <!-- Streaming Links -->
+    {% if links %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-headphones"></i> {% translate "استمع الآن" %}</h2>
+        </div>
+        <div class="streaming-links">
+          {% for link in links %}
+            <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="streaming-link" onclick="thTrack('EXTERNAL_CLICK', 'song', {{ song.pk }}, {platform:'{{ link.platform.platform_name }}', external_link_id:{{ link.pk }}});">
+              {% if link.platform.logo_icon_url %}
+                <img src="{{ link.platform.logo_icon_url }}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'bi bi-box-arrow-up-right'}));">
+              {% else %}
+                <i class="bi bi-box-arrow-up-right"></i>
+              {% endif %}
+              {{ link.platform.get_platform_name_display }}
+            </a>
           {% endfor %}
         </div>
-        {% endif %}
+      </section>
+    {% endif %}
 
-        {% if song.album or song.release_year or song.duration_seconds or song.is_duet %}
-        <div class="th-meta-row">
-          {% if song.album %}<span><i class="bi bi-disc"></i> <a href="{% url 'website_app:album-detail' song.album.slug %}" class="plain">{{ song.album|localized_field:'title' }}</a></span>{% endif %}
-          {% if song.release_year %}<span><i class="bi bi-calendar"></i> {{ song.release_year }}</span>{% endif %}
-          {% if song.duration_seconds %}
-            {% if song.duration_seconds >= 3600 %}
-              <span><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:3600 }}:{% if song.duration_seconds|floordiv:60|modulo:60 < 10 %}0{% endif %}{{ song.duration_seconds|floordiv:60|modulo:60 }}:{% if song.duration_seconds|modulo:60 < 10 %}0{% endif %}{{ song.duration_seconds|modulo:60 }} {% translate "ساعة" %}</span>
-            {% else %}
-              <span><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{% if song.duration_seconds|modulo:60 < 10 %}0{% endif %}{{ song.duration_seconds|modulo:60 }} {% translate "دقيقة" %}</span>
-            {% endif %}
+    <!-- Audio Analysis -->
+    {% if song.audio_bpm or song.audio_key or song.audio_mood or song.audio_energy or song.audio_danceability %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-soundwave"></i> {% translate "تحليل الصوت" %}</h2>
+        </div>
+        <div class="analysis-grid">
+          {% if song.audio_bpm %}
+            <div class="analysis-item">
+              <div class="analysis-item-icon"><i class="bi bi-speedometer2"></i></div>
+              <div class="analysis-label">BPM</div>
+              <div class="analysis-value">{{ song.audio_bpm|floatformat:0 }}</div>
+            </div>
           {% endif %}
-          {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
-        </div>
-        {% endif %}
-
-        <div class="th-action-bar">
-          {% if song.audio_file %}
-          <button type="button" class="th-action-btn primary" id="audioPlayBtn" onclick="toggleGlobalSongAudio(this)">
-            <i class="bi bi-play-fill" id="playIcon"></i>
-            <span>{% translate "تشغيل" %}</span>
-          </button>
+          {% if song.audio_key %}
+            <div class="analysis-item">
+              <div class="analysis-item-icon"><i class="bi bi-music-note"></i></div>
+              <div class="analysis-label">{% translate "المفتاح" %}</div>
+              <div class="analysis-value">{{ song.audio_key }}</div>
+            </div>
           {% endif %}
-          <button type="button" class="th-action-btn secondary {% if is_liked %}liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}">
-            <i class="bi bi-{% if is_liked %}heart-fill{% else %}heart{% endif %}"></i>
-            <span>{% if is_liked %}{% translate "أعجبتني" %}{% else %}{% translate "إعجاب" %}{% endif %}</span>
-          </button>
-          <button type="button" class="th-action-btn secondary" onclick="showPlaylistModal()">
-            <i class="bi bi-plus-lg"></i>
-            <span>{% translate "قائمة التشغيل" %}</span>
-          </button>
-          <button type="button" class="th-action-btn ghost" onclick="showRemixModal()">
-            <i class="bi bi-music-note-beamed"></i>
-            <span>{% translate "ريمكس" %}</span>
-          </button>
-        </div>
-
-        <div class="th-share-buttons" style="margin-top:12px;">
-          <button type="button" class="th-action-btn ghost" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
-            <i class="bi bi-link-45deg"></i>
-          </button>
-          <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-action-btn ghost" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'WHATSAPP'});">
-            <i class="bi bi-whatsapp"></i>
-          </a>
-          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-action-btn ghost" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel: 'FACEBOOK'});">
-            <i class="bi bi-facebook"></i>
-          </a>
-        </div>
-
-        {% if song.genre != 'UNSPECIFIED' or song.mood != 'UNSPECIFIED' or song.audio_bpm or song.audio_key or song.audio_mood %}
-        <div class="th-meta-row th-badges-row">
-          {% if song.genre and song.genre != 'UNSPECIFIED' %}<span class="th-badge blue">{{ song.get_genre_display }}</span>{% endif %}
-          {% if song.mood and song.mood != 'UNSPECIFIED' %}<span class="th-badge green">{{ song.get_mood_display }}</span>{% endif %}
-          {% if song.audio_bpm %}<span><i class="bi bi-speedometer2"></i> {{ song.audio_bpm|floatformat:0 }} BPM</span>{% endif %}
-          {% if song.audio_key %}<span><i class="bi bi-music-note"></i> {{ song.audio_key }}</span>{% endif %}
-          {% if song.audio_mood %}<span><i class="bi bi-emoji-smile"></i> {{ song.audio_mood }}</span>{% endif %}
-          {% if song.audio_energy %}<span><i class="bi bi-lightning"></i> {{ song.audio_energy|floatformat:2 }}</span>{% endif %}
-          {% if song.audio_danceability %}<span><i class="bi bi-person-dance"></i> {{ song.audio_danceability|floatformat:2 }}</span>{% endif %}
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-{% endif %}
-
-  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
-
-  {% if links %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "استمع الآن" %}</h2>
-    <div class="d-flex flex-wrap gap-2">
-      {% for link in links %}
-        <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
-           onclick="thTrack('EXTERNAL_CLICK', 'song', {{ song.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
-          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
-        </a>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if song.lyrics %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "الكلمات" %}</h2>
-    <div class="th-lyrics-card">
-      <p>{{ song.lyrics }}</p>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if credits %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "المشاركون" %}</h2>
-    <div class="th-cast-row">
-      {% for entry in credits %}
-        <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-cast-item">
-          {% if entry.person.profile_image %}
-            <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="th-cast-avatar">
-          {% else %}
-            <span class="th-cast-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+          {% if song.audio_mood %}
+            <div class="analysis-item">
+              <div class="analysis-item-icon"><i class="bi bi-emoji-smile"></i></div>
+              <div class="analysis-label">{% translate "المزاج" %}</div>
+              <div class="analysis-value">{{ song.audio_mood }}</div>
+            </div>
           {% endif %}
-          <div class="th-cast-name">{{ entry.person|localized_field:'full_name' }}</div>
-          <div class="th-cast-role">{{ entry.roles|join:"، " }}</div>
-        </a>
-      {% endfor %}
-    </div>
+          {% if song.audio_energy %}
+            <div class="analysis-item">
+              <div class="analysis-item-icon"><i class="bi bi-lightning"></i></div>
+              <div class="analysis-label">{% translate "الطاقة" %}</div>
+              <div class="analysis-value">{{ song.audio_energy|floatformat:2 }}</div>
+            </div>
+          {% endif %}
+          {% if song.audio_danceability %}
+            <div class="analysis-item">
+              <div class="analysis-item-icon"><i class="bi bi-person-walking"></i></div>
+              <div class="analysis-label">{% translate "قابلية الرقص" %}</div>
+              <div class="analysis-value">{{ song.audio_danceability|floatformat:2 }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Lyrics -->
+    {% if song.lyrics %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-chat-quote"></i> {% translate "الكلمات" %}</h2>
+        </div>
+        <div class="lyrics-card">
+          <p class="lyrics-text">{{ song.lyrics }}</p>
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Credits -->
+    {% if credits %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-people"></i> {% translate "المشاركون" %}</h2>
+        </div>
+        <div class="credits-wrap">
+          {% for entry in credits %}
+            <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="credit-card">
+              {% if entry.person.profile_image %}
+                <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="credit-avatar">
+              {% else %}
+                <span class="credit-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+              {% endif %}
+              <div class="credit-name">{{ entry.person|localized_field:'full_name' }}</div>
+              <div class="credit-role">{{ entry.roles|join:"، " }}</div>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Album Songs Slider -->
+    {% if album_songs %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-disc"></i> {% translate "أغاني ألبوم" %} {{ song.album|localized_field:'title' }}</h2>
+          <a href="{% url 'website_app:album-detail' song.album.slug %}" class="song-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+        </div>
+        <div class="slider-wrap">
+          <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+          <div class="slider-track">
+            {% for other in album_songs %}
+              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item">
+                <div class="th-img-wrap">
+                  {% if other.cover_image %}
+                    <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% elif other.album and other.album.cover_image %}
+                    <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% else %}
+                    <i class="bi bi-music-note-beamed icon-fallback"></i>
+                  {% endif %}
+                  <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+                </div>
+                <div class="th-body"><div class="th-title">{{ other|localized_field:'title' }}</div></div>
+              </a>
+            {% endfor %}
+          </div>
+          <button type="button" class="slider-control slider-control-next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Other Songs Slider -->
+    {% if other_songs %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-stars"></i> {% translate "أغاني أخرى قد تعجبك" %}</h2>
+          <a href="{% url 'website_app:songs' %}" class="song-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+        </div>
+        <div class="slider-wrap">
+          <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+          <div class="slider-track">
+            {% for other in other_songs %}
+              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item">
+                <div class="th-img-wrap">
+                  {% if other.cover_image %}
+                    <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% elif other.album and other.album.cover_image %}
+                    <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% else %}
+                    <i class="bi bi-music-note-beamed icon-fallback"></i>
+                  {% endif %}
+                  <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+                </div>
+                <div class="th-body">
+                  <div class="th-title">{{ other|localized_field:'title' }}</div>
+                  <div class="th-meta">{{ other.get_song_type_display }}</div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+          <button type="button" class="slider-control slider-control-next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Bottom Ad -->
+    {% if bottom_ad %}
+      {% include "website/partials/ad_banner.html" with ad=bottom_ad %}
+    {% endif %}
+
   </div>
-  {% endif %}
-
-  {% if album_songs %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "أغاني ألبوم" %} {{ song.album|localized_field:'title' }}</h2>
-    <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
-      <div class="th-slider">
-        {% for other in album_songs %}
-        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain">
-          <div class="th-img-wrap">
-            {% if other.cover_image %}
-              <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-            {% elif other.album.cover_image %}
-              <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-            {% else %}
-              <i class="bi bi-music-note-beamed icon-fallback"></i>
-            {% endif %}
-            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
-          </div>
-          <div class="th-body">
-            <div class="th-title">{{ other|localized_field:'title' }}</div>
-          </div>
-        </a>
-        {% endfor %}
-      </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if other_songs %}
-  <div class="th-section">
-    <h2 class="th-section-title">{% translate "أغاني أخرى قد تعجبك" %}</h2>
-    <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
-      <div class="th-slider">
-        {% for other in other_songs %}
-        <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain">
-          <div class="th-img-wrap">
-            {% if other.cover_image %}
-              <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-            {% elif other.album.cover_image %}
-              <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-            {% else %}
-              <i class="bi bi-music-note-beamed icon-fallback"></i>
-            {% endif %}
-            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
-          </div>
-          <div class="th-body">
-            <div class="th-title">{{ other|localized_field:'title' }}</div>
-            <div class="th-meta">{{ other.get_song_type_display }}</div>
-          </div>
-        </a>
-        {% endfor %}
-      </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
-
 </div>
 
 <!-- Remix Modal -->
-<div class="modal fade" id="remixModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content" style="background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(168,85,247,0.05) 100%); border: 1px solid rgba(99,102,241,0.2); border-radius: 24px; backdrop-filter: blur(20px);">
-      <div class="modal-header" style="border-bottom: 1px solid rgba(99,102,241,0.1); padding: 20px 24px;">
-        <h5 class="modal-title" style="color: var(--text); font-weight: 700; font-size: 20px;">{% translate "عمل ريمكس" %}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+<div class="modal fade remix-modal" id="remixModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-music-note-beamed"></i> {% translate "عمل ريمكس" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" style="padding: 24px;">
-        <div class="remix-songs-container" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-bottom: 24px;">
-          <div class="remix-song-card" style="background: linear-gradient(135deg, var(--card) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 12px;">
-            {% if song.cover_image %}
-              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
-            {% elif song.album.cover_image %}
-              <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
-            {% else %}
-              <div style="width: 50px; height: 50px; border-radius: 10px; background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 100%); display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-music-note-beamed" style="font-size: 24px; color: var(--accent);"></i>
-              </div>
-            {% endif %}
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ song|localized_field:'title' }}</div>
-              <div style="font-size: 12px; color: var(--muted); opacity: 0.8;">{% translate "الخلفية الموسيقية" %}</div>
+      <div class="modal-body">
+        <div class="remix-composition">
+          <div class="remix-song">
+            <div class="remix-cover">
+              {% if song.cover_image %}
+                <img src="{{ song.cover_image.url }}" alt="">
+              {% elif song.album and song.album.cover_image %}
+                <img src="{{ song.album.cover_image.url }}" alt="">
+              {% else %}
+                <i class="bi bi-music-note-beamed"></i>
+              {% endif %}
+            </div>
+            <div class="remix-info">
+              <div class="remix-title">{{ song|localized_field:'title' }}</div>
+              <div class="remix-type">{% translate "الخلفية الموسيقية" %}</div>
             </div>
           </div>
-          
-          <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 100%); border: 2px solid rgba(99,102,241,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; flex-shrink: 0;">
-            <i class="bi bi-plus-lg"></i>
-          </div>
-          
-          <div class="remix-song-card remix-song-card-vocal" style="background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%); border: 2px dashed rgba(99,102,241,0.3); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 12px; min-height: 82px;">
-            <div id="selectedSongCoverWrapper" style="width: 50px; height: 50px; border-radius: 10px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-              <i class="bi bi-mic" style="font-size: 24px; color: var(--accent);"></i>
+
+          <div class="remix-plus"><i class="bi bi-plus-lg"></i></div>
+
+          <div class="remix-song" id="selectedSongCard">
+            <div class="remix-cover" id="selectedSongCoverWrapper"><i class="bi bi-mic"></i></div>
+            <div class="remix-info">
+              <div class="remix-title" id="selectedSongTitle">{% translate "اختر الصوت" %}</div>
+              <div class="remix-type">{% translate "الصوت" %}</div>
             </div>
-            <div style="flex: 1; min-width: 0;">
-              <div id="selectedSongTitle" style="font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% translate "اختر الصوت" %}</div>
-              <div style="font-size: 12px; color: var(--muted); opacity: 0.8;">{% translate "الصوت" %}</div>
-            </div>
-            <button type="button" class="btn btn-sm btn-danger" onclick="clearSelectedSong()" id="clearSongBtn" style="display: none; width: 32px; height: 32px; border-radius: 8px; padding: 0; display: flex; align-items: center; justify-content: center;">
+            <button type="button" class="btn btn-sm btn-danger" id="clearSongBtn" onclick="clearSelectedSong()" style="display:none;">
               <i class="bi bi-x"></i>
             </button>
           </div>
         </div>
-        
-        <div class="mb-3">
-          <input type="text" class="form-control" id="songSearchInput" placeholder="{% translate 'ابحث عن أغنية للصوت...' %}" 
-                 style="background: rgba(255,255,255,0.05); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; color: var(--text); padding: 14px 16px; font-size: 15px;">
-        </div>
-        
-        <div id="songSearchResults" style="max-height: 350px; overflow-y: auto; border-radius: 12px;">
-          <div class="text-center py-4" style="color: var(--muted);">
-            <i class="bi bi-search" style="font-size: 32px; opacity: 0.5;"></i>
-            <p class="mt-2" style="font-size: 14px;">{% translate "ابحث عن أغنية لاستخدام صوتها" %}</p>
+
+        <input type="text" id="songSearchInput" class="remix-search" placeholder="{% translate 'ابحث عن أغنية للصوت...' %}" autocomplete="off">
+        <div id="songSearchResults" class="remix-results">
+          <div class="text-center py-4" style="color:var(--muted);">
+            <i class="bi bi-search" style="font-size:28px;opacity:.45;"></i>
+            <p class="mt-2 mb-0">{% translate "ابحث عن أغنية لاستخدام صوتها" %}</p>
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="border-top: 1px solid rgba(99,102,241,0.1); padding: 20px 24px;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; color: var(--text); padding: 12px 24px; font-weight: 600;">{% translate "إلغاء" %}</button>
-        <button type="button" class="btn btn-primary" id="createRemixBtn" onclick="createRemix()" disabled style="background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%); border: none; border-radius: 12px; padding: 12px 28px; font-weight: 600; box-shadow: 0 4px 16px rgba(99,102,241,0.3);">
+      <div class="modal-footer">
+        <button type="button" class="modal-btn modal-btn-secondary" data-bs-dismiss="modal">{% translate "إلغاء" %}</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="createRemixBtn" onclick="createRemix()" disabled>
           <i class="bi bi-music-note-beamed"></i> {% translate "إنشاء الريمكس" %}
         </button>
       </div>
@@ -430,721 +1250,31 @@
   </div>
 </div>
 
-{% endblock %}
-
-{% block extra_js %}
-<script>
-thTrack('VIEW', 'song', {{ song.pk }});
-
-const currentSongId = {{ song.pk }};
-let selectedSecondSong = null;
-let searchTimeout = null;
-
-// Remix Modal Functions
-function showRemixModal() {
-  const modal = new bootstrap.Modal(document.getElementById('remixModal'));
-  modal.show();
-}
-
-function searchSongs(query) {
-  if (searchTimeout) clearTimeout(searchTimeout);
-  
-  if (query.length < 2) {
-    document.getElementById('songSearchResults').innerHTML = `
-      <div class="text-center py-4" style="color: var(--muted);">
-        <i class="bi bi-search" style="font-size: 24px;"></i>
-        <p class="mt-2">{% translate "ابحث عن أغنية لعمل ريمكس" %}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  searchTimeout = setTimeout(() => {
-    fetch(`/v1/music/songs/?search=${encodeURIComponent(query)}`)
-      .then(response => response.json())
-      .then(data => {
-        console.log('API Response:', data);
-        console.log('Songs array:', data.data?.songs);
-        displaySearchResults(data.data?.songs || []);
-      })
-      .catch(error => {
-        console.error('Error searching songs:', error);
-      });
-  }, 300);
-}
-
-function displaySearchResults(songs) {
-  const container = document.getElementById('songSearchResults');
-  
-  console.log('Displaying songs:', songs);
-  
-  if (!songs || songs.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-4" style="color: var(--muted);">
-        <i class="bi bi-music-note" style="font-size: 24px;"></i>
-        <p class="mt-2">{% translate "لم يتم العثور على نتائج" %}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  // Filter out current song
-  const filteredSongs = songs.filter(s => s.id !== currentSongId);
-  
-  if (filteredSongs.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-4" style="color: var(--muted);">
-        <p class="mt-2">{% translate "لا توجد أغاني أخرى للبحث" %}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  let html = '<div class="list-group">';
-  filteredSongs.forEach(song => {
-    const title = song.title_ar || song.title_en || 'Untitled';
-    const cover = song.cover_image || (song.album?.cover_image) || '';
-    const type = song.song_type || '';
-    
-    html += `
-      <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3" 
-              onclick="selectSong(${song.id}, '${title.replace(/'/g, "\\'")}', '${cover}', '${type}')"
-              style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text);">
-        ${cover ? `<img src="${cover}" alt="" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">` : 
-        '<div style="width: 50px; height: 50px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;"><i class="bi bi-music-note-beamed"></i></div>'}
-        <div class="flex-1">
-          <div class="fw-bold">${title}</div>
-          <small class="text-muted">${type}</small>
-        </div>
-        <i class="bi bi-plus-circle" style="color: var(--accent);"></i>
-      </button>
-    `;
-  });
-  html += '</div>';
-  
-  container.innerHTML = html;
-}
-
-function selectSong(id, title, cover, type) {
-  selectedSecondSong = { id, title, cover, type };
-  
-  const coverWrapper = document.getElementById('selectedSongCoverWrapper');
-  const titleEl = document.getElementById('selectedSongTitle');
-  const clearBtn = document.getElementById('clearSongBtn');
-  const vocalCard = document.querySelector('.remix-song-card-vocal');
-  const searchInput = document.getElementById('songSearchInput');
-  const searchResults = document.getElementById('songSearchResults');
-  
-  if (cover) {
-    coverWrapper.innerHTML = `<img src="${cover}" alt="" style="width: 100%; height: 100%; object-fit: cover;">`;
-  } else {
-    coverWrapper.innerHTML = '<i class="bi bi-music-note-beamed" style="font-size: 24px; color: var(--accent);"></i>';
-  }
-  
-  titleEl.textContent = title;
-  clearBtn.style.display = 'flex';
-  vocalCard.style.border = '1px solid rgba(99,102,241,0.3)';
-  vocalCard.style.background = 'linear-gradient(135deg, var(--card) 0%, rgba(255,255,255,0.02) 100%)';
-  
-  document.getElementById('createRemixBtn').disabled = false;
-  
-  // Hide search input and results
-  searchInput.style.display = 'none';
-  searchResults.style.display = 'none';
-  searchInput.value = '';
-  searchResults.innerHTML = '';
-}
-
-function clearSelectedSong() {
-  selectedSecondSong = null;
-  
-  const coverWrapper = document.getElementById('selectedSongCoverWrapper');
-  const titleEl = document.getElementById('selectedSongTitle');
-  const clearBtn = document.getElementById('clearSongBtn');
-  const vocalCard = document.querySelector('.remix-song-card-vocal');
-  const searchInput = document.getElementById('songSearchInput');
-  const searchResults = document.getElementById('songSearchResults');
-  
-  coverWrapper.innerHTML = '<i class="bi bi-mic" style="font-size: 24px; color: var(--accent);"></i>';
-  titleEl.textContent = '{% translate "اختر الصوت" %}';
-  clearBtn.style.display = 'none';
-  vocalCard.style.border = '2px dashed rgba(99,102,241,0.3)';
-  vocalCard.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%)';
-  
-  document.getElementById('createRemixBtn').disabled = true;
-  
-  // Show search input and results
-  searchInput.style.display = 'block';
-  searchResults.style.display = 'block';
-  searchResults.innerHTML = `
-    <div class="text-center py-4" style="color: var(--muted);">
-      <i class="bi bi-search" style="font-size: 32px; opacity: 0.5;"></i>
-      <p class="mt-2" style="font-size: 14px;">{% translate "ابحث عن أغنية لاستخدام صوتها" %}</p>
-    </div>
-  `;
-}
-
-function createRemix() {
-  if (!selectedSecondSong) return;
-  
-  const btn = document.getElementById('createRemixBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="bi bi-spinner spinner-border spinner-border-sm"></i> {% translate "جاري الإنشاء..." %}';
-  
-  // Create remix request
-  const data = {
-    song1_id: currentSongId,
-    song2_id: selectedSecondSong.id,
-    auto_arrange: true,
-    intelligent_mix: true
-  };
-  
-  fetch('/v1/ai-remix/quick-remix/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCSRFToken()
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(result => {
-    if (result.status === 'success') {
-      // Redirect to remix result page
-      window.location.href = `/remix-result/${result.remix_id}/`;
-    } else {
-      alert('{% translate "حدث خطأ أثناء إنشاء الريمكس" %}: ' + (result.message || 'Unknown error'));
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-music-note-beamed"></i> {% translate "إنشاء الريمكس" %}';
-    }
-  })
-  .catch(error => {
-    console.error('Error creating remix:', error);
-    alert('{% translate "حدث خطأ أثناء إنشاء الريمكس" %}');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-music-note-beamed"></i> {% translate "إنشاء الريمكس" %}';
-  });
-}
-
-function getCSRFToken() {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'csrftoken') return decodeURIComponent(value);
-  }
-  return '';
-}
-
-// Search input event listener
-document.getElementById('songSearchInput').addEventListener('input', function(e) {
-  searchSongs(e.target.value);
-});
-
-let isCurrentlyListening = false;
-
-function toggleGlobalSongAudio(btn) {
-  {% if song.audio_file %}
-  const songUrl = '{{ song.audio_file.url }}';
-  const songTitle = '{{ song|localized_field:"title" }}';
-  const songImage = '{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}';
-  const songLink = window.location.href;
-  const songId = {{ song.pk }};
-
-  // Use the global toggleAudio function from base.html
-  if (typeof toggleAudio === 'function') {
-    toggleAudio(songUrl, btn, songTitle, '', [songImage], songLink);
-  } else {
-    console.error('Global audio player not available');
-  }
-
-  // Increment play count
-  fetch('/songs/increment-play/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-CSRFToken': getCSRFToken()
-    },
-    body: `song_id=${songId}`
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success' && data.incremented) {
-      const playCountElement = document.querySelector('[data-play-count]');
-      if (playCountElement) {
-        playCountElement.textContent = data.play_count;
-      }
-    }
-  })
-  .catch(error => {
-    console.error('Error incrementing play count:', error);
-  });
-  {% else %}
-  console.error('No audio file available for this song');
-  {% endif %}
-}
-
-function startListening(songId) {
-  console.log('Starting listening for song:', songId);
-  fetch('/songs/start-listening/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-CSRFToken': getCSRFToken()
-    },
-    body: `song_id=${songId}`
-  })
-  .then(response => {
-    console.log('Start listening response:', response);
-    return response.json();
-  })
-  .then(data => {
-    console.log('Start listening data:', data);
-    if (data.status === 'success') {
-      updateListenerCount(data.listener_count);
-      // Start heartbeat interval
-      startHeartbeat(songId);
-    }
-  })
-  .catch(error => {
-    console.error('Error starting listening:', error);
-  });
-}
-
-function stopListening(songId) {
-  fetch('/songs/stop-listening/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-CSRFToken': getCSRFToken()
-    },
-    body: `song_id=${songId}`
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      updateListenerCount(data.listener_count);
-      // Stop heartbeat interval
-      stopHeartbeat();
-    }
-  })
-  .catch(error => {
-    console.error('Error stopping listening:', error);
-  });
-}
-
-let heartbeatInterval = null;
-
-function startHeartbeat(songId) {
-  // Clear any existing interval
-  stopHeartbeat();
-  
-  // Send heartbeat every 30 seconds
-  heartbeatInterval = setInterval(() => {
-    fetch('/songs/listening-heartbeat/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': getCSRFToken()
-      },
-      body: `song_id=${songId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        updateListenerCount(data.listener_count);
-      }
-    })
-    .catch(error => {
-      console.error('Error sending heartbeat:', error);
-    });
-  }, 30000);
-}
-
-function stopHeartbeat() {
-  if (heartbeatInterval) {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
-  }
-}
-
-function updateListenerCount(count) {
-  const listenerCountElement = document.querySelector('[data-listener-count]');
-  if (listenerCountElement) {
-    listenerCountElement.textContent = count;
-  }
-}
-
-{% if song.audio_file %}
-let listenerPollingInterval = null;
-
-// Get initial listener count on page load
-document.addEventListener('DOMContentLoaded', function() {
-  const songId = {{ song.pk }};
-  const audioPlayBtn = document.getElementById('audioPlayBtn');
-  const playIcon = document.getElementById('playIcon');
-  
-  fetch(`/songs/current-listeners/?song_id=${songId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        updateListenerCount(data.listener_count);
-      }
-    })
-    .catch(error => {
-      console.error('Error getting current listeners:', error);
-    });
-  
-  // Start polling for listener count updates every 5 seconds
-  startListenerPolling(songId);
-  
-  // Add event listeners to globalAudio for tracking listening state and updating button
-  if (typeof globalAudio !== 'undefined') {
-    globalAudio.addEventListener('play', function() {
-      if (globalAudio.src === '{{ song.audio_file.url }}') {
-        isCurrentlyListening = true;
-        startListening(songId);
-        // Update button to pause state
-        if (audioPlayBtn && playIcon) {
-          playIcon.classList.remove('bi-play-fill');
-          playIcon.classList.add('bi-pause-fill');
-          audioPlayBtn.querySelector('span').textContent = '{% translate "إيقاف" %}';
-        }
-      }
-    });
-    
-    globalAudio.addEventListener('pause', function() {
-      if (globalAudio.src === '{{ song.audio_file.url }}') {
-        isCurrentlyListening = false;
-        stopListening(songId);
-        // Update button to play state
-        if (audioPlayBtn && playIcon) {
-          playIcon.classList.remove('bi-pause-fill');
-          playIcon.classList.add('bi-play-fill');
-          audioPlayBtn.querySelector('span').textContent = '{% translate "تشغيل" %}';
-        }
-      }
-    });
-  }
-});
-
-function startListenerPolling(songId) {
-  // Clear any existing interval
-  stopListenerPolling();
-  
-  // Poll every 5 seconds
-  listenerPollingInterval = setInterval(() => {
-    fetch(`/songs/current-listeners/?song_id=${songId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          updateListenerCount(data.listener_count);
-        }
-      })
-      .catch(error => {
-        console.error('Error polling current listeners:', error);
-      });
-  }, 5000);
-}
-
-function stopListenerPolling() {
-  if (listenerPollingInterval) {
-    clearInterval(listenerPollingInterval);
-    listenerPollingInterval = null;
-  }
-}
-
-// Stop listening when user leaves the page
-window.addEventListener('beforeunload', function() {
-  if (isCurrentlyListening && currentSongId) {
-    navigator.sendBeacon('/songs/stop-listening/', new URLSearchParams({
-      'song_id': currentSongId,
-      'csrfmiddlewaretoken': getCSRFToken()
-    }));
-  }
-  stopListenerPolling();
-});
-{% endif %}
-
-function toggleFavorite(btn) {
-  const songId = btn.dataset.songId;
-  const icon = btn.querySelector('i');
-  const span = btn.querySelector('span');
-  const isLiked = btn.classList.contains('liked');
-  const likeCountElement = document.querySelector('[data-like-count]');
-
-  if (isLiked) {
-    btn.classList.remove('liked');
-    icon.classList.remove('bi-heart-fill');
-    icon.classList.add('bi-heart');
-    span.textContent = '{% translate "إعجاب" %}';
-    // Update like count
-    if (likeCountElement) {
-      const currentCount = parseInt(likeCountElement.textContent);
-      likeCountElement.textContent = Math.max(0, currentCount - 1);
-    }
-    // API call to remove from favorites
-    fetch('/likes/toggle/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': getCSRFToken()
-      },
-      body: `content_type=song&object_id=${songId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status !== 'success') {
-        // Revert on error
-        btn.classList.add('liked');
-        icon.classList.remove('bi-heart');
-        icon.classList.add('bi-heart-fill');
-        span.textContent = '{% translate "أعجبتني" %}';
-        if (likeCountElement) {
-          likeCountElement.textContent = parseInt(likeCountElement.textContent) + 1;
-        }
-      }
-    })
-    .catch(error => {
-      console.error('Error removing favorite:', error);
-      // Revert on error
-      btn.classList.add('liked');
-      icon.classList.remove('bi-heart');
-      icon.classList.add('bi-heart-fill');
-      span.textContent = '{% translate "أعجبتني" %}';
-      if (likeCountElement) {
-        likeCountElement.textContent = parseInt(likeCountElement.textContent) + 1;
-      }
-    });
-  } else {
-    btn.classList.add('liked');
-    icon.classList.remove('bi-heart');
-    icon.classList.add('bi-heart-fill');
-    span.textContent = '{% translate "أعجبتني" %}';
-    // Update like count
-    if (likeCountElement) {
-      const currentCount = parseInt(likeCountElement.textContent);
-      likeCountElement.textContent = currentCount + 1;
-    }
-    // API call to add to favorites
-    fetch('/likes/toggle/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': getCSRFToken()
-      },
-      body: `content_type=song&object_id=${songId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status !== 'success') {
-        // Revert on error
-        btn.classList.remove('liked');
-        icon.classList.remove('bi-heart-fill');
-        icon.classList.add('bi-heart');
-        span.textContent = '{% translate "إعجاب" %}';
-        if (likeCountElement) {
-          likeCountElement.textContent = Math.max(0, parseInt(likeCountElement.textContent) - 1);
-        }
-      }
-    })
-    .catch(error => {
-      console.error('Error adding favorite:', error);
-      // Revert on error
-      btn.classList.remove('liked');
-      icon.classList.remove('bi-heart-fill');
-      icon.classList.add('bi-heart');
-      span.textContent = '{% translate "إعجاب" %}';
-      if (likeCountElement) {
-        likeCountElement.textContent = Math.max(0, parseInt(likeCountElement.textContent) - 1);
-      }
-    });
-  }
-}
-
-let userPlaylists = [];
-
-function showPlaylistModal() {
-  document.getElementById('playlistModal').style.display = 'flex';
-  loadUserPlaylists();
-}
-
-function closePlaylistModal() {
-  document.getElementById('playlistModal').style.display = 'none';
-  document.getElementById('playlistSearch').value = '';
-  document.getElementById('createPlaylistFormContainer').style.display = 'none';
-}
-
-function loadUserPlaylists() {
-  fetch(`/playlists/list/?song_id=${currentSongId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        userPlaylists = data.playlists;
-        renderPlaylists(userPlaylists);
-      }
-    })
-    .catch(error => {
-      console.error('Error loading playlists:', error);
-    });
-}
-
-function renderPlaylists(playlists) {
-  const container = document.getElementById('playlistList');
-  if (playlists.length === 0) {
-    container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 20px;">{% translate "لا توجد قوائم تشغيل" %}</p>';
-    return;
-  }
-  
-  container.innerHTML = playlists.map(playlist => `
-    <div class="th-playlist-item ${playlist.contains_song ? 'disabled' : ''}" onclick="${playlist.contains_song ? '' : `addSongToPlaylist(${playlist.pk})`}">
-      ${playlist.random_images && playlist.random_images.length > 0
-        ? playlist.random_images.map(img => `<img src="${img}" alt="${playlist.name}">`).join('')
-        : playlist.cover_image 
-          ? `<img src="${playlist.cover_image}" alt="${playlist.name}">` 
-          : `<div class="icon-fallback"><i class="bi bi-music-note-list"></i></div>`
-      }
-      <div class="info">
-        <div class="name">${playlist.name}</div>
-        <div class="count">${playlist.song_count} {% translate "أغنية" %}</div>
-        ${playlist.contains_song ? '<div class="status">{% translate "موجودة بالفعل" %}</div>' : ''}
-      </div>
-      <div class="meta-icons">
-        ${playlist.is_public 
-          ? '<i class="bi bi-globe" title="{% translate "عام" %}"></i>' 
-          : '<i class="bi bi-lock" title="{% translate "خاص" %}"></i>'
-        }
-        ${playlist.contains_song ? '<i class="bi bi-check-circle status-icon"></i>' : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-function searchPlaylists(query) {
-  const filtered = userPlaylists.filter(p => 
-    p.name.toLowerCase().includes(query.toLowerCase())
-  );
-  renderPlaylists(filtered);
-}
-
-function showCreatePlaylistInModal() {
-  document.getElementById('createPlaylistFormContainer').style.display = 'block';
-}
-
-function createAndAddPlaylist() {
-  const name = document.getElementById('newPlaylistName').value;
-  const description = document.getElementById('newPlaylistDescription').value;
-  const mode = document.getElementById('newPlaylistMode').value;
-  
-  if (!name) {
-    showToast('{% translate "يرجى إدخال اسم القائمة" %}', 'error');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('name', name);
-  formData.append('description', description);
-  formData.append('mode', mode);
-  formData.append('song_id', currentSongId);
-  
-  fetch('/playlists/create-with-song/', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-CSRFToken': getCSRFToken()
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      closePlaylistModal();
-      showToast('{% translate "تم إنشاء القائمة وإضافة الأغنية بنجاح" %}', 'success');
-    } else {
-      showToast(data.message || '{% translate "حدث خطأ" %}', 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error creating playlist:', error);
-    showToast('{% translate "حدث خطأ" %}', 'error');
-  });
-}
-
-function addSongToPlaylist(playlistId) {
-  console.log('addSongToPlaylist called, showToast available:', typeof showToast);
-  const formData = new FormData();
-  formData.append('playlist_id', playlistId);
-  formData.append('song_id', currentSongId);
-  
-  fetch('/playlists/add-song/', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-CSRFToken': getCSRFToken()
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Response:', data);
-    if (data.status === 'success') {
-      closePlaylistModal();
-      console.log('Calling showToast...');
-      if (typeof showToast === 'function') {
-        showToast('{% translate "تمت إضافة الأغنية للقائمة بنجاح" %}', 'success');
-      } else {
-        console.error('showToast is not a function');
-        alert('{% translate "تمت إضافة الأغنية للقائمة بنجاح" %}');
-      }
-    } else {
-      if (typeof showToast === 'function') {
-        showToast(data.message || '{% translate "حدث خطأ" %}', 'error');
-      } else {
-        alert(data.message || '{% translate "حدث خطأ" %}');
-      }
-    }
-  })
-  .catch(error => {
-    console.error('Error adding song to playlist:', error);
-    if (typeof showToast === 'function') {
-      showToast('{% translate "حدث خطأ" %}', 'error');
-    } else {
-      alert('{% translate "حدث خطأ" %}');
-    }
-  });
-}
-</script>
-
-<!-- Playlist Selection Modal -->
-<div id="playlistModal" class="th-modal" style="display: none;">
-  <div class="th-modal-content">
-    <div class="th-modal-header">
-      <h3>{% translate "إضافة إلى قائمة التشغيل" %}</h3>
-      <button type="button" class="th-modal-close" onclick="closePlaylistModal()">
+<!-- Playlist Modal -->
+<div id="playlistModal" class="playlist-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="playlistModalTitle">
+  <div class="playlist-dialog">
+    <div class="playlist-header">
+      <h3 id="playlistModalTitle" style="margin:0; font-size:18px; font-weight:850;">{% translate "إضافة إلى قائمة التشغيل" %}</h3>
+      <button type="button" class="playlist-close" onclick="closePlaylistModal()" aria-label="{% translate 'إغلاق' %}" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:18px;">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
-    <div class="th-modal-body">
-      <div class="th-form-group">
-        <input type="text" id="playlistSearch" placeholder="{% translate 'ابحث عن قائمة التشغيل' %}" oninput="searchPlaylists(this.value)">
-      </div>
-      <div id="playlistList" class="th-playlist-list">
-        <!-- Playlists will be loaded here -->
-      </div>
-      <button type="button" class="th-btn secondary" onclick="showCreatePlaylistInModal()">
+    <div class="playlist-body">
+      <input type="text" id="playlistSearch" class="playlist-search" placeholder="{% translate 'ابحث عن قائمة التشغيل' %}" oninput="searchPlaylists(this.value)">
+      <div id="playlistList" class="playlist-list"></div>
+      <button type="button" class="modal-btn modal-btn-secondary w-100 mt-2" onclick="showCreatePlaylistInModal()">
         <i class="bi bi-plus-lg"></i> {% translate "إنشاء قائمة جديدة" %}
       </button>
-      <div id="createPlaylistFormContainer" style="display: none; margin-top: 16px;">
-        <div class="th-form-group">
-          <input type="text" id="newPlaylistName" placeholder="{% translate 'اسم القائمة' %}">
-        </div>
-        <div class="th-form-group">
-          <textarea id="newPlaylistDescription" placeholder="{% translate 'وصف القائمة (اختياري)' %}"></textarea>
-        </div>
-        <div class="th-form-group">
-          <select id="newPlaylistMode">
+      <div id="createPlaylistFormContainer" class="playlist-create" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+        <div class="playlist-field mb-2"><input type="text" id="newPlaylistName" class="playlist-search" placeholder="{% translate 'اسم القائمة' %}"></div>
+        <div class="playlist-field mb-2"><textarea id="newPlaylistDescription" class="playlist-search" style="min-height:70px; resize:vertical;" placeholder="{% translate 'وصف القائمة (اختياري)' %}"></textarea></div>
+        <div class="playlist-field mb-3">
+          <select id="newPlaylistMode" class="playlist-search">
             <option value="private">{% translate "خاص" %}</option>
             <option value="public">{% translate "عام" %}</option>
           </select>
         </div>
-        <button type="button" class="th-btn primary" onclick="createAndAddPlaylist()">
+        <button type="button" class="modal-btn modal-btn-primary w-100" onclick="createAndAddPlaylist()">
           <i class="bi bi-plus-lg"></i> {% translate "إنشاء وإضافة" %}
         </button>
       </div>
@@ -1152,207 +1282,793 @@ function addSongToPlaylist(playlistId) {
   </div>
 </div>
 
-<style>
-.th-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+<!-- Lyrics Modal -->
+<div class="modal fade" id="lyricsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 24px; background: var(--card); box-shadow: 0 32px 90px rgba(0, 0, 0, 0.6);">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-file-text"></i> {% translate "كلمات الأغنية" %} — {{ song|localized_field:'title' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="lyricsContainer" style="max-height: 400px; overflow-y: auto; padding: 20px; background: var(--bg-2); border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
 
-.th-modal-content {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
 
-.th-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-}
+  thTrack('VIEW', 'song', {{ song.pk }});
+  window.songId = {{ song.pk }};
 
-.th-modal-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
+  let selectedSecondSong = null;
+  let searchTimeout = null;
+  let heartbeatInterval = null;
+  let listenerPollingInterval = null;
+  let isCurrentlyListening = false;
+  let userPlaylists = [];
 
-.th-modal-close {
-  background: none;
-  border: none;
-  color: var(--text);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 8px;
-}
+  function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const parts = cookie.trim().split('=');
+      if (parts[0] === 'csrftoken') {
+        return decodeURIComponent(parts.slice(1).join('='));
+      }
+    }
+    return '';
+  }
 
-.th-modal-body {
-  padding: 20px;
-}
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
-.th-form-group {
-  margin-bottom: 16px;
-}
+  function handleJson(response) {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  }
 
-.th-form-group input,
-.th-form-group select,
-.th-form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-}
+  window.showRemixModal = function () {
+    const modalElement = document.getElementById('remixModal');
+    if (!modalElement) return;
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+  };
 
-.th-form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
+  window.showLyricsModal = function () {
+    const modalElement = document.getElementById('lyricsModal');
+    if (!modalElement) return;
+    
+    // Load lyrics segments from API
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    lyricsContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    fetch(`/v1/music/songs/{{ song.pk }}/lyrics-segments/`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data.results || data.results.length === 0) {
+          lyricsContainer.innerHTML = '<p class="text-center text-muted py-4">{% translate "لا توجد كلمات متاحة" %}</p>';
+          bootstrap.Modal.getOrCreateInstance(modalElement).show();
+          return;
+        }
+        
+        lyricsContainer.innerHTML = data.results.map(segment => {
+          let text = segment.text || '';
+          let typeClass = '';
+          let typeLabel = '';
+          let icon = '';
+          
+          if (segment.segment_type === 'LYRICS') {
+            typeLabel = text;
+          } else if (segment.segment_type === 'MUSIC') {
+            typeClass = 'music-segment';
+            icon = '<i class="bi bi-music-note-beamed me-2"></i>';
+            typeLabel = '{% translate "موسيقى" %}';
+          } else {
+            typeClass = 'silence-segment';
+            icon = '<i class="bi bi-slash-circle me-2"></i>';
+            typeLabel = '{% translate "صمت" %}';
+          }
+          
+          const startSeconds = parseFloat(segment.start_seconds);
+          const endSeconds = parseFloat(segment.end_seconds);
+          const startTime = formatTime(startSeconds);
+          const endTime = formatTime(endSeconds);
+          return `
+            <div class="lyric-line p-3 mb-2 rounded cursor-pointer" style="border: 2px solid transparent; transition: all 0.3s ease; background: var(--bg-1);" data-start="${startSeconds}" data-end="${endSeconds}">
+              <div class="d-flex align-items-center">
+                <span class="timestamp-badge me-3 px-2 py-1 rounded" style="font-family: monospace; font-size: 0.85rem; background: var(--accent); color: white;">${startTime} - ${endTime}</span>
+                <span class="${typeClass} flex-grow-1" style=" margin-inline-start: 10px; ">${icon}${typeLabel}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        // Add click handlers
+        lyricsContainer.querySelectorAll('.lyric-line').forEach(line => {
+          line.addEventListener('click', function() {
+            const start = parseFloat(this.dataset.start);
+            // If there's an audio player, seek to this time
+            const audio = document.querySelector('audio');
+            if (audio) {
+              audio.currentTime = start;
+              if (audio.paused) {
+                audio.play();
+              }
+            }
+          });
+          
+          line.addEventListener('mouseenter', function() {
+            this.style.background = 'var(--bg-2)';
+          });
+          
+          line.addEventListener('mouseleave', function() {
+            this.style.background = 'var(--bg-1)';
+          });
+        });
+        
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+      })
+      .catch(error => {
+        console.error('Error loading lyrics:', error);
+        lyricsContainer.innerHTML = '<p class="text-center text-danger py-4">{% translate "حدث خطأ أثناء تحميل الكلمات" %}</p>';
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+      });
+  };
 
-.th-form-group input:focus,
-.th-form-group select:focus,
-.th-form-group textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
 
-.th-playlist-list {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 16px;
-}
+  function searchSongs(query) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    const results = document.getElementById('songSearchResults');
+    if (!results) return;
 
-.th-playlist-item {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+    query = query.trim();
+    if (query.length < 2) {
+      results.innerHTML = `
+        <div class="text-center py-4" style="color:var(--muted);">
+          <i class="bi bi-search" style="font-size:25px;"></i>
+          <p class="mt-2 mb-0">{% translate "ابحث عن أغنية لعمل ريمكس" %}</p>
+        </div>
+      `;
+      return;
+    }
 
-.th-playlist-item:hover {
-  background: var(--bg);
-  border-color: var(--accent);
-}
+    searchTimeout = setTimeout(function () {
+      fetch(`/v1/music/songs/?search=${encodeURIComponent(query)}`)
+        .then(handleJson)
+        .then(function (data) {
+          displaySearchResults(data?.data?.songs || []);
+        })
+        .catch(function (error) {
+          console.error('Error searching songs:', error);
+          results.innerHTML = `
+            <div class="text-center py-4" style="color:var(--muted);">
+              <i class="bi bi-exclamation-circle" style="font-size:25px;"></i>
+              <p class="mt-2 mb-0">{% translate "حدث خطأ أثناء البحث" %}</p>
+            </div>
+          `;
+        });
+    }, 300);
+  }
 
-.th-playlist-item img {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: cover;
-  margin-left: 12px;
-}
+  function displaySearchResults(songs) {
+    const container = document.getElementById('songSearchResults');
+    if (!container) return;
 
-.th-playlist-item .icon-fallback {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 12px;
-}
+    const filteredSongs = songs.filter(function (song) {
+      return Number(song.id) !== Number(window.songId);
+    });
 
-.th-playlist-item .info {
-  flex: 1;
-}
+    if (!filteredSongs.length) {
+      container.innerHTML = `
+        <div class="text-center py-4" style="color:var(--muted);">
+          <i class="bi bi-music-note" style="font-size:25px;"></i>
+          <p class="mt-2 mb-0">{% translate "لم يتم العثور على نتائج" %}</p>
+        </div>
+      `;
+      return;
+    }
 
-.th-playlist-item .name {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
+    container.innerHTML = filteredSongs.map(function (song) {
+      const title = song.title_ar || song.title_en || 'Untitled';
+      const cover = song.cover_image || song.album?.cover_image || '';
+      const type = song.song_type || '';
 
-.th-playlist-item .count {
-  font-size: 12px;
-  color: var(--muted);
-}
+      return `
+        <button type="button" class="remix-result" data-song-id="${escapeHtml(song.id)}" data-song-title="${escapeHtml(title)}" data-song-cover="${escapeHtml(cover)}" data-song-type="${escapeHtml(type)}">
+          <span class="remix-result-cover">
+            ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : `<i class="bi bi-music-note-beamed"></i>`}
+          </span>
+          <span class="remix-result-info">
+            <span class="remix-result-title">${escapeHtml(title)}</span>
+            <span class="remix-result-type">${escapeHtml(type)}</span>
+          </span>
+          <i class="bi bi-plus-circle" style="color:var(--accent);"></i>
+        </button>
+      `;
+    }).join('');
 
-.th-playlist-item.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: var(--bg);
-}
+    container.querySelectorAll('.remix-result').forEach(function (button) {
+      button.addEventListener('click', function () {
+        selectSong(
+          Number(button.dataset.songId),
+          button.dataset.songTitle,
+          button.dataset.songCover,
+          button.dataset.songType
+        );
+      });
+    });
+  }
 
-.th-playlist-item .status {
-  font-size: 11px;
-  color: #10b981;
-  font-weight: 600;
-  margin-top: 4px;
-}
+  function selectSong(id, title, cover, type) {
+    selectedSecondSong = { id, title, cover, type };
+    const coverWrapper = document.getElementById('selectedSongCoverWrapper');
+    const titleElement = document.getElementById('selectedSongTitle');
+    const clearButton = document.getElementById('clearSongBtn');
+    const card = document.getElementById('selectedSongCard');
+    const searchInput = document.getElementById('songSearchInput');
+    const searchResults = document.getElementById('songSearchResults');
+    const createButton = document.getElementById('createRemixBtn');
 
-.th-playlist-item .status-icon {
-  color: #10b981;
-  font-size: 18px;
-}
+    if (cover) {
+      coverWrapper.innerHTML = `<img src="${escapeHtml(cover)}" alt="">`;
+    } else {
+      coverWrapper.innerHTML = '<i class="bi bi-music-note-beamed"></i>';
+    }
 
-.th-playlist-item .meta-icons {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  display: flex;
-  gap: 4px;
-}
+    titleElement.textContent = title || '{% translate "اختر الصوت" %}';
+    clearButton.style.display = 'flex';
+    card.classList.add('selected');
+    createButton.disabled = false;
+    searchInput.style.display = 'none';
+    searchResults.style.display = 'none';
+  }
 
-.th-playlist-item .meta-icons i {
-  color: var(--muted);
-  font-size: 14px;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 4px;
-  border-radius: 4px;
-}
+  window.clearSelectedSong = function () {
+    selectedSecondSong = null;
+    const coverWrapper = document.getElementById('selectedSongCoverWrapper');
+    const titleElement = document.getElementById('selectedSongTitle');
+    const clearButton = document.getElementById('clearSongBtn');
+    const card = document.getElementById('selectedSongCard');
+    const searchInput = document.getElementById('songSearchInput');
+    const searchResults = document.getElementById('songSearchResults');
+    const createButton = document.getElementById('createRemixBtn');
 
-.th-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
+    coverWrapper.innerHTML = '<i class="bi bi-mic"></i>';
+    titleElement.textContent = '{% translate "اختر الصوت" %}';
+    clearButton.style.display = 'none';
+    card.classList.remove('selected');
+    createButton.disabled = true;
+    searchInput.style.display = 'block';
+    searchResults.style.display = 'block';
+    searchInput.value = '';
+    searchResults.innerHTML = `
+      <div class="text-center py-4" style="color:var(--muted);">
+        <i class="bi bi-search" style="font-size:28px;opacity:.5;"></i>
+        <p class="mt-2 mb-0">{% translate "ابحث عن أغنية لاستخدام صوتها" %}</p>
+      </div>
+    `;
+  };
 
-.th-btn.primary {
-  background: var(--accent);
-  color: #fff;
-}
+  window.createRemix = function () {
+    if (!selectedSecondSong) return;
+    const button = document.getElementById('createRemixBtn');
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% translate "جاري الإنشاء..." %}`;
 
-.th-btn.primary:hover {
-  opacity: 0.9;
-}
+    fetch('/v1/ai-remix/quick-remix/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify({
+        song1_id: window.songId,
+        song2_id: selectedSecondSong.id,
+        auto_arrange: true,
+        intelligent_mix: true
+      })
+    })
+      .then(handleJson)
+      .then(function (result) {
+        if (result.status === 'success') {
+          window.location.href = `/remix-result/${result.remix_id}/`;
+          return;
+        }
+        throw new Error(result.message || '{% translate "حدث خطأ أثناء إنشاء الريمكس" %}');
+      })
+      .catch(function (error) {
+        console.error('Error creating remix:', error);
+        alert(error.message || '{% translate "حدث خطأ أثناء إنشاء الريمكس" %}');
+        button.disabled = false;
+        button.innerHTML = `<i class="bi bi-music-note-beamed"></i> {% translate "إنشاء الريمكس" %}`;
+      });
+  };
 
-.th-btn.secondary {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
+  window.toggleGlobalSongAudio = function (button) {
+    {% if song.audio_file %}
+    const songUrl = '{{ song.audio_file.url }}';
+    const songTitle = '{{ song|localized_field:"title" }}';
+    const songImage = '{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}';
+    const songLink = window.location.href;
+    const songId = {{ song.pk }};
+    const songArtist = '{% for singer in singers %}{{ singer.person.name }}{% if not forloop.last %}، {% endif %}{% endfor %}'.trim();
+    const songAlbum = '{% if song.album %}{{ song.album|localized_field:"title" }}{% endif %}';
 
-.th-btn.secondary:hover {
-  background: var(--border);
-}
-</style>
+    // Store song data for player page
+    const songData = {
+      title: songTitle,
+      artist: songArtist,
+      album: songAlbum,
+      image: songImage,
+      songId: {{ song.pk }},
+      url: songUrl,
+      otherSongs: [
+        {% for song in album_songs %}
+        {
+          title: '{{ song|localized_field:"title" }}',
+          image: '{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}',
+          link: '/songs/{{ song.slug }}/',
+          duration: '{% if song.duration_seconds %}{{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}{% endif %}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ],
+      credits: [
+        {% for credit in credits %}
+        {
+          personName: '{{ credit.person.name }}',
+          personSlug: '{{ credit.person.slug }}',
+          personImage: '{% if credit.person.profile_image %}{{ credit.person.profile_image.url }}{% endif %}',
+          role: '{{ credit.get_role_display }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ],
+      platforms: [
+        {% for link in links %}
+        {
+          name: '{{ link.platform.get_platform_name_display }}',
+          url: '{{ link.direct_url }}',
+          logo: '{% if link.platform.logo_icon_url %}{{ link.platform.logo_icon_url }}{% endif %}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
+    };
+    localStorage.setItem('currentSongData', JSON.stringify(songData));
 
+    if (typeof toggleAudio === 'function') {
+      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }});
+    } else {
+      console.error('Global audio player not available');
+    }
+
+    fetch('/songs/increment-play/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: `song_id=${songId}`
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status === 'success' && data.incremented) {
+          document.querySelectorAll('[data-play-count]').forEach(function (element) {
+            element.textContent = data.play_count;
+          });
+        }
+      })
+      .catch(function (error) {
+        console.error('Error incrementing play count:', error);
+      });
+    {% else %}
+    console.error('No audio file available for this song');
+    {% endif %}
+  };
+
+  function startListening(songId) {
+    fetch('/songs/start-listening/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: `song_id=${songId}`
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status === 'success') {
+          updateListenerCount(data.listener_count);
+          startHeartbeat(songId);
+        }
+      })
+      .catch(function (error) { console.error('Error starting listening:', error); });
+  }
+
+  function stopListening(songId) {
+    fetch('/songs/stop-listening/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: `song_id=${songId}`
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status === 'success') {
+          updateListenerCount(data.listener_count);
+          stopHeartbeat();
+        }
+      })
+      .catch(function (error) { console.error('Error stopping listening:', error); });
+  }
+
+  function startHeartbeat(songId) {
+    stopHeartbeat();
+    heartbeatInterval = setInterval(function () {
+      fetch('/songs/listening-heartbeat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: `song_id=${songId}`
+      })
+        .then(handleJson)
+        .then(function (data) {
+          if (data.status === 'success') updateListenerCount(data.listener_count);
+        })
+        .catch(function (error) { console.error('Error sending heartbeat:', error); });
+    }, 30000);
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+  }
+
+  function updateListenerCount(count) {
+    document.querySelectorAll('[data-listener-count]').forEach(function (element) {
+      element.textContent = count;
+    });
+  }
+
+  function startListenerPolling(songId) {
+    stopListenerPolling();
+    listenerPollingInterval = setInterval(function () {
+      fetch(`/songs/current-listeners/?song_id=${songId}`)
+        .then(handleJson)
+        .then(function (data) {
+          if (data.status === 'success') updateListenerCount(data.listener_count);
+        })
+        .catch(function (error) { console.error('Error polling listeners:', error); });
+    }, 5000);
+  }
+
+  function stopListenerPolling() {
+    if (listenerPollingInterval) {
+      clearInterval(listenerPollingInterval);
+      listenerPollingInterval = null;
+    }
+  }
+
+  window.toggleFavorite = function (button) {
+    const songId = button.dataset.songId;
+    const icon = button.querySelector('i');
+    const text = button.querySelector('span');
+    const likeCountElements = document.querySelectorAll('[data-like-count]');
+    const oldLiked = button.classList.contains('song-action-danger');
+
+    if (oldLiked) {
+      button.classList.remove('song-action-danger');
+      icon.classList.remove('bi-heart-fill');
+      icon.classList.add('bi-heart');
+      text.textContent = '{% translate "إعجاب" %}';
+    } else {
+      button.classList.add('song-action-danger');
+      icon.classList.remove('bi-heart');
+      icon.classList.add('bi-heart-fill');
+      text.textContent = '{% translate "أعجبتني" %}';
+    }
+
+    likeCountElements.forEach(function (element) {
+      const current = parseInt(element.textContent, 10) || 0;
+      element.textContent = Math.max(0, current + (oldLiked ? -1 : 1));
+    });
+
+    fetch('/likes/toggle/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: `content_type=song&object_id=${songId}`
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status === 'success') return;
+        throw new Error(data.message || 'Favorite request failed');
+      })
+      .catch(function (error) {
+        console.error('Error toggling favorite:', error);
+        // Rollback UI
+        if (oldLiked) {
+          button.classList.add('song-action-danger');
+          icon.classList.remove('bi-heart');
+          icon.classList.add('bi-heart-fill');
+          text.textContent = '{% translate "أعجبتني" %}';
+        } else {
+          button.classList.remove('song-action-danger');
+          icon.classList.remove('bi-heart-fill');
+          icon.classList.add('bi-heart');
+          text.textContent = '{% translate "إعجاب" %}';
+        }
+        likeCountElements.forEach(function (element) {
+          const current = parseInt(element.textContent, 10) || 0;
+          element.textContent = Math.max(0, current + (oldLiked ? 1 : -1));
+        });
+      });
+  };
+
+  window.showPlaylistModal = function () {
+    const modal = document.getElementById('playlistModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    loadUserPlaylists();
+  };
+
+  window.closePlaylistModal = function () {
+    const modal = document.getElementById('playlistModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('playlistSearch').value = '';
+    document.getElementById('createPlaylistFormContainer').style.display = 'none';
+  };
+
+  function loadUserPlaylists() {
+    fetch(`/playlists/list/?song_id=${window.songId}`)
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status !== 'success') throw new Error(data.message || 'Failed to load playlists');
+        userPlaylists = data.playlists || [];
+        renderPlaylists(userPlaylists);
+      })
+      .catch(function (error) {
+        console.error('Error loading playlists:', error);
+        document.getElementById('playlistList').innerHTML = `
+          <div class="text-center py-4" style="color:var(--muted);">
+            <i class="bi bi-exclamation-circle" style="font-size:25px;"></i>
+            <p class="mt-2 mb-0">{% translate "حدث خطأ أثناء تحميل القوائم" %}</p>
+          </div>
+        `;
+      });
+  }
+
+  function renderPlaylists(playlists) {
+    const container = document.getElementById('playlistList');
+    if (!playlists.length) {
+      container.innerHTML = `
+        <div class="text-center py-4" style="color:var(--muted);">
+          <i class="bi bi-music-note-list" style="font-size:27px;"></i>
+          <p class="mt-2 mb-0">{% translate "لا توجد قوائم تشغيل" %}</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = playlists.map(function (playlist) {
+      const disabled = Boolean(playlist.contains_song);
+      const cover = playlist.cover_image || (playlist.random_images && playlist.random_images.length ? playlist.random_images[0] : '');
+
+      return `
+        <div class="playlist-item ${disabled ? 'disabled' : ''}" data-playlist-id="${escapeHtml(playlist.pk)}">
+          <div class="playlist-cover">
+            ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : `<i class="bi bi-music-note-list"></i>`}
+          </div>
+          <div class="playlist-info">
+            <div class="playlist-name">${escapeHtml(playlist.name)}</div>
+            <div class="playlist-count">${escapeHtml(playlist.song_count)} {% translate "أغنية" %}</div>
+            ${disabled ? `<div class="playlist-status">{% translate "موجودة بالفعل" %}</div>` : ''}
+          </div>
+          <div class="playlist-icons" style="display:flex; align-items:center; gap:6px; color:var(--muted);">
+            ${playlist.is_public ? '<i class="bi bi-globe"></i>' : '<i class="bi bi-lock"></i>'}
+            ${disabled ? '<i class="bi bi-check-circle" style="color:#42d890;"></i>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.playlist-item').forEach(function (item) {
+      if (item.classList.contains('disabled')) return;
+      item.addEventListener('click', function () {
+        addSongToPlaylist(Number(item.dataset.playlistId));
+      });
+    });
+  }
+
+  window.searchPlaylists = function (query) {
+    const value = query.toLowerCase().trim();
+    const filtered = userPlaylists.filter(function (playlist) {
+      return String(playlist.name || '').toLowerCase().includes(value);
+    });
+    renderPlaylists(filtered);
+  };
+
+  window.showCreatePlaylistInModal = function () {
+    const form = document.getElementById('createPlaylistFormContainer');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window.createAndAddPlaylist = function () {
+    const name = document.getElementById('newPlaylistName').value.trim();
+    const description = document.getElementById('newPlaylistDescription').value.trim();
+    const mode = document.getElementById('newPlaylistMode').value;
+
+    if (!name) {
+      alert('{% translate "يرجى إدخال اسم القائمة" %}');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('mode', mode);
+    formData.append('song_id', window.songId);
+
+    fetch('/playlists/create-with-song/', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': getCSRFToken() }
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status !== 'success') throw new Error(data.message || '{% translate "حدث خطأ" %}');
+        closePlaylistModal();
+        alert('{% translate "تم إنشاء القائمة وإضافة الأغنية بنجاح" %}');
+      })
+      .catch(function (error) {
+        console.error('Error creating playlist:', error);
+        alert(error.message || '{% translate "حدث خطأ" %}');
+      });
+  };
+
+  function addSongToPlaylist(playlistId) {
+    const formData = new FormData();
+    formData.append('playlist_id', playlistId);
+    formData.append('song_id', window.songId);
+
+    fetch('/playlists/add-song/', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': getCSRFToken() }
+    })
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status !== 'success') throw new Error(data.message || '{% translate "حدث خطأ" %}');
+        closePlaylistModal();
+        alert('{% translate "تمت إضافة الأغنية للقائمة بنجاح" %}');
+      })
+      .catch(function (error) {
+        console.error('Error adding song to playlist:', error);
+        alert(error.message || '{% translate "حدث خطأ" %}');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const songId = {{ song.pk }};
+    const searchInput = document.getElementById('songSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', function (event) {
+        searchSongs(event.target.value);
+      });
+    }
+
+    {% if song.audio_file %}
+    fetch(`/songs/current-listeners/?song_id=${songId}`)
+      .then(handleJson)
+      .then(function (data) {
+        if (data.status === 'success') updateListenerCount(data.listener_count);
+      })
+      .catch(function (error) { console.error('Error getting current listeners:', error); });
+
+    startListenerPolling(songId);
+
+    if (typeof globalAudio !== 'undefined' && globalAudio) {
+      globalAudio.addEventListener('play', function () {
+        if (globalAudio.src === '{{ song.audio_file.url }}') {
+          isCurrentlyListening = true;
+          startListening(songId);
+          const button = document.getElementById('audioPlayBtn');
+          const icon = document.getElementById('playIcon');
+          if (button && icon) {
+            icon.classList.remove('bi-play-fill');
+            icon.classList.add('bi-pause-fill');
+            const text = button.querySelector('span');
+            if (text) text.textContent = '{% translate "إيقاف" %}';
+          }
+        }
+      });
+
+      globalAudio.addEventListener('pause', function () {
+        if (globalAudio.src === '{{ song.audio_file.url }}') {
+          isCurrentlyListening = false;
+          stopListening(songId);
+          const button = document.getElementById('audioPlayBtn');
+          const icon = document.getElementById('playIcon');
+          if (button && icon) {
+            icon.classList.remove('bi-pause-fill');
+            icon.classList.add('bi-play-fill');
+            const text = button.querySelector('span');
+            if (text) text.textContent = '{% translate "تشغيل" %}';
+          }
+        }
+      });
+    }
+    {% endif %}
+
+    // Sliders scroll controls
+    document.querySelectorAll('.slider-wrap').forEach(function (wrapper) {
+      const track = wrapper.querySelector('.slider-track');
+      const prev = wrapper.querySelector('.slider-control-prev');
+      const next = wrapper.querySelector('.slider-control-next');
+      if (!track) return;
+
+      if (prev) {
+        prev.addEventListener('click', function () {
+          const rtl = document.documentElement.dir === 'rtl';
+          track.scrollBy({ left: rtl ? 360 : -360, behavior: 'smooth' });
+        });
+      }
+      if (next) {
+        next.addEventListener('click', function () {
+          const rtl = document.documentElement.dir === 'rtl';
+          track.scrollBy({ left: rtl ? -360 : 360, behavior: 'smooth' });
+        });
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    const playlistModal = document.getElementById('playlistModal');
+    if (playlistModal && playlistModal.style.display === 'flex') {
+      closePlaylistModal();
+    }
+  });
+
+  window.addEventListener('beforeunload', function () {
+    if (isCurrentlyListening && window.songId) {
+      try {
+        navigator.sendBeacon('/songs/stop-listening/', new URLSearchParams({
+          song_id: window.songId,
+          csrfmiddlewaretoken: getCSRFToken()
+        }));
+      } catch (error) {
+        console.error('Error sending stop-listening:', error);
+      }
+    }
+    stopHeartbeat();
+    stopListenerPolling();
+  });
+
+})();
+</script>
 {% endblock %}

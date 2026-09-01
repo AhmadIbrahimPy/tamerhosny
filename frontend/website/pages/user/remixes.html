@@ -75,7 +75,7 @@
         </div>
         <div class="th-remix-play-overlay">
           {% if project.outputs.first %}
-          <button class="th-remix-play-btn" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}')">
+          <button class="th-remix-play-btn" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}', '', '', true, null)">
             <i class="bi bi-play-fill"></i>
           </button>
           {% endif %}
@@ -86,7 +86,7 @@
         <div class="th-remix-meta">{{ project.song_names }}</div>
         <div class="th-remix-actions">
           {% if project.outputs.first %}
-          <button class="th-remix-btn primary" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}')">
+          <button class="th-remix-btn primary" onclick="toggleAudio('{{ project.outputs.first.output_file.url }}', this, '{{ project.name }}', '{{ project.song_names }}', [{% for img in project.song_images %}'{{ img|default:"" }}'{% if not forloop.last %},{% endif %}{% endfor %}], '{% url 'website_app:remix-result' project.id %}', '', '', true, null)">
             <i class="bi bi-play-fill"></i> {% translate "تشغيل" %}
           </button>
           <a href="{{ project.outputs.first.output_file.url }}" class="th-remix-btn secondary" download>

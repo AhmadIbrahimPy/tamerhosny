@@ -2,6 +2,272 @@
 {% load static i18n %}
 {% block title %}{% translate "توقيت كلمات الأغنية" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+.audio-player-container {
+  background: var(--bs-body-bg, #f8f9fa);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.audio-controls {
+  background: var(--bs-body-bg, #fff);
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+#playPauseBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  color: #fff;
+}
+
+#playPauseBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+#playPauseBtn:active {
+  transform: scale(0.95);
+}
+
+.progress {
+  background: var(--bs-tertiary-bg, #e9ecef);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 10px !important;
+  cursor: pointer;
+  transition: height 0.2s ease;
+}
+
+.progress:hover {
+  height: 12px !important;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  transition: width 0.1s linear;
+}
+
+#currentTime,
+#duration {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bs-body-color, #495057);
+  min-width: 45px;
+}
+
+#rewindBtn,
+#forwardBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 2px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-secondary-color, #6c757d);
+  transition: all 0.2s ease;
+}
+
+#rewindBtn i,
+#forwardBtn i {
+  font-size: 16px;
+}
+
+#rewindBtn:hover,
+#forwardBtn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  transform: scale(1.1);
+}
+
+.input-group {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input-group .form-control {
+  border: 2px solid var(--bs-border-color, #dee2e6);
+  border-right: none;
+  text-align: center;
+  font-weight: 600;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #495057);
+}
+
+.input-group .form-control:focus {
+  border-color: #667eea;
+  box-shadow: none;
+  background: var(--bs-body-bg, #fff);
+}
+
+.input-group .btn {
+  border: 2px solid var(--bs-border-color, #dee2e6);
+  border-left: none;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--bs-body-color, #495057);
+}
+
+.input-group .btn:hover {
+  background: var(--bs-secondary-bg, #e9ecef);
+  border-color: #667eea;
+}
+
+#setStartTimeBtn,
+#setEndTimeBtn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+
+#setStartTimeBtn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-color: #4facfe;
+}
+
+#setStartTimeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+
+#setEndTimeBtn {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  border-color: #43e97b;
+}
+
+#setEndTimeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark),
+html[data-bs-theme="dark"] {
+  .audio-player-container {
+    background: #212529;
+    border-color: #495057;
+  }
+  
+  .audio-controls {
+    background: #2c3035;
+  }
+  
+  .progress {
+    background: #495057;
+  }
+  
+  #rewindBtn,
+  #forwardBtn {
+    background: #343a40;
+    border-color: #495057;
+    color: #adb5bd;
+  }
+  
+  #rewindBtn:hover,
+  #forwardBtn:hover {
+    background: #495057;
+  }
+  
+  .input-group .form-control {
+    background: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
+  }
+  
+  .input-group .form-control:focus {
+    background: #343a40;
+  }
+  
+  .input-group .btn {
+    background: #495057;
+    border-color: #495057;
+    color: #f8f9fa;
+  }
+  
+  .input-group .btn:hover {
+    background: #6c757d;
+  }
+}
+
+.lyrics-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  border-radius: 8px;
+}
+
+.lyric-line {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.lyric-line:hover {
+  background: var(--bs-secondary-bg, #e9ecef);
+}
+
+.lyric-line.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.lyric-line .timestamp {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-inline-end: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+.lyric-line .text {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.lyric-line.music {
+  color: var(--bs-secondary-color, #6c757d);
+  font-style: italic;
+}
+
+.lyric-line.silence {
+  color: var(--bs-tertiary-color, #adb5bd);
+  font-size: 14px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="custom-container d-flex justify-content-center">
   <div class="w-100" style="max-width: 780px;">
@@ -22,9 +288,9 @@
               <th class="text-end">{% translate "إجراءات" %}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="segmentsTableBody">
             {% for segment in segments %}
-            <tr>
+            <tr data-segment-id="{{ segment.pk }}">
               <td>{{ segment.start_seconds }}</td>
               <td>{{ segment.end_seconds }}</td>
               <td>
@@ -38,18 +304,86 @@
               </td>
               <td class="text-wrap" style="max-width: 260px;">{{ segment.text|default:"-" }}</td>
               <td class="text-end">
-                <a href="{% url 'dashboard_app:song-segment-edit' song.pk segment.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
-                <form action="{% url 'dashboard_app:song-segment-delete' song.pk segment.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
-                </form>
+                <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="{{ segment.pk }}">{% translate "تعديل" %}</button>
+                <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="{{ segment.pk }}">{% translate "حذف" %}</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
+            <tr id="emptyRow"><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
             {% endfor %}
           </tbody>
         </table>
+      </div>
+    </div>
+
+    {% if song.audio_file %}
+    <div class="card card-lg mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">{% translate "مشغل الصوت" %}</h6>
+        <button class="btn btn-sm btn-outline-info" type="button" id="showLyricsBtn">
+          <i class="ti ti-file-text"></i> {% translate "عرض الكلمات" %}
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="audio-player-container">
+          <audio id="audioPlayer" src="{{ song.audio_file.url }}" preload="metadata"></audio>
+          
+          <div class="audio-controls d-flex align-items-center gap-3 mb-3">
+            <button id="playPauseBtn" class="btn btn-primary btn-sm" type="button">
+              <i class="ti ti-player-play" id="playIcon"></i>
+            </button>
+            
+            <div class="flex-grow-1">
+              <div class="progress" style="height: 8px; cursor: pointer;" id="progressBar">
+                <div class="progress-bar" id="progressBarFill" role="progressbar" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <span class="text-muted small" id="currentTime">0:00</span>
+            <span class="text-muted small">/</span>
+            <span class="text-muted small" id="duration">0:00</span>
+            
+            <button id="rewindBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "ترجيع 5 ثواني" %}">
+              <i class="ti ti-player-skip-back"></i>
+            </button>
+            
+            <button id="forwardBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "تقديم 5 ثواني" %}">
+              <i class="ti ti-player-skip-forward"></i>
+            </button>
+            
+            <div class="input-group input-group-sm" style="width: 100px;">
+              <input type="number" class="form-control" id="seekInput" placeholder="ثانية" min="0">
+              <button class="btn btn-outline-secondary" type="button" id="seekBtn">{% translate "انتقل" %}</button>
+            </div>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-info" type="button" id="setStartTimeBtn">
+              <i class="ti ti-player-play"></i> {% translate "تعيين كوقت بداية" %}
+            </button>
+            <button class="btn btn-sm btn-outline-success" type="button" id="setEndTimeBtn">
+              <i class="ti ti-player-stop"></i> {% translate "تعيين كوقت نهاية" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Lyrics Modal -->
+    <div class="modal fade" id="lyricsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{% translate "كلمات الأغنية" %} — {{ song.title_ar }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="lyricsContainer" class="lyrics-container">
+              <!-- Lyrics will be populated here -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -60,21 +394,484 @@
         {% if form.non_field_errors %}
           <div class="alert alert-danger">{{ form.non_field_errors }}</div>
         {% endif %}
-        <form method="post">
+        <form method="post" id="segmentForm">
           {% csrf_token %}
           {% for field in form %}
             <div class="mb-3">
               <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
               {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+              {% for error in field.errors %}<div class="text-danger small mt-1 field-error" data-field="{{ field.name }}">{{ error }}</div>{% endfor %}
             </div>
           {% endfor %}
-          <button type="submit" class="btn btn-primary">{% translate "إضافة المقطع" %}</button>
+          <button type="submit" class="btn btn-primary" id="submitSegmentBtn">{% translate "إضافة المقطع" %}</button>
+          <button type="button" class="btn btn-light" id="cancelEditBtn" style="display: none;">{% translate "إلغاء" %}</button>
         </form>
       </div>
     </div>
 
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const audio = document.getElementById('audioPlayer');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const playIcon = document.getElementById('playIcon');
+  const progressBar = document.getElementById('progressBar');
+  const progressBarFill = document.getElementById('progressBarFill');
+  const currentTimeEl = document.getElementById('currentTime');
+  const durationEl = document.getElementById('duration');
+  const rewindBtn = document.getElementById('rewindBtn');
+  const forwardBtn = document.getElementById('forwardBtn');
+  const seekInput = document.getElementById('seekInput');
+  const seekBtn = document.getElementById('seekBtn');
+  const setStartTimeBtn = document.getElementById('setStartTimeBtn');
+  const setEndTimeBtn = document.getElementById('setEndTimeBtn');
+  const startSecondsField = document.getElementById('id_start_seconds');
+  const endSecondsField = document.getElementById('id_end_seconds');
+
+  if (!audio) {
+    console.error('Audio element not found');
+    return;
+  }
+
+  function formatTime(seconds) {
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function updateProgress() {
+    if (!isFinite(audio.duration) || audio.duration === 0) return;
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progressBarFill.style.width = `${percent}%`;
+    currentTimeEl.textContent = formatTime(audio.currentTime);
+  }
+
+  // Load metadata when audio is ready
+  audio.addEventListener('loadedmetadata', function() {
+    console.log('Audio metadata loaded, duration:', audio.duration);
+    durationEl.textContent = formatTime(audio.duration);
+    if (seekInput) seekInput.max = Math.floor(audio.duration);
+  });
+
+  // Also try canplay event as fallback
+  audio.addEventListener('canplay', function() {
+    if (durationEl.textContent === '0:00') {
+      console.log('Audio can play, duration:', audio.duration);
+      durationEl.textContent = formatTime(audio.duration);
+      if (seekInput) seekInput.max = Math.floor(audio.duration);
+    }
+  });
+
+  audio.addEventListener('timeupdate', updateProgress);
+
+  audio.addEventListener('ended', function() {
+    playIcon.classList.remove('ti-player-pause');
+    playIcon.classList.add('ti-player-play');
+  });
+
+  audio.addEventListener('error', function(e) {
+    console.error('Audio error:', e);
+  });
+
+  if (playPauseBtn) {
+    playPauseBtn.addEventListener('click', function() {
+      if (audio.paused) {
+        audio.play().catch(function(err) {
+          console.error('Play error:', err);
+        });
+        playIcon.classList.remove('ti-player-play');
+        playIcon.classList.add('ti-player-pause');
+      } else {
+        audio.pause();
+        playIcon.classList.remove('ti-player-pause');
+        playIcon.classList.add('ti-player-play');
+      }
+    });
+  }
+
+  if (progressBar) {
+    progressBar.addEventListener('click', function(e) {
+      if (!isFinite(audio.duration) || audio.duration === 0) return;
+      const rect = progressBar.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = percent * audio.duration;
+    });
+  }
+
+  if (rewindBtn) {
+    rewindBtn.addEventListener('click', function() {
+      audio.currentTime = Math.max(0, audio.currentTime - 5);
+      console.log('Rewind to:', audio.currentTime);
+    });
+  }
+
+  if (forwardBtn) {
+    forwardBtn.addEventListener('click', function() {
+      if (isFinite(audio.duration)) {
+        audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+        console.log('Forward to:', audio.currentTime);
+      }
+    });
+  }
+
+  if (seekBtn && seekInput) {
+    seekBtn.addEventListener('click', function() {
+      const seconds = parseFloat(seekInput.value);
+      if (!isNaN(seconds) && seconds >= 0) {
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          audio.currentTime = Math.min(seconds, audio.duration);
+        } else {
+          audio.currentTime = seconds;
+        }
+        console.log('Seek to:', audio.currentTime);
+      }
+    });
+  }
+
+  if (setStartTimeBtn && startSecondsField) {
+    setStartTimeBtn.addEventListener('click', function() {
+      startSecondsField.value = Math.round(audio.currentTime);
+      startSecondsField.dispatchEvent(new Event('input'));
+    });
+  }
+
+  if (setEndTimeBtn && endSecondsField) {
+    setEndTimeBtn.addEventListener('click', function() {
+      endSecondsField.value = Math.round(audio.currentTime);
+      endSecondsField.dispatchEvent(new Event('input'));
+    });
+  }
+
+  // Try to load audio explicitly
+  if (audio.readyState >= 1) {
+    durationEl.textContent = formatTime(audio.duration);
+    if (seekInput) seekInput.max = Math.floor(audio.duration);
+  } else {
+    audio.load();
+  }
+
+  // Segment management via AJAX
+  const segmentForm = document.getElementById('segmentForm');
+  const submitSegmentBtn = document.getElementById('submitSegmentBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const segmentsTableBody = document.getElementById('segmentsTableBody');
+  const emptyRow = document.getElementById('emptyRow');
+  let editingSegmentId = null;
+  const songPk = {{ song.pk }};
+
+  function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrftoken') {
+        return decodeURIComponent(value);
+      }
+    }
+    return '';
+  }
+
+  function createSegmentRow(segment) {
+    let badgeClass = 'bg-secondary-subtle text-secondary';
+    if (segment.segment_type === 'LYRICS') {
+      badgeClass = 'bg-primary-subtle text-primary';
+    } else if (segment.segment_type === 'MUSIC') {
+      badgeClass = 'bg-info-subtle text-info';
+    }
+
+    const tr = document.createElement('tr');
+    tr.dataset.segmentId = segment.id;
+    tr.innerHTML = `
+      <td>${segment.start_seconds}</td>
+      <td>${segment.end_seconds}</td>
+      <td><span class="badge ${badgeClass}">${segment.segment_type_display}</span></td>
+      <td class="text-wrap" style="max-width: 260px;">${segment.text || '-'}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="${segment.id}">{% translate "تعديل" %}</button>
+        <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="${segment.id}">{% translate "حذف" %}</button>
+      </td>
+    `;
+    return tr;
+  }
+
+  if (segmentForm) {
+    segmentForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(segmentForm);
+      const currentPath = window.location.pathname;
+      const basePath = currentPath.replace(/\/$/, '');
+      const url = editingSegmentId 
+        ? `${basePath}/${editingSegmentId}/edit/`
+        : basePath + '/';
+      
+      submitSegmentBtn.disabled = true;
+      submitSegmentBtn.textContent = editingSegmentId ? '{% translate "جاري التعديل..." %}' : '{% translate "جاري الإضافة..." %}';
+
+      fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': getCSRFToken()
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          if (editingSegmentId) {
+            // Update existing row
+            const existingRow = segmentsTableBody.querySelector(`[data-segment-id="${editingSegmentId}"]`);
+            if (existingRow) {
+              const newRow = createSegmentRow(data.segment);
+              existingRow.replaceWith(newRow);
+            }
+            editingSegmentId = null;
+            cancelEditBtn.style.display = 'none';
+            submitSegmentBtn.textContent = '{% translate "إضافة المقطع" %}';
+          } else {
+            // Add new row
+            if (emptyRow) {
+              emptyRow.remove();
+            }
+            const newRow = createSegmentRow(data.segment);
+            segmentsTableBody.appendChild(newRow);
+            
+            // Update start_seconds for next segment
+            const startField = document.getElementById('id_start_seconds');
+            if (startField) {
+              startField.value = data.segment.end_seconds;
+            }
+          }
+          
+          // Clear form fields except start_seconds
+          document.getElementById('id_end_seconds').value = '';
+          document.getElementById('id_text').value = '';
+          
+          // Clear field errors
+          document.querySelectorAll('.field-error').forEach(el => el.remove());
+        } else if (data.errors) {
+          // Display errors
+          document.querySelectorAll('.field-error').forEach(el => el.remove());
+          
+          for (const [field, errors] of Object.entries(data.errors)) {
+            const fieldEl = document.getElementById(`id_${field}`);
+            if (fieldEl) {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'text-danger small mt-1 field-error';
+              errorDiv.dataset.field = field;
+              errorDiv.textContent = errors[0];
+              fieldEl.parentNode.appendChild(errorDiv);
+            }
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('{% translate "حدث خطأ أثناء الحفظ" %}');
+      })
+      .finally(() => {
+        submitSegmentBtn.disabled = false;
+        submitSegmentBtn.textContent = editingSegmentId ? '{% translate "حفظ التعديلات" %}' : '{% translate "إضافة المقطع" %}';
+      });
+    });
+  }
+
+  // Handle delete buttons
+  segmentsTableBody.addEventListener('click', function(e) {
+    if (e.target.classList.contains('delete-segment-btn')) {
+      const segmentId = e.target.dataset.segmentId;
+      if (confirm('{% translate "متأكد من الحذف؟" %}')) {
+        const currentPath = window.location.pathname;
+        const basePath = currentPath.replace(/\/$/, '');
+        fetch(`${basePath}/${segmentId}/delete/`, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const row = segmentsTableBody.querySelector(`[data-segment-id="${segmentId}"]`);
+            if (row) {
+              row.remove();
+              
+              // Show empty row if no segments left
+              if (segmentsTableBody.children.length === 0) {
+                const tr = document.createElement('tr');
+                tr.id = 'emptyRow';
+                tr.innerHTML = `<td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td>`;
+                segmentsTableBody.appendChild(tr);
+              }
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('{% translate "حدث خطأ أثناء الحذف" %}');
+        });
+      }
+    }
+  });
+
+  // Handle edit buttons
+  segmentsTableBody.addEventListener('click', function(e) {
+    if (e.target.classList.contains('edit-segment-btn')) {
+      const segmentId = e.target.dataset.segmentId;
+      const row = segmentsTableBody.querySelector(`[data-segment-id="${segmentId}"]`);
+      
+      if (row) {
+        const cells = row.querySelectorAll('td');
+        const startSeconds = parseFloat(cells[0].textContent);
+        const endSeconds = parseFloat(cells[1].textContent);
+        const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
+        
+        document.getElementById('id_start_seconds').value = startSeconds;
+        document.getElementById('id_end_seconds').value = endSeconds;
+        document.getElementById('id_text').value = text;
+        
+        editingSegmentId = segmentId;
+        submitSegmentBtn.textContent = '{% translate "حفظ التعديلات" %}';
+        cancelEditBtn.style.display = 'inline-block';
+        
+        // Scroll to form
+        segmentForm.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
+
+  // Handle cancel edit
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener('click', function() {
+      editingSegmentId = null;
+      submitSegmentBtn.textContent = '{% translate "إضافة المقطع" %}';
+      cancelEditBtn.style.display = 'none';
+      
+      // Reset form
+      segmentForm.reset();
+      
+      // Reset start_seconds to last segment's end
+      const rows = segmentsTableBody.querySelectorAll('tr[data-segment-id]');
+      if (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        const lastEnd = parseFloat(lastRow.querySelectorAll('td')[1].textContent);
+        document.getElementById('id_start_seconds').value = lastEnd;
+      }
+      
+      // Clear field errors
+      document.querySelectorAll('.field-error').forEach(el => el.remove());
+    });
+  }
+
+  // Lyrics Modal
+  const showLyricsBtn = document.getElementById('showLyricsBtn');
+  const lyricsModal = document.getElementById('lyricsModal');
+  const lyricsContainer = document.getElementById('lyricsContainer');
+  let lyricsModalInstance = null;
+
+  // Load segments data for lyrics
+  const segmentsData = [
+    {% for segment in segments %}
+    {
+      id: {{ segment.pk }},
+      start: {{ segment.start_seconds }},
+      end: {{ segment.end_seconds }},
+      type: '{{ segment.segment_type }}',
+      text: {{ segment.text|default:"''"|safe }},
+    },
+    {% endfor %}
+  ];
+
+  function populateLyrics() {
+    lyricsContainer.innerHTML = '';
+    
+    if (segmentsData.length === 0) {
+      lyricsContainer.innerHTML = '<p class="text-center text-muted py-5">{% translate "لا توجد كلمات" %}</p>';
+      return;
+    }
+
+    segmentsData.forEach((segment, index) => {
+      const div = document.createElement('div');
+      div.className = 'lyric-line';
+      div.dataset.start = segment.start;
+      div.dataset.end = segment.end;
+      div.dataset.index = index;
+      
+      let typeClass = '';
+      let typeText = '';
+      
+      if (segment.type === 'LYRICS') {
+        typeText = segment.text || '-';
+      } else if (segment.type === 'MUSIC') {
+        typeClass = 'music';
+        typeText = '{% translate "موسيقى" %}';
+      } else {
+        typeClass = 'silence';
+        typeText = '{% translate "صمت" %}';
+      }
+
+      div.innerHTML = `
+        <span class="timestamp">${formatTime(segment.start)}</span>
+        <span class="text ${typeClass}">${typeText}</span>
+      `;
+
+      div.addEventListener('click', function() {
+        if (audio) {
+          audio.currentTime = segment.start;
+          if (audio.paused) {
+            audio.play();
+          }
+        }
+      });
+
+      lyricsContainer.appendChild(div);
+    });
+  }
+
+  function updateActiveLyric() {
+    if (!audio || !lyricsModalInstance || !lyricsModalInstance._isShown) return;
+
+    const currentTime = audio.currentTime;
+    const lyricLines = lyricsContainer.querySelectorAll('.lyric-line');
+    
+    lyricLines.forEach(line => {
+      const start = parseFloat(line.dataset.start);
+      const end = parseFloat(line.dataset.end);
+      
+      if (currentTime >= start && currentTime < end) {
+        line.classList.add('active');
+        
+        // Scroll to active line
+        const containerRect = lyricsContainer.getBoundingClientRect();
+        const lineRect = line.getBoundingClientRect();
+        
+        if (lineRect.top < containerRect.top + 100 || lineRect.bottom > containerRect.bottom - 100) {
+          line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        line.classList.remove('active');
+      }
+    });
+  }
+
+  if (showLyricsBtn) {
+    showLyricsBtn.addEventListener('click', function() {
+      populateLyrics();
+      
+      if (!lyricsModalInstance) {
+        lyricsModalInstance = new bootstrap.Modal(lyricsModal);
+      }
+      lyricsModalInstance.show();
+    });
+  }
+
+  // Update active lyric during playback
+  audio.addEventListener('timeupdate', updateActiveLyric);
+});
+</script>
 {% endblock %}

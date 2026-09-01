@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from backend.ads_app.models import Advertisement
@@ -76,6 +77,85 @@ def home(request):
     })
 
 
+def player_page(request):
+    """Player page with song details and tabs."""
+    return render(request, 'website/pages/player/index.html')
+
+
+@csrf_exempt
+def song_player_data(request):
+    """API endpoint to get song data for player page."""
+    try:
+        song_id = request.POST.get('song_id') if request.method == 'POST' else request.GET.get('song_id')
+        current_song_id = request.POST.get('current_song_id') if request.method == 'POST' else request.GET.get('current_song_id')
+
+        if not song_id:
+            return JsonResponse({'error': 'song_id required'}, status=400)
+
+        song = Song.objects.select_related('album').get(pk=song_id)
+
+        # Get other songs from same album
+        album_songs = []
+        if song.album_id:
+            album_songs = list(Song.objects.select_related('album').filter(album_id=song.album_id).exclude(pk=song.pk)[:12])
+
+        # Get credits
+        all_credits = list(song.credits.select_related('person').all())
+        vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+        singers = [credit for credit in all_credits if credit.role in vocal_roles]
+        crew_credits = [credit for credit in all_credits if credit.role not in vocal_roles]
+
+        # Build response
+        print(f"Song cover_image: {song.cover_image}")
+        print(f"Album: {song.album}")
+        if song.album:
+            print(f"Album cover_image: {song.album.cover_image}")
+
+        data = {
+            'title': song.title_ar,
+            'title_en': song.title_en,
+            'artist': ', '.join([credit.person.full_name_ar for credit in singers]),
+            'album': song.album.title_ar if song.album else '',
+            'image': song.cover_image.url if song.cover_image else (song.album.cover_image.url if song.album and song.album.cover_image else ''),
+            'songId': song.pk,
+            'url': song.audio_file.url if song.audio_file else '',
+            'currentSongId': int(current_song_id) if current_song_id else None,
+            'otherSongs': [
+                {
+                    'title': s.title_ar,
+                    'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
+                    'link': f'/songs/{s.slug}/',
+                    'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
+                    'songId': s.pk
+                }
+                for s in album_songs
+            ],
+            'credits': [
+                {
+                    'personName': credit.person.full_name_ar,
+                    'personSlug': credit.person.slug,
+                    'personImage': credit.person.profile_image.url if credit.person.profile_image else '',
+                    'role': credit.get_role_display()
+                }
+                for credit in crew_credits
+            ],
+            'platforms': []
+        }
+
+        print(f"Response data image: {data['image']}")
+        print(f"First other song image: {data['otherSongs'][0]['image'] if data['otherSongs'] else 'N/A'}")
+
+        return JsonResponse(data)
+
+    except Song.DoesNotExist:
+        return JsonResponse({'error': 'Song not found'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Error in song_player_data: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 # ---------------------------------------------------------------------------
 # People
 # ---------------------------------------------------------------------------
@@ -131,6 +211,12 @@ def song_detail(request, slug):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), slug=slug,
     )
+    
+    # Auto-fetch lyrics if segments don't exist
+    if not song.lyric_segments.exists():
+        from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
+        fetch_and_save_lyrics_for_song(song)
+    
     album_songs = []
     
     if song.album_id:

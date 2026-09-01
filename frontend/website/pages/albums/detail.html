@@ -149,7 +149,12 @@
 
   {% if related_albums %}
   <div class="th-section">
-    <h2 class="th-section-title">{% translate "ألبومات أخرى" %}</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 class="th-section-title" style="margin:0;">{% translate "ألبومات أخرى" %}</h2>
+      <a href="{% url 'website_app:albums' %}" class="th-see-all">
+        {% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">

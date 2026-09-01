@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
 from django.db.models.functions import TruncDate, TruncHour
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -769,6 +769,11 @@ def song_view(request, pk):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), pk=pk,
     )
+    
+    # Auto-fetch lyrics if segments don't exist
+    if not song.lyric_segments.exists():
+        from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
+        fetch_and_save_lyrics_for_song(song)
     fields = [
         (_('العنوان بالعربية'), song.title_ar),
         (_('العنوان بالإنجليزية'), song.title_en),
@@ -916,6 +921,12 @@ def song_credit_delete(request, pk, credit_pk):
 @login_required(login_url='dashboard_app:login')
 def song_segments(request, pk):
     song = get_object_or_404(Song, pk=pk)
+    
+    # Auto-fetch lyrics if segments don't exist
+    if not song.lyric_segments.exists():
+        from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
+        fetch_and_save_lyrics_for_song(song)
+    
     segments = song.lyric_segments.all()
     last_end = segments.aggregate(Max('end_seconds'))['end_seconds__max']
 
@@ -925,7 +936,26 @@ def song_segments(request, pk):
             segment = form.save(commit=False)
             segment.song = song
             segment.save()
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'segment': {
+                        'id': segment.pk,
+                        'start_seconds': segment.start_seconds,
+                        'end_seconds': segment.end_seconds,
+                        'segment_type': segment.segment_type,
+                        'segment_type_display': segment.get_segment_type_display(),
+                        'text': segment.text,
+                    }
+                })
             return redirect('dashboard_app:song-segments', pk=pk)
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': {field: errors for field, errors in form.errors.items()}
+                })
     else:
         form = SongLyricSegmentForm(initial={'start_seconds': last_end or 0})
 
@@ -944,7 +974,27 @@ def song_segment_edit(request, pk, segment_pk):
     form = SongLyricSegmentForm(request.POST or None, instance=segment)
     if request.method == 'POST' and form.is_valid():
         form.save()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'segment': {
+                    'id': segment.pk,
+                    'start_seconds': segment.start_seconds,
+                    'end_seconds': segment.end_seconds,
+                    'segment_type': segment.segment_type,
+                    'segment_type_display': segment.get_segment_type_display(),
+                    'text': segment.text,
+                }
+            })
         return redirect('dashboard_app:song-segments', pk=song.pk)
+    else:
+        if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': {field: errors for field, errors in form.errors.items()}
+            })
+    
     return render(request, 'dashboard/pages/_form_generic.html', {
         'form': form,
         'page_title': f'{_("تعديل مقطع")}: {song.title_ar}',
@@ -957,7 +1007,10 @@ def song_segment_delete(request, pk, segment_pk):
     segment = get_object_or_404(SongLyricSegment, pk=segment_pk, song_id=pk)
     if request.method == 'POST':
         segment.delete()
-    return redirect('dashboard_app:song-segments', pk=pk)
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        return redirect('dashboard_app:song-segments', pk=pk)
 
 
 # ---------------------------------------------------------------------------

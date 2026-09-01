@@ -73,6 +73,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Listen for changes
     visibilityField.addEventListener('change', togglePublishAtField);
   }
+
+  // Auto-calculate audio duration when audio file is selected
+  const audioField = document.querySelector('input[name="audio_file"]');
+  const durationField = document.querySelector('input[name="duration_seconds"]');
+  
+  if (audioField && durationField) {
+    audioField.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const audio = new Audio();
+      const objectUrl = URL.createObjectURL(file);
+      
+      audio.addEventListener('loadedmetadata', function() {
+        const duration = Math.round(audio.duration);
+        durationField.value = duration;
+        URL.revokeObjectURL(objectUrl);
+      });
+      
+      audio.addEventListener('error', function() {
+        console.error('Error loading audio file');
+        URL.revokeObjectURL(objectUrl);
+      });
+      
+      audio.src = objectUrl;
+    });
+  }
 });
 </script>
 

@@ -47,7 +47,12 @@
 
   {% if song_credits %}
   <div class="th-section">
-    <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 class="th-section-title" style="margin:0;">{% translate "الأغاني" %}</h2>
+      <a href="{% url 'website_app:songs' %}" class="th-see-all">
+        {% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
@@ -76,7 +81,12 @@
 
   {% if media_credits %}
   <div class="th-section">
-    <h2 class="th-section-title">{% translate "الأفلام والمسلسلات والإعلانات" %}</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 class="th-section-title" style="margin:0;">{% translate "الأفلام والمسلسلات والإعلانات" %}</h2>
+      <a href="{% url 'website_app:movies' %}" class="th-see-all">
+        {% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
@@ -103,7 +113,12 @@
 
   {% if related_people %}
   <div class="th-section">
-    <h2 class="th-section-title">{% translate "فنانون آخرون" %}</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 class="th-section-title" style="margin:0;">{% translate "فنانون آخرون" %}</h2>
+      <a href="{% url 'website_app:people' %}" class="th-see-all">
+        {% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">

@@ -1374,6 +1374,45 @@ class Command(BaseCommand):
             self.stdout.write(f'Processing album: {album_title}')
 
             for song_data in album_data['songs']:
+                # Get or create recording studio based on arranger
+                recording_studio = None
+                arrangers = song_data.get('arrangers', [])
+                if arrangers:
+                    # Map arrangers to studios
+                    arranger_to_studio = {
+                        'عادل حقي': 'استوديو عادل حقي',
+                        'النابلسي': 'استوديو النابلسي',
+                        'Kay Music': 'استوديو كاي ميوزيك',
+                        'كوليبكس': 'استوديو كوليبكس',
+                        'أحمد عادل': 'استوديو أحمد عادل',
+                        'خالد نبيل': 'استوديو خالد نبيل',
+                        'جلال فهمي': 'استوديو جلال فهمي',
+                        'جلال حمداوي': 'استوديو جلال حمداوي',
+                        'أحمد عبد السلام': 'استوديو أحمد عبد السلام',
+                        'وسام محمد': 'استوديو وسام محمد',
+                        'شريف مكاوي': 'استوديو شريف مكاوي',
+                        'علي فتح الله': 'استوديو علي فتح الله',
+                        'محمد ياسر': 'استوديو محمد ياسر',
+                        'تميم': 'استوديو تميم',
+                        'إلهامي دهيمة': 'استوديو إلهامي دهيمة',
+                        'أحمد حسام': 'استوديو إلهامي دهيمة',
+                        'حسام الصعبي': 'استوديو حسام الصعبي',
+                        'يحيى يوسف': 'استوديو يحيى يوسف',
+                    }
+                    
+                    for arranger_ar, _ in arrangers:
+                        if arranger_ar in arranger_to_studio:
+                            from backend.studios_app.models import Studio
+                            studio_name = arranger_to_studio[arranger_ar]
+                            recording_studio = Studio.objects.filter(name=studio_name).first()
+                            if recording_studio:
+                                break
+
+                # Use default studio if none found
+                if not recording_studio:
+                    from backend.studios_app.models import Studio
+                    recording_studio = Studio.objects.filter(name='استوديو ساوند باور').first()
+
                 song, created = Song.objects.get_or_create(
                     title_ar=song_data['title_ar'],
                     defaults={
@@ -1381,11 +1420,33 @@ class Command(BaseCommand):
                         'release_year': album_data['year'],
                         'song_type': Song.SongType.ALBUM_TRACK,
                         'album': album,
+                        'genre': song_data.get('genre', Song.Genre.EGYPTIAN_POP),
+                        'mood': song_data.get('mood', Song.Mood.ROMANTIC),
+                        'duration_seconds': song_data.get('duration_seconds', 240),
+                        'recording_studio': recording_studio,
                     }
                 )
                 if created:
                     created_songs += 1
                     self.stdout.write(f'  Created song: {song_data["title_ar"]}')
+                else:
+                    # Update existing song with missing fields
+                    updated = False
+                    if not song.genre:
+                        song.genre = song_data.get('genre', Song.Genre.EGYPTIAN_POP)
+                        updated = True
+                    if not song.mood:
+                        song.mood = song_data.get('mood', Song.Mood.ROMANTIC)
+                        updated = True
+                    if not song.duration_seconds:
+                        song.duration_seconds = song_data.get('duration_seconds', 240)
+                        updated = True
+                    if not song.recording_studio and recording_studio:
+                        song.recording_studio = recording_studio
+                        updated = True
+                    if updated:
+                        song.save()
+                        self.stdout.write(f'  Updated song: {song_data["title_ar"]}')
 
                 # Add Tamer Hosny as singer
                 SongCredit.objects.get_or_create(

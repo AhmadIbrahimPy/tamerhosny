@@ -11,19 +11,21 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         studios_data = [
+            # Production Companies
             {
                 'name': 'TH Production',
                 'name_ar': 'تي إتش برودكشن',
                 'entity_type': 'PRODUCTION_COMPANY',
                 'description': 'شركة الإنتاج الخاصة بالفنان تامر حسني',
-                'logo_url': None,  # No official logo found
+                'logo_url': None,
             },
+            # Record Labels
             {
                 'name': 'Free Music Art Production',
                 'name_ar': 'فري ميوزيك آرت برودكشن',
                 'entity_type': 'RECORD_LABEL',
                 'description': 'شركة تسجيلات موسيقية أسسها نصر محروس',
-                'logo_url': None,  # Logo not available
+                'logo_url': None,
             },
             {
                 'name': 'Mazzika',
@@ -37,7 +39,134 @@ class Command(BaseCommand):
                 'name_ar': 'روتانا',
                 'entity_type': 'RECORD_LABEL',
                 'description': 'شركة تسجيلات وإنتاج موسيقي عربية',
-                'logo_url': None,  # Will use Wikipedia SVG
+                'logo_url': None,
+            },
+            # Recording Studios
+            {
+                'name': 'استوديو ساوند باور',
+                'name_en': 'Sound Power Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري شهير',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو النابلسي',
+                'name_en': 'El Nabulsi Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو عادل حقي',
+                'name_en': 'Adel Haki Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو كاي ميوزيك',
+                'name_en': 'Kay Music Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو كوليبكس',
+                'name_en': 'Colibex Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو أحمد عادل',
+                'name_en': 'Ahmed Adel Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو خالد نبيل',
+                'name_en': 'Khaled Nabil Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو جلال فهمي',
+                'name_en': 'Galal Fahmy Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو جلال حمداوي',
+                'name_en': 'Galal Hamdawi Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو أحمد عبد السلام',
+                'name_en': 'Ahmed Abdel Salam Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو وسام محمد',
+                'name_en': 'Wessam Mohamed Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو شريف مكاوي',
+                'name_en': 'Sherif Makawi Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو علي فتح الله',
+                'name_en': 'Ali Fathallah Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو محمد ياسر',
+                'name_en': 'Mohamed Yasser Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو تميم',
+                'name_en': 'Tamim Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو إلهامي دهيمة',
+                'name_en': 'Elhamy Dehima Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو حسام الصعبي',
+                'name_en': 'Hossam El Saabi Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
+            },
+            {
+                'name': 'استوديو يحيى يوسف',
+                'name_en': 'Yahya Youssef Studio',
+                'entity_type': 'RECORDING_STUDIO',
+                'description': 'استوديو تسجيل مصري',
+                'logo_url': None,
             },
         ]
         

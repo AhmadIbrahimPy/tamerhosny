@@ -7,6 +7,9 @@ app_name = 'website_app'
 urlpatterns = [
     path('', views.home, name='home'),
 
+    path('player/', views.player_page, name='player'),
+    path('player/song-data/', views.song_player_data, name='song-player-data'),
+
     path('people/', views.people_list, name='people'),
     path('people/<str:slug>/', views.person_detail, name='person-detail'),
 
