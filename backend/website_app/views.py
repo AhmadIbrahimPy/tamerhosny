@@ -94,11 +94,12 @@ def song_player_data(request):
 
         song = Song.objects.select_related('album').get(pk=song_id)
 
-        # Get other songs from same album
+        # Get other songs from same album (including current song)
         album_songs = []
         if song.album_id:
-            album_songs = list(Song.objects.select_related('album').filter(album_id=song.album_id).exclude(pk=song.pk)[:12])
-
+            album_songs = list(Song.objects.select_related('album').filter(album_id=song.album_id).order_by('title_ar'))
+        else:
+            album_songs = list(Song.objects.all().order_by('?'))
         # Get credits
         all_credits = list(song.credits.select_related('person').all())
         vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
@@ -114,8 +115,11 @@ def song_player_data(request):
         data = {
             'title': song.title_ar,
             'title_en': song.title_en,
+            'slug': song.slug,
             'artist': ', '.join([credit.person.full_name_ar for credit in singers]),
+            'artistSlugs': [credit.person.slug for credit in singers],
             'album': song.album.title_ar if song.album else '',
+            'albumSlug': song.album.slug if song.album else '',
             'image': song.cover_image.url if song.cover_image else (song.album.cover_image.url if song.album and song.album.cover_image else ''),
             'songId': song.pk,
             'url': song.audio_file.url if song.audio_file else '',
@@ -126,7 +130,10 @@ def song_player_data(request):
                     'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
                     'link': f'/songs/{s.slug}/',
                     'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
-                    'songId': s.pk
+                    'songId': s.pk,
+                    'url': s.audio_file.url if s.audio_file else '',
+                    'artist': ', '.join([credit.person.full_name_ar for credit in s.credits.select_related('person').all() if credit.role in vocal_roles]),
+                    'album': s.album.title_ar if s.album else ''
                 }
                 for s in album_songs
             ],
