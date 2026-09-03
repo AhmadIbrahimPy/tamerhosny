@@ -209,7 +209,15 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = 'media/'
+# Not '/media/' - that collides with the app's own '/media/<slug>/'
+# route (movie/series/commercial detail pages). Locally that's masked
+# because Django's own URL resolver always tries the app's routes
+# first; in production nginx serves MEDIA_URL directly (by design, for
+# performance) and intercepts the request before Django ever sees it,
+# so '/media/<slug>/' 404s from nginx itself. MEDIA_ROOT (the actual
+# disk path) is unaffected - only the URL prefix changes, so existing
+# stored file paths keep working unchanged.
+MEDIA_URL = 'uploads/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
