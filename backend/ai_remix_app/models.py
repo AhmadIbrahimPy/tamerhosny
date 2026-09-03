@@ -58,13 +58,26 @@ class RemixProject(models.Model):
     )
     target_bpm = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Target BPM'))
     target_key = models.CharField(max_length=10, blank=True, verbose_name=_('Target Key'))
+    # Only set for quick_remix (two-song) projects - lets that endpoint find
+    # and reuse an existing remix for the same song pair instead of
+    # re-generating it. Always stored with the lower Song pk first so the
+    # pair is looked up the same way regardless of which song was "song1".
+    source_song_1 = models.ForeignKey(
+        'music_app.Song', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    source_song_2 = models.ForeignKey(
+        'music_app.Song', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated At'))
-    
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = _('Remix Project')
         verbose_name_plural = _('Remix Projects')
+        indexes = [
+            models.Index(fields=['source_song_1', 'source_song_2']),
+        ]
     
     def __str__(self):
         return self.name

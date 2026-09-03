@@ -125,7 +125,39 @@ def login_view(request):
 @csrf_exempt
 @require_POST
 def logout_view(request):
+    user = request.user if request.user.is_authenticated else None
     auth_logout(request)
+
+    if user is not None:
+        # The client-side WS 'stop' signal (sent when logout pauses
+        # playback) races the connection teardown on the redirect that
+        # follows - if it lost that race, this user's "currently
+        # listening" row would outlive their session, showing up as
+        # someone still logged in and listening on a song they're no
+        # longer even authenticated for. Clean it up here unconditionally
+        # instead of relying on that timing.
+        from backend.main_app.models import CurrentSongListener
+        from backend.main_app.shared_utils.song_leaderboard import broadcast_current_leaderboard
+
+        song_ids = list(
+            CurrentSongListener.objects.filter(user=user).values_list('song_id', flat=True).distinct()
+        )
+        CurrentSongListener.objects.filter(user=user).delete()
+
+        if song_ids:
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+
+            channel_layer = get_channel_layer()
+            for song_id in song_ids:
+                broadcast_current_leaderboard(song_id)
+                if channel_layer is not None:
+                    count = CurrentSongListener.objects.filter(song_id=song_id).count()
+                    async_to_sync(channel_layer.group_send)(f'song_{song_id}_listeners', {
+                        'type': 'listener.count',
+                        'count': count,
+                    })
+
     return JsonResponse({'status': 'success'})
 
 

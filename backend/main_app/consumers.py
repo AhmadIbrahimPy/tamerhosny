@@ -103,6 +103,7 @@ class SongListenerConsumer(WebsocketConsumer):
 
         self.is_listening = True
         self._broadcast_count()
+        self._broadcast_live_status()
 
     def _stop_listening(self):
         user, session_key = self._identity()
@@ -113,6 +114,13 @@ class SongListenerConsumer(WebsocketConsumer):
 
         self.is_listening = False
         self._broadcast_count()
+        self._broadcast_live_status()
+
+    def _broadcast_live_status(self):
+        # Presence changed but no score changed - just refresh the live
+        # dots on the (unchanged) leaderboard, not a full recompute.
+        from backend.main_app.shared_utils.song_leaderboard import broadcast_current_leaderboard
+        broadcast_current_leaderboard(self.song_id)
 
     def _current_count(self):
         cutoff = timezone.now() - STALE_LISTENER_CUTOFF
@@ -137,4 +145,39 @@ class SongListenerConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'count',
             'count': event['count'],
+        }))
+
+
+class SongLeaderboardConsumer(WebsocketConsumer):
+    """The "top listeners" board on a song's detail page. Read-only from
+    the client's side - it joins the song's leaderboard group on connect
+    and gets pushed a fresh board whenever a full listen, a like toggle,
+    or a presence change (for the live dot) affects it (see
+    `backend.main_app.shared_utils.song_leaderboard`).
+    """
+
+    def connect(self):
+        self.song_id = self.scope['url_route']['kwargs']['song_id']
+        self.group_name = f'song_{self.song_id}_leaderboard'
+
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name,
+        )
+        self.accept()
+
+        from backend.main_app.shared_utils.song_leaderboard import get_cached_leaderboard
+        self.send(text_data=json.dumps({
+            'type': 'leaderboard',
+            'entries': get_cached_leaderboard(self.song_id),
+        }))
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name, self.channel_name,
+        )
+
+    def leaderboard_update(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'leaderboard',
+            'entries': event['entries'],
         }))

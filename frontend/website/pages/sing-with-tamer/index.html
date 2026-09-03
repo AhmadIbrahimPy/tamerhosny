@@ -19,6 +19,34 @@
     gap: 20px;
   }
 
+  .swt-blocked-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 32px;
+    text-align: center;
+    max-width: 520px;
+    margin: 60px auto;
+  }
+  .swt-blocked-icon {
+    width: 72px; height: 72px; margin: 0 auto 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex; align-items: center; justify-content: center; font-size: 30px; color: #fff;
+  }
+  .swt-blocked-card h1 { font-size: 22px; font-weight: 800; margin: 0 0 10px; }
+  .swt-blocked-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .swt-blocked-audio { width: 100%; margin-bottom: 20px; }
+  .swt-blocked-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .swt-blocked-btn {
+    display: inline-flex; align-items: center; padding: 11px 22px; border-radius: 12px;
+    font-weight: 700; font-size: 14px; text-decoration: none; color: var(--text);
+    background: rgba(255,255,255,.06); border: 1px solid var(--border); transition: .2s;
+  }
+  .swt-blocked-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .swt-blocked-btn.primary {
+    color: #111; background: linear-gradient(135deg, var(--accent), #f0d876); border: none;
+  }
+
   .swt-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -911,6 +939,37 @@
 
 {% block content %}
 
+{% if existing_project %}
+<div class="swt-page">
+  <div class="swt-blocked-card">
+    <div class="swt-blocked-icon"><i class="bi bi-mic-fill"></i></div>
+    <h1>{% translate "سجلت أغنية" %} "{{ song|localized_field:'title' }}" {% translate "قبل كده" %}</h1>
+    <p>{% translate "دي التسجيلة اللي عملتها" %} — {{ existing_project.created_at|date:"Y-m-d" }}</p>
+    {% if existing_project.final_audio_file %}
+    <audio controls class="swt-blocked-audio" src="{{ existing_project.final_audio_file.url }}"></audio>
+    {% endif %}
+    <div class="swt-blocked-actions">
+      <a href="{% url 'website_app:song-detail-duet' song.slug existing_project.pk %}" class="swt-blocked-btn primary">
+        {% translate "افتح صفحة الدويتو" %}
+      </a>
+      <a href="{% url 'website_app:song-detail' song.slug %}" class="swt-blocked-btn">{% translate "رجوع لصفحة الأغنية" %}</a>
+    </div>
+  </div>
+</div>
+{% elif cooldown_hours_left %}
+<div class="swt-page">
+  <div class="swt-blocked-card">
+    <div class="swt-blocked-icon"><i class="bi bi-hourglass-split"></i></div>
+    <h1>{% translate "استخدمت الميزة دي النهاردة" %}</h1>
+    <p>
+      {% blocktranslate count hours=cooldown_hours_left %}هتبقى متاحة تاني بعد {{ hours }} ساعة{% plural %}هتبقى متاحة تاني بعد {{ hours }} ساعة{% endblocktranslate %}
+    </p>
+    <div class="swt-blocked-actions">
+      <a href="{% url 'website_app:song-detail' song.slug %}" class="swt-blocked-btn primary">{% translate "رجوع لصفحة الأغنية" %}</a>
+    </div>
+  </div>
+</div>
+{% else %}
 <div class="swt-page">
 
   <!-- =======================================================
@@ -1516,11 +1575,13 @@
   </div>
 
 </div>
+{% endif %}
 
 {% endblock %}
 
 
 {% block extra_js %}
+{% if not existing_project and not cooldown_hours_left %}
 
 <script>
 
@@ -2297,7 +2358,19 @@ async function loadLyrics() {
       currentProject
     ) {
 
-      await loadProjectRecordings();
+      const projectStillValid = await loadProjectRecordings();
+
+      if (!projectStillValid || !currentProject) {
+        // loadProjectRecordings() found the localStorage-restored
+        // project no longer exists server-side and already cleared it -
+        // fall back to a clean division-selection screen instead of
+        // showing a stale "already complete" state.
+        document.getElementById('divisionSelectionCard').style.display = 'block';
+        document.getElementById('practiceCard').style.display = 'none';
+        document.getElementById('startFreshBtn').style.display = 'none';
+        document.getElementById('swtTitle').style.display = 'block';
+        return;
+      }
 
       // Hide division card and show practice area when project exists
       document.getElementById(
@@ -2319,7 +2392,7 @@ async function loadLyrics() {
       // Show start fresh button and hide title when project exists
       document.getElementById('startFreshBtn').style.display = 'block';
       document.getElementById('swtTitle').style.display = 'none';
-      
+
       // Show restart button if there's progress
       if (
         recordings.length > 0 ||
@@ -2364,7 +2437,7 @@ async function loadLyrics() {
 async function loadProjectRecordings() {
 
   if (!currentProject) {
-    return;
+    return true;
   }
 
 
@@ -2378,8 +2451,25 @@ async function loadProjectRecordings() {
       );
 
 
+    if (response.status === 404) {
+      // The project this localStorage progress pointed to no longer
+      // exists on the server (e.g. it was reset/deleted server-side) -
+      // the restored "X/Y recorded" state was stale and wrong. Drop it
+      // entirely instead of trusting it, so the UI falls back to a
+      // clean division-selection screen rather than showing a fake
+      // "all done" completion with zero actual recordings.
+      currentProject = null;
+      recordedLyrics = {};
+      recordings = [];
+      currentLyricIndex = 0;
+      localStorage.removeItem(PROGRESS_KEY);
+      return false;
+    }
+
     if (!response.ok) {
-      return;
+      // Transient error (network hiccup, 5xx) - keep whatever state we
+      // already have rather than wiping progress over a fluke.
+      return true;
     }
 
 
@@ -2454,6 +2544,7 @@ async function loadProjectRecordings() {
 
     updateRecordingsList();
 
+    return true;
 
   } catch (error) {
 
@@ -2461,6 +2552,8 @@ async function loadProjectRecordings() {
       'Project recordings error:',
       error
     );
+
+    return true;
 
   }
 
@@ -4725,5 +4818,5 @@ window.addEventListener(
   }
 );
 </script>
-
+{% endif %}
 {% endblock %}

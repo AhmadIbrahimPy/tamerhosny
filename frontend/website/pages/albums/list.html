@@ -2,6 +2,12 @@
 {% load static i18n bilingual %}
 {% block title %}{% translate "الألبومات" %}{% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% translate 'جميع ألبومات تامر حسني الغنائية على أرشيف تامر حسني.' %}">
+{% endblock %}
+{% block og_title %}{% translate "الألبومات" %} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_description %}{% translate "جميع ألبومات تامر حسني الغنائية على أرشيف تامر حسني." %}{% endblock %}
+
 {% block content %}
 <div class="container-xl th-section">
   <h1 class="th-section-title">{% translate "الألبومات" %}</h1>

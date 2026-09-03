@@ -15,7 +15,15 @@ if not ENV_PATH.exists():
     raise FileNotFoundError(
         f'Missing {ENV_PATH}. Copy credentials/.env.example to credentials/.env and fill in the secrets.'
     )
-load_dotenv(ENV_PATH)
+# override=True: runserver's autoreloader restarts the worker via
+# os.execv, which *inherits* the current process environment rather
+# than starting fresh - so without this, whatever credentials/.env
+# contained the very first time this process chain started stays stuck
+# in os.environ forever (load_dotenv's default is to never overwrite an
+# already-set variable), and edits to the file silently never take
+# effect until the whole dev server is killed and restarted from
+# scratch.
+load_dotenv(ENV_PATH, override=True)
 
 
 def env(key, default=None, required=False):

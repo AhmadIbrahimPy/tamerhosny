@@ -24,6 +24,23 @@
   <meta charset="utf-8">
   <title>{% translate "أرشيف تامر حسني" %} | {% block title %}{% translate "الرئيسية" %}{% endblock %}</title>
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  {% block meta_description %}
+  <meta name="description" content="{% translate 'الأرشيف الفني الكامل لتامر حسني - الأغاني، الألبومات، الأفلام، المسلسلات، الحفلات والإعلانات في مكان واحد.' %}">
+  {% endblock %}
+
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+  {% block og_tags %}
+  <meta property="og:site_name" content="{% translate 'أرشيف تامر حسني' %}">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:title" content="{% block og_title %}{% translate 'أرشيف تامر حسني' %}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{% translate 'الأرشيف الفني الكامل لتامر حسني - الأغاني، الألبومات، الأفلام، المسلسلات، الحفلات والإعلانات في مكان واحد.' %}{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/logos/logo_d.jpeg' %}{% endblock %}">
+  <meta name="twitter:card" content="summary_large_image">
+  {% endblock %}
+
   <link rel="icon" type="image/jpeg" href="{% static 'images/logos/icon.jpeg' %}">
   <link rel="apple-touch-icon" href="{% static 'images/logos/icon.jpeg' %}">
 
@@ -131,7 +148,7 @@
     /* Ad banner */
     .th-ad-banner-wrap{padding-block:20px;}
     .th-ad-banner{position:relative; display:block; border-radius:16px; overflow:hidden; border:1px solid var(--border);}
-    .th-ad-banner img{width:100%; max-height:280px; object-fit:cover; display:block;}
+    .th-ad-banner img{width:100%; max-height:320px; object-fit:cover; display:block;}
     .th-ad-tag{position:absolute; top:10px; inset-inline-start:10px; background:rgba(0,0,0,.55); color:#fff;
       font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; backdrop-filter:blur(4px); z-index:2;}
 
@@ -142,12 +159,17 @@
     .th-ad-slide.active{display:block; animation:thFade .5s ease;}
     .th-ad-slide .th-ad-banner{margin:0;}
     @keyframes thFade{from{opacity:0;} to{opacity:1;}}
+    /* Loading spinner swapped onto the global player's play/pause icon
+       (and, on a song's own page, its "listening now" stat icon) while
+       the audio is buffering - see the globalAudio 'waiting'/'playing'
+       listeners below. */
+    .icon-spin{display:inline-block; animation:iconSpin .8s linear infinite;}
+    @keyframes iconSpin{to{transform:rotate(360deg);}}
     .th-ad-dots{display:flex; justify-content:center; gap:8px; margin-top:12px;}
     .th-ad-dot{width:8px; height:8px; border-radius:50%; border:none; background:var(--border); cursor:pointer; padding:0;}
     .th-ad-dot.active{background:var(--accent); width:20px; border-radius:4px; transition:width .2s ease;}
 
     /* Section */
-    .th-section{padding-block:36px;}
     .th-section-title{font-size:22px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:10px;}
     .th-section-title::before{content:""; width:5px; height:22px; border-radius:4px; background:linear-gradient(180deg, var(--accent), var(--accent-2)); display:inline-block;}
     .th-section-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;}
@@ -181,9 +203,15 @@
     .th-slider > .th-card.aspect-wide{flex-basis:300px;}
     .th-slider > .th-card.th-person-card{flex-basis:150px;}
     .th-slider > .th-card{transition:transform .25s ease, box-shadow .25s ease; position:relative; z-index:1;}
-    /* Only movie/series/commercial poster cards get the hover pop-out — kept subtle. */
-    .th-slider > .th-card.aspect-poster:hover{
-      transform:scale(1.12); z-index:5; box-shadow:0 18px 34px rgba(0,0,0,.5); border-color:rgba(212,175,55,.5);
+    /* Only movie/series/commercial poster cards get the hover pop-out — kept
+       subtle, and only on devices with a real hover (mouse/trackpad). On
+       touch, :hover sticks after the first tap instead of firing the
+       link - the poster would zoom to fill more of the screen instead of
+       navigating, and it took a second tap to actually open the movie. */
+    @media (hover:hover) and (pointer:fine){
+      .th-slider > .th-card.aspect-poster:hover{
+        transform:scale(1.12); z-index:5; box-shadow:0 18px 34px rgba(0,0,0,.5); border-color:rgba(212,175,55,.5);
+      }
     }
     .th-slider > p.th-empty{flex:1 0 auto;}
     .th-slider-arrow{
@@ -205,10 +233,12 @@
       transition:transform .18s ease, border-color .18s ease, background .18s ease;
       display:block; height:100%;
     }
-    .th-card:hover{transform:translateY(-5px); border-color:rgba(212,175,55,.4); background:var(--card-hover);}
+    @media (hover:hover) and (pointer:fine){
+      .th-card:hover{transform:translateY(-5px); border-color:rgba(212,175,55,.4); background:var(--card-hover);}
+      .th-card:hover .th-img-wrap{border-color: var(--accent);}
+    }
     .th-card .th-img-wrap{width:100%; background:#1e2130; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; direction: rtl; text-align: center; transition: border-color 0.18s ease; border: 3px solid transparent;}
     .th-card .th-img-wrap img{width:100%; height:100%; object-fit:cover; display:block; text-align: center;}
-    .th-card:hover .th-img-wrap{border-color: var(--accent);}
     .th-card.aspect-square .th-img-wrap{aspect-ratio:1/1;}
     .th-card.aspect-poster .th-img-wrap{aspect-ratio:2/3;}
     .th-card.aspect-wide .th-img-wrap{aspect-ratio:16/9;}
@@ -319,6 +349,18 @@
     .th-hero-banner{position:relative; width:100%; min-height:56vh; overflow:hidden; background:#0e0f16;}
     .th-hero-media{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border:none; display:block;}
     .th-hero-video{z-index:0;}
+    .th-hero-unmute-btn{
+      position:absolute; bottom:16px; inset-inline-end:16px; z-index:3;
+      width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.25);
+      background:rgba(11,12,18,.55); backdrop-filter:blur(4px); color:#fff; font-size:15px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease;
+    }
+    .th-hero-unmute-btn:hover{background:rgba(11,12,18,.8); border-color:var(--accent); color:var(--accent);}
+    .th-hero-unmute-btn.pulse-hint{animation:heroUnmutePulse 1s ease-in-out 4;}
+    @keyframes heroUnmutePulse{
+      0%, 100%{transform:scale(1); box-shadow:0 0 0 0 rgba(212,175,55,.5);}
+      50%{transform:scale(1.15); box-shadow:0 0 0 8px rgba(212,175,55,0);}
+    }
     .th-hero-poster-box{
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
       width:180px; height:180px; border-radius:16px; overflow:hidden; z-index:1;
@@ -377,6 +419,10 @@
       border-radius:50%; background:rgba(255,255,255,.06); font-size:13px;
     }
     .th-footer-social:hover{background:rgba(212,175,55,.15); color:var(--accent);}
+    .th-footer-disclaimer{
+      flex-basis:100%; color:var(--muted); font-size:11.5px; opacity:.75; margin:4px 0 0;
+      text-align:center; line-height:1.5;
+    }
 
     @media (max-width:700px){
       .th-footer-top{flex-direction:column; gap:28px;}
@@ -402,6 +448,22 @@
        every page. */
     @media (max-width: 576px){
       body{zoom:87%;}
+    }
+
+    /* Detail-page titles (song/album/movie/series/concert/etc.) were
+       fixed at 34-44px with no mobile override at all, so on a phone
+       they rendered huge (Arabic titles at font-weight:900 made it
+       worse). Scale them down explicitly instead of relying on the
+       body zoom dial alone. */
+    @media (max-width: 768px){
+      .th-hero h1{font-size:30px;}
+      .th-hero-inner h1{font-size:28px;}
+      .th-detail-body h1{font-size:26px;}
+    }
+    @media (max-width: 576px){
+      .th-hero h1{font-size:26px;}
+      .th-hero-inner h1{font-size:24px;}
+      .th-detail-body h1{font-size:22px;}
     }
 
     /* Any grid listing on mobile (songs, albums, movies, series,
@@ -523,22 +585,63 @@
         }
       });
 
+      // Buffering (either the initial load right after pressing play, or
+      // a mid-stream stall on a slow connection) - swap to a spinner
+      // instead of leaving a play/pause icon that looks unresponsive.
+      // 'playing' is the reliable "actually producing audio now" event,
+      // unlike 'play' which can fire before there's any data yet.
+      globalAudio.addEventListener('waiting', function() {
+        setPlayButtonsIcon('bi-arrow-repeat icon-spin');
+        document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: true, songId: currentSongId } }));
+      });
+
+      globalAudio.addEventListener('playing', function() {
+        setPlayButtonsIcon('bi-pause-fill');
+        document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: false, songId: currentSongId } }));
+      });
+
       globalAudio.addEventListener('pause', function() {
         if (!globalAudio.ended && isManualPause) {
           setPlayButtonsIcon('bi-play-fill');
           isManualPause = false;
         }
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
+        document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: false, songId: currentSongId } }));
         sendGlobalListenerAction('stop');
       });
 
+      globalAudio.addEventListener('error', function() {
+        setPlayButtonsIcon('bi-play-fill');
+        document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: false, songId: currentSongId } }));
+      });
+
       globalAudio.addEventListener('ended', function() {
+        // Reached the end naturally (not a skip) - the one signal that
+        // should count toward the "top listeners" leaderboard. Fires
+        // for a repeat-loop completion too, not just before switching
+        // songs, since either way they listened start to finish.
+        if (window.isAuthenticated && currentSongId !== null) {
+          fetch('/songs/full-listen/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: 'song_id=' + encodeURIComponent(currentSongId),
+          }).catch(function () {});
+        }
+
         if (isRepeat) {
           globalAudio.currentTime = 0;
           globalAudio.play();
           return;
         }
         setPlayButtonsIcon('bi-play-fill');
+        // Auto-advancing to the next song never fires a native 'pause'
+        // for the one that just ended (its src just gets replaced), so
+        // any page relying on audioPlayPause to know when to send a
+        // "stop listening" signal (the song/player pages' "listening
+        // now" count) never heard about it - that count stayed stuck
+        // inflated after every natural end-of-song. Tell them here.
+        document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
         playAdjacentSong(1);
       });
 
@@ -755,6 +858,31 @@
           var poster = video.parentElement.querySelector('.th-hero-poster-box');
           if (poster) poster.classList.add('is-hidden');
         }, { once: true });
+
+        // Browsers only allow audible autoplay after a real user
+        // gesture - it has to start muted, so offer a one-tap unmute
+        // button rather than trying (and silently failing) to play with
+        // sound from the start.
+        var banner = video.closest('.th-hero-banner');
+        if (!banner) return;
+        var unmuteBtn = document.createElement('button');
+        unmuteBtn.type = 'button';
+        unmuteBtn.className = 'th-hero-unmute-btn';
+        unmuteBtn.setAttribute('aria-label', '{% translate "تشغيل الصوت" %}');
+        unmuteBtn.innerHTML = '<i class="bi bi-volume-mute-fill"></i>';
+        unmuteBtn.classList.add('pulse-hint');
+        var pulseTimer = setTimeout(function () {
+          unmuteBtn.classList.remove('pulse-hint');
+        }, 4000);
+        unmuteBtn.addEventListener('click', function () {
+          clearTimeout(pulseTimer);
+          unmuteBtn.classList.remove('pulse-hint');
+          video.muted = !video.muted;
+          unmuteBtn.innerHTML = video.muted
+            ? '<i class="bi bi-volume-mute-fill"></i>'
+            : '<i class="bi bi-volume-up-fill"></i>';
+        });
+        banner.appendChild(unmuteBtn);
       });
 
       // Close dropdown when clicking outside
@@ -771,10 +899,10 @@
   <!-- Global Audio Player Bar -->
   <div id="globalAudioPlayer" style="display:none; position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:8px 16px; z-index:1000; box-shadow:0 -4px 20px rgba(0,0,0,.3);">
     <audio id="globalAudioElement" preload="auto" style="display:none;"></audio>
-    <div class="container-xl" style="display:flex; align-items:center; gap:16px; height:56px;">
-      
+    <div class="container-xl" style="display:flex; align-items:center; gap:16px; height:56px;" dir="ltr">
+
       <!-- Left Controls -->
-      <div class="player-left-controls" style="display:flex; align-items:center; gap:8px; width:280px;" dir="ltr">
+      <div class="player-left-controls" style="display:flex; align-items:center; gap:8px; width:280px;">
         <button onclick="playPrevious()" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:background 0.2s ease;">
           <i class="bi bi-skip-start-fill"></i>
         </button>
@@ -794,9 +922,9 @@
         </div>
         <div style="flex:1; min-width:0;">
           <a id="playerLink" href="#" style="text-decoration:none; color:inherit;">
-            <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
-            <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
-            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
           </a>
         </div>
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
@@ -983,13 +1111,16 @@
       if (savedState) {
         try {
           const state = JSON.parse(savedState);
-          
-          // Show player bar if there's a saved state
+
+          // Only show the player bar if the saved state actually has a song in it.
+          if (!state.currentSongUrl) {
+            return;
+          }
           const playerBar = document.getElementById('globalAudioPlayer');
           if (playerBar) {
             playerBar.style.display = 'block';
           }
-          
+
           // Restore audio state if globalAudio exists
           if (globalAudio && state.currentSongUrl) {
             globalAudio.src = state.currentSongUrl;

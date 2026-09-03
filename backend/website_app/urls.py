@@ -19,6 +19,8 @@ urlpatterns = [
     path('auth/google/start/', auth_views.google_login_start, name='auth-google-start'),
     path('auth/google/callback/', auth_views.google_login_callback, name='auth-google-callback'),
 
+    path('tamer-hosny/', views.tamer_bio, name='tamer-bio'),
+
     path('player/', views.player_page, name='player'),
     path('player/song-data/', views.song_player_data, name='song-player-data'),
 
@@ -27,6 +29,7 @@ urlpatterns = [
 
     path('songs/', views.songs_list, name='songs'),
     path('songs/increment-play/', views.increment_play_count, name='increment-play-count'),
+    path('songs/full-listen/', views.record_full_listen, name='record-full-listen'),
     path('songs/<str:slug>/', views.song_detail, name='song-detail'),
     path('songs/<str:slug>/duet/<int:duet_id>/', views.song_detail, name='song-detail-duet'),
     path('sing-with-tamer/<str:slug>/', views.sing_with_tamer, name='sing-with-tamer'),

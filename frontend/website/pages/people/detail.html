@@ -2,6 +2,15 @@
 {% load static i18n bilingual %}
 {% block title %}{{ person|localized_field:'full_name' }}{% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% if person.bio %}{{ person.bio|truncatechars:160 }}{% else %}{% blocktranslate with name=person|localized_field:'full_name' %}{{ name }} - أعمال، أغاني وتفاصيل على أرشيف تامر حسني.{% endblocktranslate %}{% endif %}">
+{% endblock %}
+
+{% block og_type %}profile{% endblock %}
+{% block og_title %}{{ person|localized_field:'full_name' }} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_description %}{% if person.bio %}{{ person.bio|truncatechars:200 }}{% else %}{{ person|localized_field:'full_name' }}{% endif %}{% endblock %}
+{% block og_image %}{% if person.profile_image %}{{ request.scheme }}://{{ request.get_host }}{{ person.profile_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
 {% block content %}
 <div class="container-xl">
 

@@ -83,6 +83,17 @@ class UserSongPlay(models.Model):
     last_played_at = models.DateTimeField(auto_now=True, verbose_name=_('آخر تشغيل'))
     play_count = models.PositiveIntegerField(default=0, verbose_name=_('عدد مرات التشغيل للمستخدم'))
 
+    # Engagement score for the "top listeners" leaderboard - only a full,
+    # natural listen (reached the end, not skipped/paused early) adds to
+    # it, and it decays over time so someone who binged this song months
+    # ago doesn't keep outranking someone listening to it heavily today.
+    # See backend.main_app.shared_utils.song_leaderboard for the decay
+    # math; this column stores the score as of `score_updated_at`, not
+    # a continuously-updated value.
+    full_listen_count = models.PositiveIntegerField(default=0, verbose_name=_('عدد مرات الاستماع الكامل'))
+    decayed_score = models.FloatField(default=0.0, verbose_name=_('نقاط التفاعل (متناقصة زمنياً)'))
+    score_updated_at = models.DateTimeField(null=True, blank=True, verbose_name=_('آخر تحديث للنقاط'))
+
     class Meta:
         verbose_name = _('تشغيل مستخدم')
         verbose_name_plural = _('تشغيلات المستخدمين')
@@ -248,3 +259,42 @@ class PasswordResetCode(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.code}'
+
+
+class SongLeaderboardRank(models.Model):
+    """The last-computed "top engaged listeners" ranking for a song (see
+    `backend.main_app.shared_utils.song_leaderboard`) - who has listened
+    to it the most, weighted toward recent full listens, with a bonus
+    for having liked it. Persisted so a newly-connecting viewer sees the
+    board immediately, and so the next recompute has a baseline to diff
+    against for the up/down/same/new trend arrows.
+    """
+
+    class Trend(models.TextChoices):
+        UP = 'UP', _('صاعد')
+        DOWN = 'DOWN', _('هابط')
+        SAME = 'SAME', _('ثابت')
+        NEW = 'NEW', _('جديد')
+
+    song = models.ForeignKey(
+        'music_app.Song', on_delete=models.CASCADE, related_name='leaderboard_ranks',
+    )
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.CASCADE, related_name='song_leaderboard_ranks',
+    )
+    rank = models.PositiveSmallIntegerField()
+    score = models.FloatField(default=0.0)
+    full_listen_count = models.PositiveIntegerField(default=0)
+    is_liked = models.BooleanField(default=False)
+    trend = models.CharField(max_length=4, choices=Trend.choices, default=Trend.NEW)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['song', 'user']
+        ordering = ['rank']
+        indexes = [
+            models.Index(fields=['song', 'rank']),
+        ]
+
+    def __str__(self):
+        return f'{self.song} - #{self.rank} {self.user.username}'

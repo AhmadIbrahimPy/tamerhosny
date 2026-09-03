@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -6,6 +8,7 @@ from django.db import models
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -68,6 +71,12 @@ def robots_txt(request):
 
 def home(request):
     songs = Song.visible_queryset(Song.objects.select_related('album'))[:7]
+    sing_with_tamer_songs = Song.visible_queryset(
+        Song.objects.select_related('album')
+        .exclude(audio_file='')
+        .filter(lyric_segments__isnull=False)
+        .distinct()
+    )[:10]
     movies = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.MOVIE))[:7]
     series = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.TV_SERIES))[:7]
     commercials = Media.visible_queryset(Media.objects.filter(media_type=Media.MediaType.COMMERCIAL))[:7]
@@ -77,6 +86,7 @@ def home(request):
     home_ads = list(_ads_for(Advertisement.Placement.HOME)[:8])
     return render(request, 'website/pages/home.html', {
         'songs': songs,
+        'sing_with_tamer_songs': sing_with_tamer_songs,
         'movies': movies,
         'series': series,
         'commercials': commercials,
@@ -92,6 +102,56 @@ def home(request):
 def player_page(request):
     """Player page with song details and tabs."""
     return render(request, 'website/pages/player/index.html')
+
+
+def tamer_bio(request):
+    """A designed, animated biography page about Tamer Hosny."""
+    tamer = Person.objects.filter(slug='tamer-hosny').first()
+    stats = [
+        {'value': '25+', 'label_ar': 'سنة من المشوار الفني', 'label_en': 'Years in the industry'},
+        {'value': '30+', 'label_ar': 'ألبوم غنائي', 'label_en': 'Music albums'},
+        {'value': '25+', 'label_ar': 'فيلم سينمائي', 'label_en': 'Feature films'},
+        {'value': '100+', 'label_ar': 'أغنية منفردة وتعاونات', 'label_en': 'Singles & collaborations'},
+    ]
+    timeline = [
+        {
+            'year': '1977',
+            'title_ar': 'البداية', 'title_en': 'The Beginning',
+            'text_ar': 'وُلد تامر حسني في مدينة المنصورة، وبدأ شغفه بالموسيقى والتلحين منذ الطفولة.',
+            'text_en': 'Tamer Hosny was born in Mansoura, Egypt, and his passion for music and composing began in early childhood.',
+        },
+        {
+            'year': '1990',
+            'title_ar': 'أول خطوة', 'title_en': 'First Steps',
+            'text_ar': 'دخل عالم الغناء والتلحين وهو لا يزال في سن مبكرة، ولحّن أغاني لفنانين كبار قبل أن يطرح ألبومه الخاص.',
+            'text_en': 'He entered the music scene at a young age, composing for established artists before releasing his own debut work.',
+        },
+        {
+            'year': '2000',
+            'title_ar': 'الانطلاقة', 'title_en': 'Breakthrough',
+            'text_ar': 'حقق نجاحاً جماهيرياً واسعاً بألبوماته المتتالية وأغانيه التي سيطرت على الشارع العربي، ولُقّب بـ"نجم جيله".',
+            'text_en': 'A string of hit albums and chart-topping singles made him one of the most prominent voices of his generation.',
+        },
+        {
+            'year': '2005 - 2015',
+            'title_ar': 'التمثيل والسينما', 'title_en': 'Acting & Cinema',
+            'text_ar': 'خاض تجربة التمثيل السينمائي بنجاح كبير عبر سلسلة أفلام حققت إيرادات مرتفعة وحضوراً جماهيرياً واسعاً في مصر والعالم العربي.',
+            'text_en': 'He built a highly successful film career, starring in a series of box-office hits across Egypt and the Arab world.',
+        },
+        {
+            'year': '2010',
+            'title_ar': 'انتشار عالمي', 'title_en': 'Going Global',
+            'text_ar': 'قدّم تعاونات غنائية عالمية وشارك في حفلات دولية، ووصل صوته إلى جمهور أوسع خارج المنطقة العربية.',
+            'text_en': 'International collaborations and global performances carried his sound to audiences far beyond the Arab world.',
+        },
+        {
+            'year': 'اليوم', 'year_en': 'Today',
+            'title_ar': 'مسيرة مستمرة', 'title_en': 'An Ongoing Journey',
+            'text_ar': 'ما زال تامر حسني حاضراً بقوة في الساحة الفنية، بين الغناء والتلحين والتمثيل، محتفظاً بمكانته كأحد أهم نجوم الوطن العربي.',
+            'text_en': 'Tamer Hosny remains a driving force across music, composing and film — one of the biggest names in the Arab world.',
+        },
+    ]
+    return render(request, 'website/pages/bio.html', {'tamer': tamer, 'stats': stats, 'timeline': timeline})
 
 
 @csrf_exempt
@@ -144,6 +204,8 @@ def song_player_data(request):
         singers = [credit for credit in all_credits if credit.role in vocal_roles]
         crew_credits = [credit for credit in all_credits if credit.role not in vocal_roles]
 
+        song_ct = ContentType.objects.get_for_model(Song)
+
         data = {
             'title': song.title_ar,
             'title_en': song.title_en,
@@ -156,6 +218,9 @@ def song_player_data(request):
             'songId': song.pk,
             'url': song.audio_file.url if song.audio_file else '',
             'currentSongId': int(current_song_id) if current_song_id else song.pk,
+            'playCount': song.play_count,
+            'likeCount': Like.objects.filter(content_type=song_ct, object_id=song.pk).count(),
+            'listenerCount': CurrentSongListener.objects.filter(song_id=song.pk).count(),
             'otherSongs': [
                 {
                     'title': s.title_ar,
@@ -336,11 +401,13 @@ def song_detail(request, slug, duet_id=None):
     top_ad, bottom_ad = _ad_slots(Advertisement.Placement.SONGS)
 
     if duet is not None:
-        audio_url = duet.final_audio_file.url if duet.final_audio_file else ''
+        has_audio = bool(duet.final_audio_file) and duet.final_audio_file.storage.exists(duet.final_audio_file.name)
+        audio_url = duet.final_audio_file.url if has_audio else ''
         performer_name = duet.user.get_full_name() or duet.user.username
         player_title = f'{song.title_ar} ({performer_name})'
     else:
-        audio_url = song.audio_file.url if song.audio_file else ''
+        has_audio = bool(song.audio_file) and song.audio_file.storage.exists(song.audio_file.name)
+        audio_url = song.audio_file.url if has_audio else ''
         player_title = song.title_ar
 
     return render(request, 'website/pages/songs/detail.html', {
@@ -776,6 +843,25 @@ def remixes_list(request):
 
 
 @require_POST
+def record_full_listen(request):
+    """Called from the player's native 'ended' event - a song reached
+    its natural end (not a skip/pause), which is the one signal that
+    should move the "top listeners" leaderboard.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'success', 'recorded': False})
+
+    song_id = request.POST.get('song_id')
+    if not song_id or not Song.objects.filter(pk=song_id).exists():
+        return JsonResponse({'status': 'error', 'message': 'Invalid song_id'}, status=400)
+
+    from backend.main_app.shared_utils.song_leaderboard import record_full_listen as _record
+    _record(request.user, song_id)
+
+    return JsonResponse({'status': 'success', 'recorded': True})
+
+
+@require_POST
 def increment_play_count(request):
     """زيادة عدد مرات التشغيل للأغنية (فقط إذا مرت ساعة على آخر تشغيل للمستخدم)"""
     song_id = request.POST.get('song_id')
@@ -784,8 +870,6 @@ def increment_play_count(request):
         return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
     
     try:
-        from django.utils import timezone
-        from datetime import timedelta
         
         song = Song.objects.get(pk=song_id)
         
@@ -813,7 +897,7 @@ def increment_play_count(request):
         user_play.play_count += 1
         user_play.last_played_at = timezone.now()
         user_play.save()
-        
+
         return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': True})
     except Song.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
@@ -821,24 +905,50 @@ def increment_play_count(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
+SING_WITH_TAMER_COOLDOWN = timedelta(hours=24)
+
+
 def sing_with_tamer(request, slug):
     """صفحة غني مع تامر - للغناء مع الأغنية"""
     song = get_object_or_404(
         Song.objects.select_related('album'), slug=slug,
     )
-    
+
     # Auto-fetch lyrics if segments don't exist
     if not song.lyric_segments.exists():
         from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
         fetch_and_save_lyrics_for_song(song)
-    
+
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     all_credits = song.credits.select_related('person').all()
     singers = [credit for credit in all_credits if credit.role in vocal_roles]
-    
+
+    # Already recorded this exact song - show that recording instead of
+    # letting them start over. Otherwise, a completed recording of *any*
+    # other song within the last 24h blocks starting a new one until the
+    # cooldown clears (one duet per day, site-wide - not per song).
+    existing_project = None
+    cooldown_hours_left = None
+    if request.user.is_authenticated:
+        existing_project = SingWithTamerProject.objects.filter(
+            user=request.user, song=song, is_completed=True,
+        ).order_by('-created_at').first()
+
+        if not existing_project:
+            last_project = SingWithTamerProject.objects.filter(
+                user=request.user, is_completed=True,
+            ).order_by('-created_at').first()
+            if last_project:
+                elapsed = timezone.now() - last_project.created_at
+                if elapsed < SING_WITH_TAMER_COOLDOWN:
+                    remaining = SING_WITH_TAMER_COOLDOWN - elapsed
+                    cooldown_hours_left = max(1, int(remaining.total_seconds() // 3600) + 1)
+
     return render(request, 'website/pages/sing-with-tamer/index.html', {
         'song': song,
         'singers': singers,
+        'existing_project': existing_project,
+        'cooldown_hours_left': cooldown_hours_left,
     })
 
 
@@ -879,11 +989,17 @@ def toggle_favorite(request):
         if not created:
             # إذا كان موجوداً، احذفه
             like.delete()
-            return JsonResponse({'status': 'success', 'liked': False})
+            liked = False
         else:
             # إذا لم يكن موجوداً، تم إنشاؤه
-            return JsonResponse({'status': 'success', 'liked': True})
-            
+            liked = True
+
+        if content_type.lower() == 'song':
+            from backend.main_app.shared_utils.song_leaderboard import refresh_song_leaderboard
+            refresh_song_leaderboard(object_id)
+
+        return JsonResponse({'status': 'success', 'liked': liked})
+
     except ContentType.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Invalid content type'}, status=400)
     except Exception as e:

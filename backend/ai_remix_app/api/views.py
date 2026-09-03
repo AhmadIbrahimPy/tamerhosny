@@ -323,26 +323,51 @@ def quick_remix(request, **kwargs):
                 'status': 'error',
                 'message': 'One or both songs do not have audio files'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Same pair, same (only) method this endpoint supports - reuse the
+        # existing remix instead of generating a duplicate one. Order the
+        # pair by pk so it's found regardless of which song was song1/song2.
+        song_a, song_b = sorted([song1, song2], key=lambda s: s.pk)
+        existing_project = RemixProject.objects.filter(
+            source_song_1=song_a, source_song_2=song_b, status=RemixProject.Status.COMPLETED,
+        ).order_by('-created_at').first()
+        if existing_project:
+            existing_output = existing_project.outputs.order_by('-created_at').first()
+            if existing_output:
+                return Response({
+                    'status': 'success',
+                    'remix_id': existing_project.id,
+                    'output_id': existing_output.id,
+                    'message': 'Remix already exists',
+                    'reused': True,
+                }, status=status.HTTP_200_OK)
+
         # إنشاء مشروع الريمكس
         project_name = f"Remix: {song1.title_ar or song1.title_en} + {song2.title_ar or song2.title_en}"
         project = RemixProject.objects.create(
             name=project_name,
-            status=RemixProject.Status.PROCESSING
+            status=RemixProject.Status.PROCESSING,
+            source_song_1=song_a,
+            source_song_2=song_b,
         )
         
         # إنشاء مصادر صوتية من الأغاني
+        # Assigning an already-saved FieldFile straight to a new FileField
+        # does NOT copy it - Django just reuses the same storage path, so
+        # AudioSource.audio_file would alias the master Song.audio_file
+        # (deleting one deletes both). Read + re-save as real, independent
+        # copies instead.
         source1 = AudioSource.objects.create(
             name=f"{song1.title_ar or song1.title_en} (Audio)",
-            audio_file=song1.audio_file,
             source_type=AudioSource.SourceType.OTHER
         )
-        
+        source1.audio_file.save(os.path.basename(song1.audio_file.name), song1.audio_file, save=True)
+
         source2 = AudioSource.objects.create(
             name=f"{song2.title_ar or song2.title_en} (Audio)",
-            audio_file=song2.audio_file,
             source_type=AudioSource.SourceType.OTHER
         )
+        source2.audio_file.save(os.path.basename(song2.audio_file.name), song2.audio_file, save=True)
         
         # إضافة المصادر للمشروع
         RemixSource.objects.create(

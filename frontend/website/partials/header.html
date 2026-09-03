@@ -12,6 +12,7 @@
     </a>
     <div class="th-nav-links">
       <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
+      <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
       <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
       <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
       <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>
@@ -81,6 +82,7 @@
   <div class="container-xl">
     <div class="th-mobile-panel" id="thMobilePanel">
       <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
+      <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
       <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
       <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
       <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>

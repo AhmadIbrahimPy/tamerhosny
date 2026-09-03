@@ -295,6 +295,13 @@ class CreateSongAPIView(APIView):
             project.is_completed = True
             project.save()
 
+            # The per-line takes are already baked into final_audio_file
+            # above and are never read again - delete them to stop the
+            # server disk from filling up with duplicate audio.
+            for recording in project.lyric_recordings.all():
+                recording.audio_file.delete(save=False)
+            project.lyric_recordings.all().delete()
+
             return Response({
                 'status': 'success',
                 'message': 'Song created successfully',

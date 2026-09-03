@@ -3,6 +3,15 @@
 
 {% block title %}{{ song|localized_field:'title' }}{% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% blocktranslate with title=song|localized_field:'title' %}استمع لأغنية {{ title }} لتامر حسني{% endblocktranslate %}{% if song.album %} - {{ song.album|localized_field:'title' }}{% endif %}. {% translate 'كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني.' %}">
+{% endblock %}
+
+{% block og_type %}music.song{% endblock %}
+{% block og_title %}{{ song|localized_field:'title' }} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_description %}{% blocktranslate with title=song|localized_field:'title' %}استمع لأغنية {{ title }} لتامر حسني{% endblocktranslate %}{% if song.album %} - {{ song.album|localized_field:'title' }}{% endif %}{% endblock %}
+{% block og_image %}{% if song.cover_image %}{{ request.scheme }}://{{ request.get_host }}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ request.scheme }}://{{ request.get_host }}{{ song.album.cover_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
 {% block extra_css %}
 <style>
   :root {
@@ -100,35 +109,36 @@
     }
   }
 
+  /* Matches the global player bar's play button (#playerPlayBtn): solid
+     accent circle, dark icon, plain scale-on-hover - was previously a
+     purple gradient at a different size per breakpoint (72px desktop,
+     44px mobile, then further shrunk by base.html's mobile zoom), so it
+     looked inconsistent in scale and style depending on screen size. */
   .cover-play-btn {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 72px;
-    height: 72px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    background: var(--accent);
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 28px;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
-    backdrop-filter: blur(10px);
+    color: #111;
+    font-size: 22px;
+    transition: transform 0.2s ease;
   }
 
   .cover-play-btn:hover {
-    background: linear-gradient(135deg, #8b5cf6, var(--accent));
-    transform: translate(-50%, -50%) scale(1.15);
-    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.7);
+    transform: translate(-50%, -50%) scale(1.08);
   }
 
   .cover-play-btn i {
-    font-size: 28px;
+    font-size: 22px;
     margin-left: 2px;
   }
 
@@ -650,6 +660,33 @@
     margin: 0;
   }
 
+  .song-stat-clickable {
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* Always-on pulse so the "listening now" stat reads as live/clickable
+     rather than a static number. */
+  .song-stat-icon-pulse {
+    position: relative;
+  }
+  .song-stat-icon-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    animation: songStatPulse 1.8s ease-out infinite;
+  }
+  @keyframes songStatPulse {
+    0% { transform: scale(1); opacity: .7; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
   /* --- Original Song card (shown on a duet page) --- */
   .original-song-card {
     display: flex;
@@ -695,6 +732,7 @@
   /* --- Sections Layout --- */
   .song-section {
     margin-bottom: 36px;
+    margin-top: 20px;
   }
 
   .song-section-head {
@@ -1141,6 +1179,140 @@
     margin: 12px 0;
   }
 
+  /* --- Leaderboard Modal --- */
+  .leaderboard-dialog {
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .leaderboard-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(212,175,55,.08), transparent);
+  }
+  .leaderboard-card img,
+  .leaderboard-card .icon-fallback {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1e2130;
+    font-size: 22px;
+    color: var(--muted);
+  }
+  .leaderboard-card-title {
+    font-weight: 800;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  .leaderboard-card-sub {
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .leaderboard-list {
+    overflow-y: auto;
+    padding: 10px 14px 16px;
+  }
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 8px;
+    border-radius: 12px;
+    transition: background .2s ease;
+  }
+  .leaderboard-row:hover { background: rgba(255,255,255,.04); }
+  .leaderboard-rank {
+    width: 26px;
+    flex-shrink: 0;
+    text-align: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .leaderboard-row:nth-child(1) .leaderboard-rank { color: #ffd54f; }
+  .leaderboard-row:nth-child(2) .leaderboard-rank { color: #cfd8dc; }
+  .leaderboard-row:nth-child(3) .leaderboard-rank { color: #d7a271; }
+  .leaderboard-avatar,
+  .leaderboard-avatar-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .leaderboard-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #22263a;
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .leaderboard-info { flex: 1; min-width: 0; }
+  .leaderboard-name {
+    font-weight: 700;
+    font-size: 13.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  .leaderboard-meta {
+    color: var(--muted);
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .leaderboard-meta i { color: var(--accent); }
+  .leaderboard-trend {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .leaderboard-trend.trend-up { background: rgba(46,204,113,.15); color: #4fd486; }
+  .leaderboard-trend.trend-down { background: rgba(231,76,60,.15); color: #ff6b5f; }
+  .leaderboard-trend.trend-same { background: rgba(255,255,255,.06); color: var(--muted); }
+  .leaderboard-trend.trend-new { background: rgba(212,175,55,.15); color: var(--accent); font-size: 9px; font-weight: 800; }
+  .leaderboard-trend.trend-live { background: rgba(46,204,113,.15); color: #4fd486; }
+  .leaderboard-empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 20px;
+    font-size: 13.5px;
+  }
+  .leaderboard-live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4fd486;
+    margin-inline-start: 6px;
+    animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes leaderboardLiveDotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .35; transform: scale(.65); }
+  }
+
   .playlist-item,
   .remix-result {
     display: flex;
@@ -1339,6 +1511,7 @@
     .song-detail-page {
       padding-bottom: 100px; /* clears the fixed global audio bar */
     }
+    .song-title { font-size: 28px; }
     .credit-card {
       width: 92px;
       min-width: 92px;
@@ -1370,9 +1543,9 @@
       width: 90%;
       max-width: none; /* fill the row instead of leaving space on both sides */
     }
-    .cover-play-btn { width: 44px; height: 44px; border-width: 2px; font-size: 17px; }
-    .cover-play-btn i { font-size: 17px; }
-    .song-title { font-size: 24px; }
+    .cover-play-btn { width: 48px; height: 48px; font-size: 19px; }
+    .cover-play-btn i { font-size: 19px; }
+    .song-title { font-size: 22px; }
     .song-content { padding: 0; }
     .song-hero-media { padding: 0; gap: 12px; }
     /* Icon-only buttons at this width used to end up small and centered,
@@ -1463,13 +1636,13 @@
                             <div class="song-stat-label">{% translate "إعجاب" %}</div>
                         </div>
                     </div>
-                    <div class="song-stat">
-                        <div class="song-stat-icon"><i class="bi bi-headphones"></i></div>
+                    <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'الأكثر استماعاً' %}">
+                        <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
                         <div>
                             <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
-                            <div class="song-stat-label">{% translate "يستمع الآن" %}</div>
+                            <div class="song-stat-label">{% translate "الأكثر استماعاً" %}</div>
                         </div>
-                    </div>
+                    </button>
                 </div>
 
                 {% if duet %}
@@ -1677,10 +1850,6 @@
         </div>
     </div>
 
-    <!-- Top Ad -->
-    {% if top_ad %}
-      {% include "website/partials/ad_banner.html" with ad=top_ad %}
-    {% endif %}
 
     <!-- Streaming Links -->
     {% if links %}
@@ -1814,6 +1983,10 @@
       </section>
     {% endif %}
 
+    <!-- Top Ad -->
+    {% if top_ad %}
+      {% include "website/partials/ad_banner.html" with ad=top_ad %}
+    {% endif %}
     <!-- Other Songs Slider -->
     {% if other_songs %}
       <section class="song-section">
@@ -2022,12 +2195,17 @@
       </button>
     </div>
     <div class="playlist-body">
-      <input type="text" id="playlistSearch" class="playlist-search" placeholder="{% translate 'ابحث عن قائمة التشغيل' %}" oninput="searchPlaylists(this.value)">
-      <div id="playlistList" class="playlist-list"></div>
-      <button type="button" class="modal-btn modal-btn-secondary w-100 mt-2" onclick="showCreatePlaylistInModal()">
-        <i class="bi bi-plus-lg"></i> {% translate "إنشاء قائمة جديدة" %}
-      </button>
-      <div id="createPlaylistFormContainer" class="playlist-create" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+      <div id="playlistSearchSection">
+        <input type="text" id="playlistSearch" class="playlist-search" placeholder="{% translate 'ابحث عن قائمة التشغيل' %}" oninput="searchPlaylists(this.value)">
+        <div id="playlistList" class="playlist-list"></div>
+        <button type="button" class="modal-btn modal-btn-secondary w-100 mt-2" onclick="showCreatePlaylistInModal()">
+          <i class="bi bi-plus-lg"></i> {% translate "إنشاء قائمة جديدة" %}
+        </button>
+      </div>
+      <div id="createPlaylistFormContainer" class="playlist-create" style="display:none;">
+        <button type="button" class="modal-btn modal-btn-secondary w-100 mb-3" onclick="hideCreatePlaylistInModal()">
+          <i class="bi bi-arrow-right"></i> {% translate "رجوع للبحث" %}
+        </button>
         <div class="playlist-field mb-2"><input type="text" id="newPlaylistName" class="playlist-search" placeholder="{% translate 'اسم القائمة' %}"></div>
         <div class="playlist-field mb-2"><textarea id="newPlaylistDescription" class="playlist-search" style="min-height:70px; resize:vertical;" placeholder="{% translate 'وصف القائمة (اختياري)' %}"></textarea></div>
         <div class="playlist-field mb-3">
@@ -2039,6 +2217,36 @@
         <button type="button" class="modal-btn modal-btn-primary w-100" onclick="createAndAddPlaylist()">
           <i class="bi bi-plus-lg"></i> {% translate "إنشاء وإضافة" %}
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard Modal -->
+<div id="leaderboardModal" class="playlist-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="leaderboardModalTitle" onclick="if (event.target === this) closeLeaderboardModal();">
+  <div class="leaderboard-dialog">
+    <div class="playlist-header">
+      <h3 id="leaderboardModalTitle" style="margin:0; font-size:18px; font-weight:850; display:flex; align-items:center;"><i class="bi bi-headphones"></i> {% translate "الأكثر استماعاً" %}<span class="leaderboard-live-dot" title="{% translate 'مباشر' %}"></span></h3>
+      <button type="button" class="playlist-close" onclick="closeLeaderboardModal()" aria-label="{% translate 'إغلاق' %}" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:18px;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="leaderboard-card">
+      {% if song.cover_image %}
+        <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+      {% elif song.album and song.album.cover_image %}
+        <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+      {% else %}
+        <div class="icon-fallback"><i class="bi bi-music-note-beamed"></i></div>
+      {% endif %}
+      <div>
+        <div class="leaderboard-card-title">{{ song|localized_field:'title' }}</div>
+        <div class="leaderboard-card-sub">{% translate "أكثر المستمعين تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب" %}</div>
+      </div>
+    </div>
+    <div class="leaderboard-list" id="leaderboardList">
+      <div class="leaderboard-empty">
+        <i class="bi bi-hourglass-split"></i> {% translate "جارِ التحميل..." %}
       </div>
     </div>
   </div>
@@ -2991,10 +3199,25 @@
   let listenerReconnectTimer = null;
   let listenerSocketClosingDeliberately = false;
 
+  // If 'start' is sent (e.g. by the restored-playback sync check right
+  // after DOMContentLoaded) before the socket has finished connecting,
+  // it used to be silently dropped - the WS handshake takes at least one
+  // round trip, so that race was routinely lost, leaving the visitor
+  // playing but absent from their own "listening now" count/list. Queue
+  // it and flush on 'open' instead of dropping it.
+  let pendingListenerAction = null;
+
   function connectListenerSocket(songId) {
     listenerSocketClosingDeliberately = false;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     listenerSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/listening/`);
+
+    listenerSocket.addEventListener('open', function () {
+      if (pendingListenerAction) {
+        listenerSocket.send(JSON.stringify({ action: pendingListenerAction }));
+        pendingListenerAction = null;
+      }
+    });
 
     listenerSocket.addEventListener('message', function (event) {
       let data;
@@ -3021,6 +3244,8 @@
   function sendListenerAction(action) {
     if (listenerSocket && listenerSocket.readyState === WebSocket.OPEN) {
       listenerSocket.send(JSON.stringify({ action: action }));
+    } else if (listenerSocket && listenerSocket.readyState === WebSocket.CONNECTING) {
+      pendingListenerAction = action;
     }
   }
 
@@ -3042,6 +3267,88 @@
     document.querySelectorAll('[data-listener-count]').forEach(function (element) {
       element.textContent = validCount;
     });
+  }
+
+  // "Top listeners" leaderboard modal - ranked by engagement (recent
+  // full listens, decayed over time, boosted by a like), not just who's
+  // online this second. Opened on demand since it's only relevant while
+  // the modal is visible; a live dot per row still shows who happens to
+  // be listening right now, refreshed independently of the ranking.
+  let leaderboardSocket = null;
+
+  window.openLeaderboardModal = function () {
+    const modal = document.getElementById('leaderboardModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    connectLeaderboardSocket();
+  };
+
+  window.closeLeaderboardModal = function () {
+    const modal = document.getElementById('leaderboardModal');
+    if (modal) modal.style.display = 'none';
+    if (leaderboardSocket) {
+      leaderboardSocket.close();
+      leaderboardSocket = null;
+    }
+  };
+
+  function connectLeaderboardSocket() {
+    if (leaderboardSocket) return;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    leaderboardSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/leaderboard/`);
+
+    leaderboardSocket.addEventListener('message', function (event) {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        return;
+      }
+      if (data.type === 'leaderboard') renderLeaderboard(data.entries || []);
+    });
+
+    leaderboardSocket.addEventListener('close', function () {
+      leaderboardSocket = null;
+    });
+  }
+
+  const TREND_ICON = {
+    UP: '<i class="bi bi-arrow-up"></i>',
+    DOWN: '<i class="bi bi-arrow-down"></i>',
+    SAME: '<i class="bi bi-arrow-left-right"></i>',
+    NEW: '{% translate "جديد" %}',
+  };
+
+  function renderLeaderboard(entries) {
+    const list = document.getElementById('leaderboardList');
+    if (!list) return;
+
+    if (!entries.length) {
+      list.innerHTML = '<div class="leaderboard-empty"><i class="bi bi-headphones"></i> {% translate "محدش سمعها كفاية عشان يدخل الترتيب لسه" %}</div>';
+      return;
+    }
+
+    list.innerHTML = entries.map(function (entry) {
+      const trendClass = entry.trend ? 'trend-' + entry.trend.toLowerCase() : 'trend-live';
+      const trendIcon = entry.trend ? (TREND_ICON[entry.trend] || TREND_ICON.SAME) : '<i class="bi bi-broadcast"></i>';
+      const avatar = entry.avatar_url
+        ? `<img class="leaderboard-avatar" src="${escapeHtml(entry.avatar_url)}" alt="">`
+        : `<div class="leaderboard-avatar-fallback">${escapeHtml(entry.display_name.slice(0, 1).toUpperCase())}</div>`;
+      const liveDot = entry.is_live ? '<span class="leaderboard-live-dot" title="{% translate "بيسمعها دلوقتي" %}"></span>' : '';
+      const likeBadge = entry.is_liked ? '<i class="bi bi-heart-fill"></i>' : '';
+
+      return `
+        <div class="leaderboard-row">
+          <div class="leaderboard-rank">${entry.rank ? "#" + entry.rank : "<i class=\"bi bi-headphones\"></i>"}</div>
+          ${avatar}
+          <div class="leaderboard-info">
+            <div class="leaderboard-name">${escapeHtml(entry.display_name)}${liveDot}</div>
+            <div class="leaderboard-meta">${entry.full_listen_count} {% translate "استماع كامل" %} ${likeBadge}</div>
+          </div>
+          <div class="leaderboard-trend ${trendClass}">${trendIcon}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   window.toggleFavorite = function (button) {
@@ -3204,8 +3511,13 @@
   };
 
   window.showCreatePlaylistInModal = function () {
-    const form = document.getElementById('createPlaylistFormContainer');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('playlistSearchSection').style.display = 'none';
+    document.getElementById('createPlaylistFormContainer').style.display = 'block';
+  };
+
+  window.hideCreatePlaylistInModal = function () {
+    document.getElementById('createPlaylistFormContainer').style.display = 'none';
+    document.getElementById('playlistSearchSection').style.display = 'block';
   };
 
   window.createAndAddPlaylist = function () {
@@ -3313,6 +3625,22 @@
       // it used to also be duplicated on globalAudio's own native
       // 'play'/'pause' events, so every toggle sent the action twice and
       // restarted the lyrics-sync interval twice.
+      // Swap the "listening now" stat icon to a spinner while this
+      // page's song is buffering (initial load or a mid-stream stall),
+      // so it doesn't look stuck while nothing audible is happening yet.
+      document.addEventListener('audioLoading', function (e) {
+        if (e.detail.songId !== songId) return;
+        const icon = document.getElementById('listeningStatIcon');
+        if (!icon) return;
+        if (e.detail.loading) {
+          icon.classList.remove('bi-headphones');
+          icon.classList.add('bi-arrow-repeat', 'icon-spin');
+        } else {
+          icon.classList.remove('bi-arrow-repeat', 'icon-spin');
+          icon.classList.add('bi-headphones');
+        }
+      });
+
       document.addEventListener('audioPlayPause', function (e) {
         if (e.detail.songId === songId) {
           if (e.detail.playing) {
@@ -3337,9 +3665,35 @@
         }
       });
 
+      // A page refresh restores playback from localStorage (see
+      // restorePlayerState in base.html) on a ~300ms delay, after this
+      // song's own audioPlayPause listener above is already registered -
+      // so in the normal case that alone keeps the cover button and the
+      // "listening now" count in sync. This is just a safety net for
+      // any other path that could leave the two out of sync (e.g. a
+      // slow/late 'play' event): reconcile once, shortly after load.
+      setTimeout(function () {
+        if (
+          typeof globalAudio !== 'undefined' && globalAudio &&
+          !globalAudio.paused && Number(currentSongId) === songId && !isCurrentlyListening
+        ) {
+          isCurrentlyListening = true;
+          sendListenerAction('start');
+          startLyricsSync();
+          const icon = document.getElementById('playIcon');
+          if (icon) {
+            icon.classList.remove('bi-play-fill');
+            icon.classList.add('bi-pause-fill');
+          }
+        }
+      }, 600);
+
       globalAudio.addEventListener('ended', function () {
         if (!isThisSongPlaying()) return;
-        isCurrentlyListening = false;
+        // isCurrentlyListening / sendListenerAction('stop') are handled
+        // by the audioPlayPause listener above - base.html's global
+        // 'ended' handler dispatches it (playing:false) before switching
+        // songs, same as a manual pause.
         stopLyricsSync();
         const syncedLyrics = document.getElementById('syncedLyrics');
         if (syncedLyrics) {

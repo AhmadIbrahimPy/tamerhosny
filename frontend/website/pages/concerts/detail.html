@@ -2,6 +2,15 @@
 {% load static i18n l10n bilingual %}
 {% block title %}{{ concert|localized_field:'title' }}{% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% if concert.description %}{{ concert.description|truncatechars:160 }}{% else %}{% blocktranslate with title=concert|localized_field:'title' %}{{ title }} - تفاصيل الحفلة، الموعد ومواقع الحجز على أرشيف تامر حسني.{% endblocktranslate %}{% endif %}">
+{% endblock %}
+
+{% block og_type %}website{% endblock %}
+{% block og_title %}{{ concert|localized_field:'title' }} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_description %}{% if concert.description %}{{ concert.description|truncatechars:200 }}{% else %}{{ concert|localized_field:'title' }}{% endif %}{% endblock %}
+{% block og_image %}{% if concert.display_poster_url %}{% if 'http' in concert.display_poster_url %}{{ concert.display_poster_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ concert.display_poster_url }}{% endif %}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
 {% block extra_css %}
 {% if concert.has_location %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -22,6 +31,22 @@
   .th-ticket-tba{font-size:13px; font-weight:700; color:var(--muted); padding-block:22px;}
   .th-concert-meta{flex:1; min-width:260px;}
   .th-concert-meta h1{font-size:36px; font-weight:900; margin-block:10px 6px;}
+  @media (max-width: 768px){ .th-concert-meta h1{font-size:28px;} }
+  @media (max-width: 576px){ .th-concert-meta h1{font-size:24px;} }
+
+  /* Same problem as the movie/media header: a fixed-width poster plus a
+     ticket stub pinned to the far end via margin-inline-start:auto had
+     nowhere sensible to go once wrapped on a narrow screen. Stack
+     everything into one centered column, ticket stub last. */
+  @media (max-width:700px){
+    .th-concert-header-inner{flex-direction:column; align-items:center; text-align:center; padding:26px 18px 22px; gap:16px;}
+    .th-concert-poster{flex-basis:auto; width:150px;}
+    .th-concert-meta{min-width:0; width:100%;}
+    .th-concert-meta .th-meta-row{justify-content:center;}
+    .th-concert-meta .d-flex.flex-wrap{justify-content:center;}
+    .th-concert-meta p{margin-inline:auto;}
+    .th-ticket-stub{margin-inline-start:0; align-self:center;}
+  }
 </style>
 {% endblock %}
 

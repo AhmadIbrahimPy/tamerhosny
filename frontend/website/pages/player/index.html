@@ -3,6 +3,11 @@
 
 {% block title %}{% translate "المشغل" %}{% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% translate 'استمع لأغاني تامر حسني - مشغل الموسيقى الكامل على أرشيف تامر حسني.' %}">
+<meta name="robots" content="noindex, follow">
+{% endblock %}
+
 {% block extra_css %}
 <style>
   .player-page {
@@ -58,6 +63,224 @@
     overflow: hidden;
     background: var(--card);
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  /* --- Stats Bar (play/like/listening-now counts), same as the song
+     detail page - duplicated here since these two pages don't share a
+     CSS partial. --- */
+  .song-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 12px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+  }
+  .song-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+  }
+  .song-stat-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 14px;
+    position: relative;
+  }
+  .song-stat-value {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .song-stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    margin: 0;
+  }
+  .song-stat-clickable {
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .song-stat-icon-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    animation: songStatPulse 1.8s ease-out infinite;
+  }
+  @keyframes songStatPulse {
+    0% { transform: scale(1); opacity: .7; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* --- Leaderboard modal (who's listening now) --- */
+  .playlist-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+  }
+  .leaderboard-dialog {
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 24px;
+    background: var(--card);
+    box-shadow: 0 32px 90px rgba(0, 0, 0, 0.6);
+  }
+  .playlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .leaderboard-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(212,175,55,.08), transparent);
+  }
+  .leaderboard-card img,
+  .leaderboard-card .icon-fallback {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1e2130;
+    font-size: 22px;
+    color: var(--muted);
+  }
+  .leaderboard-card-title {
+    font-weight: 800;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  .leaderboard-card-sub {
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .leaderboard-list {
+    overflow-y: auto;
+    padding: 10px 14px 16px;
+  }
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 8px;
+    border-radius: 12px;
+    transition: background .2s ease;
+  }
+  .leaderboard-row:hover { background: rgba(255,255,255,.04); }
+  .leaderboard-rank {
+    width: 26px;
+    flex-shrink: 0;
+    text-align: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .leaderboard-row:nth-child(1) .leaderboard-rank { color: #ffd54f; }
+  .leaderboard-row:nth-child(2) .leaderboard-rank { color: #cfd8dc; }
+  .leaderboard-row:nth-child(3) .leaderboard-rank { color: #d7a271; }
+  .leaderboard-avatar,
+  .leaderboard-avatar-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .leaderboard-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #22263a;
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .leaderboard-info { flex: 1; min-width: 0; }
+  .leaderboard-name {
+    font-weight: 700;
+    font-size: 13.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  .leaderboard-meta {
+    color: var(--muted);
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .leaderboard-meta i { color: var(--accent); }
+  .leaderboard-trend {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .leaderboard-trend.trend-up { background: rgba(46,204,113,.15); color: #4fd486; }
+  .leaderboard-trend.trend-down { background: rgba(231,76,60,.15); color: #ff6b5f; }
+  .leaderboard-trend.trend-same { background: rgba(255,255,255,.06); color: var(--muted); }
+  .leaderboard-trend.trend-new { background: rgba(212,175,55,.15); color: var(--accent); font-size: 9px; font-weight: 800; }
+  .leaderboard-trend.trend-live { background: rgba(46,204,113,.15); color: #4fd486; }
+  .leaderboard-empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 20px;
+    font-size: 13.5px;
+  }
+  .leaderboard-live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4fd486;
+    margin-inline-start: 6px;
+    animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes leaderboardLiveDotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .35; transform: scale(.65); }
   }
 
   .player-cover img {
@@ -448,6 +671,29 @@
     <div class="player-cover">
       <img id="playerPageCover" src="" alt="">
     </div>
+    <div class="song-stats">
+      <div class="song-stat">
+        <div class="song-stat-icon"><i class="bi bi-play-circle"></i></div>
+        <div>
+          <div class="song-stat-value" id="playerPagePlayCount">0</div>
+          <div class="song-stat-label">{% translate "تشغيل" %}</div>
+        </div>
+      </div>
+      <div class="song-stat">
+        <div class="song-stat-icon"><i class="bi bi-heart"></i></div>
+        <div>
+          <div class="song-stat-value" id="playerPageLikeCount">0</div>
+          <div class="song-stat-label">{% translate "إعجاب" %}</div>
+        </div>
+      </div>
+      <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'الأكثر استماعاً' %}">
+        <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones"></i></div>
+        <div>
+          <div class="song-stat-value" id="playerPageListenerCount">0</div>
+          <div class="song-stat-label">{% translate "الأكثر استماعاً" %}</div>
+        </div>
+      </button>
+    </div>
     <div class="player-info">
       <h1 id="playerPageTitle"><a href="#" id="playerPageTitleLink"></a></h1>
       <div class="artist" id="playerPageArtist"></div>
@@ -490,6 +736,27 @@
     </div>
   </div>
 </div>
+
+<!-- Leaderboard Modal (who's listening now) -->
+<div id="leaderboardModal" class="playlist-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="leaderboardModalTitle" onclick="if (event.target === this) closeLeaderboardModal();">
+  <div class="leaderboard-dialog">
+    <div class="playlist-header">
+      <h3 id="leaderboardModalTitle" style="margin:0; font-size:18px; font-weight:850; display:flex; align-items:center;"><i class="bi bi-headphones"></i> {% translate "الأكثر استماعاً" %}<span class="leaderboard-live-dot" title="{% translate 'مباشر' %}"></span></h3>
+      <button type="button" class="playlist-close" onclick="closeLeaderboardModal()" aria-label="{% translate 'إغلاق' %}" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:18px;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="leaderboard-card">
+      <img id="leaderboardSongCover" src="" alt="" style="display:none;">
+      <div class="icon-fallback" id="leaderboardSongCoverFallback"><i class="bi bi-music-note-beamed"></i></div>
+      <div>
+        <div class="leaderboard-card-title" id="leaderboardSongTitle"></div>
+        <div class="leaderboard-card-sub">{% translate "أكثر المستمعين تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب" %}</div>
+      </div>
+    </div>
+    <div class="leaderboard-list" id="leaderboardList"></div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -497,6 +764,172 @@
 // Get current song data from localStorage
 let currentSongData = JSON.parse(localStorage.getItem('currentSongData') || '{}');
 let isFetchingFromAPI = false; // Flag to prevent infinite loop
+
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.textContent = value == null ? '' : String(value);
+  return div.innerHTML;
+}
+
+// "Listening now" stat + live-listeners modal - same feature as the
+// song detail page, reconnected whenever the song shown here changes
+// (next/prev, picking another song from the "other songs" tab...)
+// since this page never navigates away, unlike the detail page.
+let listenerSocket = null;
+let listenerSocketSongId = null;
+let pendingListenerAction = null;
+let isCurrentlyListening = false;
+let leaderboardSocket = null;
+
+function connectListenerSocket(songId) {
+  if (listenerSocket && listenerSocketSongId === songId) return;
+  disconnectListenerSocket();
+  listenerSocketSongId = songId;
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  listenerSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/listening/`);
+
+  listenerSocket.addEventListener('open', function () {
+    if (pendingListenerAction) {
+      listenerSocket.send(JSON.stringify({ action: pendingListenerAction }));
+      pendingListenerAction = null;
+    }
+  });
+
+  listenerSocket.addEventListener('message', function (event) {
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (error) {
+      return;
+    }
+    if (data.type === 'count') {
+      const el = document.getElementById('playerPageListenerCount');
+      if (el) el.textContent = data.count;
+    }
+  });
+
+  listenerSocket.addEventListener('close', function () {
+    if (listenerSocket && listenerSocketSongId === songId) listenerSocket = null;
+  });
+}
+
+function disconnectListenerSocket() {
+  if (listenerSocket) {
+    const socket = listenerSocket;
+    listenerSocket = null;
+    socket.close();
+  }
+  listenerSocketSongId = null;
+  isCurrentlyListening = false;
+}
+
+function sendListenerAction(action) {
+  if (listenerSocket && listenerSocket.readyState === WebSocket.OPEN) {
+    listenerSocket.send(JSON.stringify({ action: action }));
+  } else if (listenerSocket && listenerSocket.readyState === WebSocket.CONNECTING) {
+    pendingListenerAction = action;
+  }
+}
+
+document.addEventListener('audioPlayPause', function (e) {
+  if (!currentSongData.songId || Number(e.detail.songId) !== Number(currentSongData.songId)) return;
+  if (e.detail.playing) {
+    isCurrentlyListening = true;
+    sendListenerAction('start');
+  } else {
+    isCurrentlyListening = false;
+    sendListenerAction('stop');
+  }
+});
+
+window.openLeaderboardModal = function () {
+  if (!currentSongData.songId) return;
+  const modal = document.getElementById('leaderboardModal');
+  if (!modal) return;
+
+  document.getElementById('leaderboardSongTitle').textContent = currentSongData.title || '';
+  const cover = document.getElementById('leaderboardSongCover');
+  const fallback = document.getElementById('leaderboardSongCoverFallback');
+  if (currentSongData.image) {
+    cover.src = currentSongData.image;
+    cover.style.display = 'block';
+    fallback.style.display = 'none';
+  } else {
+    cover.style.display = 'none';
+    fallback.style.display = 'flex';
+  }
+
+  modal.style.display = 'flex';
+  connectLeaderboardSocket(currentSongData.songId);
+};
+
+window.closeLeaderboardModal = function () {
+  const modal = document.getElementById('leaderboardModal');
+  if (modal) modal.style.display = 'none';
+  if (leaderboardSocket) {
+    leaderboardSocket.close();
+    leaderboardSocket = null;
+  }
+};
+
+function connectLeaderboardSocket(songId) {
+  if (leaderboardSocket) return;
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  leaderboardSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/leaderboard/`);
+
+  leaderboardSocket.addEventListener('message', function (event) {
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (error) {
+      return;
+    }
+    if (data.type === 'leaderboard') renderLeaderboard(data.entries || []);
+  });
+
+  leaderboardSocket.addEventListener('close', function () {
+    leaderboardSocket = null;
+  });
+}
+
+const TREND_ICON = {
+  UP: '<i class="bi bi-arrow-up"></i>',
+  DOWN: '<i class="bi bi-arrow-down"></i>',
+  SAME: '<i class="bi bi-arrow-left-right"></i>',
+  NEW: '{% translate "جديد" %}',
+};
+
+function renderLeaderboard(entries) {
+  const list = document.getElementById('leaderboardList');
+  if (!list) return;
+
+  if (!entries.length) {
+    list.innerHTML = '<div class="leaderboard-empty"><i class="bi bi-headphones"></i> {% translate "محدش سمعها كفاية عشان يدخل الترتيب لسه" %}</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map(function (entry) {
+    const trendClass = entry.trend ? 'trend-' + entry.trend.toLowerCase() : 'trend-live';
+    const trendIcon = entry.trend ? (TREND_ICON[entry.trend] || TREND_ICON.SAME) : '<i class="bi bi-broadcast"></i>';
+    const avatar = entry.avatar_url
+      ? `<img class="leaderboard-avatar" src="${escapeHtml(entry.avatar_url)}" alt="">`
+      : `<div class="leaderboard-avatar-fallback">${escapeHtml(entry.display_name.slice(0, 1).toUpperCase())}</div>`;
+    const liveDot = entry.is_live ? '<span class="leaderboard-live-dot" title="{% translate "بيسمعها دلوقتي" %}"></span>' : '';
+    const likeBadge = entry.is_liked ? '<i class="bi bi-heart-fill"></i>' : '';
+
+    return `
+      <div class="leaderboard-row">
+        <div class="leaderboard-rank">${entry.rank ? "#" + entry.rank : "<i class=\"bi bi-headphones\"></i>"}</div>
+        ${avatar}
+        <div class="leaderboard-info">
+          <div class="leaderboard-name">${escapeHtml(entry.display_name)}${liveDot}</div>
+          <div class="leaderboard-meta">${entry.full_listen_count} {% translate "استماع كامل" %} ${likeBadge}</div>
+        </div>
+        <div class="leaderboard-trend ${trendClass}">${trendIcon}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 // Ensure player bar is always visible on this page
 document.addEventListener('DOMContentLoaded', function() {
@@ -680,6 +1113,25 @@ function loadPlayerPageData() {
 
   if (currentSongData.image) {
     document.getElementById('playerPageCover').src = currentSongData.image;
+  }
+
+  if (currentSongData.playCount !== undefined) {
+    document.getElementById('playerPagePlayCount').textContent = currentSongData.playCount;
+  }
+  if (currentSongData.likeCount !== undefined) {
+    document.getElementById('playerPageLikeCount').textContent = currentSongData.likeCount;
+  }
+  if (currentSongData.listenerCount !== undefined) {
+    document.getElementById('playerPageListenerCount').textContent = currentSongData.listenerCount;
+  }
+
+  if (currentSongData.songId && listenerSocketSongId !== currentSongData.songId) {
+    connectListenerSocket(currentSongData.songId);
+    if (typeof globalAudio !== 'undefined' && globalAudio && !globalAudio.paused &&
+        Number(currentSongId) === Number(currentSongData.songId)) {
+      isCurrentlyListening = true;
+      sendListenerAction('start');
+    }
   }
 
   // Always fetch from API to ensure the queue (other songs) includes the
@@ -934,5 +1386,9 @@ function switchPlayerTab(tabName) {
 
 // Load data when page loads
 document.addEventListener('DOMContentLoaded', loadPlayerPageData);
+
+window.addEventListener('beforeunload', function () {
+  disconnectListenerSocket();
+});
 </script>
 {% endblock %}
