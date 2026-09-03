@@ -20,6 +20,10 @@
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
       <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
 
+      <button type="button" class="lang-btn" onclick="document.getElementById('langSwitchForm').submit();">
+        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+      </button>
+
       {% if user.is_authenticated %}
       <div class="th-user-menu">
         <button type="button" class="th-user-btn" onclick="toggleUserMenu()">
@@ -58,10 +62,6 @@
           <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
             <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
           </a>
-          <div class="th-user-dropdown-divider"></div>
-          <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
-            <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
-          </button>
           <div class="th-user-dropdown-divider"></div>
           <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
             <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}

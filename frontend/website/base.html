@@ -340,7 +340,11 @@
     }
 
     /* Footer */
-    .th-footer{border-top:1px solid var(--border); padding-block:48px 28px; margin-top:60px; background:var(--bg-2);}
+    /* padding-bottom clears the fixed global audio bar (72px tall) -
+       it's shown on nearly every page once any song has ever been
+       played (state persists across navigation), so without this the
+       last line of the footer sits underneath it, unreachable. */
+    .th-footer{border-top:1px solid var(--border); padding:48px 0 100px; margin-top:60px; background:var(--bg-2);}
     .th-footer a{color:var(--muted); text-decoration:none; font-size:14px; transition:color .15s ease;}
     .th-footer a:hover{color:var(--accent);}
 
@@ -364,8 +368,9 @@
     }
     .th-footer-copyright{color:var(--muted); font-size:12.5px; margin:0;}
     .th-footer-credit{
-      display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-size:12.5px; margin:0;
+      display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; color:var(--muted); font-size:12.5px; margin:0;
     }
+    .th-footer-credit-name{white-space:nowrap; display:inline-flex; align-items:center; gap:6px;}
     .th-footer-credit a:not(.th-footer-social){color:var(--accent); font-weight:700;}
     .th-footer-social{
       display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;

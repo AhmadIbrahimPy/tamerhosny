@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Q
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -52,6 +52,15 @@ def _ad_slots(placement):
     top = ads[0]
     bottom = ads[1] if len(ads) > 1 else ads[0]
     return top, bottom
+
+
+def robots_txt(request):
+    lines = [
+        'User-agent: *',
+        'Allow: /',
+        f'Sitemap: {request.build_absolute_uri("/sitemap.xml")}',
+    ]
+    return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 
 def home(request):

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
 from backend.ads_app import urls as urls_ads_app
@@ -12,9 +13,11 @@ from backend.media_app import urls as urls_media_app
 from backend.music_app import urls as urls_music_app
 from backend.people_app import urls as urls_people_app
 from backend.studios_app import urls as urls_studios_app
+from backend.website_app.sitemaps import sitemaps
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path(f'{settings.ADMIN_URL_PATH}/', admin.site.urls),
 
     # Server-rendered internal dashboard (session auth), on an obfuscated

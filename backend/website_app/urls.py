@@ -6,6 +6,7 @@ app_name = 'website_app'
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('robots.txt', views.robots_txt, name='robots-txt'),
 
     # Public site auth (separate from the internal dashboard login) -
     # JSON endpoints backing the login/register modal.
