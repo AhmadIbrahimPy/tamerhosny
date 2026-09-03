@@ -131,7 +131,7 @@
 
   {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
-  <div class="th-section">
+  <div class="th-section" style="margin-bottom: 10px;">
     <h2 class="th-section-title">{% translate "الأغاني" %}</h2>
     <div class="th-tracklist">
       {% for song in songs %}
@@ -164,7 +164,7 @@
   </div>
 
   {% if links %}
-  <div class="th-section">
+  <div class="th-section" style="margin-bottom: 10px;">
     <h2 class="th-section-title">{% translate "روابط المنصات" %}</h2>
     <div class="d-flex flex-wrap gap-2">
       {% for link in links %}
@@ -178,7 +178,7 @@
   {% endif %}
 
   {% if related_albums %}
-  <div class="th-section">
+  <div class="th-section" style="margin-bottom: 10px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 class="th-section-title" style="margin:0;">{% translate "ألبومات أخرى" %}</h2>
       <a href="{% url 'website_app:albums' %}" class="th-see-all">
