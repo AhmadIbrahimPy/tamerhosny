@@ -269,8 +269,9 @@ html[data-bs-theme="dark"] {
 {% endblock %}
 
 {% block content %}
-<div class="custom-container d-flex justify-content-center">
-  <div class="w-100" style="max-width: 780px;">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
 
     <div class="card card-lg mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -281,11 +282,12 @@ html[data-bs-theme="dark"] {
         <table class="table text-nowrap mb-0 table-centered table-hover">
           <thead>
             <tr>
-              <th>{% translate "من (ثانية)" %}</th>
-              <th>{% translate "إلى (ثانية)" %}</th>
-              <th>{% translate "النوع" %}</th>
+              <th style="width: 80px;">{% translate "من (ثانية)" %}</th>
+              <th style="width: 80px;">{% translate "إلى (ثانية)" %}</th>
+              <th style="width: 100px;">{% translate "النوع" %}</th>
               <th>{% translate "النص" %}</th>
-              <th class="text-end">{% translate "إجراءات" %}</th>
+              <th style="width: 120px;" class="text-center">{% translate "تأثيرات الصوت" %}</th>
+              <th style="width: 140px;" class="text-end">{% translate "إجراءات" %}</th>
             </tr>
           </thead>
           <tbody id="segmentsTableBody">
@@ -302,18 +304,116 @@ html[data-bs-theme="dark"] {
                   <span class="badge bg-secondary-subtle text-secondary">{{ segment.get_segment_type_display }}</span>
                 {% endif %}
               </td>
-              <td class="text-wrap" style="max-width: 260px;">{{ segment.text|default:"-" }}</td>
+              <td class="text-wrap" style="max-width: 300px;">{{ segment.text|default:"-" }}</td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-2">
+                  {% if segment.vocal_doubling %}
+                    <span class="badge bg-success text-white" title="تكرار الصوت">
+                      <i class="ti ti-wave-sine"></i> تكرار الصوت
+                    </span>
+                  {% endif %}
+                  {% if segment.double_tracking %}
+                    <span class="badge bg-warning text-dark" title="تتبع مزدوج">
+                      <i class="ti ti-layers"></i> تتبع مزدوج
+                    </span>
+                  {% endif %}
+                  {% if not segment.vocal_doubling and not segment.double_tracking %}
+                    <span class="text-muted small">-</span>
+                  {% endif %}
+                </div>
+              </td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="{{ segment.pk }}">{% translate "تعديل" %}</button>
-                <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="{{ segment.pk }}">{% translate "حذف" %}</button>
+                <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="{{ segment.pk }}">
+                  <i class="ti ti-pencil"></i> تعديل
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="{{ segment.pk }}">
+                  <i class="ti ti-trash"></i> حذف
+                </button>
               </td>
             </tr>
             {% empty %}
-            <tr id="emptyRow"><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
+            <tr id="emptyRow"><td colspan="6" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+      
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pb-2">
+        <span class="text-muted small" id="paginationInfo">عرض 1-10 من {{ total_segments }}</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0" id="pagination">
+            <!-- Pagination will be populated by JavaScript -->
+          </ul>
+        </nav>
+      </div>
+      
+      <style>
+        .pagination .page-link {
+          color: var(--bs-body-color);
+          border-color: var(--bs-border-color);
+          background-color: var(--bs-body-bg);
+          padding: 0.375rem 0.75rem;
+          margin: 0 0.125rem;
+        }
+        .pagination .page-link:hover {
+          background-color: var(--bs-tertiary-bg);
+        }
+        .pagination .page-item.active .page-link {
+          background-color: var(--bs-primary);
+          border-color: var(--bs-primary);
+          color: white;
+        }
+        .pagination .page-item.disabled .page-link {
+          color: var(--bs-secondary-color);
+          background-color: var(--bs-tertiary-bg);
+          border-color: var(--bs-border-color);
+        }
+        .pagination {
+          margin: 0;
+        }
+        
+        /* Ensure buttons and icons are visible */
+        .btn-sm {
+          padding: 0.25rem 0.5rem;
+          min-width: 80px;
+          position: relative;
+          z-index: 100 !important;
+        }
+        td.text-end {
+          position: relative;
+          z-index: 1;
+        }
+        .btn-outline-primary {
+          color: var(--bs-primary) !important;
+          border-color: var(--bs-primary) !important;
+          pointer-events: auto !important;
+        }
+        .btn-outline-primary:hover {
+          background-color: var(--bs-primary) !important;
+          color: white !important;
+        }
+        .btn-outline-danger {
+          color: var(--bs-danger) !important;
+          border-color: var(--bs-danger) !important;
+          pointer-events: auto !important;
+        }
+        .btn-outline-danger:hover {
+          background-color: var(--bs-danger) !important;
+          color: white !important;
+        }
+        
+        /* Ensure icons are visible */
+        .ti {
+          display: inline-block;
+          font-size: 1rem;
+          pointer-events: none;
+        }
+        .btn-outline-primary .ti,
+        .btn-outline-danger .ti {
+          color: inherit;
+        }
+      </style>
     </div>
 
     {% if song.audio_file %}
@@ -410,6 +510,7 @@ html[data-bs-theme="dark"] {
       </div>
     </div>
 
+    </div>
   </div>
 </div>
 
@@ -560,8 +661,69 @@ document.addEventListener('DOMContentLoaded', function() {
   const cancelEditBtn = document.getElementById('cancelEditBtn');
   const segmentsTableBody = document.getElementById('segmentsTableBody');
   const emptyRow = document.getElementById('emptyRow');
+  const pagination = document.getElementById('pagination');
+  const paginationInfo = document.getElementById('paginationInfo');
   let editingSegmentId = null;
   const songPk = {{ song.pk }};
+  
+  // Pagination - DISABLED to avoid data loss issues
+  // let currentPage = 1;
+  // const itemsPerPage = 10;
+  // let allSegments = [];
+  
+  // Load all segments from table (initial load only) - DISABLED
+  // function loadSegmentsFromTable() {
+  //   allSegments = [];
+  //   const rows = segmentsTableBody.querySelectorAll('tr[data-segment-id]');
+  //   rows.forEach(row => {
+  //     const cells = row.querySelectorAll('td');
+  //     const segmentId = row.dataset.segmentId;
+  //     const startSeconds = parseFloat(cells[0].textContent);
+  //     const endSeconds = parseFloat(cells[1].textContent);
+  //     const typeBadge = cells[2].querySelector('.badge');
+  //     const segmentType = typeBadge.textContent.trim();
+  //     const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
+  //     
+  //     // Check for effects badges by text content
+  //     const effectsCell = cells[4];
+  //     const effectsText = effectsCell.textContent.trim();
+  //     const vocalDoubling = effectsText.includes('تكرار الصوت');
+  //     const doubleTracking = effectsText.includes('تتبع مزدوج');
+  //     
+  //     allSegments.push({
+  //       id: segmentId,
+  //       start_seconds: startSeconds,
+  //       end_seconds: endSeconds,
+  //       segment_type_display: segmentType,
+  //       text: text,
+  //       vocal_doubling: vocalDoubling,
+  //       double_tracking: doubleTracking
+  //     });
+  //   });
+  }
+  
+  function renderPagination() {
+    // Pagination disabled - show all segments
+    pagination.innerHTML = '';
+    paginationInfo.textContent = '';
+  }
+  
+  function renderSegmentsPage() {
+    // Pagination disabled - do nothing, keep server-rendered content
+  }
+  
+  // Handle pagination clicks - DISABLED
+  // pagination.addEventListener('click', function(e) {
+  //   const pageLink = e.target.closest('[data-page]');
+  //   if (pageLink) {
+  //     e.preventDefault();
+  //     const page = parseInt(pageLink.dataset.page);
+  //     if (page >= 1 && page <= Math.ceil(allSegments.length / itemsPerPage)) {
+  //       currentPage = page;
+  //       renderSegmentsPage();
+  //     }
+  //   }
+  // });
 
   function getCSRFToken() {
     const cookies = document.cookie.split(';');
@@ -582,20 +744,45 @@ document.addEventListener('DOMContentLoaded', function() {
       badgeClass = 'bg-info-subtle text-info';
     }
 
+    // Build effects badges HTML
+    let effectsHtml = '';
+    if (segment.vocal_doubling) {
+      effectsHtml += '<span class="badge bg-success text-white" title="تكرار الصوت"><i class="ti ti-wave-sine"></i> تكرار الصوت</span>';
+    }
+    if (segment.double_tracking) {
+      effectsHtml += '<span class="badge bg-warning text-dark" title="تتبع مزدوج"><i class="ti ti-layers"></i> تتبع مزدوج</span>';
+    }
+    if (!segment.vocal_doubling && !segment.double_tracking) {
+      effectsHtml = '<span class="text-muted small">-</span>';
+    }
+
     const tr = document.createElement('tr');
-    tr.dataset.segmentId = segment.id;
+    tr.dataset.segmentId = segment.id || segment.pk;
     tr.innerHTML = `
       <td>${segment.start_seconds}</td>
       <td>${segment.end_seconds}</td>
-      <td><span class="badge ${badgeClass}">${segment.segment_type_display}</span></td>
-      <td class="text-wrap" style="max-width: 260px;">${segment.text || '-'}</td>
+      <td><span class="badge ${badgeClass}">${segment.segment_type_display || segment.get_segment_type_display}</span></td>
+      <td class="text-wrap" style="max-width: 300px;">${segment.text || '-'}</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center gap-2">
+          ${effectsHtml}
+        </div>
+      </td>
       <td class="text-end">
-        <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="${segment.id}">{% translate "تعديل" %}</button>
-        <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="${segment.id}">{% translate "حذف" %}</button>
+        <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="${segment.id || segment.pk}">
+          <i class="ti ti-pencil"></i> تعديل
+        </button>
+        <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="${segment.id || segment.pk}">
+          <i class="ti ti-trash"></i> حذف
+        </button>
       </td>
     `;
     return tr;
   }
+  
+  // Initialize pagination on page load - DISABLED
+  // loadSegmentsFromTable();
+  // renderSegmentsPage();
 
   if (segmentForm) {
     segmentForm.addEventListener('submit', function(e) {
@@ -609,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
         : basePath + '/';
       
       submitSegmentBtn.disabled = true;
-      submitSegmentBtn.textContent = editingSegmentId ? '{% translate "جاري التعديل..." %}' : '{% translate "جاري الإضافة..." %}';
+      submitSegmentBtn.textContent = editingSegmentId ? 'جاري التعديل...' : 'جاري الإضافة...';
 
       fetch(url, {
         method: 'POST',
@@ -622,37 +809,8 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          if (editingSegmentId) {
-            // Update existing row
-            const existingRow = segmentsTableBody.querySelector(`[data-segment-id="${editingSegmentId}"]`);
-            if (existingRow) {
-              const newRow = createSegmentRow(data.segment);
-              existingRow.replaceWith(newRow);
-            }
-            editingSegmentId = null;
-            cancelEditBtn.style.display = 'none';
-            submitSegmentBtn.textContent = '{% translate "إضافة المقطع" %}';
-          } else {
-            // Add new row
-            if (emptyRow) {
-              emptyRow.remove();
-            }
-            const newRow = createSegmentRow(data.segment);
-            segmentsTableBody.appendChild(newRow);
-            
-            // Update start_seconds for next segment
-            const startField = document.getElementById('id_start_seconds');
-            if (startField) {
-              startField.value = data.segment.end_seconds;
-            }
-          }
-          
-          // Clear form fields except start_seconds
-          document.getElementById('id_end_seconds').value = '';
-          document.getElementById('id_text').value = '';
-          
-          // Clear field errors
-          document.querySelectorAll('.field-error').forEach(el => el.remove());
+          // Reload page to get updated segments
+          window.location.reload();
         } else if (data.errors) {
           // Display errors
           document.querySelectorAll('.field-error').forEach(el => el.remove());
@@ -671,20 +829,26 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('{% translate "حدث خطأ أثناء الحفظ" %}');
+        alert('حدث خطأ أثناء الحفظ');
       })
       .finally(() => {
         submitSegmentBtn.disabled = false;
-        submitSegmentBtn.textContent = editingSegmentId ? '{% translate "حفظ التعديلات" %}' : '{% translate "إضافة المقطع" %}';
+        submitSegmentBtn.textContent = editingSegmentId ? 'حفظ التعديلات' : 'إضافة المقطع';
       });
     });
   }
 
   // Handle delete buttons
   segmentsTableBody.addEventListener('click', function(e) {
-    if (e.target.classList.contains('delete-segment-btn')) {
-      const segmentId = e.target.dataset.segmentId;
-      if (confirm('{% translate "متأكد من الحذف؟" %}')) {
+    console.log('Table clicked for delete, target:', e.target);
+    const deleteBtn = e.target.closest('.delete-segment-btn');
+    console.log('Delete button found:', deleteBtn);
+    if (deleteBtn) {
+      console.log('Delete button clicked, segmentId:', deleteBtn.dataset.segmentId);
+      e.preventDefault();
+      e.stopPropagation();
+      const segmentId = deleteBtn.dataset.segmentId;
+      if (confirm('متأكد من الحذف؟')) {
         const currentPath = window.location.pathname;
         const basePath = currentPath.replace(/\/$/, '');
         fetch(`${basePath}/${segmentId}/delete/`, {
@@ -697,23 +861,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            const row = segmentsTableBody.querySelector(`[data-segment-id="${segmentId}"]`);
-            if (row) {
-              row.remove();
-              
-              // Show empty row if no segments left
-              if (segmentsTableBody.children.length === 0) {
-                const tr = document.createElement('tr');
-                tr.id = 'emptyRow';
-                tr.innerHTML = `<td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td>`;
-                segmentsTableBody.appendChild(tr);
-              }
-            }
+            // Reload page to get updated segments
+            window.location.reload();
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('{% translate "حدث خطأ أثناء الحذف" %}');
+          alert('حدث خطأ أثناء الحذف');
         });
       }
     }
@@ -721,8 +875,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Handle edit buttons
   segmentsTableBody.addEventListener('click', function(e) {
-    if (e.target.classList.contains('edit-segment-btn')) {
-      const segmentId = e.target.dataset.segmentId;
+    console.log('Table clicked, target:', e.target);
+    const editBtn = e.target.closest('.edit-segment-btn');
+    console.log('Edit button found:', editBtn);
+    if (editBtn) {
+      console.log('Edit button clicked, segmentId:', editBtn.dataset.segmentId);
+      e.preventDefault();
+      e.stopPropagation();
+      const segmentId = editBtn.dataset.segmentId;
       const row = segmentsTableBody.querySelector(`[data-segment-id="${segmentId}"]`);
       
       if (row) {
@@ -731,12 +891,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const endSeconds = parseFloat(cells[1].textContent);
         const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
         
+        // Check for effects by text content
+        const effectsCell = cells[4];
+        const effectsText = effectsCell.textContent.trim();
+        const vocalDoubling = effectsText.includes('تكرار الصوت');
+        const doubleTracking = effectsText.includes('تتبع مزدوج');
+        
         document.getElementById('id_start_seconds').value = startSeconds;
         document.getElementById('id_end_seconds').value = endSeconds;
         document.getElementById('id_text').value = text;
+        document.getElementById('id_vocal_doubling').checked = vocalDoubling;
+        document.getElementById('id_double_tracking').checked = doubleTracking;
         
         editingSegmentId = segmentId;
-        submitSegmentBtn.textContent = '{% translate "حفظ التعديلات" %}';
+        submitSegmentBtn.textContent = 'حفظ التعديلات';
         cancelEditBtn.style.display = 'inline-block';
         
         // Scroll to form
@@ -749,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (cancelEditBtn) {
     cancelEditBtn.addEventListener('click', function() {
       editingSegmentId = null;
-      submitSegmentBtn.textContent = '{% translate "إضافة المقطع" %}';
+      submitSegmentBtn.textContent = 'إضافة المقطع';
       cancelEditBtn.style.display = 'none';
       
       // Reset form
@@ -774,24 +942,38 @@ document.addEventListener('DOMContentLoaded', function() {
   const lyricsContainer = document.getElementById('lyricsContainer');
   let lyricsModalInstance = null;
 
-  // Load segments data for lyrics
-  const segmentsData = [
-    {% for segment in segments %}
-    {
-      id: {{ segment.pk }},
-      start: {{ segment.start_seconds }},
-      end: {{ segment.end_seconds }},
-      type: '{{ segment.segment_type }}',
-      text: {{ segment.text|default:"''"|safe }},
-    },
-    {% endfor %}
-  ];
+  // Load segments data for lyrics (load from table)
+  function loadSegmentsData() {
+    const segments = [];
+    const rows = segmentsTableBody.querySelectorAll('tr[data-segment-id]');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      const segmentId = row.dataset.segmentId;
+      const startSeconds = parseFloat(cells[0].textContent);
+      const endSeconds = parseFloat(cells[1].textContent);
+      const typeBadge = cells[2].querySelector('.badge');
+      const segmentType = typeBadge ? typeBadge.textContent.trim() : '';
+      const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
+      
+      segments.push({
+        id: segmentId,
+        start: startSeconds,
+        end: endSeconds,
+        type: segmentType === 'كلمات' ? 'LYRICS' : (segmentType === 'موسيقى' ? 'MUSIC' : 'SILENCE'),
+        text: text
+      });
+    });
+    return segments;
+  }
+  
+  let segmentsData = [];
 
   function populateLyrics() {
+    segmentsData = loadSegmentsData();
     lyricsContainer.innerHTML = '';
     
     if (segmentsData.length === 0) {
-      lyricsContainer.innerHTML = '<p class="text-center text-muted py-5">{% translate "لا توجد كلمات" %}</p>';
+      lyricsContainer.innerHTML = '<p class="text-center text-muted py-5">لا توجد كلمات</p>';
       return;
     }
 
@@ -809,10 +991,10 @@ document.addEventListener('DOMContentLoaded', function() {
         typeText = segment.text || '-';
       } else if (segment.type === 'MUSIC') {
         typeClass = 'music';
-        typeText = '{% translate "موسيقى" %}';
+        typeText = 'موسيقى';
       } else {
         typeClass = 'silence';
-        typeText = '{% translate "صمت" %}';
+        typeText = 'صمت';
       }
 
       div.innerHTML = `

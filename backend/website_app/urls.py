@@ -15,11 +15,9 @@ urlpatterns = [
 
     path('songs/', views.songs_list, name='songs'),
     path('songs/increment-play/', views.increment_play_count, name='increment-play-count'),
-    path('songs/start-listening/', views.start_listening, name='start-listening'),
-    path('songs/stop-listening/', views.stop_listening, name='stop-listening'),
-    path('songs/listening-heartbeat/', views.listening_heartbeat, name='listening-heartbeat'),
-    path('songs/current-listeners/', views.get_current_listeners, name='current-listeners'),
     path('songs/<str:slug>/', views.song_detail, name='song-detail'),
+    path('songs/<str:slug>/duet/<int:duet_id>/', views.song_detail, name='song-detail-duet'),
+    path('sing-with-tamer/<str:slug>/', views.sing_with_tamer, name='sing-with-tamer'),
 
     path('albums/', views.albums_list, name='albums'),
     path('albums/<str:slug>/', views.album_detail, name='album-detail'),
@@ -37,6 +35,8 @@ urlpatterns = [
     # User Features
     path('likes/', views.likes_list, name='likes'),
     path('likes/toggle/', views.toggle_favorite, name='toggle-like'),
+    path('my-duets/', views.my_duets_list, name='my-duets'),
+    path('my-duets/<int:pk>/toggle-privacy/', views.toggle_duet_privacy, name='toggle-duet-privacy'),
     path('recently-played/', views.recently_played, name='recently-played'),
     path('playlists/list/', views.list_playlists, name='list-playlists'),
     path('playlists/add-song/', views.add_song_to_playlist, name='add-song-to-playlist'),

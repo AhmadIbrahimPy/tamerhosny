@@ -38,6 +38,8 @@ def serialize_song(song, request=None):
                 'end_seconds': segment.end_seconds,
                 'segment_type': segment.segment_type,
                 'text': segment.text,
+                'vocal_doubling': segment.vocal_doubling,
+                'double_tracking': segment.double_tracking,
             }
             for segment in song.lyric_segments.all()
         ],

@@ -815,10 +815,10 @@ class AudioProcessor:
     # ACTUAL START / END
     # =========================================================
 
-    def find_actual_start(
+    def find_actual_start_end(
         self,
         audio_data: np.ndarray,
-    ) -> int:
+    ) -> Tuple[int, int]:
 
         mono = self._to_mono(
             audio_data
@@ -826,7 +826,7 @@ class AudioProcessor:
 
         if len(mono) == 0:
 
-            return 0
+            return 0, len(mono)
 
         try:
 
@@ -837,39 +837,27 @@ class AudioProcessor:
                 )
             )
 
-            return int(index[0])
+            return int(index[0]), int(index[1])
 
         except Exception:
 
-            return 0
+            return 0, len(mono)
+
+    def find_actual_start(
+        self,
+        audio_data: np.ndarray,
+    ) -> int:
+
+        start, _ = self.find_actual_start_end(audio_data)
+        return start
 
     def find_actual_end(
         self,
         audio_data: np.ndarray,
     ) -> int:
 
-        mono = self._to_mono(
-            audio_data
-        )
-
-        if len(mono) == 0:
-
-            return 0
-
-        try:
-
-            _, index = (
-                librosa.effects.trim(
-                    mono,
-                    top_db=40,
-                )
-            )
-
-            return int(index[1])
-
-        except Exception:
-
-            return len(mono)
+        _, end = self.find_actual_start_end(audio_data)
+        return end
 
     # =========================================================
     # SLICE
@@ -2049,16 +2037,9 @@ class AIRemixGenerator:
         # CLEAN VOCAL SILENCE
         # =====================================================
 
-        vocal_start = (
+        vocal_start, vocal_end = (
             self.processor
-            .find_actual_start(
-                vocals2
-            )
-        )
-
-        vocal_end = (
-            self.processor
-            .find_actual_end(
+            .find_actual_start_end(
                 vocals2
             )
         )
@@ -2124,23 +2105,42 @@ class AIRemixGenerator:
         )
 
         # =====================================================
-        # MAIN
+        # MAIN (use middle section after intro)
         # =====================================================
 
+        intro_samples = len(intro)
+        outro_samples = min(
+            int(3.0 * self.processor.sample_rate),
+            len(instrumental1) - intro_samples
+        )
+        
+        middle_start = intro_samples
+        middle_end = len(instrumental1) - outro_samples
+        
+        if middle_end > middle_start:
+            middle_instrumental = instrumental1[middle_start:middle_end]
+        else:
+            middle_instrumental = instrumental1[intro_samples:]
+        
         main = (
             self._build_mashup(
-                instrumental1,
+                middle_instrumental,
                 vocals2,
             )
         )
 
         # =====================================================
-        # OUTRO
+        # OUTRO (use last section)
         # =====================================================
 
+        if outro_samples > 0:
+            outro_instrumental = instrumental1[-outro_samples:]
+        else:
+            outro_instrumental = np.array([], dtype=np.float32).reshape(0, 2)
+        
         outro = (
             self._build_outro(
-                instrumental1,
+                outro_instrumental,
                 vocals2,
             )
         )

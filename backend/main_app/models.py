@@ -100,7 +100,16 @@ class CurrentSongListener(models.Model):
         UserAccount,
         on_delete=models.CASCADE,
         related_name='current_listening',
-        verbose_name=_('المستخدم')
+        verbose_name=_('المستخدم'),
+        null=True,
+        blank=True
+    )
+    
+    session_key = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('مفتاح الجلسة')
     )
     
     song = models.ForeignKey(
@@ -116,7 +125,18 @@ class CurrentSongListener(models.Model):
     class Meta:
         verbose_name = _('مستخدم حالي')
         verbose_name_plural = _('المستخدمون الحاليون')
-        unique_together = ['user', 'song']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'song'],
+                condition=models.Q(user__isnull=False),
+                name='unique_user_song'
+            ),
+            models.UniqueConstraint(
+                fields=['session_key', 'song'],
+                condition=models.Q(user__isnull=True),
+                name='unique_session_song'
+            )
+        ]
         ordering = ['-started_at']
         indexes = [
             models.Index(fields=['user', 'song']),
@@ -125,7 +145,9 @@ class CurrentSongListener(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.user.username} - {self.song}'
+        if self.user:
+            return f'{self.user.username} - {self.song}'
+        return f'Session {self.session_key[:8]} - {self.song}'
 
 
 class Playlist(models.Model):

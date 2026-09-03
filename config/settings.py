@@ -53,6 +53,8 @@ DYNAMIC_CSRF_TRUSTED_ORIGIN_REGEXES = env_list(
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # must precede staticfiles so it takes over `runserver`
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -119,6 +121,19 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Real-time features (e.g. "listening now" presence) go over this. Same
+# Redis instance the app already has available; a separate REDIS_URL
+# lets it point elsewhere in production without touching CACHES.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [env('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+        },
+    },
+}
 
 AUTH_USER_MODEL = 'main_app.UserAccount'
 

@@ -62,10 +62,9 @@ class AudioSourceViewSet(viewsets.ModelViewSet):
                 'analysis': {
                     'bpm': analysis['bpm'],
                     'key': analysis['key'],
+                    'mode': analysis['mode'],
                     'duration': analysis['duration'],
-                    'spectral_centroid': float(analysis['spectral_centroid']),
-                    'spectral_rolloff': float(analysis['spectral_rolloff']),
-                    'spectral_bandwidth': float(analysis['spectral_bandwidth']),
+                    'energy': analysis['energy'],
                 }
             })
         except Exception as e:
@@ -186,22 +185,6 @@ class RemixProjectViewSet(viewsets.ModelViewSet):
                     'end_time': remix_source.end_time
                 }
                 sources_data.append(source_data)
-            
-            # الترتيب التلقائي إذا طلب المستخدم
-            if config.get('auto_arrange'):
-                # حساب المدة الكلية
-                total_duration = sum(
-                    (s.get('end_time', 0) - s.get('start_time', 0)) 
-                    for s in sources_data 
-                    if s.get('end_time')
-                )
-                if total_duration == 0:
-                    total_duration = 180  # 3 دقائق افتراضياً
-                sources_data = generator.auto_arrange(sources_data, total_duration)
-            
-            # الخلط الذكي إذا طلب المستخدم
-            if config.get('intelligent_mix'):
-                sources_data = generator.intelligent_mix(sources_data)
             
             # إعداد التكوين المستهدف
             target_config = {

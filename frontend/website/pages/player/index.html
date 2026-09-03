@@ -21,9 +21,34 @@
 
   .player-main {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .player-page {
+      flex-direction: column;
+      padding: 16px;
+      padding-bottom: 90px;
+      gap: 20px;
+      min-height: auto;
+    }
+
+    .player-sidebar {
+      flex: 0 0 auto;
+      width: 100%;
+    }
+
+    .player-cover {
+      max-width: 240px;
+      margin-inline: auto;
+    }
+
+    .player-info {
+      text-align: center;
+    }
   }
 
   .player-cover {
@@ -319,44 +344,99 @@
 
   .lyric-line {
     position: relative;
-    border: 1px solid var(--border);
-    background: var(--card);
+    background: transparent;
     color: var(--text);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 8px;
+    transition: all 0.2s ease;
+    padding: 16px 20px;
+    margin-bottom: 4px;
+    border-radius: 12px;
     cursor: pointer;
+    border-left: 3px solid transparent;
   }
 
   .lyric-line:hover {
-    border-color: var(--accent);
-    background: rgba(99, 102, 241, 0.08);
-    transform: translateX(4px);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+    background: var(--card);
+    border-left-color: var(--accent);
+  }
+
+  .lyric-line.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-left-color: var(--accent);
+    animation: lyricPulse 0.3s ease-out;
+  }
+
+  .lyric-line.active .flex-grow-1 {
+    animation: textGlow 1.5s ease-in-out infinite;
+  }
+
+  @keyframes lyricPulse {
+    0% {
+      transform: scale(0.98);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes textGlow {
+    0%, 100% {
+      text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+    }
   }
 
   .timestamp-badge {
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
-    color: white;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: var(--card);
+    color: var(--muted);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-family: monospace;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+  }
+
+  .lyric-line:hover .timestamp-badge {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
   }
 
   .music-segment {
-    color: #a78bfa;
+    color: var(--accent);
     font-weight: 600;
-    font-style: italic;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .music-segment i {
+    font-size: 1.2rem;
+  }
+
+  .lyric-line.active .music-segment i {
+    animation: musicNoteBounce 0.6s ease-in-out infinite;
+  }
+
+  @keyframes musicNoteBounce {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-4px) scale(1.1);
+    }
   }
 
   .silence-segment {
-    color: #94a3b8;
+    color: var(--muted);
     font-weight: 500;
+    font-style: italic;
   }
 </style>
 {% endblock %}
@@ -425,13 +505,10 @@ document.addEventListener('DOMContentLoaded', function() {
     playerBar.style.display = 'block';
   }
 
-  console.log('Initial currentSongData:', currentSongData);
-
   // Load song data from localStorage
   if (currentSongData.title) {
     // If songId is missing but we have other data, try to fetch from API
     if (!currentSongData.songId && currentSongData.otherSongs && currentSongData.otherSongs.length > 0) {
-      console.log('songId missing, using first song from otherSongs');
       const firstSong = currentSongData.otherSongs[0];
       currentSongData.songId = firstSong.songId;
       currentSongData.url = firstSong.url;
@@ -443,12 +520,20 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPlayerPageData();
     updatePlayerBar();
   } else {
-    // No song data available - redirect to songs page
-    window.location.href = '/songs/';
+    // No song in context (e.g. landing on /player/ directly) - seed a
+    // random playlist instead of bouncing the visitor away.
+    fetchSongDataFromAPI(null);
   }
 });
 
 function updatePlayerBar() {
+  if (currentSongData.songId && typeof setCurrentSongId === 'function') {
+    setCurrentSongId(currentSongData.songId);
+    if (typeof checkLikeStatus === 'function') {
+      checkLikeStatus(currentSongData.songId);
+    }
+  }
+
   // Update player bar elements directly
   if (currentSongData.title) {
     document.getElementById('playerTitle').textContent = currentSongData.title;
@@ -513,7 +598,30 @@ function handleTimeUpdate() {
     document.getElementById('playerProgressBar').style.width = progress + '%';
     document.getElementById('playerCurrentTime').textContent = formatTime(audio.currentTime);
     document.getElementById('playerDuration').textContent = formatTime(audio.duration);
+    
+    // Highlight active lyric line
+    highlightActiveLyric(audio.currentTime);
   }
+}
+
+function highlightActiveLyric(currentTime) {
+  const lyricsContainer = document.getElementById('lyricsContainer');
+  if (!lyricsContainer) return;
+  
+  const lyricLines = lyricsContainer.querySelectorAll('.lyric-line');
+  
+  lyricLines.forEach(line => {
+    const start = parseFloat(line.dataset.start);
+    const end = parseFloat(line.dataset.end);
+    
+    if (currentTime >= start && currentTime < end) {
+      line.classList.add('active');
+      // Scroll to active lyric if needed
+      line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      line.classList.remove('active');
+    }
+  });
 }
 
 function handleLoadedMetadata() {
@@ -538,8 +646,6 @@ function handleAudioPause() {
 }
 
 function loadPlayerPageData() {
-  console.log('Loading player page data:', currentSongData);
-
   if (currentSongData.title) {
     const titleLink = document.getElementById('playerPageTitleLink');
     titleLink.textContent = currentSongData.title;
@@ -575,19 +681,9 @@ function loadPlayerPageData() {
     document.getElementById('playerPageCover').src = currentSongData.image;
   }
 
-  // Load other songs - always fetch from API to ensure current song is in the list
+  // Always fetch from API to ensure the queue (other songs) includes the
+  // current song, whether it came from an album or a random playlist.
   if (currentSongData.songId && !isFetchingFromAPI) {
-    console.log('Fetching song data from API to ensure current song is in the list');
-    fetchSongDataFromAPI(currentSongData.songId);
-  } else if (isFetchingFromAPI) {
-    console.log('Already fetching from API, skipping to prevent loop');
-  } else {
-    console.log('No songId available, cannot fetch from API');
-  }
-
-  // Also fetch from API if image is missing
-  if (!currentSongData.image && currentSongData.songId) {
-    console.log('Image is missing, fetching from API');
     fetchSongDataFromAPI(currentSongData.songId);
   }
 
@@ -599,41 +695,29 @@ function loadPlayerPageData() {
   // Load credits if available
   if (currentSongData.credits && currentSongData.credits.length > 0) {
     loadCredits(currentSongData.credits);
-  } else {
-    console.log('No credits found in localStorage');
   }
 
   // Load platforms if available
   if (currentSongData.platforms && currentSongData.platforms.length > 0) {
     loadPlatforms(currentSongData.platforms);
-  } else {
-    console.log('No platforms found in localStorage');
   }
 }
 
+// songId=null bootstraps a random song (used when landing on /player/
+// with no song in context yet).
 function fetchSongDataFromAPI(songId) {
-  if (isFetchingFromAPI) {
-    console.log('Already fetching from API, skipping to prevent loop');
-    return;
-  }
+  if (isFetchingFromAPI) return;
 
   isFetchingFromAPI = true;
-  console.log('Fetching song data from API for songId:', songId);
 
-  const url = `/player/song-data/?song_id=${songId}&current_song_id=${currentSongData.songId}`;
-  console.log('API URL:', url);
+  const params = new URLSearchParams();
+  if (songId) params.set('song_id', songId);
+  if (currentSongData.songId) params.set('current_song_id', currentSongData.songId);
+  const url = `/player/song-data/?${params.toString()}`;
 
   fetch(url)
-  .then(response => {
-    console.log('API response status:', response.status);
-    return response.json();
-  })
+  .then(response => response.json())
   .then(data => {
-    console.log('Received song data from API:', data);
-    console.log('Image from API:', data.image);
-    console.log('First other song image:', data.otherSongs[0]?.image);
-    console.log('First other song songId:', data.otherSongs[0]?.songId);
-
     if (data.error) {
       console.error('Error fetching song data:', data.error);
       isFetchingFromAPI = false;
@@ -646,8 +730,6 @@ function fetchSongDataFromAPI(songId) {
       ...data
     };
     localStorage.setItem('currentSongData', JSON.stringify(currentSongData));
-
-    console.log('Updated currentSongData after API:', currentSongData);
 
     // Reload the page data with the new data (without triggering another API call)
     isFetchingFromAPI = true; // Keep flag true to prevent loop
@@ -683,14 +765,10 @@ function getCSRFToken() {
   return cookieValue || '';
 }
 
-function loadOtherSongs(songs, currentSongId = null) {
-  console.log('loadOtherSongs called with currentSongId:', currentSongId);
-  console.log('Songs data:', songs);
-
+function loadOtherSongs(songs, activeSongId = null) {
   const container = document.getElementById('otherSongsContainer');
   container.innerHTML = '<div class="th-tracklist">' + songs.map((song, index) => {
-    const isActive = song.songId === currentSongId;
-    console.log(`Song ${index}: songId=${song.songId}, currentSongId=${currentSongId}, isActive=${isActive}`);
+    const isActive = song.songId === activeSongId;
     return `
     <div class="th-track-row ${isActive ? 'active' : ''}" onclick="playSongFromList(${index})" style="cursor:pointer;">
       <span class="th-track-num">${index + 1}</span>
@@ -713,8 +791,6 @@ function playSongFromList(index) {
   const song = window.otherSongsList[index];
   if (!song) return;
 
-  console.log('Playing song from list:', song);
-
   // Update currentSongData with the selected song
   currentSongData = {
     songId: song.songId,
@@ -725,8 +801,6 @@ function playSongFromList(index) {
     url: song.url,
     otherSongs: window.otherSongsList
   };
-
-  console.log('Updated currentSongData:', currentSongData);
 
   // Save to localStorage
   localStorage.setItem('currentSongData', JSON.stringify(currentSongData));

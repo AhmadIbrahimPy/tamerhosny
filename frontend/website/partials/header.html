@@ -55,6 +55,9 @@
           <a href="{% url 'website_app:remixes' %}" class="th-dropdown-item">
             <i class="bi bi-music-note-beamed"></i> {% translate "الريمكسات" %}
           </a>
+          <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
+            <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
+          </a>
           <div class="th-user-dropdown-divider"></div>
           <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
             <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}

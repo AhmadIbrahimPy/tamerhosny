@@ -30,7 +30,7 @@
     }
     a{color:inherit;}
     a.plain{text-decoration:none; color:inherit;}
-    .container-xl{max-width:1240px; margin-inline:auto; padding-inline:20px;}
+    .container-xl{max-width:1240px; margin-inline:auto;}
 
     /* Navbar */
     .th-nav{
@@ -379,26 +379,96 @@
       globalAudio = document.getElementById('globalAudioElement');
       if (!globalAudio) {
         console.error('Audio element not found');
+        return;
       }
+
+      // Registered once (not per-song) so switching songs never piles up
+      // duplicate listeners bound to stale play buttons.
+      globalAudio.addEventListener('play', function() {
+        setPlayButtonsIcon('bi-pause-fill');
+      });
+
+      globalAudio.addEventListener('pause', function() {
+        if (!globalAudio.ended && isManualPause) {
+          setPlayButtonsIcon('bi-play-fill');
+          isManualPause = false;
+        }
+      });
+
+      globalAudio.addEventListener('ended', function() {
+        if (isRepeat) {
+          globalAudio.currentTime = 0;
+          globalAudio.play();
+          return;
+        }
+        setPlayButtonsIcon('bi-play-fill');
+        playAdjacentSong(1);
+      });
+
+      globalAudio.addEventListener('timeupdate', function() {
+        if (globalAudio.duration) {
+          var progress = (globalAudio.currentTime / globalAudio.duration) * 100;
+          var currentTimeText = formatTime(globalAudio.currentTime);
+          var durationText = formatTime(globalAudio.duration);
+
+          document.getElementById('playerProgressBar').style.width = progress + '%';
+          document.getElementById('playerCurrentTime').textContent = currentTimeText;
+          document.getElementById('playerDuration').textContent = durationText;
+
+          // Mobile menu isn't always open, but keep it in sync so it's
+          // correct the moment it's shown instead of frozen at open-time.
+          var mobileProgressBar = document.getElementById('mobilePlayerProgressBar');
+          var mobileCurrentTime = document.getElementById('mobilePlayerCurrentTime');
+          var mobileDuration = document.getElementById('mobilePlayerDuration');
+          if (mobileProgressBar) mobileProgressBar.style.width = progress + '%';
+          if (mobileCurrentTime) mobileCurrentTime.textContent = currentTimeText;
+          if (mobileDuration) mobileDuration.textContent = durationText;
+        }
+      });
     });
 
+    function setPlayButtonsIcon(iconClass) {
+      var mainBtn = document.getElementById('playerPlayBtn');
+      if (mainBtn) {
+        mainBtn.innerHTML = '<i class="bi ' + iconClass + '"></i>';
+      }
+      if (currentPlayBtn) {
+        currentPlayBtn.innerHTML = '<i class="bi ' + iconClass + '"></i>';
+      }
+    }
+
     function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
-      // Stop current audio if playing
+      // Check if this is the same song - don't reset position
+      let isSameSong = false;
       if (globalAudio.src) {
-        globalAudio.pause();
-        globalAudio.currentTime = 0;
-        if (currentPlayBtn) {
-          currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        const currentUrl = globalAudio.src;
+        isSameSong = currentUrl.includes(url) || url.includes(currentUrl);
+        
+        if (!isSameSong) {
+          // Different song - stop and reset
+          globalAudio.pause();
+          globalAudio.currentTime = 0;
+          if (currentPlayBtn) {
+            currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+          }
         }
       }
 
-      // Set new audio source
-      globalAudio.src = url;
+      // Only set new source if different song
+      if (!isSameSong) {
+        globalAudio.src = url;
+      }
       currentPlayBtn = playBtn;
+      const previousSongId = currentSongId;
       currentSongId = songId;
 
-      // Update play button icon
-      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+      // Dispatch custom event when song changes
+      if (previousSongId !== songId) {
+        const event = new CustomEvent('songChanged', { detail: { songId: songId, previousSongId: previousSongId } });
+        document.dispatchEvent(event);
+      }
+
+      setPlayButtonsIcon('bi-pause-fill');
 
       // Show player bar and set title
       document.getElementById('globalAudioPlayer').style.display = 'block';
@@ -440,27 +510,7 @@
       };
       localStorage.setItem('currentSongData', JSON.stringify(songData));
       
-      // Check if song is liked
-      if (songId) {
-        fetch('/likes/toggle/', {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: 'content_type=song&object_id=' + songId + '&check_only=true'
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            isLiked = data.liked;
-            updateLikeButton();
-          }
-        })
-        .catch(error => {
-          console.error('Error checking like status:', error);
-        });
-      }
+      checkLikeStatus(songId);
       
       // Handle image - single image for normal songs, grid for mix
       if (image) {
@@ -513,60 +563,31 @@
       // Play audio
       globalAudio.play().catch(function(error) {
         console.error('Error playing audio:', error);
-        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-      });
-
-      // Update play button when audio ends
-      globalAudio.addEventListener('ended', function() {
-        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
-      });
-
-      // Update play button when audio is paused
-      globalAudio.addEventListener('pause', function() {
-        if (!globalAudio.ended && isManualPause) {
-          playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
-          isManualPause = false;
-        }
-      });
-
-      // Update play button when audio is playing
-      globalAudio.addEventListener('play', function() {
-        playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>';
-      });
-
-      // Update progress bar using timeupdate event
-      globalAudio.addEventListener('timeupdate', function() {
-        if (globalAudio.duration) {
-          var progress = (globalAudio.currentTime / globalAudio.duration) * 100;
-          document.getElementById('playerProgressBar').style.width = progress + '%';
-          document.getElementById('playerCurrentTime').textContent = formatTime(globalAudio.currentTime);
-          document.getElementById('playerDuration').textContent = formatTime(globalAudio.duration);
-          console.log('Timeupdate - currentTime:', globalAudio.currentTime, 'duration:', globalAudio.duration, 'progress:', progress + '%');
-        }
-      });
-
-      // Log when currentTime changes due to seek
-      globalAudio.addEventListener('seeking', function() {
-        console.log('Seeking to:', globalAudio.currentTime);
-      });
-
-      globalAudio.addEventListener('seeked', function() {
-        console.log('Seeked to:', globalAudio.currentTime);
+        setPlayButtonsIcon('bi-play-fill');
       });
     }
 
     function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
-      if (globalAudio && globalAudio.src === url && !globalAudio.paused) {
-        isManualPause = true;
-        globalAudio.pause();
-        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-        document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
-      } else {
-        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+      if (globalAudio && globalAudio.src) {
+        // Check if current audio is the same song (compare URLs more loosely)
+        const currentUrl = globalAudio.src;
+        const isSameSong = currentUrl.includes(url) || url.includes(currentUrl);
+        
+        if (isSameSong) {
+          currentPlayBtn = playBtn;
+          if (!globalAudio.paused) {
+            // Currently playing - pause it
+            isManualPause = true;
+            globalAudio.pause();
+          } else {
+            // Currently paused - resume from current position
+            globalAudio.play();
+          }
+          return;
+        }
       }
+      // Different song or no audio - play new song
+      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
     }
 
     function openPlayerPage() {
@@ -645,25 +666,54 @@
 
       <!-- Right Controls -->
       <div class="player-right-controls" style="display:flex; align-items:center; gap:8px; width:280px;">
-        <button onclick="toggleRepeat()" id="playerRepeatBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
-          <i class="bi bi-repeat"></i>
+        <!-- Mobile Menu Button -->
+        <button onclick="togglePlayerMenu()" id="playerMenuBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:none; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+          <i class="bi bi-three-dots-vertical"></i>
         </button>
-        <button onclick="toggleShuffle()" id="playerShuffleBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
-          <i class="bi bi-shuffle"></i>
-        </button>
-        <div style="display:flex; align-items:center; gap:8px; flex:1;">
-          <span id="playerCurrentTime" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
-          <div id="playerProgress" style="flex:1; height:4px; background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer; position:relative; direction:ltr;">
-            <div id="playerProgressBar" style="height:100%; background:var(--accent); border-radius:2px; width:0%;"></div>
+        
+        <!-- Desktop Controls -->
+        <div class="player-desktop-controls" style="display:flex; align-items:center; gap:8px; flex:1;">
+          <button onclick="toggleRepeat()" id="playerRepeatBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+            <i class="bi bi-repeat"></i>
+          </button>
+          <button onclick="toggleShuffle()" id="playerShuffleBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+            <i class="bi bi-shuffle"></i>
+          </button>
+          <div style="display:flex; align-items:center; gap:8px; flex:1;">
+            <span id="playerCurrentTime" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+            <div id="playerProgress" style="flex:1; height:4px; background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer; position:relative; direction:ltr;">
+              <div id="playerProgressBar" style="height:100%; background:var(--accent); border-radius:2px; width:0%;"></div>
+            </div>
+            <span id="playerDuration" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
           </div>
-          <span id="playerDuration" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+          <button onclick="toggleMute()" id="playerMuteBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+            <i class="bi bi-volume-up"></i>
+          </button>
         </div>
-        <button onclick="toggleMute()" id="playerMuteBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
-          <i class="bi bi-volume-up"></i>
-        </button>
-        <button onclick="closeGlobalPlayer()" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
-          <i class="bi bi-x-lg"></i>
-        </button>
+      </div>
+      
+      <!-- Mobile Menu Dropdown -->
+      <div id="playerMobileMenu" style="display:none; position:absolute; bottom:70px; right:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; min-width:200px; box-shadow:0 8px 32px rgba(0,0,0,0.4); z-index:1001;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="toggleRepeat()" id="mobilePlayerRepeatBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              <i class="bi bi-repeat"></i>
+            </button>
+            <button onclick="toggleShuffle()" id="mobilePlayerShuffleBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--muted); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              <i class="bi bi-shuffle"></i>
+            </button>
+            <button onclick="toggleMute()" id="mobilePlayerMuteBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              <i class="bi bi-volume-up"></i>
+            </button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="mobilePlayerCurrentTime" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+            <div id="mobilePlayerProgress" style="flex:1; height:4px; background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer; position:relative; direction:ltr;">
+              <div id="mobilePlayerProgressBar" style="height:100%; background:var(--accent); border-radius:2px; width:0%;"></div>
+            </div>
+            <span id="mobilePlayerDuration" style="color:var(--muted); font-size:11px; min-width:35px; direction:ltr;">0:00</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -717,6 +767,30 @@
       color: var(--accent);
       text-decoration: underline;
     }
+    
+    /* Mobile menu responsive styles */
+    @media (max-width: 768px) {
+      .player-left-controls {
+        width: auto;
+      }
+      .player-right-controls {
+        width: auto;
+        justify-content: flex-end;
+      }
+      .player-desktop-controls {
+        display: none !important;
+      }
+      #playerMenuBtn {
+        display: flex !important;
+      }
+      .player-middle-controls {
+        gap: 8px;
+      }
+      #playerImage {
+        width: 48px;
+        height: 48px;
+      }
+    }
   </style>
 
   <script>
@@ -728,45 +802,283 @@
     let currentSongId = null;
     let isLiked = false;
 
+    // Save player state to localStorage
+    function savePlayerState() {
+      if (globalAudio) {
+        const playerTitle = document.getElementById('playerTitle');
+        const playerArtist = document.getElementById('playerArtist');
+        const playerAlbum = document.getElementById('playerAlbum');
+        const playerImageImg = document.getElementById('playerImageImg');
+        const playerLink = document.getElementById('playerLink');
+        
+        const state = {
+          currentTime: globalAudio.currentTime,
+          volume: globalAudio.volume,
+          isMuted: globalAudio.muted,
+          isPlaying: !globalAudio.paused,
+          currentSongId: currentSongId,
+          currentSongUrl: globalAudio.src,
+          currentSongTitle: playerTitle ? playerTitle.textContent : null,
+          currentSongArtist: playerArtist ? playerArtist.textContent : null,
+          currentSongAlbum: playerAlbum ? playerAlbum.textContent : null,
+          currentSongImage: playerImageImg ? playerImageImg.src : null,
+          currentSongLink: playerLink ? playerLink.href : null,
+          isRepeat: isRepeat,
+          isShuffle: isShuffle
+        };
+        localStorage.setItem('playerState', JSON.stringify(state));
+      }
+    }
+
+    // Restore player state from localStorage
+    function restorePlayerState() {
+      const savedState = localStorage.getItem('playerState');
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState);
+          
+          // Show player bar if there's a saved state
+          const playerBar = document.getElementById('globalAudioPlayer');
+          if (playerBar) {
+            playerBar.style.display = 'block';
+          }
+          
+          // Restore audio state if globalAudio exists
+          if (globalAudio && state.currentSongUrl) {
+            globalAudio.src = state.currentSongUrl;
+            globalAudio.currentTime = state.currentTime || 0;
+            globalAudio.volume = state.volume !== undefined ? state.volume : 1;
+            globalAudio.muted = state.isMuted || false;
+            isRepeat = state.isRepeat || false;
+            isShuffle = state.isShuffle || false;
+            currentSongId = state.currentSongId || null;
+            syncToggleButtonStyles();
+
+            // Restore play state
+            if (state.isPlaying) {
+              globalAudio.play().catch(function() {});
+              setPlayButtonsIcon('bi-pause-fill');
+            } else {
+              setPlayButtonsIcon('bi-play-fill');
+            }
+            
+            // Update time display after metadata loads
+            const updateTimeDisplay = function() {
+              const currentTimeEl = document.getElementById('playerCurrentTime');
+              const durationEl = document.getElementById('playerDuration');
+              const progressBar = document.getElementById('playerProgressBar');
+              
+              if (currentTimeEl) {
+                currentTimeEl.textContent = formatTime(state.currentTime || 0);
+              }
+              
+              if (durationEl && globalAudio.duration && !isNaN(globalAudio.duration)) {
+                durationEl.textContent = formatTime(globalAudio.duration);
+              }
+              
+              if (progressBar && globalAudio.duration && !isNaN(globalAudio.duration)) {
+                const percent = (state.currentTime / globalAudio.duration) * 100;
+                progressBar.style.width = percent + '%';
+              }
+            };
+            
+            // Update immediately if metadata is loaded, otherwise wait for it
+            if (globalAudio.readyState >= 1) {
+              updateTimeDisplay();
+            } else {
+              globalAudio.addEventListener('loadedmetadata', updateTimeDisplay, { once: true });
+            }
+            
+            // Trigger a timeupdate event to ensure progress updates continue
+            globalAudio.dispatchEvent(new Event('timeupdate'));
+            
+            // Also set up a periodic update as backup
+            const progressInterval = setInterval(function() {
+              if (globalAudio && globalAudio.duration && !isNaN(globalAudio.duration)) {
+                const progress = (globalAudio.currentTime / globalAudio.duration) * 100;
+                const progressBar = document.getElementById('playerProgressBar');
+                const currentTimeEl = document.getElementById('playerCurrentTime');
+                const durationEl = document.getElementById('playerDuration');
+                
+                if (progressBar) progressBar.style.width = progress + '%';
+                if (currentTimeEl) currentTimeEl.textContent = formatTime(globalAudio.currentTime);
+                if (durationEl) durationEl.textContent = formatTime(globalAudio.duration);
+              }
+            }, 500);
+            
+            // Clear interval after 10 seconds (timeupdate should take over by then)
+            setTimeout(function() {
+              clearInterval(progressInterval);
+            }, 10000);
+            
+            // Update player bar info
+            if (state.currentSongTitle) {
+              const titleEl = document.getElementById('playerTitle');
+              if (titleEl) titleEl.textContent = state.currentSongTitle;
+            }
+            
+            if (state.currentSongArtist) {
+              const artistEl = document.getElementById('playerArtist');
+              if (artistEl) artistEl.textContent = state.currentSongArtist;
+            }
+            
+            if (state.currentSongAlbum) {
+              const albumEl = document.getElementById('playerAlbum');
+              if (albumEl) albumEl.textContent = state.currentSongAlbum;
+            }
+            
+            if (state.currentSongImage) {
+              const imageImg = document.getElementById('playerImageImg');
+              const imageIcon = document.getElementById('playerImageIcon');
+              if (imageImg) {
+                imageImg.src = state.currentSongImage;
+                imageImg.style.display = 'block';
+              }
+              if (imageIcon) {
+                imageIcon.style.display = 'none';
+              }
+            }
+            
+            if (state.currentSongLink) {
+              const linkEl = document.getElementById('playerLink');
+              if (linkEl) linkEl.href = state.currentSongLink;
+            }
+          }
+        } catch (e) {
+          console.error('Error restoring player state:', e);
+        }
+      }
+    }
+
+    // Save state before page unload
+    window.addEventListener('beforeunload', savePlayerState);
+    
+    // Also save state periodically (every 5 seconds) during playback
+    setInterval(savePlayerState, 5000);
+    
+    // Restore state on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait for globalAudio to be initialized
+      setTimeout(function() {
+        if (globalAudio) {
+          restorePlayerState();
+        }
+      }, 300);
+    });
+
     // Function to safely set currentSongId (called from detail pages)
     function setCurrentSongId(songId) {
       currentSongId = songId;
     }
 
     function toggleGlobalAudio() {
-      if (globalAudio) {
-        if (globalAudio.paused) {
-          globalAudio.play();
-          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>';
-          if (currentPlayBtn) {
-            currentPlayBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-          }
-        } else {
-          isManualPause = true;
-          globalAudio.pause();
-          document.getElementById('playerPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
-          if (currentPlayBtn) {
-            currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-          }
-        }
+      if (!globalAudio) return;
+      if (globalAudio.paused) {
+        globalAudio.play();
+        // Dispatch event when audio starts playing
+        const event = new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } });
+        document.dispatchEvent(event);
+      } else {
+        isManualPause = true;
+        globalAudio.pause();
+        // Dispatch event when audio is paused
+        const event = new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } });
+        document.dispatchEvent(event);
       }
+    }
+
+    // Shared by playPrevious/playNext. `step` is -1 or +1.
+    // Picks the next queue index. Shuffle only applies going forward
+    // (step === 1) - a random track that isn't the one currently playing.
+    function pickAdjacentIndex(list, currentIndex, step) {
+      if (step === 1 && isShuffle && list.length > 1) {
+        let index;
+        do {
+          index = Math.floor(Math.random() * list.length);
+        } while (index === currentIndex);
+        return index;
+      }
+      return (currentIndex + step + list.length) % list.length;
+    }
+
+    function playFromQueue(list, index, step) {
+      window.otherSongsList = list;
+      const targetIndex = pickAdjacentIndex(list, index, step);
+
+      // On the player page, its own function keeps richer page state in sync.
+      if (typeof playSongFromList === 'function') {
+        playSongFromList(targetIndex);
+        return;
+      }
+
+      const song = list[targetIndex];
+      const btn = currentPlayBtn || document.getElementById('playerPlayBtn');
+      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, null, song.artist, song.album, false, song.songId);
+    }
+
+    // No queue set up yet (e.g. next/prev pressed outside the player page
+    // and outside an album context) - fetch one from the backend instead
+    // of doing nothing. Random by default; only actual album playback
+    // (started from that album's own page) queues the album's tracks.
+    function fetchFallbackQueue(step) {
+      if (currentSongId === null) return;
+      const params = 'song_id=' + currentSongId + '&current_song_id=' + currentSongId + '&random=1';
+      fetch('/player/song-data/?' + params)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+          if (data.error || !data.otherSongs || data.otherSongs.length === 0) return;
+          const index = data.otherSongs.findIndex(function(song) { return song.songId == currentSongId; });
+          if (index === -1) return;
+          playFromQueue(data.otherSongs, index, step);
+        })
+        .catch(function() {});
+    }
+
+    function playAdjacentSong(step) {
+      const list = window.otherSongsList;
+      if (currentSongId === null) return;
+
+      const index = list ? list.findIndex(song => song.songId == currentSongId) : -1;
+      if (index === -1) {
+        fetchFallbackQueue(step);
+        return;
+      }
+
+      playFromQueue(list, index, step);
     }
 
     function playPrevious() {
-      // Implement previous song logic
-      console.log('Previous song');
+      playAdjacentSong(-1);
     }
 
     function playNext() {
-      // Implement next song logic
-      console.log('Next song');
+      playAdjacentSong(1);
+    }
+
+    function checkLikeStatus(songId) {
+      if (!songId) return;
+      fetch('/likes/toggle/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCSRFToken(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'content_type=song&object_id=' + songId + '&check_only=true'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          isLiked = data.liked;
+          updateLikeButton();
+        }
+      })
+      .catch(error => {
+        console.error('Error checking like status:', error);
+      });
     }
 
     function toggleLike() {
-      if (!currentSongId) {
-        console.log('No song loaded');
-        return;
-      }
+      if (!currentSongId) return;
 
       const formData = new FormData();
       formData.append('content_type', 'song');
@@ -811,49 +1123,79 @@
       }
     }
 
+    function syncToggleButtonStyles() {
+      ['playerRepeatBtn', 'mobilePlayerRepeatBtn'].forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.style.color = isRepeat ? 'var(--accent)' : 'var(--muted)';
+      });
+      ['playerShuffleBtn', 'mobilePlayerShuffleBtn'].forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.style.color = isShuffle ? 'var(--accent)' : 'var(--muted)';
+      });
+    }
+
     function toggleRepeat() {
       isRepeat = !isRepeat;
-      const repeatBtn = document.getElementById('playerRepeatBtn');
-      repeatBtn.style.color = isRepeat ? 'var(--accent)' : 'var(--muted)';
+      syncToggleButtonStyles();
     }
 
     function toggleShuffle() {
       isShuffle = !isShuffle;
-      const shuffleBtn = document.getElementById('playerShuffleBtn');
-      shuffleBtn.style.color = isShuffle ? 'var(--accent)' : 'var(--muted)';
+      syncToggleButtonStyles();
     }
 
     function toggleMute() {
       if (globalAudio) {
         if (isMuted) {
-          globalAudio.volume = previousVolume;
+          globalAudio.volume = previousVolume || 1;
           isMuted = false;
         } else {
-          previousVolume = globalAudio.volume;
+          previousVolume = globalAudio.volume || 1;
           globalAudio.volume = 0;
           isMuted = true;
         }
         updateMuteIcon();
+      } else {
+        console.error('Global audio not initialized');
       }
     }
+
+    // Make toggleMute globally accessible
+    window.toggleMute = toggleMute;
+
+    function togglePlayerMenu() {
+      const menu = document.getElementById('playerMobileMenu');
+      if (menu.style.display === 'none') {
+        menu.style.display = 'block';
+        // Progress/time/mute stay live via the shared timeupdate/mute
+        // handlers - only the toggle button colors need a one-off sync.
+        syncToggleButtonStyles();
+      } else {
+        menu.style.display = 'none';
+      }
+    }
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('playerMobileMenu');
+      const menuBtn = document.getElementById('playerMenuBtn');
+      if (menu && menu.style.display === 'block' && !menu.contains(e.target) && !menuBtn.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    // Make togglePlayerMenu globally accessible
+    window.togglePlayerMenu = togglePlayerMenu;
 
     function updateMuteIcon() {
-      const muteBtn = document.getElementById('playerMuteBtn');
-      const icon = muteBtn.querySelector('i');
-      icon.classList.remove('bi-volume-up', 'bi-volume-mute');
-      if (isMuted || globalAudio.volume === 0) {
-        icon.classList.add('bi-volume-mute');
-      } else {
-        icon.classList.add('bi-volume-up');
-      }
-    }
-
-    function closeGlobalPlayer() {
-      if (globalAudio) {
-        globalAudio.pause();
-        globalAudio.currentTime = 0;
-      }
-      document.getElementById('globalAudioPlayer').style.display = 'none';
+      const muted = isMuted || globalAudio.volume === 0;
+      ['playerMuteBtn', 'mobilePlayerMuteBtn'].forEach(function(id) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        icon.classList.remove('bi-volume-up', 'bi-volume-mute');
+        icon.classList.add(muted ? 'bi-volume-mute' : 'bi-volume-up');
+      });
     }
 
     function formatTime(seconds) {
@@ -865,23 +1207,26 @@
     // Seek functionality - add once
     document.addEventListener('DOMContentLoaded', function() {
       var progressEl = document.getElementById('playerProgress');
+      var mobileProgressEl = document.getElementById('mobilePlayerProgress');
+      
+      function handleSeek(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (globalAudio && globalAudio.duration) {
+          var rect = this.getBoundingClientRect();
+          var clickX = e.clientX - rect.left;
+          var percent = Math.max(0, Math.min(1, clickX / rect.width));
+          globalAudio.currentTime = percent * globalAudio.duration;
+        }
+        return false;
+      }
+      
       if (progressEl) {
-        progressEl.onclick = function(e) {
-          console.log('Progress bar clicked');
-          if (globalAudio && globalAudio.duration) {
-            var rect = progressEl.getBoundingClientRect();
-            var clickX = e.clientX - rect.left;
-            var percent = clickX / rect.width;
-            percent = Math.max(0, Math.min(1, percent));
-            var newTime = percent * globalAudio.duration;
-            console.log('Seek calculation - clickX:', clickX, 'rect.width:', rect.width, 'percent:', percent, 'newTime:', newTime);
-            globalAudio.currentTime = newTime;
-            console.log('After setting currentTime:', globalAudio.currentTime);
-          } else {
-            console.log('Cannot seek - globalAudio:', globalAudio, 'duration:', globalAudio ? globalAudio.duration : 'N/A');
-          }
-          return false;
-        };
+        progressEl.addEventListener('click', handleSeek);
+      }
+      
+      if (mobileProgressEl) {
+        mobileProgressEl.addEventListener('click', handleSeek);
       }
     });
   </script>
@@ -978,21 +1323,16 @@
 
   <script>
     window.showToast = function(message, type = 'success') {
-      console.log('showToast called with:', message, type);
       const container = document.getElementById('toastContainer');
-      if (!container) {
-        console.error('Toast container not found');
-        return;
-      }
-      console.log('Container found:', container);
-      
+      if (!container) return;
+
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
-      
+
       let icon = 'bi-check-circle';
       if (type === 'error') icon = 'bi-x-circle';
       if (type === 'info') icon = 'bi-info-circle';
-      
+
       toast.innerHTML = `
         <i class="bi ${icon} toast-icon"></i>
         <span class="toast-message">${message}</span>
@@ -1000,11 +1340,9 @@
           <i class="bi bi-x"></i>
         </button>
       `;
-      
-      console.log('Toast element created:', toast);
+
       container.appendChild(toast);
-      console.log('Toast appended to container');
-      
+
       // Auto remove after 4 seconds
       setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';

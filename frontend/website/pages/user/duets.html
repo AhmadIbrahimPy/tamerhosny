@@ -1,0 +1,79 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "غنيت إيه مع تامر" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .duet-privacy-toggle {
+    appearance: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .duet-privacy-toggle:hover { border-color: var(--accent); color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "غنيت إيه مع تامر" %}</h1>
+
+  {% if duets %}
+  <div class="th-grid">
+    {% for duet in duets %}
+    <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song">
+      <div class="th-img-wrap aspect-square">
+        {% if duet.song.cover_image %}
+          <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% elif duet.song.album.cover_image %}
+          <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-mic-fill icon-fallback"></i>
+        {% endif %}
+        <div class="th-play-badge">
+          <div class="th-play-icon"><i class="bi bi-play-fill"></i></div>
+        </div>
+        <button type="button" class="th-poster-type-badge duet-privacy-toggle" data-pk="{{ duet.pk }}"
+                title="{% if duet.is_public %}{% translate 'خليها خاصة' %}{% else %}{% translate 'خليها عامة' %}{% endif %}"
+                onclick="event.preventDefault(); event.stopPropagation(); toggleDuetPrivacyInline(this);">
+          <i class="bi bi-{% if duet.is_public %}globe{% else %}lock-fill{% endif %}"></i>
+        </button>
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ duet.song|localized_field:'title' }} ({% translate "غناءك" %})</div>
+        <div class="th-meta">{{ duet.get_division_type_display }} &middot; {{ duet.updated_at|date:"Y-m-d" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-mic" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لسه معملتش أي دويتو مع تامر" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function toggleDuetPrivacyInline(button) {
+  const pk = button.dataset.pk;
+  fetch(`/my-duets/${pk}/toggle-privacy/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCSRFToken() },
+    credentials: 'same-origin',
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+      if (result.status !== 'success') return;
+      const icon = button.querySelector('i');
+      const isPublic = result.is_public;
+      icon.className = `bi bi-${isPublic ? 'globe' : 'lock-fill'}`;
+      button.title = isPublic
+        ? '{% translate "خليها خاصة" %}'
+        : '{% translate "خليها عامة" %}';
+    })
+    .catch(function (error) { console.error('Error toggling duet privacy:', error); });
+}
+</script>
+{% endblock %}

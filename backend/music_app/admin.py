@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
+from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment, InstrumentalVersion
 
 
 class SongCreditInline(admin.TabularInline):
@@ -28,3 +28,11 @@ class SongAdmin(admin.ModelAdmin):
     list_filter = ('song_type', 'album', 'is_duet')
     prepopulated_fields = {'slug': ('title_ar',)}
     inlines = [SongCreditInline, SongLyricSegmentInline]
+
+
+@admin.register(InstrumentalVersion)
+class InstrumentalVersionAdmin(admin.ModelAdmin):
+    list_display = ('song', 'status', 'quality_score', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('song__title_ar', 'song__title_en')
+    readonly_fields = ('created_at', 'updated_at')

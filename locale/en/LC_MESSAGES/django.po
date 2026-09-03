@@ -1845,3 +1845,93 @@ msgstr "Menu"
 
 #~ msgid "شارك"
 #~ msgstr "Share"
+
+msgid "قائمة التشغيل"
+msgstr "Playlist"
+
+msgid "مشاركة"
+msgstr "Share"
+
+msgid "أعجبني"
+msgstr "Like"
+
+msgid "أعجبتني"
+msgstr "Liked"
+
+msgid "ريمكس"
+msgstr "Remix"
+
+msgid "غني مع تامر"
+msgstr "Sing With Tamer"
+
+msgid "أغنية"
+msgstr "Song"
+
+msgid "أغنية من ألبوم"
+msgstr "Album Track"
+
+msgid "الأغنية الأصلية"
+msgstr "Original Song"
+
+msgid "تشغيل"
+msgstr "Plays"
+
+msgid "إعجاب"
+msgstr "Likes"
+
+msgid "يستمع الآن"
+msgstr "Listening Now"
+
+msgid "غنيت إيه مع تامر"
+msgstr "What I Sang With Tamer"
+
+msgid "عامة"
+msgstr "Public"
+
+msgid "خاصة"
+msgstr "Private"
+
+msgid "خليها عامة"
+msgstr "Make It Public"
+
+msgid "خليها خاصة"
+msgstr "Make It Private"
+
+msgid "لسه معملتش أي دويتو مع تامر"
+msgstr "You haven't sung any duets with Tamer yet"
+
+msgid "ناس تانية غنت مع تامر"
+msgstr "Others Who Sang With Tamer"
+
+msgid "غناءك"
+msgstr "Your Version"
+
+msgid "تم نسخ اللينك"
+msgstr "Link copied"
+
+#, python-format
+msgid "دويتو مع %(name)s"
+msgstr "Duet with %(name)s"
+
+#, python-format
+msgid "مين غنى %(title)s مع تامر"
+msgstr "Who Sang %(title)s With Tamer"
+
+#, python-format
+msgid "باقي أغاني %(name)s مع تامر"
+msgstr "More of %(name)s's Duets With Tamer"
+
+msgid "الإعجاب"
+msgstr "Likes"
+
+msgid "استمعت مؤخراً"
+msgstr "Recently Played"
+
+msgid "قوائم التشغيل"
+msgstr "Playlists"
+
+msgid "الريمكسات"
+msgstr "Remixes"
+
+msgid "تسجيل خروج"
+msgstr "Log Out"

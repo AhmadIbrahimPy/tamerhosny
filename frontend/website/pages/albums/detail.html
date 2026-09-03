@@ -24,6 +24,14 @@
   .th-track-duration{color:var(--muted); font-size:13px; flex-shrink:0;}
   .th-track-arrow{color:var(--muted); font-size:14px; flex-shrink:0;}
   .th-track-row:hover .th-track-arrow{color:var(--accent);}
+  .th-track-play-btn{
+    width:32px; height:32px; border-radius:50%; flex-shrink:0; border:none; cursor:pointer;
+    background:var(--accent); color:#111; display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .th-album-play-btn{
+    display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:999px; border:none;
+    background:var(--accent); color:#111; font-weight:700; font-size:13.5px; cursor:pointer;
+  }
 </style>
 {% endblock %}
 
@@ -94,6 +102,11 @@
           <span><i class="bi bi-music-note-list"></i> {{ songs|length }} {% translate "أغنية" %}</span>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
+          {% if songs %}
+          <button type="button" class="th-album-play-btn" onclick="playAlbum(this)">
+            <i class="bi bi-play-fill"></i> {% translate "تشغيل الألبوم" %}
+          </button>
+          {% endif %}
           <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'album', {{ album.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
           <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
              onclick="thTrack('SHARE', 'album', {{ album.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
@@ -125,6 +138,12 @@
         <span class="th-track-title">{{ song|localized_field:'title' }}</span>
         {% if song.is_duet %}<span class="th-badge purple">{% translate "دويتو" %}</span>{% endif %}
         {% if song.duration_seconds %}<span class="th-track-duration">{{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>{% endif %}
+        {% if song.audio_file %}
+        <button type="button" class="th-track-play-btn" title="{% translate 'تشغيل' %}"
+                onclick="event.preventDefault(); event.stopPropagation(); playAlbumTrack({{ forloop.counter0 }}, this);">
+          <i class="bi bi-play-fill"></i>
+        </button>
+        {% endif %}
         <i class="bi bi-chevron-left th-track-arrow"></i>
       </a>
       {% empty %}
@@ -187,5 +206,36 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>thTrack('VIEW', 'album', {{ album.pk }});</script>
+<script>
+thTrack('VIEW', 'album', {{ album.pk }});
+
+// Playing from this page queues the whole album (not a random pick) -
+// next/prev then simply walk this same list.
+window.albumTracks = [
+  {% for song in songs %}
+  {
+    songId: {{ song.pk }},
+    title: '{{ song|localized_field:"title"|escapejs }}',
+    image: '{% if song.cover_image %}{{ song.cover_image.url|escapejs }}{% elif album.cover_image %}{{ album.cover_image.url|escapejs }}{% endif %}',
+    link: '{% url "website_app:song-detail" song.slug %}',
+    url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
+    duration: '{% if song.duration_seconds %}{{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}{% endif %}',
+    album: '{{ album|localized_field:"title"|escapejs }}'
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+function playAlbumTrack(index, btn) {
+  const track = window.albumTracks[index];
+  if (!track || !track.url) return;
+  window.otherSongsList = window.albumTracks;
+  toggleAudio(track.url, btn, track.title, '', track.image ? [track.image] : null, track.link, '', track.album, false, track.songId);
+}
+
+function playAlbum(btn) {
+  const index = window.albumTracks.findIndex(function(track) { return track.url; });
+  if (index === -1) return;
+  playAlbumTrack(index, btn);
+}
+</script>
 {% endblock %}

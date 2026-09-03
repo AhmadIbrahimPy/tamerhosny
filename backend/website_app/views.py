@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -15,7 +15,7 @@ from backend.main_app.models import Like, Playlist, PlaylistItem, UserSongPlay, 
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
-from backend.music_app.models import Album, Song, SongCredit
+from backend.music_app.models import Album, Song, SongCredit, SingWithTamerProject
 from backend.people_app.models import Person
 
 PAGE_SIZE = 35
@@ -84,33 +84,53 @@ def player_page(request):
 
 @csrf_exempt
 def song_player_data(request):
-    """API endpoint to get song data for player page."""
+    """API endpoint to get song data for player page.
+
+    `song_id` is optional: without one (e.g. landing on /player/ with no
+    song in context), a random playable song is picked to seed the queue.
+
+    `random=1` forces a random queue even when the song has an album -
+    used when playback wasn't started from that album's own page, so
+    next/prev elsewhere on the site don't just wander through its album.
+    """
     try:
         song_id = request.POST.get('song_id') if request.method == 'POST' else request.GET.get('song_id')
         current_song_id = request.POST.get('current_song_id') if request.method == 'POST' else request.GET.get('current_song_id')
+        force_random = (request.POST.get('random') if request.method == 'POST' else request.GET.get('random')) == '1'
 
-        if not song_id:
-            return JsonResponse({'error': 'song_id required'}, status=400)
+        playable_songs = Song.objects.select_related('album').exclude(audio_file='')
+        # User-submitted "Sing with Tamer" duets live as Song rows too
+        # (is_duet=True) - fine to open directly, but they shouldn't turn
+        # up as random catalog suggestions or seed a fresh queue.
+        catalog_songs = Song.visible_queryset(playable_songs).filter(is_duet=False)
 
-        song = Song.objects.select_related('album').get(pk=song_id)
-
-        # Get other songs from same album (including current song)
-        album_songs = []
-        if song.album_id:
-            album_songs = list(Song.objects.select_related('album').filter(album_id=song.album_id).order_by('title_ar'))
+        if song_id:
+            song = playable_songs.get(pk=song_id)
         else:
-            album_songs = list(Song.objects.all().order_by('?'))
+            song = catalog_songs.order_by('?').first()
+            if not song:
+                return JsonResponse({'error': 'No playable songs available'}, status=404)
+
+        # Build the playback queue: same-album tracks when there is an
+        # album (unless a random queue was explicitly requested),
+        # otherwise a random playlist - always including the current
+        # song itself so the player can locate it for next/prev.
+        if song.album_id and not force_random:
+            album_songs = list(
+                catalog_songs.filter(album_id=song.album_id).order_by('title_ar')
+            )
+            if song not in album_songs:
+                album_songs = [song] + album_songs
+        else:
+            random_songs = list(
+                catalog_songs.exclude(pk=song.pk).order_by('?')[:19]
+            )
+            album_songs = [song] + random_songs
         # Get credits
         all_credits = list(song.credits.select_related('person').all())
         vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
         singers = [credit for credit in all_credits if credit.role in vocal_roles]
         crew_credits = [credit for credit in all_credits if credit.role not in vocal_roles]
-
-        # Build response
-        print(f"Song cover_image: {song.cover_image}")
-        print(f"Album: {song.album}")
-        if song.album:
-            print(f"Album cover_image: {song.album.cover_image}")
 
         data = {
             'title': song.title_ar,
@@ -123,7 +143,7 @@ def song_player_data(request):
             'image': song.cover_image.url if song.cover_image else (song.album.cover_image.url if song.album and song.album.cover_image else ''),
             'songId': song.pk,
             'url': song.audio_file.url if song.audio_file else '',
-            'currentSongId': int(current_song_id) if current_song_id else None,
+            'currentSongId': int(current_song_id) if current_song_id else song.pk,
             'otherSongs': [
                 {
                     'title': s.title_ar,
@@ -148,9 +168,6 @@ def song_player_data(request):
             ],
             'platforms': []
         }
-
-        print(f"Response data image: {data['image']}")
-        print(f"First other song image: {data['otherSongs'][0]['image'] if data['otherSongs'] else 'N/A'}")
 
         return JsonResponse(data)
 
@@ -214,11 +231,43 @@ def songs_list(request):
     })
 
 
-def song_detail(request, slug):
+def song_detail(request, slug, duet_id=None):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), slug=slug,
     )
-    
+
+    # "غنيت إيه مع تامر" duets open on this exact same page: the same
+    # layout, sections and player, just with the duet's own audio and
+    # a small badge/actions swapped in for the hero.
+    duet = None
+    is_duet_owner = False
+
+    if duet_id is not None:
+        duet = get_object_or_404(
+            SingWithTamerProject.objects.select_related('user'),
+            pk=duet_id, song=song, is_completed=True,
+        )
+        is_duet_owner = request.user.is_authenticated and duet.user_id == request.user.id
+        if not duet.is_public and not is_duet_owner:
+            raise Http404
+
+    duets = SingWithTamerProject.objects.filter(
+        song=song, is_completed=True, is_public=True,
+    ).exclude(final_audio_file='').select_related('user').order_by('-updated_at')[:12]
+
+    user_other_duets = []
+    discover_duets = []
+
+    if duet is not None:
+        user_other_duets = SingWithTamerProject.objects.filter(
+            user=duet.user, is_completed=True, is_public=True,
+        ).exclude(pk=duet.pk).exclude(final_audio_file='').select_related('song', 'song__album').order_by('-updated_at')[:12]
+
+        discover_duets = SingWithTamerProject.objects.filter(
+            is_completed=True, is_public=True,
+        ).exclude(pk=duet.pk).exclude(song=song).exclude(final_audio_file='').select_related('song', 'song__album', 'user').order_by('-updated_at')[:12]
+
+
     # Auto-fetch lyrics if segments don't exist
     if not song.lyric_segments.exists():
         from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
@@ -270,7 +319,18 @@ def song_detail(request, slug):
     song_ct = ContentType.objects.get_for_model(Song)
     like_count = Like.objects.filter(content_type=song_ct, object_id=song.pk).count()
 
+    listener_count = CurrentSongListener.objects.filter(song=song).count()
+
     top_ad, bottom_ad = _ad_slots(Advertisement.Placement.SONGS)
+
+    if duet is not None:
+        audio_url = duet.final_audio_file.url if duet.final_audio_file else ''
+        performer_name = duet.user.get_full_name() or duet.user.username
+        player_title = f'{song.title_ar} ({performer_name})'
+    else:
+        audio_url = song.audio_file.url if song.audio_file else ''
+        player_title = song.title_ar
+
     return render(request, 'website/pages/songs/detail.html', {
         'song': song,
         'singers': singers,
@@ -282,6 +342,14 @@ def song_detail(request, slug):
         'bottom_ad': bottom_ad,
         'is_liked': is_liked,
         'like_count': like_count,
+        'listener_count': listener_count,
+        'duet': duet,
+        'is_duet_owner': is_duet_owner,
+        'duets': duets,
+        'user_other_duets': user_other_duets,
+        'discover_duets': discover_duets,
+        'audio_url': audio_url,
+        'player_title': player_title,
     })
 
 
@@ -741,149 +809,25 @@ def increment_play_count(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
-@require_POST
-def start_listening(request):
-    """بدء الاستماع لأغنية"""
-    song_id = request.POST.get('song_id')
+def sing_with_tamer(request, slug):
+    """صفحة غني مع تامر - للغناء مع الأغنية"""
+    song = get_object_or_404(
+        Song.objects.select_related('album'), slug=slug,
+    )
     
-    if not song_id:
-        return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
+    # Auto-fetch lyrics if segments don't exist
+    if not song.lyric_segments.exists():
+        from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
+        fetch_and_save_lyrics_for_song(song)
     
-    try:
-        song = Song.objects.get(pk=song_id)
-        
-        # Only track logged in users
-        if not request.user.is_authenticated:
-            return JsonResponse({'status': 'success', 'listener_count': 0})
-        
-        # Create or update current listener
-        listener, created = CurrentSongListener.objects.get_or_create(
-            user=request.user,
-            song=song
-        )
-        
-        if not created:
-            # Update heartbeat if already exists
-            from django.utils import timezone
-            listener.last_heartbeat = timezone.now()
-            listener.save()
-        
-        # Get current listener count
-        listener_count = CurrentSongListener.objects.filter(song=song).count()
-        
-        return JsonResponse({'status': 'success', 'listener_count': listener_count})
-    except Song.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@require_POST
-def stop_listening(request):
-    """إيقاف الاستماع لأغنية"""
-    song_id = request.POST.get('song_id')
+    vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+    all_credits = song.credits.select_related('person').all()
+    singers = [credit for credit in all_credits if credit.role in vocal_roles]
     
-    if not song_id:
-        return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
-    
-    try:
-        song = Song.objects.get(pk=song_id)
-        
-        # Only track logged in users
-        if not request.user.is_authenticated:
-            return JsonResponse({'status': 'success', 'listener_count': 0})
-        
-        # Remove current listener
-        CurrentSongListener.objects.filter(
-            user=request.user,
-            song=song
-        ).delete()
-        
-        # Get current listener count
-        listener_count = CurrentSongListener.objects.filter(song=song).count()
-        
-        return JsonResponse({'status': 'success', 'listener_count': listener_count})
-    except Song.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
-@require_POST
-def listening_heartbeat(request):
-    """تحديث نبض الاستماع (للتأكد من أن المستخدم لسه بيسمع)"""
-    song_id = request.POST.get('song_id')
-    
-    if not song_id:
-        return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
-    
-    try:
-        from django.utils import timezone
-        from datetime import timedelta
-        
-        song = Song.objects.get(pk=song_id)
-        
-        # Update heartbeat
-        listener = CurrentSongListener.objects.filter(
-            user=request.user,
-            song=song
-        ).first()
-        
-        if listener:
-            listener.last_heartbeat = timezone.now()
-            listener.save()
-        else:
-            # Create if doesn't exist
-            CurrentSongListener.objects.create(
-                user=request.user,
-                song=song
-            )
-        
-        # Clean up old listeners (no heartbeat for 2 minutes)
-        from django.utils import timezone
-        cutoff_time = timezone.now() - timedelta(minutes=2)
-        CurrentSongListener.objects.filter(
-            last_heartbeat__lt=cutoff_time
-        ).delete()
-        
-        # Get current listener count
-        listener_count = CurrentSongListener.objects.filter(song=song).count()
-        
-        return JsonResponse({'status': 'success', 'listener_count': listener_count})
-    except Song.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-def get_current_listeners(request):
-    """الحصول على عدد المستخدمين الحاليين لأغنية"""
-    song_id = request.GET.get('song_id')
-    
-    if not song_id:
-        return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
-    
-    try:
-        from django.utils import timezone
-        from datetime import timedelta
-        
-        song = Song.objects.get(pk=song_id)
-        
-        # Clean up old listeners (no heartbeat for 2 minutes)
-        cutoff_time = timezone.now() - timedelta(minutes=2)
-        CurrentSongListener.objects.filter(
-            last_heartbeat__lt=cutoff_time
-        ).delete()
-        
-        # Get current listener count
-        listener_count = CurrentSongListener.objects.filter(song=song).count()
-        
-        return JsonResponse({'status': 'success', 'listener_count': listener_count})
-    except Song.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return render(request, 'website/pages/sing-with-tamer/index.html', {
+        'song': song,
+        'singers': singers,
+    })
 
 
 @login_required
@@ -957,6 +901,29 @@ def likes_list(request):
         'media_items': media_items,
         'concerts': concerts,
     })
+
+
+@login_required
+def my_duets_list(request):
+    """عرض ثنائيات 'غني مع تامر' الخاصة بالمستخدم فقط"""
+    duets = SingWithTamerProject.objects.filter(
+        user=request.user,
+        is_completed=True,
+    ).exclude(final_audio_file='').select_related('song').order_by('-updated_at')
+
+    return render(request, 'website/pages/user/duets.html', {
+        'duets': duets,
+    })
+
+
+@login_required
+@require_POST
+def toggle_duet_privacy(request, pk):
+    """تبديل حالة الثنائي بين عام وخاص - لصاحبه فقط"""
+    duet = get_object_or_404(SingWithTamerProject, pk=pk, user=request.user)
+    duet.is_public = not duet.is_public
+    duet.save(update_fields=['is_public'])
+    return JsonResponse({'status': 'success', 'is_public': duet.is_public})
 
 
 @login_required

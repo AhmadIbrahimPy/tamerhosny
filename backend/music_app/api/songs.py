@@ -2,13 +2,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
 
 from backend.main_app.shared_utils.authentication_manager import UserAuthenticationManager
 from backend.music_app.core.songs import SongsHandle
-from backend.music_app.models import Song
+from backend.music_app.models import Song, SingWithTamerProject, LyricRecording, SongLyricSegment, InstrumentalVersion
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -18,7 +19,7 @@ class SongsLyricsSegmentsAPIView(APIView):
     def get(self, request, pk, **kwargs):
         song = get_object_or_404(Song, pk=pk)
         segments = song.lyric_segments.all().values(
-            'pk', 'start_seconds', 'end_seconds', 'segment_type', 'text'
+            'pk', 'start_seconds', 'end_seconds', 'segment_type', 'text', 'vocal_doubling', 'double_tracking'
         )
         
         segments_list = list(segments)
@@ -69,3 +70,242 @@ class SongsAPIView(APIView):
         if call_response[0] == status.HTTP_200_OK:
             call_response = SongsHandle(request).delete(pk)
         return Response({'details': call_response[1], 'data': call_response[2]}, call_response[0])
+
+
+class SingWithTamerProjectAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+
+    def post(self, request, **kwargs):
+        print(f"User: {request.user}, Authenticated: {request.user.is_authenticated}")
+        user = request.user
+        song_id = request.POST.get('song_id')
+        division_type = request.POST.get('division_type', 'EVEN')
+
+        if not song_id:
+            return Response({
+                'status': 'error',
+                'message': 'Missing required field: song_id'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            song = get_object_or_404(Song, pk=song_id)
+
+            # Create or get project
+            project, created = SingWithTamerProject.objects.get_or_create(
+                user=user,
+                song=song,
+                division_type=division_type,
+                defaults={'is_completed': False}
+            )
+
+            return Response({
+                'status': 'success',
+                'message': 'Project created/retrieved successfully',
+                'data': {
+                    'project_id': project.pk,
+                    'created': created,
+                    'division_type': project.division_type,
+                    'is_completed': project.is_completed
+                }
+            }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get(self, request, song_id, **kwargs):
+        user = request.user
+        song = get_object_or_404(Song, pk=song_id)
+        division_type = request.GET.get('division_type', 'EVEN')
+
+        try:
+            project = SingWithTamerProject.objects.get(
+                user=user,
+                song=song,
+                division_type=division_type
+            )
+
+            # Get all recordings for this project
+            recordings = project.lyric_recordings.select_related('lyric_segment').values(
+                'pk', 'lyric_segment__pk', 'lyric_segment__text',
+                'lyric_segment__start_seconds', 'lyric_segment__end_seconds',
+                'audio_file', 'duration_seconds', 'recorded_at'
+            )
+
+            return Response({
+                'status': 'success',
+                'data': {
+                    'project_id': project.pk,
+                    'division_type': project.division_type,
+                    'is_completed': project.is_completed,
+                    'recordings': list(recordings)
+                }
+            }, status=status.HTTP_200_OK)
+
+        except SingWithTamerProject.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Project not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, song_id, **kwargs):
+        user = request.user
+        song = get_object_or_404(Song, pk=song_id)
+        division_type = request.GET.get('division_type', 'EVEN')
+
+        try:
+            project = SingWithTamerProject.objects.get(
+                user=user,
+                song=song,
+                division_type=division_type
+            )
+            
+            # Delete all recordings for this project
+            project.lyric_recordings.all().delete()
+            
+            # Delete the project
+            project.delete()
+
+            return Response({
+                'status': 'success',
+                'message': 'Project deleted successfully'
+            }, status=status.HTTP_200_OK)
+
+        except SingWithTamerProject.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Project not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LyricRecordingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+
+    def post(self, request, **kwargs):
+        project_id = request.POST.get('project_id')
+        lyric_segment_id = request.POST.get('lyric_segment_id')
+        audio_file = request.FILES.get('audio_file')
+        duration_seconds = request.POST.get('duration_seconds')
+
+        if not all([project_id, lyric_segment_id, audio_file, duration_seconds]):
+            return Response({
+                'status': 'error',
+                'message': 'Missing required fields: project_id, lyric_segment_id, audio_file, duration_seconds'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            project = get_object_or_404(SingWithTamerProject, pk=project_id, user=request.user)
+            lyric_segment = get_object_or_404(SongLyricSegment, pk=lyric_segment_id, song=project.song)
+
+            # Create or update the recording
+            recording, created = LyricRecording.objects.update_or_create(
+                project=project,
+                lyric_segment=lyric_segment,
+                defaults={
+                    'audio_file': audio_file,
+                    'duration_seconds': int(duration_seconds)
+                }
+            )
+
+            return Response({
+                'status': 'success',
+                'message': 'Recording saved successfully',
+                'data': {
+                    'recording_id': recording.pk,
+                    'created': created
+                }
+            }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateSongAPIView(APIView):
+    """API endpoint to create a song from Sing With Tamer project."""
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+
+    def post(self, request, **kwargs):
+        from backend.music_app.core.vocal_remover import VocalRemover
+        from backend.music_app.core.song_mixer import SongMixer
+        
+        project_id = request.POST.get('project_id')
+        
+        if not project_id:
+            return Response({
+                'status': 'error',
+                'message': 'Missing required field: project_id'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            project = get_object_or_404(SingWithTamerProject, pk=project_id, user=request.user)
+            song = project.song
+            
+            # Check if instrumental version exists
+            instrumental, created = InstrumentalVersion.objects.get_or_create(
+                song=song,
+                defaults={
+                    'status': InstrumentalVersion.ProcessingStatus.PENDING
+                }
+            )
+            
+            # Process instrumental if not completed
+            if instrumental.status != InstrumentalVersion.ProcessingStatus.COMPLETED:
+                instrumental.status = InstrumentalVersion.ProcessingStatus.PROCESSING
+                instrumental.save()
+                
+                try:
+                    # Use advanced AI to remove vocals
+                    vocal_remover = VocalRemover()
+                    instrumental_path = vocal_remover.remove_vocals(song.audio_file.path)
+                    
+                    instrumental.instrumental_file.name = instrumental_path
+                    instrumental.status = InstrumentalVersion.ProcessingStatus.COMPLETED
+                    # Quality score not set - Spleeter provides AI-based separation
+                    instrumental.save()
+                except Exception as e:
+                    instrumental.status = InstrumentalVersion.ProcessingStatus.FAILED
+                    instrumental.processing_error = str(e)
+                    instrumental.save()
+                    raise
+            
+            # Mix user recordings with instrumental
+            mixer = SongMixer()
+            final_song_path = mixer.create_final_song(
+                project,
+                instrumental.instrumental_file.path,
+                song.audio_file.path,
+            )
+            
+            # Store the mixed duet directly on the project. This is
+            # intentionally NOT a catalog Song: it must never show up
+            # in song browsing, search, or the admin song list -
+            # it's private to this user, visible only on their own
+            # "My Duets" page (same as their liked songs).
+            project.final_audio_file.name = final_song_path
+            project.is_completed = True
+            project.save()
+
+            return Response({
+                'status': 'success',
+                'message': 'Song created successfully',
+                'data': {
+                    'project_id': project.pk,
+                    'redirect_url': '/my-duets/',
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

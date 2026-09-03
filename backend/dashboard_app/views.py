@@ -947,6 +947,8 @@ def song_segments(request, pk):
                         'segment_type': segment.segment_type,
                         'segment_type_display': segment.get_segment_type_display(),
                         'text': segment.text,
+                        'vocal_doubling': segment.vocal_doubling,
+                        'double_tracking': segment.double_tracking,
                     }
                 })
             return redirect('dashboard_app:song-segments', pk=pk)

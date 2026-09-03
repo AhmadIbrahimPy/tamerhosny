@@ -205,20 +205,32 @@ const totalTimeEl = document.getElementById('totalTime');
 const waveform = document.getElementById('waveform');
 
 let isPlaying = false;
+let hasStarted = false;
 
 function toggleAudio() {
-  if (isPlaying) {
-    audio.pause();
-    playIcon.className = 'bi bi-play-fill';
-    playBtn.classList.remove('playing');
-    waveform.classList.add('paused');
-  } else {
+  if (hasStarted && !isPlaying) {
+    // Resume from pause
     audio.play();
     playIcon.className = 'bi bi-pause-fill';
     playBtn.classList.add('playing');
     waveform.classList.remove('paused');
+    isPlaying = true;
+  } else if (!hasStarted) {
+    // First time start
+    audio.play();
+    playIcon.className = 'bi bi-pause-fill';
+    playBtn.classList.add('playing');
+    waveform.classList.remove('paused');
+    isPlaying = true;
+    hasStarted = true;
+  } else {
+    // Pause
+    audio.pause();
+    playIcon.className = 'bi bi-play-fill';
+    playBtn.classList.remove('playing');
+    waveform.classList.add('paused');
+    isPlaying = false;
   }
-  isPlaying = !isPlaying;
 }
 
 function formatTime(seconds) {

@@ -381,18 +381,22 @@ class ConcertForm(forms.ModelForm):
 class SongLyricSegmentForm(forms.ModelForm):
     class Meta:
         model = SongLyricSegment
-        fields = ['start_seconds', 'end_seconds', 'segment_type', 'text']
+        fields = ['start_seconds', 'end_seconds', 'segment_type', 'text', 'vocal_doubling', 'double_tracking']
         labels = {
             'start_seconds': _('من (ثانية)'),
             'end_seconds': _('إلى (ثانية)'),
             'segment_type': _('نوع المقطع'),
             'text': _('النص'),
+            'vocal_doubling': _('تكرار الصوت'),
+            'double_tracking': _('تتبع مزدوج'),
         }
         widgets = {
             'start_seconds': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.01', 'min': 0}),
             'end_seconds': forms.NumberInput(attrs={**WIDGET_ATTRS, 'step': '0.01', 'min': 0}),
             'segment_type': forms.Select(attrs=SELECT_ATTRS),
             'text': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 2}),
+            'vocal_doubling': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'double_tracking': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):

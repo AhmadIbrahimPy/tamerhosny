@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
@@ -10,6 +11,8 @@ from backend.main_app.shared_utils.slugs import generate_ascii_slug
 from backend.media_app.models import Media
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
+
+User = get_user_model()
 
 
 class Album(PublishableModel, HeroMediaMixin):
@@ -76,7 +79,7 @@ class Song(PublishableModel, HeroMediaMixin):
     title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     cover_image = models.ImageField(upload_to='songs/covers/', blank=True, null=True)
-    audio_file = models.FileField(upload_to='songs/audio/', blank=True, null=True)
+    audio_file = models.FileField(upload_to='songs/audio/', blank=True, null=True, max_length=500)
     duration_seconds = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
     lyrics = models.TextField(blank=True)
     release_year = models.PositiveSmallIntegerField(
@@ -174,6 +177,8 @@ class SongLyricSegment(models.Model):
     end_seconds = models.DecimalField(max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
     segment_type = models.CharField(max_length=10, choices=SegmentType.choices, default=SegmentType.LYRICS)
     text = models.TextField(blank=True, help_text=_('Required only when the segment type is Lyrics.'))
+    vocal_doubling = models.BooleanField(default=False, help_text=_('Enable vocal doubling effect for this segment'))
+    double_tracking = models.BooleanField(default=False, help_text=_('Enable double tracking effect for this segment'))
 
     class Meta:
         ordering = ('start_seconds',)
@@ -188,3 +193,86 @@ class SongLyricSegment(models.Model):
 
     def __str__(self):
         return f'{self.song} [{self.start_seconds}s–{self.end_seconds}s] {self.get_segment_type_display()}'
+
+
+class SingWithTamerProject(models.Model):
+    """Represents a user's project for singing along with a song."""
+    
+    class DivisionType(models.TextChoices):
+        TAMER_STARTS = 'EVEN', _('Tamer Starts')
+        USER_STARTS = 'ODD', _('You Start')
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sing_projects')
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='sing_projects')
+    division_type = models.CharField(max_length=10, choices=DivisionType.choices, default=DivisionType.TAMER_STARTS)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_completed = models.BooleanField(default=False)
+    final_audio_file = models.FileField(
+        upload_to='user_songs/', null=True, blank=True, max_length=500,
+        help_text=_('The mixed duet (Tamer + user vocal). Private to the user, never a catalog Song.'),
+    )
+    is_public = models.BooleanField(
+        default=False,
+        help_text=_('When on, the duet can be opened via its link by anyone, and a share option is shown.'),
+    )
+
+    class Meta:
+        unique_together = ('user', 'song', 'division_type')
+        ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=['user', 'song']),
+            models.Index(fields=['is_completed']),
+        ]
+    
+    def __str__(self):
+        return f'{self.user.username} - {self.song.title_ar} ({self.get_division_type_display()})'
+
+
+class LyricRecording(models.Model):
+    """Stores individual lyric recordings within a SingWithTamerProject."""
+    
+    project = models.ForeignKey(SingWithTamerProject, on_delete=models.CASCADE, related_name='lyric_recordings')
+    lyric_segment = models.ForeignKey(SongLyricSegment, on_delete=models.CASCADE, related_name='recordings')
+    audio_file = models.FileField(upload_to='lyric_recordings/')
+    duration_seconds = models.PositiveIntegerField(help_text=_('Recording duration in seconds'))
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('project', 'lyric_segment')
+        ordering = ('lyric_segment__start_seconds',)
+        indexes = [
+            models.Index(fields=['project', 'lyric_segment']),
+        ]
+    
+    def __str__(self):
+        return f'{self.project} - Segment {self.lyric_segment.pk}'
+
+
+class InstrumentalVersion(models.Model):
+    """Stores instrumental (vocal-removed) versions of songs for Sing With Tamer."""
+    
+    class ProcessingStatus(models.TextChoices):
+        PENDING = 'PENDING', _('Pending')
+        PROCESSING = 'PROCESSING', _('Processing')
+        COMPLETED = 'COMPLETED', _('Completed')
+        FAILED = 'FAILED', _('Failed')
+    
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='instrumental_versions')
+    instrumental_file = models.FileField(upload_to='instrumental_versions/', null=True, blank=True, max_length=500)
+    status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
+    processing_error = models.TextField(blank=True, help_text=_('Error message if processing failed'))
+    quality_score = models.FloatField(null=True, blank=True, help_text=_('Quality score of vocal removal (0.0 to 1.0)'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('song',)
+        ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=['song']),
+            models.Index(fields=['status']),
+        ]
+    
+    def __str__(self):
+        return f'{self.song.title_ar} - Instrumental ({self.get_status_display()})'
