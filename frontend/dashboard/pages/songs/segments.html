@@ -671,37 +671,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // const itemsPerPage = 10;
   // let allSegments = [];
   
-  // Load all segments from table (initial load only) - DISABLED
-  // function loadSegmentsFromTable() {
-  //   allSegments = [];
-  //   const rows = segmentsTableBody.querySelectorAll('tr[data-segment-id]');
-  //   rows.forEach(row => {
-  //     const cells = row.querySelectorAll('td');
-  //     const segmentId = row.dataset.segmentId;
-  //     const startSeconds = parseFloat(cells[0].textContent);
-  //     const endSeconds = parseFloat(cells[1].textContent);
-  //     const typeBadge = cells[2].querySelector('.badge');
-  //     const segmentType = typeBadge.textContent.trim();
-  //     const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
-  //     
-  //     // Check for effects badges by text content
-  //     const effectsCell = cells[4];
-  //     const effectsText = effectsCell.textContent.trim();
-  //     const vocalDoubling = effectsText.includes('تكرار الصوت');
-  //     const doubleTracking = effectsText.includes('تتبع مزدوج');
-  //     
-  //     allSegments.push({
-  //       id: segmentId,
-  //       start_seconds: startSeconds,
-  //       end_seconds: endSeconds,
-  //       segment_type_display: segmentType,
-  //       text: text,
-  //       vocal_doubling: vocalDoubling,
-  //       double_tracking: doubleTracking
-  //     });
-  //   });
-  }
-  
+  // Load all segments from table (initial load only) - DISABLED entirely
+  // (was: function loadSegmentsFromTable() { ...built allSegments from the
+  // table's own DOM... }) - unused now that pagination/client-side
+  // re-rendering is disabled and the table is just server-rendered.
+
   function renderPagination() {
     // Pagination disabled - show all segments
     pagination.innerHTML = '';

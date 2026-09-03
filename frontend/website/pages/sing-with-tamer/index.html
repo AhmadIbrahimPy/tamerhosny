@@ -982,15 +982,15 @@
 
       <div class="swt-badge">
         <i class="bi bi-mic-fill"></i>
-        Sing With Tamer
+        {% translate "غني مع تامر" %}
       </div>
 
       <h1 class="swt-title" id="swtTitle">
-        غني مع تامر 🎤
+        {% translate "غني مع تامر 🎤" %}
       </h1>
 
       <p class="swt-subtitle">
-        اسمع الجملة بتوقيتها الصحيح، وبعدها سجل صوتك عليها.
+        {% translate "اسمع الجملة بتوقيتها الصحيح، وبعدها سجل صوتك عليها." %}
       </p>
 
     </div>
@@ -1091,11 +1091,11 @@
 
     <h3 class="section-title">
       <i class="bi bi-headphones"></i>
-      الأغنية الأصلية
+      {% translate "الأغنية الأصلية" %}
     </h3>
 
     <p class="section-description">
-      تقدر تسمع الأغنية كاملة من هنا.
+      {% translate "تقدر تسمع الأغنية كاملة من هنا." %}
     </p>
 
     <audio
@@ -1113,7 +1113,7 @@
 
       {% endif %}
 
-      متصفحك لا يدعم تشغيل الصوت.
+      {% translate "متصفحك لا يدعم تشغيل الصوت." %}
 
     </audio>
 
@@ -1131,11 +1131,11 @@
 
     <h3 class="section-title">
       <i class="bi bi-people"></i>
-      اختر طريقة الغناء
+      {% translate "اختر طريقة الغناء" %}
     </h3>
 
     <p class="section-description">
-      مين يبدأ أولاً؟
+      {% translate "مين يبدأ أولاً؟" %}
     </p>
 
 
@@ -1193,14 +1193,18 @@
         type="button"
         class="ready-btn"
         id="readyBtn"
-        onclick="startProject()"
+        disabled
       >
 
         <i class="bi bi-play-fill"></i>
 
-        ابدأ
+        {% translate "ابدأ" %}
 
       </button>
+
+      <p style="color:var(--muted); font-size:13px; margin-top:10px; text-align:center;">
+        {% translate "هتبقى الميزة دي متاحة قريب" %}
+      </p>
 
     </div>
 

@@ -111,7 +111,8 @@
       transition:all .2s ease; z-index:100;
     }
     .th-user-dropdown.show{opacity:1; visibility:visible; transform:translateY(0);}
-    .th-user-dropdown-header{display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--border);}
+    .th-user-dropdown-header{display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--border); text-decoration:none; color:inherit; transition:background .15s ease;}
+    a.th-user-dropdown-header:hover{background:rgba(255,255,255,.04);}
     .th-dropdown-avatar, .th-dropdown-avatar-fallback{
       width:44px; height:44px; border-radius:50%; object-fit:cover; display:flex; align-items:center; justify-content:center;
       background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color:#fff; font-size:18px; font-weight:800;
@@ -131,9 +132,17 @@
     .th-dropdown-btn:hover{color:var(--accent);}
     .th-nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:22px; flex-shrink:0; cursor:pointer;}
     .th-mobile-panel{display:none; flex-direction:column; gap:2px; padding:8px 0 16px;}
-    .th-mobile-panel a{font-size:14.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:10px 4px; border-bottom:1px solid var(--border);}
-    .th-mobile-panel a:hover, .th-mobile-panel a.active{color:var(--accent);}
+    /* Scoped away from .th-dropdown-item/.th-user-dropdown-header - both
+       are also <a> tags sharing this panel (the user menu is inlined
+       into it on mobile instead of a separate popup), and were getting
+       this plain-nav-link styling (small padding, border-bottom) on top
+       of their own flex/avatar layout, breaking both. */
+    .th-mobile-panel > a:not(.th-dropdown-item):not(.th-user-dropdown-header){font-size:14.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:10px 4px; border-bottom:1px solid var(--border);}
+    .th-mobile-panel > a:not(.th-dropdown-item):not(.th-user-dropdown-header):hover,
+    .th-mobile-panel > a.active{color:var(--accent);}
     .th-mobile-panel.open{display:flex;}
+    .th-mobile-panel .th-user-dropdown-header{padding-inline:4px; border-radius:10px;}
+    .th-mobile-panel .th-dropdown-item{border-radius:10px;}
 
     /* Hero */
     .th-hero{

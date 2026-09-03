@@ -1044,6 +1044,68 @@ def my_duets_list(request):
     })
 
 
+def public_profile(request, username):
+    """صفحة عامة تظهر لأي زائر - إحصائيات ونشاط المستخدم اللي هو نفسه
+    اختار مشاركتها (ثنائيات 'غني مع تامر' العامة فقط، مش الخاصة).
+    """
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    profile_user = get_object_or_404(User, username=username)
+
+    liked_songs = [
+        like.content_object for like in
+        Like.objects.filter(user=profile_user, content_type__model='song').select_related('content_type')
+        if like.content_object is not None
+    ]
+    public_duets = SingWithTamerProject.objects.filter(
+        user=profile_user, is_completed=True, is_public=True,
+    ).exclude(final_audio_file='').select_related('song').order_by('-updated_at')
+    full_listens = UserSongPlay.objects.filter(
+        user=profile_user, full_listen_count__gt=0,
+    ).select_related('song').order_by('-decayed_score')[:20]
+
+    return render(request, 'website/pages/user/public_profile.html', {
+        'profile_user': profile_user,
+        'liked_songs': liked_songs,
+        'public_duets': public_duets,
+        'full_listens': full_listens,
+        'is_own_profile': request.user.is_authenticated and request.user.pk == profile_user.pk,
+    })
+
+
+@login_required
+@require_POST
+def update_profile(request):
+    """يعدّل المستخدم اسمه و/أو صورته من صفحة بروفايله بس - مفيش حد تاني
+    يقدر يعدل غير حسابه هو (login_required كافي هنا لأننا دايماً بنعدل
+    request.user، مش أي id متبعت من الفورم). AJAX بالكامل - بيرجع JSON
+    مش redirect، عشان الصفحة تتحدث من غير ريفريش.
+    """
+    if request.POST.get('remove_image') == '1':
+        request.user.profile_image.delete(save=False)
+        request.user.profile_image = None
+        request.user.save(update_fields=['profile_image'])
+        return JsonResponse({'status': 'success', 'username': request.user.username, 'avatar_url': None})
+
+    new_username = (request.POST.get('username') or '').strip()
+    if new_username and new_username != request.user.username:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if User.objects.exclude(pk=request.user.pk).filter(username=new_username).exists():
+            return JsonResponse({'status': 'error', 'message': str(_('اسم المستخدم ده مأخوذ بالفعل.'))}, status=400)
+        request.user.username = new_username
+
+    if request.FILES.get('profile_image'):
+        request.user.profile_image = request.FILES['profile_image']
+
+    request.user.save()
+    return JsonResponse({
+        'status': 'success',
+        'username': request.user.username,
+        'avatar_url': request.user.profile_image.url if request.user.profile_image else None,
+    })
+
+
 @login_required
 @require_POST
 def toggle_duet_privacy(request, pk):

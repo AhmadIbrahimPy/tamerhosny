@@ -543,11 +543,20 @@
   }
 
   @media (min-width: 577px) {
+    /* Desktop keeps its layout space reserved (display:block always -
+       no jumping the layout around when lyrics start/stop), but opacity
+       still fades via .visible like everywhere else. Forcing opacity to
+       1 !important here too is what broke the open/close animation on
+       desktop and left stale lyric text frozen on screen during a gap
+       with no active segment (the JS never got a chance to hide it). */
     .synced-lyrics {
-      display: block !important;
-      opacity: 1 !important;
-      transform: translateY(0) !important;
-      pointer-events: auto !important;
+      display: block;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .synced-lyrics.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
   }
 
@@ -1010,7 +1019,7 @@
     overflow-x: auto;
     padding-bottom: 8px;
     scrollbar-width: thin;
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
@@ -1079,10 +1088,12 @@
     padding: 4px 2px 12px;
     scroll-behavior: smooth;
     scrollbar-width: none;
-    /* Without these, a horizontal swipe near the screen edge (the track
-       runs edge-to-edge on mobile) gets grabbed by the browser's own
-       edge-swipe back/forward gesture instead of scrolling the slider. */
-    touch-action: pan-x;
+    /* overscroll-behavior-x stops a horizontal swipe near the screen
+       edge (the track runs edge-to-edge on mobile) from being grabbed
+       by the browser's own edge-swipe back/forward gesture. touch-action
+       explicitly allows both axes - pan-x alone also blocked vertical
+       page scroll for any touch starting on the slider. */
+    touch-action: pan-x pan-y;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
@@ -1230,6 +1241,8 @@
     padding: 9px 8px;
     border-radius: 12px;
     transition: background .2s ease;
+    text-decoration: none;
+    color: inherit;
   }
   .leaderboard-row:hover { background: rgba(255,255,255,.04); }
   .leaderboard-rank {
@@ -2950,8 +2963,11 @@
     const container = document.getElementById('songSearchResults');
     if (!container) return;
 
+    // A remix needs an actual audio track to mix - songs with no
+    // uploaded audio_file showed up in results and just failed (or
+    // silently produced nothing) when picked.
     const filteredSongs = songs.filter(function (song) {
-      return Number(song.id) !== Number(window.songId);
+      return Number(song.id) !== Number(window.songId) && song.has_audio;
     });
 
     if (!filteredSongs.length) {
@@ -3346,7 +3362,7 @@
       const likeBadge = entry.is_liked ? '<i class="bi bi-heart-fill"></i>' : '';
 
       return `
-        <div class="leaderboard-row">
+        <a class="leaderboard-row" href="/u/${encodeURIComponent(entry.username)}/">
           <div class="leaderboard-rank">${entry.rank ? "#" + entry.rank : "<i class=\"bi bi-headphones\"></i>"}</div>
           ${avatar}
           <div class="leaderboard-info">
@@ -3354,7 +3370,7 @@
             <div class="leaderboard-meta">${entry.full_listen_count} {% translate "استماع كامل" %} ${likeBadge}</div>
           </div>
           <div class="leaderboard-trend ${trendClass}">${trendIcon}</div>
-        </div>
+        </a>
       `;
     }).join('');
   }

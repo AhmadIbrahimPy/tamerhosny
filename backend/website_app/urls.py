@@ -48,6 +48,9 @@ urlpatterns = [
     path('remix-result/<int:remix_id>/', views.remix_result, name='remix-result'),
 
     # User Features
+    path('u/<str:username>/', views.public_profile, name='public-profile'),
+    path('profile/update/', views.update_profile, name='update-profile'),
+
     path('likes/', views.likes_list, name='likes'),
     path('likes/toggle/', views.toggle_favorite, name='toggle-like'),
     path('my-duets/', views.my_duets_list, name='my-duets'),

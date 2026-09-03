@@ -1,0 +1,298 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{{ profile_user.username }}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{% blocktranslate with name=profile_user.username %}الملف الشخصي لـ {{ name }} على أرشيف تامر حسني.{% endblocktranslate %}">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-header {
+    display: flex; align-items: center; gap: 20px; padding-block: 32px;
+    border-bottom: 1px solid var(--border); margin-bottom: 32px;
+  }
+  .profile-avatar-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+  .profile-avatar, .profile-avatar-fallback {
+    width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--border); display: block;
+  }
+  .profile-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: #22263a; color: var(--accent); font-weight: 900; font-size: 32px;
+  }
+  .profile-avatar-overlay {
+    position: absolute; inset: 0; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(11,12,18,0); color: #fff; font-size: 18px; opacity: 0;
+    transition: opacity .2s ease, background .2s ease;
+  }
+  .profile-avatar-wrap:hover .profile-avatar-overlay { opacity: 1; background: rgba(11,12,18,.55); }
+  .profile-avatar-menu {
+    position: absolute; top: calc(100% + 8px); inset-inline-start: 0; z-index: 20; min-width: 170px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.4); overflow: hidden; display: none;
+  }
+  .profile-avatar-menu.open { display: block; }
+  .profile-avatar-menu button {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px;
+    background: none; border: none; color: var(--text); font-size: 13px; font-weight: 600;
+    cursor: pointer; text-align: start;
+  }
+  .profile-avatar-menu button:hover { background: rgba(255,255,255,.06); color: var(--accent); }
+  .profile-name-row { display: flex; align-items: center; gap: 8px; }
+  .profile-name { font-size: 22px; font-weight: 900; margin: 0; }
+  .profile-name-edit-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px;
+    padding: 4px; border-radius: 6px;
+  }
+  .profile-name-edit-btn:hover { color: var(--accent); background: rgba(255,255,255,.06); }
+  .profile-name-input {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 10px; color: var(--text); font-size: 18px; font-weight: 800; min-width: 160px;
+  }
+  .profile-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .profile-section { margin-bottom: 40px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+  <div class="profile-header">
+    <div class="profile-avatar-wrap" id="avatarWrap">
+      <img src="{% if profile_user.profile_image %}{{ profile_user.profile_image.url }}{% endif %}" alt="{{ profile_user.username }}" class="profile-avatar" id="profileAvatarImg" {% if not profile_user.profile_image %}style="display:none;"{% endif %}>
+      <span class="profile-avatar-fallback" id="profileAvatarFallback" {% if profile_user.profile_image %}style="display:none;"{% endif %}>{{ profile_user.username|slice:":1"|upper }}</span>
+      {% if is_own_profile %}
+      <div class="profile-avatar-overlay" onclick="event.stopPropagation(); document.getElementById('avatarMenu').classList.toggle('open');">
+        <i class="bi bi-camera-fill"></i>
+      </div>
+      <div class="profile-avatar-menu" id="avatarMenu">
+        <button type="button" onclick="document.getElementById('avatarFileInput').click();">
+          <i class="bi bi-image"></i> {% translate "تغيير الصورة" %}
+        </button>
+        <button type="button" id="removeAvatarBtn" onclick="removeAvatar();" {% if not profile_user.profile_image %}style="display:none;"{% endif %}>
+          <i class="bi bi-trash"></i> {% translate "حذف الصورة" %}
+        </button>
+      </div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="if (this.files[0]) uploadAvatar(this.files[0]);">
+      {% endif %}
+    </div>
+    <div>
+      <div class="profile-name-row">
+        <h1 class="profile-name" id="profileNameText">{{ profile_user.username }}</h1>
+        {% if is_own_profile %}
+        <input type="text" class="profile-name-input" id="profileNameInput" value="{{ profile_user.username }}" style="display:none;">
+        <button type="button" class="profile-name-edit-btn" id="profileNameEditBtn" onclick="startEditName();" title="{% translate 'تعديل الاسم' %}">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="profile-name-edit-btn" id="profileNameSaveBtn" onclick="saveEditName();" style="display:none;" title="{% translate 'حفظ' %}">
+          <i class="bi bi-check-lg"></i>
+        </button>
+        <button type="button" class="profile-name-edit-btn" id="profileNameCancelBtn" onclick="cancelEditName();" style="display:none;" title="{% translate 'إلغاء' %}">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        {% endif %}
+      </div>
+      <div class="profile-meta"><i class="bi bi-calendar3"></i> {% blocktranslate with date=profile_user.date_joined|date:"Y-m-d" %}عضو منذ {{ date }}{% endblocktranslate %}</div>
+    </div>
+  </div>
+
+  {% if full_listens %}
+  <div class="profile-section">
+    <h2 class="th-section-title">{% translate "الأكثر استماعاً لها" %}</h2>
+    <div class="th-grid cols-6">
+      {% for play in full_listens %}
+      <a href="{% url 'website_app:song-detail' play.song.slug %}" class="th-card aspect-square th-card-song plain">
+        <div class="th-img-wrap">
+          {% if play.song.cover_image %}
+            <img src="{{ play.song.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
+          {% elif play.song.album.cover_image %}
+            <img src="{{ play.song.album.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ play.song|localized_field:'title' }}</div>
+          <div class="th-meta">{{ play.full_listen_count }} {% translate "استماع كامل" %}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if public_duets %}
+  <div class="profile-section">
+    <h2 class="th-section-title">{% translate "غنى مع تامر" %}</h2>
+    <div class="th-grid">
+      {% for duet in public_duets %}
+      <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song">
+        <div class="th-img-wrap aspect-square">
+          {% if duet.song.cover_image %}
+            <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+          {% elif duet.song.album.cover_image %}
+            <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+          {% else %}
+            <i class="bi bi-mic-fill icon-fallback"></i>
+          {% endif %}
+          <div class="th-play-badge"><div class="th-play-icon"><i class="bi bi-play-fill"></i></div></div>
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ duet.song|localized_field:'title' }}</div>
+          <div class="th-meta">{{ duet.updated_at|date:"Y-m-d" }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if liked_songs %}
+  <div class="profile-section">
+    <h2 class="th-section-title">{% translate "الأغاني المفضلة" %}</h2>
+    <div class="th-grid cols-6">
+      {% for song in liked_songs %}
+      <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
+        <div class="th-img-wrap">
+          {% if song.cover_image %}
+            <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+          {% elif song.album.cover_image %}
+            <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+          {% else %}
+            <i class="bi bi-music-note-beamed icon-fallback"></i>
+          {% endif %}
+        </div>
+        <div class="th-body"><div class="th-title">{{ song|localized_field:'title' }}</div></div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not full_listens and not public_duets and not liked_songs %}
+  <div class="th-empty">
+    <i class="bi bi-person" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "مفيش نشاط عام يتعرض هنا لسه" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if is_own_profile %}
+<script>
+(function () {
+  'use strict';
+
+  function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const parts = cookie.trim().split('=');
+      if (parts[0] === 'csrftoken') return decodeURIComponent(parts.slice(1).join('='));
+    }
+    return '';
+  }
+
+  function applyResult(data) {
+    document.getElementById('profileNameText').textContent = data.username;
+    const img = document.getElementById('profileAvatarImg');
+    const fallback = document.getElementById('profileAvatarFallback');
+    const removeBtn = document.getElementById('removeAvatarBtn');
+    if (data.avatar_url) {
+      img.src = data.avatar_url;
+      img.style.display = 'block';
+      fallback.style.display = 'none';
+      removeBtn.style.display = 'flex';
+    } else {
+      img.style.display = 'none';
+      fallback.style.display = 'flex';
+      fallback.textContent = data.username.slice(0, 1).toUpperCase();
+      removeBtn.style.display = 'none';
+    }
+    // The URL itself changes if the username changed - keep it in sync
+    // so a page refresh (or re-sharing the link) still lands here.
+    const newPath = '/u/' + encodeURIComponent(data.username) + '/';
+    if (window.location.pathname !== newPath) {
+      window.history.replaceState({}, '', newPath);
+    }
+  }
+
+  function submitUpdate(formData) {
+    return fetch('{% url "website_app:update-profile" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRFToken() },
+      body: formData,
+      credentials: 'same-origin',
+    })
+      .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.message || '{% translate "حدث خطأ" %}');
+        applyResult(result.data);
+      });
+  }
+
+  window.uploadAvatar = function (file) {
+    document.getElementById('avatarMenu').classList.remove('open');
+    const formData = new FormData();
+    formData.append('profile_image', file);
+    submitUpdate(formData).catch(function (error) { alert(error.message); });
+  };
+
+  window.removeAvatar = function () {
+    document.getElementById('avatarMenu').classList.remove('open');
+    const formData = new FormData();
+    formData.append('remove_image', '1');
+    submitUpdate(formData).catch(function (error) { alert(error.message); });
+  };
+
+  window.startEditName = function () {
+    document.getElementById('profileNameText').style.display = 'none';
+    document.getElementById('profileNameEditBtn').style.display = 'none';
+    document.getElementById('profileNameInput').style.display = 'inline-block';
+    document.getElementById('profileNameSaveBtn').style.display = 'inline-flex';
+    document.getElementById('profileNameCancelBtn').style.display = 'inline-flex';
+    document.getElementById('profileNameInput').focus();
+  };
+
+  window.cancelEditName = function () {
+    document.getElementById('profileNameInput').value = document.getElementById('profileNameText').textContent;
+    document.getElementById('profileNameText').style.display = 'block';
+    document.getElementById('profileNameEditBtn').style.display = 'inline-flex';
+    document.getElementById('profileNameInput').style.display = 'none';
+    document.getElementById('profileNameSaveBtn').style.display = 'none';
+    document.getElementById('profileNameCancelBtn').style.display = 'none';
+  };
+
+  window.saveEditName = function () {
+    const newName = document.getElementById('profileNameInput').value.trim();
+    if (!newName) return;
+    const formData = new FormData();
+    formData.append('username', newName);
+    submitUpdate(formData)
+      .then(function () { cancelEditNameUI(); })
+      .catch(function (error) { alert(error.message); });
+  };
+
+  function cancelEditNameUI() {
+    document.getElementById('profileNameText').style.display = 'block';
+    document.getElementById('profileNameEditBtn').style.display = 'inline-flex';
+    document.getElementById('profileNameInput').style.display = 'none';
+    document.getElementById('profileNameSaveBtn').style.display = 'none';
+    document.getElementById('profileNameCancelBtn').style.display = 'none';
+  }
+
+  document.getElementById('profileNameInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); window.saveEditName(); }
+    if (e.key === 'Escape') { window.cancelEditName(); }
+  });
+
+  document.addEventListener('click', function (e) {
+    const menu = document.getElementById('avatarMenu');
+    const wrap = document.getElementById('avatarWrap');
+    if (menu.classList.contains('open') && !wrap.contains(e.target)) {
+      menu.classList.remove('open');
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

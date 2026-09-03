@@ -37,7 +37,7 @@
           <i class="bi bi-chevron-down"></i>
         </button>
         <div class="th-user-dropdown" id="thUserDropdown">
-          <div class="th-user-dropdown-header">
+          <a href="{% url 'website_app:public-profile' user.username %}" class="th-user-dropdown-header">
             {% if user.profile_image %}
               <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
             {% else %}
@@ -47,7 +47,7 @@
               <div class="th-dropdown-name">{{ user.username }}</div>
               <div class="th-dropdown-email">{{ user.email }}</div>
             </div>
-          </div>
+          </a>
           <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
             <i class="bi bi-heart"></i> {% translate "الإعجاب" %}
           </a>
@@ -94,7 +94,7 @@
       <div class="th-user-dropdown-divider mt-2"></div>
 
       {% if user.is_authenticated %}
-      <div class="th-user-dropdown-header" style="padding-inline:4px;">
+      <a href="{% url 'website_app:public-profile' user.username %}" class="th-user-dropdown-header" style="padding-inline:4px;">
         {% if user.profile_image %}
           <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
         {% else %}
@@ -104,7 +104,7 @@
           <div class="th-dropdown-name">{{ user.username }}</div>
           <div class="th-dropdown-email">{{ user.email }}</div>
         </div>
-      </div>
+      </a>
       <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
         <i class="bi bi-heart"></i> {% translate "الإعجاب" %}
       </a>

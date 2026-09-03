@@ -200,6 +200,8 @@
     padding: 9px 8px;
     border-radius: 12px;
     transition: background .2s ease;
+    text-decoration: none;
+    color: inherit;
   }
   .leaderboard-row:hover { background: rgba(255,255,255,.04); }
   .leaderboard-rank {
@@ -931,7 +933,7 @@ function renderLeaderboard(entries) {
     const likeBadge = entry.is_liked ? '<i class="bi bi-heart-fill"></i>' : '';
 
     return `
-      <div class="leaderboard-row">
+      <a class="leaderboard-row" href="/u/${encodeURIComponent(entry.username)}/">
         <div class="leaderboard-rank">${entry.rank ? "#" + entry.rank : "<i class=\"bi bi-headphones\"></i>"}</div>
         ${avatar}
         <div class="leaderboard-info">
@@ -939,7 +941,7 @@ function renderLeaderboard(entries) {
           <div class="leaderboard-meta">${entry.full_listen_count} {% translate "استماع كامل" %} ${likeBadge}</div>
         </div>
         <div class="leaderboard-trend ${trendClass}">${trendIcon}</div>
-      </div>
+      </a>
     `;
   }).join('');
 }

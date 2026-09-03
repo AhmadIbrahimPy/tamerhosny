@@ -20,7 +20,12 @@ def serialize_album(album, request=None):
 
 
 def serialize_song(song, request=None):
-    cover_url = song.cover_image.url if song.cover_image else None
+    if song.cover_image:
+        cover_url = song.cover_image.url
+    elif song.album_id and song.album.cover_image:
+        cover_url = song.album.cover_image.url
+    else:
+        cover_url = None
     if cover_url and request:
         cover_url = request.build_absolute_uri(cover_url)
 
@@ -46,6 +51,7 @@ def serialize_song(song, request=None):
         'release_year': song.release_year,
         'song_type': song.song_type,
         'is_duet': song.is_duet,
+        'has_audio': bool(song.audio_file),
         'recording_studio': (
             {'id': song.recording_studio_id, 'name': song.recording_studio.name}
             if song.recording_studio_id else None
