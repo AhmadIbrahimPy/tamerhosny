@@ -1,0 +1,79 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{{ section_label }}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{{ section_label }}</h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary">{{ media_items.paginator.count }}</span>
+        <a href="{{ create_url }}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
+      </div>
+    </div>
+    {% include "dashboard/partials/_search_filter_bar.html" %}
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>{% translate "العنوان" %}</th>
+            <th>{% translate "تاريخ الإصدار" %}</th>
+            <th>{% translate "الحالة" %}</th>
+            <th>{% translate "الفنانون" %}</th>
+            <th>{% translate "المنصات" %}</th>
+            <th class="text-end">{% translate "إجراءات" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in media_items %}
+          <tr>
+            <td>
+              <a href="{% url 'dashboard_app:media-view' item.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                {% if item.display_poster_url %}
+                  <img src="{{ item.display_poster_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ item.title_ar|slice:":1" }}</span>
+                {% endif %}
+                <span>{{ item.title_ar }}</span>
+              </a>
+            </td>
+            <td>{{ item.release_date|default:"-" }}</td>
+            <td>
+              {% if item.visibility == "PUBLISHED" %}
+                <span class="badge bg-success-subtle text-success">{{ item.get_visibility_display }}</span>
+              {% elif item.visibility == "DRAFT" %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ item.get_visibility_display }}</span>
+              {% else %}
+                <span class="badge bg-info-subtle text-info">{{ item.get_visibility_display }}</span>
+              {% endif %}
+            </td>
+            <td>{{ item.credits.count }}</td>
+            <td>{{ item.links.count }}</td>
+            <td class="text-end">
+              <a href="{% url 'dashboard_app:media-view' item.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "عرض" %}</a>
+              <a href="{% url 'dashboard_app:media-edit' item.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+              <form action="{% url 'dashboard_app:media-toggle' item.pk %}" method="post" class="d-inline">
+                {% csrf_token %}
+                {% if item.visibility == "DRAFT" %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% translate "إظهار" %}</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إخفاء" %}</button>
+                {% endif %}
+              </form>
+              <form action="{% url 'dashboard_app:media-delete' item.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=media_items %}
+  </div>
+</div>
+{% endblock %}

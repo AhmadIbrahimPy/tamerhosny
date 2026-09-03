@@ -1,0 +1,72 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "دور العرض" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container d-flex justify-content-center">
+  <div class="w-100" style="max-width: 780px;">
+
+    <div class="card card-lg mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% translate "دور العرض" %} — {{ media.title_ar }}</h5>
+        <div class="d-flex gap-2">
+          <a href="{% url 'dashboard_app:cinema-venues' %}" class="btn btn-sm btn-outline-primary">{% translate "إدارة دور العرض" %}</a>
+          <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table text-nowrap mb-0 table-centered table-hover">
+          <thead>
+            <tr>
+              <th>{% translate "دار العرض" %}</th>
+              <th>{% translate "المدينة" %}</th>
+              <th>{% translate "سعر التذكرة" %}</th>
+              <th class="text-end">{% translate "إجراءات" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for screening in screenings %}
+            <tr>
+              <td>{{ screening.venue.name }}</td>
+              <td>{{ screening.venue.city|default:"-" }}</td>
+              <td>{{ screening.ticket_price|default:"-" }}</td>
+              <td class="text-end">
+                <a href="{% url 'dashboard_app:media-screening-edit' media.pk screening.pk %}" class="btn btn-sm btn-outline-primary">{% translate "تعديل" %}</a>
+                <form action="{% url 'dashboard_app:media-screening-delete' media.pk screening.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا توجد دور عرض مضافة بعد" %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-lg">
+      <div class="card-header"><h6 class="mb-0">{% translate "إضافة دار عرض" %}</h6></div>
+      <div class="card-body">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">{% translate "إضافة" %}</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

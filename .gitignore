@@ -5,5 +5,5 @@ credentials/.env
 deploy_key*
 DEPLOY_SSH*
 staticfiles/
-media/
+/media/
 .idea/

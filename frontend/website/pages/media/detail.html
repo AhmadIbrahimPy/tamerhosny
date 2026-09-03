@@ -1,0 +1,324 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{{ media|localized_field:'title' }}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{% if media.synopsis %}{{ media.synopsis|truncatechars:160 }}{% else %}{% blocktranslate with title=media|localized_field:'title' %}{{ title }} - تفاصيل، فريق العمل ودور العرض على أرشيف تامر حسني.{% endblocktranslate %}{% endif %}">
+{% endblock %}
+
+{% block og_type %}video.movie{% endblock %}
+{% block og_title %}{{ media|localized_field:'title' }} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_description %}{% if media.synopsis %}{{ media.synopsis|truncatechars:200 }}{% else %}{{ media|localized_field:'title' }}{% endif %}{% endblock %}
+{% block og_image %}{% if media.display_poster_url %}{% if 'http' in media.display_poster_url %}{{ media.display_poster_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ media.display_poster_url }}{% endif %}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .th-media-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:var(--card); min-height:340px;}
+  .th-media-header-bg{position:absolute; inset:0; background-size:cover; background-position:center 20%; filter:blur(35px) brightness(.4) saturate(1.2); transform:scale(1.2);}
+  .th-media-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
+  .th-media-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 8%, rgba(11,12,18,.6) 50%, rgba(11,12,18,.2) 100%);}
+  .th-media-header-inner{position:relative; z-index:1; display:flex; gap:32px; align-items:flex-end; padding:48px 28px 32px; flex-wrap:wrap;}
+  .th-media-poster{flex:0 0 200px; width:200px; aspect-ratio:2/3; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6); border:1px solid var(--border); background:#1e2130;}
+  .th-media-poster img{width:100%; height:100%; object-fit:cover; display:block;}
+  .th-media-poster .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:56px;}
+  .th-media-meta{flex:1; min-width:260px;}
+  .th-media-meta h1{font-size:36px; font-weight:900; margin-block:10px 6px;}
+  @media (max-width: 768px){ .th-media-meta h1{font-size:28px;} }
+  @media (max-width: 576px){ .th-media-meta h1{font-size:24px;} }
+  .th-cast-row{display:flex; gap:20px; overflow-x:auto; padding-block:6px 10px;}
+  .th-cast-item{flex:0 0 96px; text-align:center; text-decoration:none; color:var(--text);}
+  .th-cast-avatar{width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--border); margin-inline:auto; display:block;}
+  .th-cast-avatar-fallback{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:24px; margin-inline:auto;}
+  .th-cast-name{font-size:12.5px; font-weight:700; margin-top:8px;}
+  .th-cast-role{font-size:11px; color:var(--muted);}
+  .th-cast-item:hover .th-cast-avatar, .th-cast-item:hover .th-cast-avatar-fallback{border-color:var(--accent);}
+  .th-screening-card{background:var(--card); border:1px dashed var(--border); border-radius:14px; padding:16px;}
+  .th-screening-card .th-title{display:flex; align-items:center; gap:8px;}
+  .th-screening-row{display:flex; justify-content:space-between; align-items:center; padding-block:8px; border-bottom:1px solid var(--border);}
+  .th-screening-row:last-child{border-bottom:none;}
+
+  .th-screenings-more-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:14px;
+    padding:12px; border-radius:12px; border:1px dashed var(--border); background:none; color:var(--accent);
+    font-weight:700; font-size:13.5px; cursor:pointer;
+  }
+  .th-screenings-more-btn:hover{border-color:var(--accent); background:rgba(212,175,55,.06);}
+
+  /* Detail-page header (poster + title/meta block) wasn't built for
+     narrow screens at all - the fixed-width poster and flex-end
+     alignment squeezed the title into a thin column next to it. Stack
+     to a single centered column below ~700px like every other detail
+     hero on the site. */
+  @media (max-width:700px){
+    .th-media-header-inner{flex-direction:column; align-items:center; text-align:center; padding:28px 18px 22px; gap:18px;}
+    .th-media-poster{flex-basis:auto; width:150px;}
+    .th-media-meta{min-width:0; width:100%;}
+    .th-media-meta .th-meta-row{justify-content:center;}
+    .th-media-meta .d-flex.flex-wrap{justify-content:center;}
+    .th-media-meta p{margin-inline:auto;}
+  }
+
+  .th-modal-overlay{
+    position:fixed; inset:0; z-index:1060; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+  }
+  .th-modal-dialog{
+    width:100%; max-width:640px; max-height:85vh; overflow-y:auto;
+    border:1px solid rgba(99,102,241,.25); border-radius:24px; background:var(--card);
+    box-shadow:0 32px 90px rgba(0,0,0,.6); padding:20px;
+  }
+  .th-modal-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if media.cover_video %}
+<div class="th-hero-banner">
+  {% if media.display_poster_url %}
+    <div class="th-hero-poster-box"><img src="{{ media.display_poster_url }}" alt="{{ media|localized_field:'title' }}"></div>
+  {% endif %}
+  <video class="th-hero-media th-hero-video" autoplay muted loop playsinline>
+    <source src="{{ media.cover_video.url }}">
+  </video>
+  <div class="th-hero-overlay"></div>
+
+  <div class="th-hero-inner container-xl">
+    <span class="th-badge gold">{{ media.get_media_type_display }}</span>
+    <h1>{{ media|localized_field:'title' }}</h1>
+    {% if LANGUAGE_CODE == 'ar' %}{% if media.title_en %}<p class="th-meta">{{ media.title_en }}</p>{% endif %}{% else %}{% if media.title_ar %}<p class="th-meta">{{ media.title_ar }}</p>{% endif %}{% endif %}
+
+    <div class="th-meta-row">
+      {% if media.release_date %}<span><i class="bi bi-calendar"></i> {{ media.release_date|date:"Y-m-d" }}</span>{% endif %}
+      {% if media.rating %}<span><i class="bi bi-star-fill" style="color:var(--accent);"></i> {{ media.rating }}/10</span>{% endif %}
+    </div>
+
+    {% if media.media_type == "COMMERCIAL" %}
+    <div class="th-meta-row">
+      {% if media.advertiser_company %}<span><i class="bi bi-briefcase"></i> {{ media.advertiser_company }}</span>{% endif %}
+      {% if media.brand_name %}<span><i class="bi bi-tag"></i> {{ media.brand_name }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if media.synopsis %}<p class="mt-2" style="max-width:640px;">{{ media.synopsis }}</p>{% endif %}
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+      <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+         onclick="thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+         onclick="thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xl">
+
+{% else %}
+<div class="container-xl">
+
+  <div class="th-media-header">
+    {% if media.display_poster_url %}
+      <div class="th-media-header-bg" style="background-image:url('{{ media.display_poster_url }}');"></div>
+    {% else %}
+      <div class="th-media-header-fallback"></div>
+    {% endif %}
+    <div class="th-media-header-shade"></div>
+    <div class="th-media-header-inner">
+      <div class="th-media-poster">
+        {% if media.display_poster_url %}
+          <img src="{{ media.display_poster_url }}" alt="{{ media|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-film icon-fallback"></i>
+        {% endif %}
+      </div>
+      <div class="th-media-meta">
+        <span class="th-badge gold">{{ media.get_media_type_display }}</span>
+        <h1>{{ media|localized_field:'title' }}</h1>
+        {% if LANGUAGE_CODE == 'ar' %}{% if media.title_en %}<p class="th-meta">{{ media.title_en }}</p>{% endif %}{% else %}{% if media.title_ar %}<p class="th-meta">{{ media.title_ar }}</p>{% endif %}{% endif %}
+
+        <div class="th-meta-row">
+          {% if media.release_date %}<span><i class="bi bi-calendar"></i> {{ media.release_date|date:"Y-m-d" }}</span>{% endif %}
+          {% if media.rating %}<span><i class="bi bi-star-fill" style="color:var(--accent);"></i> {{ media.rating }}/10</span>{% endif %}
+        </div>
+
+        {% if media.media_type == "COMMERCIAL" %}
+        <div class="th-meta-row">
+          {% if media.advertiser_company %}<span><i class="bi bi-briefcase"></i> {{ media.advertiser_company }}</span>{% endif %}
+          {% if media.brand_name %}<span><i class="bi bi-tag"></i> {{ media.brand_name }}</span>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if media.synopsis %}<p class="mt-2" style="max-width:640px;">{{ media.synopsis }}</p>{% endif %}
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+          <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+             onclick="thTrack('SHARE', 'media', {{ media.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
+
+  {% if links %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "شاهد الآن" %}</h2>
+    <div class="d-flex flex-wrap gap-2">
+      {% for link in links %}
+        <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
+           onclick="thTrack('EXTERNAL_CLICK', 'media', {{ media.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
+          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if screenings %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "دور العرض" %}</h2>
+    {% regroup screenings by venue.city as screenings_by_city %}
+    <div class="row g-3">
+      {% for group in screenings_by_city %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="th-screening-card">
+          <div class="th-title mb-2"><i class="bi bi-geo-alt"></i> {{ group.grouper|default:"—" }}</div>
+          {% for s in group.list|slice:":5" %}
+          <div class="th-screening-row">
+            {% if s.booking_url %}
+              <a href="{{ s.booking_url }}" target="_blank" rel="noopener" class="plain" style="text-decoration:underline;">{{ s.venue.name }}</a>
+            {% else %}
+              <span>{{ s.venue.name }}</span>
+            {% endif %}
+            {% if s.ticket_price %}<span class="th-badge gold">{{ s.ticket_price }} {% translate "ج.م" %}</span>{% endif %}
+          </div>
+          {% endfor %}
+          {% if group.list|length > 5 %}
+          <button type="button" class="th-screenings-more-btn" style="margin-top:8px; padding:8px;" onclick="document.getElementById('screeningsModal').style.display='flex';">
+            <i class="bi bi-plus-lg"></i> {% translate "عرض المزيد" %} ({{ group.list|length|add:"-5" }})
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if screenings|length > 15 %}
+    <div id="screeningsModal" class="th-modal-overlay" style="display:none;" onclick="if (event.target === this) this.style.display='none';">
+      <div class="th-modal-dialog">
+        <div class="th-modal-header">
+          <h3 style="margin:0; font-size:17px; font-weight:850;"><i class="bi bi-geo-alt"></i> {% translate "دور العرض" %}</h3>
+          <button type="button" onclick="document.getElementById('screeningsModal').style.display='none';" style="background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer;">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="row g-3">
+          {% for group in screenings_by_city %}
+          <div class="col-12 col-md-6">
+            <div class="th-screening-card">
+              <div class="th-title mb-2"><i class="bi bi-geo-alt"></i> {{ group.grouper|default:"—" }}</div>
+              {% for s in group.list %}
+              <div class="th-screening-row">
+                {% if s.booking_url %}
+                  <a href="{{ s.booking_url }}" target="_blank" rel="noopener" class="plain" style="text-decoration:underline;">{{ s.venue.name }}</a>
+                {% else %}
+                  <span>{{ s.venue.name }}</span>
+                {% endif %}
+                {% if s.ticket_price %}<span class="th-badge gold">{{ s.ticket_price }} {% translate "ج.م" %}</span>{% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if credits %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "الفنانون" %}</h2>
+    <div class="th-cast-row">
+      {% for entry in credits %}
+        <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-cast-item">
+          {% if entry.person.profile_image %}
+            <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="th-cast-avatar">
+          {% else %}
+            <span class="th-cast-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+          {% endif %}
+          <div class="th-cast-name">{{ entry.person|localized_field:'full_name' }}</div>
+          <div class="th-cast-role">{{ entry.roles|join:"، " }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if theme_songs %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "الأغاني المرتبطة" %}</h2>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for song in theme_songs %}
+        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
+          <div class="th-img-wrap">
+            {% if song.cover_image %}
+              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+            {% else %}
+              <i class="bi bi-music-note-beamed icon-fallback"></i>
+            {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+          </div>
+          <div class="th-body"><div class="th-title">{{ song|localized_field:'title' }}</div></div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if related_media %}
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "أعمال أخرى مشابهة" %}</h2>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for other in related_media %}
+        <a href="{% url 'website_app:media-detail' other.slug %}" class="th-card aspect-poster plain">
+          <div class="th-img-wrap">
+            {% if other.display_poster_url %}
+              <img src="{{ other.display_poster_url }}" alt="{{ other|localized_field:'title' }}">
+            {% else %}
+              <i class="bi bi-film icon-fallback"></i>
+            {% endif %}
+            <span class="th-poster-type-badge"><i class="bi {% if other.media_type == 'TV_SERIES' %}bi-tv{% elif other.media_type == 'COMMERCIAL' %}bi-megaphone{% else %}bi-film{% endif %}"></i></span>
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ other|localized_field:'title' }}</div>
+            {% if other.release_date %}<div class="th-meta">{{ other.release_date|date:"Y" }}</div>{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>thTrack('VIEW', 'media', {{ media.pk }});</script>
+{% endblock %}
