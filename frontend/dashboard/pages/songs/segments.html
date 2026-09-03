@@ -4,8 +4,11 @@
 
 {% block extra_css %}
 <style>
+/* One consistent accent (Tabler's primary blue) instead of three
+   clashing gradients (purple play button, blue "start", green "end")
+   fighting for attention in one small toolbar. */
 .audio-player-container {
-  background: var(--bs-body-bg, #f8f9fa);
+  background: var(--bs-tertiary-bg, #f8f9fa);
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--bs-border-color, #dee2e6);
@@ -15,48 +18,40 @@
   background: var(--bs-body-bg, #fff);
   padding: 16px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid var(--bs-border-color, #dee2e6);
 }
 
 #playPauseBtn {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-size: 18px;
+  background: var(--bs-primary, #206bc4);
   border: none;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
+  transition: transform 0.15s ease;
   color: #fff;
+  flex-shrink: 0;
 }
 
-#playPauseBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-}
-
-#playPauseBtn:active {
-  transform: scale(0.95);
-}
+#playPauseBtn:hover { transform: scale(1.06); }
+#playPauseBtn:active { transform: scale(0.95); }
 
 .progress {
   background: var(--bs-tertiary-bg, #e9ecef);
   border-radius: 10px;
   overflow: hidden;
-  height: 10px !important;
+  height: 8px !important;
   cursor: pointer;
-  transition: height 0.2s ease;
+  transition: height 0.15s ease;
 }
 
-.progress:hover {
-  height: 12px !important;
-}
+.progress:hover { height: 10px !important; }
 
 .progress-bar {
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: var(--bs-primary, #206bc4);
   border-radius: 10px;
   transition: width 0.1s linear;
 }
@@ -65,155 +60,47 @@
 #duration {
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  font-size: 14px;
-  color: var(--bs-body-color, #495057);
-  min-width: 45px;
+  font-size: 13px;
+  color: var(--bs-secondary-color, #6c757d);
+  min-width: 42px;
 }
 
 #rewindBtn,
 #forwardBtn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  border: 2px solid var(--bs-border-color, #dee2e6);
+  font-size: 15px;
+  border: 1px solid var(--bs-border-color, #dee2e6);
   background: var(--bs-body-bg, #fff);
   color: var(--bs-secondary-color, #6c757d);
-  transition: all 0.2s ease;
-}
-
-#rewindBtn i,
-#forwardBtn i {
-  font-size: 16px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 #rewindBtn:hover,
 #forwardBtn:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background: var(--bs-tertiary-bg, #f8f9fa);
-  transform: scale(1.1);
-}
-
-.input-group {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border-radius: 8px;
-  overflow: hidden;
+  border-color: var(--bs-primary, #206bc4);
+  color: var(--bs-primary, #206bc4);
 }
 
 .input-group .form-control {
-  border: 2px solid var(--bs-border-color, #dee2e6);
-  border-right: none;
   text-align: center;
   font-weight: 600;
-  background: var(--bs-body-bg, #fff);
-  color: var(--bs-body-color, #495057);
-}
-
-.input-group .form-control:focus {
-  border-color: #667eea;
-  box-shadow: none;
-  background: var(--bs-body-bg, #fff);
-}
-
-.input-group .btn {
-  border: 2px solid var(--bs-border-color, #dee2e6);
-  border-left: none;
-  background: var(--bs-tertiary-bg, #f8f9fa);
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--bs-body-color, #495057);
-}
-
-.input-group .btn:hover {
-  background: var(--bs-secondary-bg, #e9ecef);
-  border-color: #667eea;
 }
 
 #setStartTimeBtn,
 #setEndTimeBtn {
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 9px 18px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 13px;
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #fff;
-}
-
-#setStartTimeBtn {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  border-color: #4facfe;
-}
-
-#setStartTimeBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
-}
-
-#setEndTimeBtn {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  border-color: #43e97b;
-}
-
-#setEndTimeBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark),
-html[data-bs-theme="dark"] {
-  .audio-player-container {
-    background: #212529;
-    border-color: #495057;
-  }
-  
-  .audio-controls {
-    background: #2c3035;
-  }
-  
-  .progress {
-    background: #495057;
-  }
-  
-  #rewindBtn,
-  #forwardBtn {
-    background: #343a40;
-    border-color: #495057;
-    color: #adb5bd;
-  }
-  
-  #rewindBtn:hover,
-  #forwardBtn:hover {
-    background: #495057;
-  }
-  
-  .input-group .form-control {
-    background: #343a40;
-    border-color: #495057;
-    color: #f8f9fa;
-  }
-  
-  .input-group .form-control:focus {
-    background: #343a40;
-  }
-  
-  .input-group .btn {
-    background: #495057;
-    border-color: #495057;
-    color: #f8f9fa;
-  }
-  
-  .input-group .btn:hover {
-    background: #6c757d;
-  }
 }
 
 .lyrics-container {
@@ -443,11 +330,11 @@ html[data-bs-theme="dark"] {
             <span class="text-muted small">/</span>
             <span class="text-muted small" id="duration">0:00</span>
             
-            <button id="rewindBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "ترجيع 5 ثواني" %}">
+            <button id="rewindBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "المقطع السابق" %}">
               <i class="ti ti-player-skip-back"></i>
             </button>
             
-            <button id="forwardBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "تقديم 5 ثواني" %}">
+            <button id="forwardBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "المقطع التالي" %}">
               <i class="ti ti-player-skip-forward"></i>
             </button>
             
@@ -584,15 +471,33 @@ document.addEventListener('DOMContentLoaded', function() {
         audio.play().catch(function(err) {
           console.error('Play error:', err);
         });
-        playIcon.classList.remove('ti-player-play');
-        playIcon.classList.add('ti-player-pause');
       } else {
         audio.pause();
-        playIcon.classList.remove('ti-player-pause');
-        playIcon.classList.add('ti-player-play');
       }
     });
   }
+
+  // Native events, not just the button - covers pausing via the
+  // keyboard, the browser's own media controls, etc. too.
+  audio.addEventListener('play', function() {
+    playIcon.classList.remove('ti-player-play');
+    playIcon.classList.add('ti-player-pause');
+  });
+
+  audio.addEventListener('pause', function() {
+    playIcon.classList.remove('ti-player-pause');
+    playIcon.classList.add('ti-player-play');
+
+    // Pausing mid-playback is exactly the moment you'd want to mark
+    // where a segment ends - fill it in automatically instead of
+    // having to note the second and type it in by hand. Only while
+    // actively timing something (not e.g. right after the audio loads
+    // at 0, and not once it's already reached the very end).
+    if (endSecondsField && audio.currentTime > 0 && !audio.ended) {
+      endSecondsField.value = audio.currentTime.toFixed(2);
+      endSecondsField.dispatchEvent(new Event('input'));
+    }
+  });
 
   if (progressBar) {
     progressBar.addEventListener('click', function(e) {
@@ -603,18 +508,39 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Jump to the previous/next segment boundary (from the table already
+  // saved below) instead of a blind +/-5s - lines up with the actual
+  // timing work being done here far better than a fixed skip.
+  function getSegmentBoundaries() {
+    const rows = segmentsTableBody.querySelectorAll('tr[data-segment-id]');
+    const times = new Set([0]);
+    rows.forEach(function (row) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 2) return;
+      [cells[0].textContent, cells[1].textContent].forEach(function (raw) {
+        const value = parseFloat(raw.trim().replace(',', '.'));
+        if (!isNaN(value)) times.add(value);
+      });
+    });
+    return Array.from(times).sort(function (a, b) { return a - b; });
+  }
+
   if (rewindBtn) {
     rewindBtn.addEventListener('click', function() {
-      audio.currentTime = Math.max(0, audio.currentTime - 5);
-      console.log('Rewind to:', audio.currentTime);
+      const boundaries = getSegmentBoundaries();
+      const previous = boundaries.filter(function (t) { return t < audio.currentTime - 0.05; }).pop();
+      audio.currentTime = previous !== undefined ? previous : 0;
     });
   }
 
   if (forwardBtn) {
     forwardBtn.addEventListener('click', function() {
-      if (isFinite(audio.duration)) {
-        audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
-        console.log('Forward to:', audio.currentTime);
+      const boundaries = getSegmentBoundaries();
+      const next = boundaries.find(function (t) { return t > audio.currentTime + 0.05; });
+      if (next !== undefined) {
+        audio.currentTime = next;
+      } else if (isFinite(audio.duration)) {
+        audio.currentTime = audio.duration;
       }
     });
   }
