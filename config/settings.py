@@ -35,6 +35,12 @@ def env_list(key, default=''):
 
 SECRET_KEY = env('DJANGO_SECRET_KEY', required=True)
 DEBUG = env_bool('DJANGO_DEBUG', False)
+
+# Behind nginx terminating TLS and proxying over plain HTTP - without
+# this, request.is_secure() (and anything built on it: sitemap/robots
+# URLs, secure-cookie logic, redirect schemes) reads every request as
+# HTTP, since Django only sees the proxy's own local connection.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 # Obfuscated, non-guessable admin/dashboard paths (never the defaults).
@@ -139,6 +145,7 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [{
+
                 'address': env('REDIS_URL', 'redis://127.0.0.1:6379/0'),
                 'socket_timeout': 30,
                 'socket_connect_timeout': 10,
