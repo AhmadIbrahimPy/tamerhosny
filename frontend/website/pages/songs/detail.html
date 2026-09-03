@@ -1636,11 +1636,11 @@
                             <div class="song-stat-label">{% translate "إعجاب" %}</div>
                         </div>
                     </div>
-                    <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'الأكثر استماعاً' %}">
+                    <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}">
                         <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
                         <div>
                             <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
-                            <div class="song-stat-label">{% translate "الأكثر استماعاً" %}</div>
+                            <div class="song-stat-label">{% translate "يستمع الآن" %}</div>
                         </div>
                     </button>
                 </div>
@@ -2226,7 +2226,7 @@
 <div id="leaderboardModal" class="playlist-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="leaderboardModalTitle" onclick="if (event.target === this) closeLeaderboardModal();">
   <div class="leaderboard-dialog">
     <div class="playlist-header">
-      <h3 id="leaderboardModalTitle" style="margin:0; font-size:18px; font-weight:850; display:flex; align-items:center;"><i class="bi bi-headphones"></i> {% translate "الأكثر استماعاً" %}<span class="leaderboard-live-dot" title="{% translate 'مباشر' %}"></span></h3>
+      <h3 id="leaderboardModalTitle" style="margin:0; font-size:18px; font-weight:850; display:flex; align-items:center;"><i class="bi bi-headphones"></i> {% translate "يستمع الآن" %}<span class="leaderboard-live-dot" title="{% translate 'مباشر' %}"></span></h3>
       <button type="button" class="playlist-close" onclick="closeLeaderboardModal()" aria-label="{% translate 'إغلاق' %}" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:18px;">
         <i class="bi bi-x-lg"></i>
       </button>
@@ -2241,7 +2241,7 @@
       {% endif %}
       <div>
         <div class="leaderboard-card-title">{{ song|localized_field:'title' }}</div>
-        <div class="leaderboard-card-sub">{% translate "أكثر المستمعين تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب" %}</div>
+        <div class="leaderboard-card-sub">{% translate "مرتبين حسب الأكثر تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب" %}</div>
       </div>
     </div>
     <div class="leaderboard-list" id="leaderboardList">
@@ -3324,7 +3324,7 @@
     if (!list) return;
 
     if (!entries.length) {
-      list.innerHTML = '<div class="leaderboard-empty"><i class="bi bi-headphones"></i> {% translate "محدش سمعها كفاية عشان يدخل الترتيب لسه" %}</div>';
+      list.innerHTML = '<div class="leaderboard-empty"><i class="bi bi-headphones"></i> {% translate "محدش بيسمعها دلوقتي" %}</div>';
       return;
     }
 

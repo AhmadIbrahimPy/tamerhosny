@@ -1,6 +1,13 @@
-"""The "top listeners" leaderboard shown on a song's detail page.
+"""The "who's listening now" leaderboard shown on a song's detail page.
 
-Ranking rewards genuine engagement, not just clicking play once:
+Only people currently listening are shown at all - the moment someone
+stops (pause, leave the page, the song ends/auto-advances, they log
+out...), they drop out of the list; the moment they start, they appear.
+That's driven entirely by CurrentSongListener presence (see
+`_filter_to_live`), same signal as the plain listener count.
+
+Within that live set, ranking rewards genuine engagement, not just
+clicking play once:
 - Only a FULL, natural listen (reached the end, not skipped or paused
   early) adds to a listener's score - see `record_full_listen`, called
   from the player's native 'ended' event.
@@ -9,12 +16,11 @@ Ranking rewards genuine engagement, not just clicking play once:
   to it heavily this week.
 - Liking the song multiplies the score, on top of listens.
 
-Every recompute diffs against the last-persisted ranking
-(SongLeaderboardRank) to produce an up/down/same/new trend per
-listener, then broadcasts the new board to everyone with the "who's
-listening" modal open, over `song_{id}_leaderboard`. Each entry is also
-tagged `is_live` (currently an active CurrentSongListener row) so the
-UI can show a live dot without that changing the ranking itself.
+The full (unfiltered) ranking is still persisted (SongLeaderboardRank)
+so up/down/same/new trend arrows and the live-set ranks stay meaningful
+across recomputes; only the *displayed* board is filtered down to who's
+live right now. Broadcast over `song_{id}_leaderboard` on every score
+change or presence change (start/stop listening).
 """
 import math
 
@@ -100,11 +106,25 @@ def _live_only_entries(song_id, live_user_ids, already_ranked_user_ids):
     ]
 
 
+def _filter_to_live(entries):
+    """Drop anyone not currently listening, then renumber the ones that
+    are (by their real engagement rank) 1..N so the displayed list has
+    no gaps. Live-but-unranked entries (rank=None) are already `is_live`
+    by construction and keep their headphones-icon-instead-of-a-number
+    treatment.
+    """
+    ranked_live = [e for e in entries if e['is_live'] and e['rank'] is not None]
+    for index, entry in enumerate(ranked_live):
+        entry['rank'] = index + 1
+    unranked_live = [e for e in entries if e['is_live'] and e['rank'] is None]
+    return ranked_live + unranked_live
+
+
 def get_cached_leaderboard(song_id):
-    """Cheap read of the last-computed board, with live status (and any
-    live-but-unranked listeners) refreshed fresh each time - too volatile
-    to persist. Used when a viewer opens the modal and nothing
-    score-changing has happened since.
+    """Cheap read of the last-computed board, filtered to who's live
+    right now (see `_filter_to_live`) with presence refreshed fresh each
+    time - too volatile to persist. Used when a viewer opens the modal
+    and nothing score-changing has happened since.
     """
     from backend.main_app.models import SongLeaderboardRank
 
@@ -118,7 +138,7 @@ def get_cached_leaderboard(song_id):
         for row in rows
     ]
     entries += _live_only_entries(song_id, live_user_ids, {row.user_id for row in rows})
-    return entries
+    return _filter_to_live(entries)
 
 
 def broadcast_current_leaderboard(song_id):
@@ -194,6 +214,7 @@ def refresh_song_leaderboard(song_id, broadcast=True):
         for row in new_rows
     ]
     entries += _live_only_entries(song_id, live_user_ids, {row.user_id for row in new_rows})
+    entries = _filter_to_live(entries)
 
     if broadcast:
         channel_layer = get_channel_layer()
