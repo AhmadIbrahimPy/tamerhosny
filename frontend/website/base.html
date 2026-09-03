@@ -449,9 +449,19 @@
       }
 
       // Registered once (not per-song) so switching songs never piles up
-      // duplicate listeners bound to stale play buttons.
+      // duplicate listeners bound to stale play buttons. Dispatching
+      // audioPlayPause from here (not from whichever button happened to
+      // trigger playback) is what makes it fire reliably no matter which
+      // control started/stopped the song - the inline cover-art play
+      // button, an inline song-list button, the bar itself, next/prev...
+      // detail.html's lyrics sync listens for exactly this event.
       globalAudio.addEventListener('play', function() {
         setPlayButtonsIcon('bi-pause-fill');
+        document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } }));
+        if (currentSongId !== null) {
+          connectGlobalListenerSocket(currentSongId);
+          sendGlobalListenerAction('start');
+        }
       });
 
       globalAudio.addEventListener('pause', function() {
@@ -459,6 +469,8 @@
           setPlayButtonsIcon('bi-play-fill');
           isManualPause = false;
         }
+        document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
+        sendGlobalListenerAction('stop');
       });
 
       globalAudio.addEventListener('ended', function() {
@@ -720,9 +732,9 @@
         </div>
         <div style="flex:1; min-width:0;">
           <a id="playerLink" href="#" style="text-decoration:none; color:inherit;">
-            <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
-            <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
-            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:center; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
+            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; cursor:pointer; transition:color 0.2s ease;"></div>
           </a>
         </div>
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
@@ -873,6 +885,7 @@
     let previousVolume = 1;
     let currentSongId = null;
     let isLiked = false;
+    let likeStatusRequestId = 0;
 
     // Save player state to localStorage
     function savePlayerState() {
@@ -1045,17 +1058,13 @@
 
     function toggleGlobalAudio() {
       if (!globalAudio) return;
+      // audioPlayPause is dispatched from the native play/pause listeners
+      // above, not here - this just needs to trigger them.
       if (globalAudio.paused) {
         globalAudio.play();
-        // Dispatch event when audio starts playing
-        const event = new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } });
-        document.dispatchEvent(event);
       } else {
         isManualPause = true;
         globalAudio.pause();
-        // Dispatch event when audio is paused
-        const event = new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } });
-        document.dispatchEvent(event);
       }
     }
 
@@ -1085,7 +1094,7 @@
 
       const song = list[targetIndex];
       const btn = currentPlayBtn || document.getElementById('playerPlayBtn');
-      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, null, song.artist, song.album, false, song.songId);
+      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link || null, song.artist, song.album, false, song.songId);
     }
 
     // No queue set up yet (e.g. next/prev pressed outside the player page
@@ -1127,8 +1136,50 @@
       playAdjacentSong(1);
     }
 
+    // "Who's actually listening" tracking, tied to whatever's actually
+    // playing in the bar - independent of which page you're on. A song
+    // detail page's own listener socket only counts listens while you
+    // stay on that exact page; next/prev/auto-advance keep playing
+    // without navigating anywhere, so a song played that way never
+    // registered a listener at all. This mirrors that same server
+    // endpoint from here instead, so it's covered regardless of
+    // navigation.
+    var globalListenerSocket = null;
+    var globalListenerSongId = null;
+
+    function connectGlobalListenerSocket(songId) {
+      if (globalListenerSongId === songId && globalListenerSocket) return;
+      disconnectGlobalListenerSocket();
+      globalListenerSongId = songId;
+      var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      globalListenerSocket = new WebSocket(protocol + '//' + window.location.host + '/ws/songs/' + songId + '/listening/');
+      globalListenerSocket.addEventListener('close', function() {
+        globalListenerSocket = null;
+      });
+    }
+
+    function sendGlobalListenerAction(action) {
+      if (globalListenerSocket && globalListenerSocket.readyState === WebSocket.OPEN) {
+        globalListenerSocket.send(JSON.stringify({ action: action }));
+      }
+    }
+
+    function disconnectGlobalListenerSocket() {
+      if (globalListenerSocket) {
+        var socket = globalListenerSocket;
+        globalListenerSocket = null;
+        socket.close();
+      }
+      globalListenerSongId = null;
+    }
+
     function checkLikeStatus(songId) {
       if (!songId) return;
+      // Switching songs quickly fires a new check before the previous
+      // one's response lands - without this, an older response could
+      // resolve after a newer one and overwrite the bar with the
+      // *previous* song's liked state.
+      const requestId = ++likeStatusRequestId;
       fetch('/likes/toggle/', {
         method: 'POST',
         headers: {
@@ -1139,6 +1190,7 @@
       })
       .then(response => response.json())
       .then(data => {
+        if (requestId !== likeStatusRequestId) return;
         if (data.status === 'success') {
           isLiked = data.liked;
           updateLikeButton();
@@ -1151,6 +1203,9 @@
 
     function toggleLike() {
       if (!currentSongId) return;
+      // Supersede any in-flight checkLikeStatus for this button so its
+      // response can't land after this click and stomp the fresh state.
+      likeStatusRequestId++;
 
       const formData = new FormData();
       formData.append('content_type', 'song');

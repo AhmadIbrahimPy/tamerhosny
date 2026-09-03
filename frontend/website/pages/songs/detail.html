@@ -1582,7 +1582,7 @@
 
                 <div class="song-actions">
                     {% if not duet %}
-                    <button type="button" class="song-action song-action-secondary song-action-danger" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}">
+                    <button type="button" class="song-action song-action-secondary{% if is_liked %} song-action-danger{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}">
                         <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
                         <span>{% if is_liked %}{% translate "أعجبتني" %}{% else %}{% translate "أعجبني" %}{% endif %}</span>
                     </button>
@@ -3304,7 +3304,11 @@
         }
       });
 
-      // Listen for play/pause events from global player bar
+      // Listen for play/pause events from global player bar. This is the
+      // one place that sends 'start'/'stop' over the listener socket -
+      // it used to also be duplicated on globalAudio's own native
+      // 'play'/'pause' events, so every toggle sent the action twice and
+      // restarted the lyrics-sync interval twice.
       document.addEventListener('audioPlayPause', function (e) {
         if (e.detail.songId === songId) {
           if (e.detail.playing) {
@@ -3326,30 +3330,6 @@
               icon.classList.add('bi-play-fill');
             }
           }
-        }
-      });
-
-      globalAudio.addEventListener('play', function () {
-        if (!isThisSongPlaying()) return;
-        isCurrentlyListening = true;
-        sendListenerAction('start');
-        startLyricsSync();
-        const icon = document.getElementById('playIcon');
-        if (icon) {
-          icon.classList.remove('bi-play-fill');
-          icon.classList.add('bi-pause-fill');
-        }
-      });
-
-      globalAudio.addEventListener('pause', function () {
-        if (!isThisSongPlaying()) return;
-        isCurrentlyListening = false;
-        sendListenerAction('stop');
-        stopLyricsSync();
-        const icon = document.getElementById('playIcon');
-        if (icon) {
-          icon.classList.remove('bi-pause-fill');
-          icon.classList.add('bi-play-fill');
         }
       });
 
