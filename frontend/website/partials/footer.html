@@ -1,15 +1,46 @@
-{% load i18n %}
-<div class="th-footer">
-  <div class="container-xl d-flex flex-wrap justify-content-between gap-4">
-    <div>
-      <div class="th-brand mb-2">{% translate "تامر حسني" %}</div>
-      <p class="text-muted small mb-0" style="max-width:380px;">{% translate "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
+{% load static i18n %}
+<footer class="th-footer">
+  <div class="container-xl">
+    <div class="th-footer-top">
+      <div class="th-footer-brand">
+        <a href="{% url 'website_app:home' %}" class="th-footer-logo plain">
+          <img src="{% static 'images/logos/logo_d.jpeg' %}" alt="{% translate 'تامر حسني' %}">
+          <span>{% translate "أرشيف تامر حسني" %}</span>
+        </a>
+        <p>{% translate "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات والحفلات." %}</p>
+      </div>
+
+      <div class="th-footer-col">
+        <h3>{% translate "المحتوى" %}</h3>
+        <a href="{% url 'website_app:songs' %}">{% translate "الأغاني" %}</a>
+        <a href="{% url 'website_app:albums' %}">{% translate "الألبومات" %}</a>
+        <a href="{% url 'website_app:movies' %}">{% translate "الأفلام" %}</a>
+        <a href="{% url 'website_app:series' %}">{% translate "المسلسلات" %}</a>
+      </div>
+
+      <div class="th-footer-col">
+        <h3>{% translate "اكتشف" %}</h3>
+        <a href="{% url 'website_app:concerts' %}">{% translate "الحفلات" %}</a>
+        <a href="{% url 'website_app:commercials' %}">{% translate "الإعلانات" %}</a>
+        <a href="{% url 'website_app:people' %}">{% translate "الفنانون" %}</a>
+        <a href="{% url 'website_app:player' %}">{% translate "المشغل" %}</a>
+      </div>
     </div>
-    <div class="d-flex flex-column gap-2">
-      <a href="{% url 'website_app:songs' %}">{% translate "الأغاني" %}</a>
-      <a href="{% url 'website_app:movies' %}">{% translate "الأفلام" %}</a>
-      <a href="{% url 'website_app:series' %}">{% translate "المسلسلات" %}</a>
-      <a href="{% url 'website_app:concerts' %}">{% translate "الحفلات" %}</a>
+
+    <div class="th-footer-bottom">
+      <p class="th-footer-copyright">
+        &copy; {% now "Y" %} {% translate "أرشيف تامر حسني" %}. {% translate "جميع الحقوق محفوظة." %}
+      </p>
+      <p class="th-footer-credit">
+        {% translate "تطوير" %}
+        <a href="https://www.linkedin.com/in/ahmadibrahimpy/" target="_blank" rel="noopener">Ahmad Ibrahim</a>
+        <a href="https://www.linkedin.com/in/ahmadibrahimpy/" target="_blank" rel="noopener" class="th-footer-social" aria-label="LinkedIn">
+          <i class="bi bi-linkedin"></i>
+        </a>
+        <a href="https://www.facebook.com/AhmadIbrahimPy1/" target="_blank" rel="noopener" class="th-footer-social" aria-label="Facebook">
+          <i class="bi bi-facebook"></i>
+        </a>
+      </p>
     </div>
   </div>
-</div>
+</footer>
