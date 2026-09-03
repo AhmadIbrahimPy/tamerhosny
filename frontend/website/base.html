@@ -2,6 +2,16 @@
 <html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EPR337HYXV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-EPR337HYXV');
+  </script>
+
   <meta charset="utf-8">
   <title>{% translate "أرشيف تامر حسني" %} | {% block title %}{% translate "الرئيسية" %}{% endblock %}</title>
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
