@@ -890,23 +890,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const startSeconds = parseFloat(cells[0].textContent);
         const endSeconds = parseFloat(cells[1].textContent);
         const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
-        
+
         // Check for effects by text content
         const effectsCell = cells[4];
         const effectsText = effectsCell.textContent.trim();
         const vocalDoubling = effectsText.includes('تكرار الصوت');
         const doubleTracking = effectsText.includes('تتبع مزدوج');
-        
+
         document.getElementById('id_start_seconds').value = startSeconds;
         document.getElementById('id_end_seconds').value = endSeconds;
         document.getElementById('id_text').value = text;
         document.getElementById('id_vocal_doubling').checked = vocalDoubling;
         document.getElementById('id_double_tracking').checked = doubleTracking;
-        
+
         editingSegmentId = segmentId;
         submitSegmentBtn.textContent = 'حفظ التعديلات';
         cancelEditBtn.style.display = 'inline-block';
-        
+
+        // Mark which row is actually being edited - the form filled in
+        // silently otherwise, with nothing on the table itself showing
+        // which segment it came from.
+        segmentsTableBody.querySelectorAll('tr.table-warning').forEach(function (r) {
+          r.classList.remove('table-warning');
+        });
+        row.classList.add('table-warning');
+
         // Scroll to form
         segmentForm.scrollIntoView({ behavior: 'smooth' });
       }
@@ -919,7 +927,11 @@ document.addEventListener('DOMContentLoaded', function() {
       editingSegmentId = null;
       submitSegmentBtn.textContent = 'إضافة المقطع';
       cancelEditBtn.style.display = 'none';
-      
+
+      segmentsTableBody.querySelectorAll('tr.table-warning').forEach(function (r) {
+        r.classList.remove('table-warning');
+      });
+
       // Reset form
       segmentForm.reset();
       
