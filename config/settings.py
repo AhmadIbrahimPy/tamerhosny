@@ -200,8 +200,33 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Email
+#
+# Prints to the console until EMAIL_HOST is filled in (dev-friendly: no
+# real inbox needed to see the forgot-password code). Set EMAIL_HOST in
+# credentials/.env to switch to real SMTP.
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if env('EMAIL_HOST')
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+EMAIL_HOST = env('EMAIL_HOST', '')
+EMAIL_PORT = int(env('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@tamerhosny.local')
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Public website auth (separate from the internal dashboard login) -
+# email/password signup plus "Sign in with Google". Client
+# ID/secret are placeholders until the real Google Cloud OAuth
+# credentials are dropped into credentials/.env; the button stays
+# visible either way but errors clearly if clicked before that.
+GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET', '')
+GOOGLE_OAUTH_REDIRECT_URI = env(
+    'GOOGLE_OAUTH_REDIRECT_URI', 'http://127.0.0.1:8600/auth/google/callback/',
+)
 
 
 # CORS

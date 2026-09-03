@@ -1,11 +1,22 @@
 from django.urls import path
 
-from backend.website_app import views
+from backend.website_app import auth_views, views
 
 app_name = 'website_app'
 
 urlpatterns = [
     path('', views.home, name='home'),
+
+    # Public site auth (separate from the internal dashboard login) -
+    # JSON endpoints backing the login/register modal.
+    path('auth/register/', auth_views.register, name='auth-register'),
+    path('auth/login/', auth_views.login_view, name='auth-login'),
+    path('auth/logout/', auth_views.logout_view, name='auth-logout'),
+    path('auth/forgot-password/request/', auth_views.forgot_password_request, name='auth-forgot-password-request'),
+    path('auth/forgot-password/verify/', auth_views.forgot_password_verify, name='auth-forgot-password-verify'),
+    path('auth/forgot-password/reset/', auth_views.forgot_password_reset, name='auth-forgot-password-reset'),
+    path('auth/google/start/', auth_views.google_login_start, name='auth-google-start'),
+    path('auth/google/callback/', auth_views.google_login_callback, name='auth-google-callback'),
 
     path('player/', views.player_page, name='player'),
     path('player/song-data/', views.song_player_data, name='song-player-data'),

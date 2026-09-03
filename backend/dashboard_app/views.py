@@ -5,7 +5,6 @@ from urllib.parse import urlencode
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
-from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
@@ -21,6 +20,7 @@ from backend.ads_app.models import Advertisement
 from backend.analytics_app.models import AnalyticsEvent
 from backend.concerts_app.models import Concert
 from backend.main_app.shared_utils.credits import dedupe_credits
+from backend.main_app.shared_utils.decorators import dashboard_required
 from backend.dashboard_app.forms import (
     AdvertisementForm, AlbumForm, CinemaVenueForm, ConcertForm, ExternalLinkForm, MediaCreditForm,
     MEDIA_SECTION_FORMS, PersonForm, PlatformForm, ScreeningForm, SongCreditForm, SongForm, SongLyricSegmentForm,
@@ -78,13 +78,13 @@ def dashboard_login(request):
     return render(request, 'dashboard/login.html', {'error': error})
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def dashboard_logout(request):
     auth_logout(request)
     return redirect('dashboard_app:login')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def home(request):
     stats = {
         'people': Person.objects.count(),
@@ -308,7 +308,7 @@ def _build_analytics_context(request):
     }
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def analytics_overview(request):
     return render(request, 'dashboard/pages/analytics.html', _build_analytics_context(request))
 
@@ -317,7 +317,7 @@ def analytics_overview(request):
 # Platform links (generic: person / album / song / media / concert)
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def entity_links(request, kind, object_id):
     mapping = LINKABLE_KINDS.get(kind)
     if not mapping:
@@ -348,7 +348,7 @@ def entity_links(request, kind, object_id):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def entity_link_edit(request, kind, object_id, link_pk):
     mapping = LINKABLE_KINDS.get(kind)
     if not mapping:
@@ -368,7 +368,7 @@ def entity_link_edit(request, kind, object_id, link_pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def entity_link_delete(request, kind, object_id, link_pk):
     mapping = LINKABLE_KINDS.get(kind)
     if not mapping:
@@ -386,7 +386,7 @@ def entity_link_delete(request, kind, object_id, link_pk):
 # People
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def people_list(request):
     queryset = Person.objects.all()
     q = request.GET.get('q')
@@ -404,7 +404,7 @@ def people_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def person_create(request):
     return _save_form(
         request, PersonForm, None, _('إضافة فنان / عضو طاقم'), reverse('dashboard_app:people'),
@@ -412,7 +412,7 @@ def person_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def person_edit(request, pk):
     person = get_object_or_404(Person, pk=pk)
     return _save_form(
@@ -421,7 +421,7 @@ def person_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def person_view(request, pk):
     person = get_object_or_404(Person, pk=pk)
     fields = [
@@ -499,7 +499,7 @@ def person_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def person_delete(request, pk):
     person = get_object_or_404(Person, pk=pk)
     if request.method == 'POST':
@@ -511,7 +511,7 @@ def person_delete(request, pk):
 # Studios
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def studios_list(request):
     queryset = Studio.objects.all()
     q = request.GET.get('q')
@@ -529,7 +529,7 @@ def studios_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def studio_create(request):
     return _save_form(
         request, StudioForm, None, _('إضافة استوديو / شركة'), reverse('dashboard_app:studios'),
@@ -537,7 +537,7 @@ def studio_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def studio_edit(request, pk):
     studio = get_object_or_404(Studio, pk=pk)
     return _save_form(
@@ -546,7 +546,7 @@ def studio_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def studio_view(request, pk):
     studio = get_object_or_404(Studio, pk=pk)
     fields = [(_('الاسم'), studio.name)]
@@ -587,7 +587,7 @@ def studio_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def studio_delete(request, pk):
     studio = get_object_or_404(Studio, pk=pk)
     if request.method == 'POST':
@@ -599,7 +599,7 @@ def studio_delete(request, pk):
 # Albums
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def albums_list(request):
     queryset = Album.objects.select_related('record_label')
     q = request.GET.get('q')
@@ -617,7 +617,7 @@ def albums_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def album_create(request):
     return _save_form(
         request, AlbumForm, None, _('إضافة ألبوم'), reverse('dashboard_app:albums'),
@@ -625,7 +625,7 @@ def album_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def album_edit(request, pk):
     album = get_object_or_404(Album, pk=pk)
     return _save_form(
@@ -634,7 +634,7 @@ def album_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def album_view(request, pk):
     album = get_object_or_404(Album, pk=pk)
     fields = [
@@ -687,7 +687,7 @@ def album_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def album_delete(request, pk):
     album = get_object_or_404(Album, pk=pk)
     if request.method == 'POST':
@@ -695,7 +695,7 @@ def album_delete(request, pk):
     return redirect('dashboard_app:albums')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def album_toggle_visibility(request, pk):
     album = get_object_or_404(Album, pk=pk)
     if request.method == 'POST':
@@ -710,7 +710,7 @@ def album_toggle_visibility(request, pk):
 # Songs
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def songs_list(request):
     queryset = Song.objects.select_related('album', 'recording_studio', 'related_media')
     q = request.GET.get('q')
@@ -735,7 +735,7 @@ def _album_years_json():
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_create(request):
     form = SongForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
@@ -749,7 +749,7 @@ def song_create(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_edit(request, pk):
     song = get_object_or_404(Song, pk=pk)
     form = SongForm(request.POST or None, request.FILES or None, instance=song)
@@ -764,7 +764,7 @@ def song_edit(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_view(request, pk):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), pk=pk,
@@ -853,7 +853,7 @@ def song_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_delete(request, pk):
     song = get_object_or_404(Song, pk=pk)
     if request.method == 'POST':
@@ -861,7 +861,7 @@ def song_delete(request, pk):
     return redirect('dashboard_app:songs')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_toggle_visibility(request, pk):
     song = get_object_or_404(Song, pk=pk)
     if request.method == 'POST':
@@ -872,7 +872,7 @@ def song_toggle_visibility(request, pk):
     return redirect('dashboard_app:songs')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_credits(request, pk):
     song = get_object_or_404(Song, pk=pk)
     credits_qs = song.credits.select_related('person').all()
@@ -895,7 +895,7 @@ def song_credits(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_credit_edit(request, pk, credit_pk):
     song = get_object_or_404(Song, pk=pk)
     credit = get_object_or_404(SongCredit, pk=credit_pk, song=song)
@@ -910,7 +910,7 @@ def song_credit_edit(request, pk, credit_pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_credit_delete(request, pk, credit_pk):
     credit = get_object_or_404(SongCredit, pk=credit_pk, song_id=pk)
     if request.method == 'POST':
@@ -918,7 +918,7 @@ def song_credit_delete(request, pk, credit_pk):
     return redirect('dashboard_app:song-credits', pk=pk)
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_segments(request, pk):
     song = get_object_or_404(Song, pk=pk)
     
@@ -969,7 +969,7 @@ def song_segments(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_segment_edit(request, pk, segment_pk):
     song = get_object_or_404(Song, pk=pk)
     segment = get_object_or_404(SongLyricSegment, pk=segment_pk, song=song)
@@ -1004,7 +1004,7 @@ def song_segment_edit(request, pk, segment_pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def song_segment_delete(request, pk, segment_pk):
     segment = get_object_or_404(SongLyricSegment, pk=segment_pk, song_id=pk)
     if request.method == 'POST':
@@ -1059,42 +1059,42 @@ def _media_section_create(request, section):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def movies_list(request):
     return _media_section_list(request, 'movies')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def movie_create(request):
     return _media_section_create(request, 'movies')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def series_list(request):
     return _media_section_list(request, 'series')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def series_create(request):
     return _media_section_create(request, 'series')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def commercials_list(request):
     return _media_section_list(request, 'commercials')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def commercial_create(request):
     return _media_section_create(request, 'commercials')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def programs_list(request):
     return _media_section_list(request, 'programs')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def program_create(request):
     return _media_section_create(request, 'programs')
 
@@ -1102,7 +1102,7 @@ def program_create(request):
 _MEDIA_TYPE_TO_SECTION = {media_type: section for section, (media_type, *_rest) in MEDIA_SECTIONS.items()}
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_edit(request, pk):
     media = get_object_or_404(Media, pk=pk)
     section = _MEDIA_TYPE_TO_SECTION[media.media_type]
@@ -1114,7 +1114,7 @@ def media_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_view(request, pk):
     media = get_object_or_404(Media, pk=pk)
     section = _MEDIA_TYPE_TO_SECTION[media.media_type]
@@ -1203,7 +1203,7 @@ def media_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_delete(request, pk):
     media = get_object_or_404(Media, pk=pk)
     section = _MEDIA_TYPE_TO_SECTION[media.media_type]
@@ -1212,7 +1212,7 @@ def media_delete(request, pk):
     return redirect(MEDIA_SECTIONS[section][2])
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_toggle_visibility(request, pk):
     media = get_object_or_404(Media, pk=pk)
     section = _MEDIA_TYPE_TO_SECTION[media.media_type]
@@ -1224,7 +1224,7 @@ def media_toggle_visibility(request, pk):
     return redirect(MEDIA_SECTIONS[section][2])
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_crew(request, pk):
     media = get_object_or_404(Media, pk=pk)
     credits_qs = media.credits.select_related('person').all()
@@ -1247,7 +1247,7 @@ def media_crew(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_crew_edit(request, pk, credit_pk):
     media = get_object_or_404(Media, pk=pk)
     credit = get_object_or_404(MediaCredit, pk=credit_pk, media=media)
@@ -1262,7 +1262,7 @@ def media_crew_edit(request, pk, credit_pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_crew_delete(request, pk, credit_pk):
     credit = get_object_or_404(MediaCredit, pk=credit_pk, media_id=pk)
     if request.method == 'POST':
@@ -1270,7 +1270,7 @@ def media_crew_delete(request, pk, credit_pk):
     return redirect('dashboard_app:media-crew', pk=pk)
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_screenings(request, pk):
     media = get_object_or_404(Media, pk=pk)
     screenings = media.screenings.select_related('venue').all()
@@ -1293,7 +1293,7 @@ def media_screenings(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_screening_edit(request, pk, screening_pk):
     media = get_object_or_404(Media, pk=pk)
     screening = get_object_or_404(CinemaScreening, pk=screening_pk, media=media)
@@ -1308,7 +1308,7 @@ def media_screening_edit(request, pk, screening_pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def media_screening_delete(request, pk, screening_pk):
     screening = get_object_or_404(CinemaScreening, pk=screening_pk, media_id=pk)
     if request.method == 'POST':
@@ -1320,7 +1320,7 @@ def media_screening_delete(request, pk, screening_pk):
 # Concerts
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concerts_list(request):
     queryset = Concert.objects.select_related('organizer')
     q = request.GET.get('q')
@@ -1340,7 +1340,7 @@ def concerts_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concert_create(request):
     return _save_form(
         request, ConcertForm, None, _('إضافة حفلة'), reverse('dashboard_app:concerts'),
@@ -1348,7 +1348,7 @@ def concert_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concert_edit(request, pk):
     concert = get_object_or_404(Concert, pk=pk)
     return _save_form(
@@ -1357,7 +1357,7 @@ def concert_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concert_view(request, pk):
     concert = get_object_or_404(Concert, pk=pk)
     fields = [
@@ -1403,7 +1403,7 @@ def concert_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concert_delete(request, pk):
     concert = get_object_or_404(Concert, pk=pk)
     if request.method == 'POST':
@@ -1411,7 +1411,7 @@ def concert_delete(request, pk):
     return redirect('dashboard_app:concerts')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def concert_toggle_visibility(request, pk):
     concert = get_object_or_404(Concert, pk=pk)
     if request.method == 'POST':
@@ -1427,7 +1427,7 @@ def concert_toggle_visibility(request, pk):
 # Advertisements
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ads_list(request):
     queryset = Advertisement.objects.select_related('content_type').all()
     q = request.GET.get('q')
@@ -1444,7 +1444,7 @@ def ads_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ad_create(request):
     return _save_form(
         request, AdvertisementForm, None, _('إضافة إعلان'), reverse('dashboard_app:ads'),
@@ -1452,7 +1452,7 @@ def ad_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ad_edit(request, pk):
     ad = get_object_or_404(Advertisement, pk=pk)
     return _save_form(
@@ -1461,7 +1461,7 @@ def ad_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ad_view(request, pk):
     ad = get_object_or_404(Advertisement, pk=pk)
 
@@ -1496,7 +1496,7 @@ def ad_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ad_delete(request, pk):
     ad = get_object_or_404(Advertisement, pk=pk)
     if request.method == 'POST':
@@ -1504,7 +1504,7 @@ def ad_delete(request, pk):
     return redirect('dashboard_app:ads')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def ad_toggle_active(request, pk):
     ad = get_object_or_404(Advertisement, pk=pk)
     if request.method == 'POST':
@@ -1517,7 +1517,7 @@ def ad_toggle_active(request, pk):
 # Platforms
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def platforms_list(request):
     queryset = Platform.objects.all()
     type_filter = request.GET.get('filter')
@@ -1532,7 +1532,7 @@ def platforms_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def platform_create(request):
     return _save_form(
         request, PlatformForm, None, _('إضافة منصة'), reverse('dashboard_app:platforms'),
@@ -1540,7 +1540,7 @@ def platform_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def platform_edit(request, pk):
     platform = get_object_or_404(Platform, pk=pk)
     return _save_form(
@@ -1549,7 +1549,7 @@ def platform_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def platform_view(request, pk):
     platform = get_object_or_404(Platform, pk=pk)
     fields = [
@@ -1582,7 +1582,7 @@ def platform_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def platform_delete(request, pk):
     platform = get_object_or_404(Platform, pk=pk)
     if request.method == 'POST':
@@ -1595,7 +1595,7 @@ def platform_delete(request, pk):
 # picked per movie via "دور العرض" instead of retyping name/city each time.
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def cinema_venues_list(request):
     queryset = CinemaVenue.objects.all()
     q = request.GET.get('q')
@@ -1608,7 +1608,7 @@ def cinema_venues_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def cinema_venue_create(request):
     return _save_form(
         request, CinemaVenueForm, None, _('إضافة دار عرض'), reverse('dashboard_app:cinema-venues'),
@@ -1616,7 +1616,7 @@ def cinema_venue_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def cinema_venue_edit(request, pk):
     venue = get_object_or_404(CinemaVenue, pk=pk)
     return _save_form(
@@ -1625,7 +1625,7 @@ def cinema_venue_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def cinema_venue_delete(request, pk):
     venue = get_object_or_404(CinemaVenue, pk=pk)
     if request.method == 'POST':
@@ -1637,7 +1637,7 @@ def cinema_venue_delete(request, pk):
 # Users
 # ---------------------------------------------------------------------------
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def users_list(request):
     queryset = UserAccount.objects.all()
     q = request.GET.get('q')
@@ -1655,7 +1655,7 @@ def users_list(request):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def user_create(request):
     return _save_form(
         request, UserAccountForm, None, _('إضافة مستخدم'), reverse('dashboard_app:users'),
@@ -1663,7 +1663,7 @@ def user_create(request):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def user_edit(request, pk):
     account = get_object_or_404(UserAccount, pk=pk)
     return _save_form(
@@ -1672,7 +1672,7 @@ def user_edit(request, pk):
     )
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def user_view(request, pk):
     account = get_object_or_404(UserAccount, pk=pk)
     fields = [
@@ -1689,7 +1689,7 @@ def user_view(request, pk):
     })
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def user_delete(request, pk):
     account = get_object_or_404(UserAccount, pk=pk)
     if request.method == 'POST' and account.pk != request.user.pk:
@@ -1697,7 +1697,7 @@ def user_delete(request, pk):
     return redirect('dashboard_app:users')
 
 
-@login_required(login_url='dashboard_app:login')
+@dashboard_required
 def user_toggle_active(request, pk):
     account = get_object_or_404(UserAccount, pk=pk)
     if request.method == 'POST' and account.pk != request.user.pk:

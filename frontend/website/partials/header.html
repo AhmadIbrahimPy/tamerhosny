@@ -63,18 +63,15 @@
             <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
           </button>
           <div class="th-user-dropdown-divider"></div>
-          <form action="{% url 'dashboard_app:logout' %}" method="post" class="th-dropdown-item">
-            {% csrf_token %}
-            <button type="submit" class="th-dropdown-btn">
-              <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
-            </button>
-          </form>
+          <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
+            <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
+          </button>
         </div>
       </div>
       {% else %}
-      <a href="{% url 'dashboard_app:login' %}" class="th-login-btn">
+      <button type="button" class="th-login-btn" onclick="openAuthModal('login')">
         <i class="bi bi-person"></i> {% translate "تسجيل دخول" %}
-      </a>
+      </button>
       {% endif %}
     </div>
     <button type="button" class="th-nav-toggle" onclick="document.getElementById('thMobilePanel').classList.toggle('open');" aria-label="{% translate 'القائمة' %}">
@@ -126,16 +123,13 @@
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
       <div class="th-user-dropdown-divider"></div>
-      <form action="{% url 'dashboard_app:logout' %}" method="post" class="th-dropdown-item">
-        {% csrf_token %}
-        <button type="submit" class="th-dropdown-btn">
-          <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
-        </button>
-      </form>
+      <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
+        <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
+      </button>
       {% else %}
-      <a href="{% url 'dashboard_app:login' %}" class="th-login-btn" style="justify-content:center;">
+      <button type="button" class="th-login-btn" style="justify-content:center;" onclick="openAuthModal('login')">
         <i class="bi bi-person"></i> {% translate "تسجيل دخول / إنشاء حساب" %}
-      </a>
+      </button>
       <button type="button" class="lang-btn mt-2" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>

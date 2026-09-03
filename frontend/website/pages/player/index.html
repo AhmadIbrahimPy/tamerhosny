@@ -556,6 +556,7 @@ function updatePlayerBar() {
 
   // Restore audio if URL is available
   if (currentSongData.url) {
+    if (typeof requireAuth === 'function' && requireAuth(function () { updatePlayerBar(); })) return;
     const audio = document.getElementById('globalAudioElement');
     if (audio) {
       // Remove old event listeners to avoid duplicates
@@ -857,7 +858,6 @@ function loadLyrics(songId) {
         return `
           <div class="lyric-line" data-start="${startSeconds}" data-end="${endSeconds}">
             <div style="display:flex; align-items:center; gap:12px;">
-              <span class="timestamp-badge">${startTime} - ${endTime}</span>
               <span class="${typeClass} flex-grow-1">${icon}${typeLabel}</span>
             </div>
           </div>
@@ -872,6 +872,7 @@ function loadLyrics(songId) {
           if (audio) {
             audio.currentTime = start;
             if (audio.paused) {
+              if (typeof requireAuth === 'function' && requireAuth(function () { audio.currentTime = start; audio.play(); })) return;
               audio.play();
             }
           }

@@ -2182,6 +2182,7 @@
             if (audio) {
               audio.currentTime = start;
               if (audio.paused) {
+                if (typeof requireAuth === 'function' && requireAuth(function () { audio.currentTime = start; audio.play(); })) return;
                 audio.play();
               }
             }
@@ -2898,6 +2899,7 @@
           }
         } else {
           // Resume from current position
+          if (typeof requireAuth === 'function' && requireAuth(function () { toggleGlobalSongAudio(button); })) return;
           globalAudio.play();
           button.innerHTML = '<i class="bi bi-pause-fill"></i>';
           if (document.getElementById('playerPlayBtn')) {
@@ -3043,6 +3045,8 @@
   }
 
   window.toggleFavorite = function (button) {
+    if (typeof requireAuth === 'function' && requireAuth(function () { toggleFavorite(button); }, '{% translate "سجل دخولك عشان تقدر تعمل إعجاب" %}')) return;
+
     const songId = button.dataset.songId;
     const icon = button.querySelector('i');
     const text = button.querySelector('span');

@@ -1,7 +1,11 @@
+import random
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -206,3 +210,41 @@ class PlaylistItem(models.Model):
 
     def __str__(self):
         return f'{self.playlist.name} - {self.song.title_ar}'
+
+
+class PasswordResetCode(models.Model):
+    """A short-lived 6-digit code emailed for the public site's
+    forgot-password flow (separate from the internal dashboard login).
+    """
+
+    EXPIRY = timedelta(minutes=15)
+
+    user = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='password_reset_codes',
+        verbose_name=_('المستخدم'),
+    )
+    code = models.CharField(max_length=6, verbose_name=_('الكود'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    used_at = models.DateTimeField(null=True, blank=True, verbose_name=_('تاريخ الاستخدام'))
+
+    class Meta:
+        verbose_name = _('كود استعادة كلمة السر')
+        verbose_name_plural = _('أكواد استعادة كلمة السر')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'code']),
+        ]
+
+    @classmethod
+    def generate(cls, user):
+        cls.objects.filter(user=user, used_at__isnull=True).delete()
+        return cls.objects.create(user=user, code=f'{random.randint(0, 999999):06d}')
+
+    @property
+    def is_valid(self):
+        return self.used_at is None and timezone.now() - self.created_at <= self.EXPIRY
+
+    def __str__(self):
+        return f'{self.user.username} - {self.code}'
