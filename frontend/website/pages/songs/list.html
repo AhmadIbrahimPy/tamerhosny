@@ -7,7 +7,7 @@
   <h1 class="th-section-title">{% translate "الأغاني" %}</h1>
   {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
-  <div class="th-grid cols-6">
+  <div class="th-grid cols-12">
     {% for song in songs %}
     <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
       <div class="th-img-wrap">

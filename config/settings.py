@@ -126,11 +126,23 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Real-time features (e.g. "listening now" presence) go over this. Same
 # Redis instance the app already has available; a separate REDIS_URL
 # lets it point elsewhere in production without touching CACHES.
+#
+# Explicit socket_timeout (well above the 5s BZPOPMIN poll channels_redis
+# blocks on internally) plus retry_on_timeout: without these the async
+# redis client's own read timeout could race that poll and surface as a
+# spurious `TimeoutError`, which channels treats as a hard failure and
+# drops the socket - the client then reconnects a couple seconds later,
+# repeating open/close on every hiccup instead of just retrying quietly.
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [env('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+            'hosts': [{
+                'address': env('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+                'socket_timeout': 30,
+                'socket_connect_timeout': 10,
+                'retry_on_timeout': True,
+            }],
         },
     },
 }

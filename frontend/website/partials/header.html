@@ -91,9 +91,55 @@
       <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
       <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
+
+      <div class="th-user-dropdown-divider mt-2"></div>
+
+      {% if user.is_authenticated %}
+      <div class="th-user-dropdown-header" style="padding-inline:4px;">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
+        {% else %}
+          <span class="th-dropdown-avatar-fallback">{{ user.username|slice:":1"|upper }}</span>
+        {% endif %}
+        <div class="th-dropdown-info">
+          <div class="th-dropdown-name">{{ user.username }}</div>
+          <div class="th-dropdown-email">{{ user.email }}</div>
+        </div>
+      </div>
+      <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
+        <i class="bi bi-heart"></i> {% translate "الإعجاب" %}
+      </a>
+      <a href="{% url 'website_app:recently-played' %}" class="th-dropdown-item">
+        <i class="bi bi-clock-history"></i> {% translate "استمعت مؤخراً" %}
+      </a>
+      <a href="{% url 'website_app:playlists' %}" class="th-dropdown-item">
+        <i class="bi bi-list-ul"></i> {% translate "قوائم التشغيل" %}
+      </a>
+      <a href="{% url 'website_app:remixes' %}" class="th-dropdown-item">
+        <i class="bi bi-music-note-beamed"></i> {% translate "الريمكسات" %}
+      </a>
+      <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
+        <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
+      </a>
+      <div class="th-user-dropdown-divider"></div>
+      <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
+        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+      </button>
+      <div class="th-user-dropdown-divider"></div>
+      <form action="{% url 'dashboard_app:logout' %}" method="post" class="th-dropdown-item">
+        {% csrf_token %}
+        <button type="submit" class="th-dropdown-btn">
+          <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
+        </button>
+      </form>
+      {% else %}
+      <a href="{% url 'dashboard_app:login' %}" class="th-login-btn" style="justify-content:center;">
+        <i class="bi bi-person"></i> {% translate "تسجيل دخول / إنشاء حساب" %}
+      </a>
       <button type="button" class="lang-btn mt-2" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
+      {% endif %}
     </div>
   </div>
 </nav>

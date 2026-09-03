@@ -149,6 +149,13 @@
     .th-slider{
       display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity;
       padding:16px 4px 40px; scrollbar-width:none; -ms-overflow-style:none;
+      /* Without these, a horizontal swipe that starts near the screen
+         edge (common once a slider is that wide) gets grabbed by the
+         browser's own edge-swipe back/forward gesture instead of
+         scrolling the slider - especially on mobile. */
+      touch-action: pan-x;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
     }
     .th-slider::-webkit-scrollbar{display:none;}
     .th-slider > .th-card{flex:0 0 170px; scroll-snap-align:start;}
@@ -200,6 +207,7 @@
     }
     .th-person-card .avatar-fallback{background:#22263a; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; color:var(--accent);}
     .th-person-card:hover img, .th-person-card:hover .avatar-fallback{border-color:var(--accent);}
+    .th-person-card .th-body{padding:0;}
 
     /* Song card — play affordance on hover */
     .th-card-song .th-play-badge{
@@ -326,6 +334,64 @@
     @media (max-width: 980px){
       .th-nav-links{display:none;}
       .th-nav-toggle{display:block;}
+    }
+
+    /* Single dial for "everything reads a bit big on mobile" - the site
+       is styled in px throughout (not rem), so there's no root font-size
+       to turn down that would cascade on its own. zoom scales text,
+       spacing and icons together from this one rule instead of touching
+       every page. */
+    @media (max-width: 576px){
+      body{zoom:87%;}
+    }
+
+    /* Any grid listing on mobile (songs, albums, movies, series,
+       commercials, concerts, people): a square/poster card per row
+       wastes a lot of height for very little info - switch to a
+       compact horizontal row (small thumbnail + text beside it), one
+       per line. Scoped to .th-grid so slider cards elsewhere
+       (.th-slider .th-card-*) keep their original square/poster look. */
+    @media (max-width: 576px){
+      .th-grid{grid-template-columns:1fr; gap:10px;}
+      .th-grid .th-card{
+        display:flex; flex-direction:row; align-items:center; gap:12px; padding:8px;
+      }
+      .th-grid .th-card:hover{transform:none;}
+      .th-grid .th-card .th-img-wrap{
+        width:64px; flex:0 0 64px; aspect-ratio:1/1 !important; border-radius:10px;
+      }
+      .th-grid .th-card .th-body{flex:1; min-width:0; padding:0; text-align:start;}
+      .th-grid .th-card .th-title{
+        text-align:start; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+      .th-grid .th-card .th-meta{text-align:start;}
+
+      /* Poster cards (movies/series/commercials) - narrower thumbnail at
+         their own 2:3 ratio instead of forcing a square crop. */
+      .th-grid .th-card.aspect-poster .th-img-wrap{
+        width:48px; flex:0 0 48px; aspect-ratio:2/3 !important;
+      }
+
+      /* Concerts - wider thumbnail at their own 16:9 ratio. */
+      .th-grid .th-card.aspect-wide .th-img-wrap{
+        width:96px; flex:0 0 96px; aspect-ratio:16/9 !important;
+      }
+
+      /* Albums - keep the circular vinyl look, just smaller and beside
+         the title instead of centered above it. */
+      .th-grid .th-card-album{padding-top:8px; text-align:start;}
+      .th-grid .th-card-album .th-img-wrap{
+        width:56px; flex:0 0 56px; margin-inline:0; box-shadow:none;
+      }
+      .th-grid .th-card-album:hover .th-img-wrap{transform:none;}
+
+      /* People - circular avatar beside the name instead of centered
+         above it. */
+      .th-grid .th-person-card{text-align:start; padding:8px;}
+      .th-grid .th-person-card img,
+      .th-grid .th-person-card .avatar-fallback{
+        width:56px; height:56px; margin:0; flex:0 0 56px;
+      }
     }
   </style>
   {% block extra_css %}{% endblock %}
@@ -770,11 +836,17 @@
     
     /* Mobile menu responsive styles */
     @media (max-width: 768px) {
+      /* Both are width:280px via inline style on the element itself,
+         which no external rule can beat without !important - so this
+         override never actually applied. The two 280px boxes stayed
+         claiming 560px combined on a ~375px screen, squeezing/covering
+         the middle controls (cover art, like button) between them and
+         swallowing taps meant for them. */
       .player-left-controls {
-        width: auto;
+        width: auto !important;
       }
       .player-right-controls {
-        width: auto;
+        width: auto !important;
         justify-content: flex-end;
       }
       .player-desktop-controls {

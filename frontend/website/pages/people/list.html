@@ -7,7 +7,7 @@
   <h1 class="th-section-title">{% translate "الفنانون" %}</h1>
   {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
-  <div class="th-grid cols-6">
+  <div class="th-grid cols-12">
     {% for person in people %}
     <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
       {% if person.profile_image %}
@@ -15,8 +15,10 @@
       {% else %}
         <div class="avatar-fallback">{{ person|localized_field:'full_name'|slice:":1" }}</div>
       {% endif %}
-      <div class="th-title">{{ person|localized_field:'full_name' }}</div>
-      <div class="th-meta">{{ person.get_primary_role_display }}</div>
+      <div class="th-body">
+        <div class="th-title">{{ person|localized_field:'full_name' }}</div>
+        <div class="th-meta">{{ person.get_primary_role_display }}</div>
+      </div>
     </a>
     {% empty %}
     <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>

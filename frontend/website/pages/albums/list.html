@@ -7,7 +7,7 @@
   <h1 class="th-section-title">{% translate "الألبومات" %}</h1>
   {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
-  <div class="th-grid cols-6">
+  <div class="th-grid cols-12">
     {% for album in albums %}
     <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
       <div class="th-img-wrap">

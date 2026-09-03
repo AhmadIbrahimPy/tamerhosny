@@ -24,7 +24,7 @@
   /* --- Hero Section --- */
   .song-hero {
     position: relative;
-    margin: 28px 0 36px;
+    margin: 28px 0 0px;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 32px;
@@ -32,7 +32,6 @@
     isolation: isolate;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   }
-
   .song-hero-bg,
   .song-hero-video {
     position: absolute;
@@ -72,7 +71,7 @@
 
   .song-cover {
     position: relative;
-    width: 100%;
+    width: 90%;
     max-width: 280px;
     aspect-ratio: 1;
     overflow: hidden;
@@ -156,6 +155,9 @@
   /* --- Song Info & Meta --- */
   .song-content {
     min-width: 0;
+    width: 100%; /* .song-hero-inner centers flex items by default (mobile
+                    stacked layout) - without this it shrinks to its
+                    content's width and leaves space on both sides. */
   }
 
   .song-topline {
@@ -413,10 +415,11 @@
     }
     .song-actions-more-wrap {
       display: block;
+      text-align: end;
     }
     .song-action-more {
       display: inline-flex;
-      width: 48px;
+      width: 100%;
       padding: 12px;
     }
     .song-actions-menu {
@@ -425,7 +428,7 @@
       gap: 4px;
       position: absolute;
       bottom: calc(100% + 8px);
-      inset-inline: 0;
+      inset-inline: -12px;
       padding: 8px;
       background: var(--card);
       border: 1px solid var(--border);
@@ -457,15 +460,26 @@
       margin-bottom: 4px;
       border-bottom: 1px solid var(--border);
     }
+    /* No action buttons after it (e.g. no lyrics for this song) - drop
+       the separator so it doesn't look like a broken, half-empty menu. */
+    .song-actions-menu-info:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 10px;
+    }
     .song-actions-menu-info-row.song-info-row,
-    .song-actions-menu-info-row.song-alt-title {
+    .song-actions-menu-info-row.song-alt-title,
+    .song-actions-menu-info-row.song-share {
       justify-content: flex-start;
       text-align: start;
       margin: 0;
     }
 
-    /* The hero's own copies of this info move into the menu above. */
-    .song-topline > .song-type,
+    /* The hero's own copies of this info move into the menu above.
+       .song-topline only ever held the type badge and the share row -
+       both hidden here - so hide the row itself too, not just its
+       children, or its margin still leaves an empty gap. */
+    .song-topline,
     .song-title-row .song-info-row,
     .song-content > .song-alt-title {
       display: none;
@@ -596,7 +610,7 @@
   .song-hero-media .song-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 32px;
     padding: 12px 10px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -958,6 +972,9 @@
     overflow-x: auto;
     padding-bottom: 8px;
     scrollbar-width: thin;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .credit-card {
@@ -1024,6 +1041,12 @@
     padding: 4px 2px 12px;
     scroll-behavior: smooth;
     scrollbar-width: none;
+    /* Without these, a horizontal swipe near the screen edge (the track
+       runs edge-to-edge on mobile) gets grabbed by the browser's own
+       edge-swipe back/forward gesture instead of scrolling the slider. */
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .slider-track::-webkit-scrollbar { display: none; }
 
@@ -1332,18 +1355,50 @@
   @media (max-width: 576px) {
     .song-container { padding-inline: 16px; }
     .song-hero { border-radius: 20px; margin-top: 16px; }
-    .song-hero-inner { padding: 20px; }
-    .song-cover { width: 180px; }
+    /* Hero overall is smaller here (padding/gap/title/button sizes) -
+       .song-stats and .synced-lyrics keep their own sizing untouched,
+       they were already small. */
+    .song-hero-inner { padding: 14px; gap: 14px; }
+    /* base.html's global mobile zoom:87% (everything shrinks together
+       from that one dial) hit .song-stats harder than the rest, since
+       it was already the smallest text on the page - zoom:115% here
+       cancels that out (0.87 * 1.15 ≈ 1) so it reads at its original
+       size instead of compounding smaller. */
+    .song-stats { zoom: 115%; }
+    .song-cover,
+    .song-hero-media {
+      width: 90%;
+      max-width: none; /* fill the row instead of leaving space on both sides */
+    }
+    .cover-play-btn { width: 44px; height: 44px; border-width: 2px; font-size: 17px; }
+    .cover-play-btn i { font-size: 17px; }
+    .song-title { font-size: 24px; }
     .song-content { padding: 0; }
-    .song-hero-media { padding: 0; }
-    .song-actions { display: flex; flex-wrap: wrap; }
-    .song-action { width: auto; padding: 12px; }
+    .song-hero-media { padding: 0; gap: 12px; }
+    /* Icon-only buttons at this width used to end up small and centered,
+       with empty space on both sides of them - flex:1 makes them share
+       the full row instead of clustering in the middle. */
+    .song-actions {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: stretch;
+      margin-bottom: 0;
+    }
+    .song-action {
+      flex: 1;
+      width: auto;
+      min-height: 40px;
+      padding: 10px;
+    }
     .song-action span { display: none; }
-    .song-action i { font-size: 20px; margin: 0; }
+    .song-action i { font-size: 18px; margin: 0; }
     .song-title-row {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 12px;
+    }
+    .song-title {
+      text-align: center;
     }
     .song-info-row {
       flex-wrap: wrap;
@@ -1558,6 +1613,20 @@
                                     {% if song.duration_seconds %}
                                     <span class="song-info-item"><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>
                                     {% endif %}
+                                </div>
+                                {% endif %}
+                                {% if not duet or duet.is_public %}
+                                <div class="song-actions-menu-info-row song-share">
+                                    <span class="song-share-label">{% translate "مشاركة" %}</span>
+                                    <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+                                    <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </a>
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
+                                        <i class="bi bi-facebook"></i>
+                                    </a>
                                 </div>
                                 {% endif %}
                             </div>
@@ -2231,14 +2300,11 @@
       return;
     }
 
-    // Only show lyrics for this specific song
-    const audioPath = globalAudio.src.split('/media/').pop();
-    {% if song.audio_file %}
-    const expectedPath = '{{ audio_url|escapejs }}'.split('/media/').pop();
-    if (audioPath !== expectedPath) {
+    // Only show lyrics for this specific song - compare by id, not by
+    // audio src string (see the play/pause listeners below for why).
+    if (typeof currentSongId === 'undefined' || Number(currentSongId) !== {{ song.pk }}) {
       return;
     }
-    {% endif %}
 
     if (lyricsSegments.length === 0) {
       return;
