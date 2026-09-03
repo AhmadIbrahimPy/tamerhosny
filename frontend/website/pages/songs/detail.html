@@ -3274,22 +3274,25 @@
   // online this second. Opened on demand since it's only relevant while
   // the modal is visible; a live dot per row still shows who happens to
   // be listening right now, refreshed independently of the ranking.
+  // Connected from page load (same lifecycle as the listener socket)
+  // rather than only while the modal is open - since the board is now
+  // filtered to live listeners only, its entry count IS the accurate
+  // "listening now" number, and it's proven reliable, so the stat badge
+  // is driven from here instead of the separate count-only channel,
+  // which could drift out of sync with it.
   let leaderboardSocket = null;
+  let lastLeaderboardEntries = [];
 
   window.openLeaderboardModal = function () {
     const modal = document.getElementById('leaderboardModal');
     if (!modal) return;
     modal.style.display = 'flex';
-    connectLeaderboardSocket();
+    renderLeaderboard(lastLeaderboardEntries);
   };
 
   window.closeLeaderboardModal = function () {
     const modal = document.getElementById('leaderboardModal');
     if (modal) modal.style.display = 'none';
-    if (leaderboardSocket) {
-      leaderboardSocket.close();
-      leaderboardSocket = null;
-    }
   };
 
   function connectLeaderboardSocket() {
@@ -3304,7 +3307,12 @@
       } catch (error) {
         return;
       }
-      if (data.type === 'leaderboard') renderLeaderboard(data.entries || []);
+      if (data.type !== 'leaderboard') return;
+      const entries = data.entries || [];
+      lastLeaderboardEntries = entries;
+      updateListenerCount(entries.length);
+      const modal = document.getElementById('leaderboardModal');
+      if (modal && modal.style.display === 'flex') renderLeaderboard(entries);
     });
 
     leaderboardSocket.addEventListener('close', function () {
@@ -3597,6 +3605,7 @@
     {% endif %}
 
     connectListenerSocket(songId);
+    connectLeaderboardSocket();
 
     if (typeof globalAudio !== 'undefined' && globalAudio) {
       // Compare by song id, not by audio src string - the bar's src can be
@@ -3737,6 +3746,7 @@
     // Closing the socket is enough - the server's disconnect() handler
     // removes this listener and broadcasts the updated count itself.
     disconnectListenerSocket();
+    if (leaderboardSocket) leaderboardSocket.close();
   });
 
 })();

@@ -190,11 +190,14 @@
     .th-slider{
       display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity;
       padding:16px 4px 40px; scrollbar-width:none; -ms-overflow-style:none;
-      /* Without these, a horizontal swipe that starts near the screen
-         edge (common once a slider is that wide) gets grabbed by the
-         browser's own edge-swipe back/forward gesture instead of
-         scrolling the slider - especially on mobile. */
-      touch-action: pan-x;
+      /* overscroll-behavior-x is what actually stops a horizontal swipe
+         near the screen edge from being grabbed by the browser's own
+         edge-swipe back/forward gesture. touch-action is explicitly
+         BOTH axes (same as the default) - restricting it to pan-x alone
+         also blocked page scroll for any vertical-ish touch that
+         happened to start over the slider, forcing users to hunt for a
+         gap around it just to scroll the page. */
+      touch-action: pan-x pan-y;
       overscroll-behavior-x: contain;
       -webkit-overflow-scrolling: touch;
     }

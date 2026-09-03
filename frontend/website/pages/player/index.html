@@ -860,20 +860,27 @@ window.openLeaderboardModal = function () {
   }
 
   modal.style.display = 'flex';
-  connectLeaderboardSocket(currentSongData.songId);
+  renderLeaderboard(lastLeaderboardEntries);
 };
 
 window.closeLeaderboardModal = function () {
   const modal = document.getElementById('leaderboardModal');
   if (modal) modal.style.display = 'none';
-  if (leaderboardSocket) {
-    leaderboardSocket.close();
-    leaderboardSocket = null;
-  }
 };
 
+// Connected from page load (same lifecycle as the listener socket, and
+// reconnected on song change the same way) rather than only while the
+// modal is open - since the board is now filtered to live listeners
+// only, its entry count IS the accurate "listening now" number, and
+// it's proven reliable, so the stat badge is driven from here instead
+// of the separate count-only channel, which could drift out of sync.
+let leaderboardSocketSongId = null;
+let lastLeaderboardEntries = [];
+
 function connectLeaderboardSocket(songId) {
-  if (leaderboardSocket) return;
+  if (leaderboardSocket && leaderboardSocketSongId === songId) return;
+  if (leaderboardSocket) leaderboardSocket.close();
+  leaderboardSocketSongId = songId;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   leaderboardSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/leaderboard/`);
 
@@ -884,11 +891,17 @@ function connectLeaderboardSocket(songId) {
     } catch (error) {
       return;
     }
-    if (data.type === 'leaderboard') renderLeaderboard(data.entries || []);
+    if (data.type !== 'leaderboard') return;
+    const entries = data.entries || [];
+    lastLeaderboardEntries = entries;
+    const el = document.getElementById('playerPageListenerCount');
+    if (el) el.textContent = entries.length;
+    const modal = document.getElementById('leaderboardModal');
+    if (modal && modal.style.display === 'flex') renderLeaderboard(entries);
   });
 
   leaderboardSocket.addEventListener('close', function () {
-    leaderboardSocket = null;
+    if (leaderboardSocket && leaderboardSocketSongId === songId) leaderboardSocket = null;
   });
 }
 
@@ -1132,6 +1145,9 @@ function loadPlayerPageData() {
       isCurrentlyListening = true;
       sendListenerAction('start');
     }
+  }
+  if (currentSongData.songId && leaderboardSocketSongId !== currentSongData.songId) {
+    connectLeaderboardSocket(currentSongData.songId);
   }
 
   // Always fetch from API to ensure the queue (other songs) includes the
