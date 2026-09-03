@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
@@ -58,6 +59,8 @@ def robots_txt(request):
     lines = [
         'User-agent: *',
         'Allow: /',
+        f'Disallow: /{settings.ADMIN_URL_PATH}/',
+        f'Disallow: /{settings.DASHBOARD_URL_PATH}/',
         f'Sitemap: {request.build_absolute_uri("/sitemap.xml")}',
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
