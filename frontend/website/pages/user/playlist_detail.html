@@ -259,6 +259,13 @@
 </style>
 
 <script>
+(function () {
+// Wrapped in an IIFE so a boosted revisit to this page (or to a
+// *different* playlist's detail page, same identifier either way)
+// doesn't throw "Identifier 'playlistId' has already been declared" -
+// re-running this script unwrapped redeclares its top-level const, and
+// unlike the DOM node for the <script> tag, that isn't undone just
+// because #th-page-root got swapped out.
 const playlistId = {{ playlist.pk }};
 
 function openEditPlaylistModal() {
@@ -347,5 +354,11 @@ document.getElementById('editPlaylistModal').addEventListener('click', function(
     closeEditPlaylistModal();
   }
 });
+
+window.openEditPlaylistModal = openEditPlaylistModal;
+window.closeEditPlaylistModal = closeEditPlaylistModal;
+window.updatePlaylist = updatePlaylist;
+window.removeSongFromPlaylist = removeSongFromPlaylist;
+})();
 </script>
 {% endblock %}

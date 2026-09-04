@@ -194,6 +194,13 @@
 
 {% block extra_js %}
 <script>
+(function () {
+// Wrapped in an IIFE so a boosted revisit to this page doesn't throw
+// "Identifier 'audio' has already been declared" - re-running this
+// script unwrapped redeclares its top-level const/let bindings, and
+// unlike the DOM node for the <script> tag, those aren't undone just
+// because #th-extra-js got swapped out (see base.html's thOnTeardown
+// comment for the general version of this).
 const audio = document.getElementById('audioElement');
 const playBtn = document.getElementById('audioPlayBtn');
 const playIcon = document.getElementById('playIcon');
@@ -207,7 +214,7 @@ const waveform = document.getElementById('waveform');
 let isPlaying = false;
 let hasStarted = false;
 
-function toggleAudio() {
+window.toggleAudio = function () {
   if (hasStarted && !isPlaying) {
     // Resume from pause
     audio.play();
@@ -281,5 +288,6 @@ audio.addEventListener('ended', () => {
 if (progressSlider) {
   progressSlider.addEventListener('input', seekAudio);
 }
+})();
 </script>
 {% endblock %}

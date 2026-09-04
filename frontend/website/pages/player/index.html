@@ -763,6 +763,18 @@
 
 {% block extra_js %}
 <script>
+(function () {
+// Every boosted navigation re-runs this whole script (see thOnReady's
+// comment in base.html), but a page-level `let`/`const` binding - unlike
+// `var` - isn't undone just because the <script> tag that declared it
+// got swapped out of the DOM; the JS engine keeps the old one alive in
+// the shared script scope. Re-running this file unwrapped threw
+// "Identifier 'currentSongData' has already been declared" the moment
+// this page was visited a second time. Wrapping the whole thing in an
+// IIFE gives it a fresh scope every run instead; anything referenced
+// from inline onclick="" (which always runs in true global scope) is
+// exposed explicitly via window.* at the bottom.
+
 // Get current song data from localStorage
 let currentSongData = JSON.parse(localStorage.getItem('currentSongData') || '{}');
 let isFetchingFromAPI = false; // Flag to prevent infinite loop
@@ -1419,5 +1431,12 @@ if (typeof thOnTeardown === 'function') {
     disconnectListenerSocket();
   });
 }
+
+// Referenced from inline onclick="" in this page's own HTML, which
+// always runs in real global scope - openLeaderboardModal/
+// closeLeaderboardModal already did this (defined as window.* directly).
+window.playSongFromList = playSongFromList;
+window.switchPlayerTab = switchPlayerTab;
+})();
 </script>
 {% endblock %}
