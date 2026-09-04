@@ -3124,6 +3124,7 @@
         } else {
           // Resume from current position
           if (typeof requireAuth === 'function' && requireAuth(function () { toggleGlobalSongAudio(button); })) return;
+          if (typeof thEnsureAudible === 'function') thEnsureAudible();
           globalAudio.play();
           button.innerHTML = '<i class="bi bi-pause-fill"></i>';
           if (document.getElementById('playerPlayBtn')) {

@@ -882,6 +882,7 @@
       }
 
       // Play audio
+      thEnsureAudible();
       globalAudio.play().catch(function(error) {
         console.error('Error playing audio:', error);
         setPlayButtonsIcon('bi-play-fill');
@@ -905,6 +906,7 @@
             if (requireAuthForPlayback(function () {
               toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
             })) return;
+            thEnsureAudible();
             globalAudio.play();
           }
           return;
@@ -1345,6 +1347,7 @@
       // above, not here - this just needs to trigger them.
       if (globalAudio.paused) {
         if (requireAuthForPlayback(toggleGlobalAudio)) return;
+        thEnsureAudible();
         globalAudio.play();
       } else {
         isManualPause = true;
@@ -1574,6 +1577,21 @@
 
     // Make toggleMute globally accessible
     window.toggleMute = toggleMute;
+
+    // Called wherever playback actually starts (see below). Mute here
+    // is two separate, independently-stuck-able states - the native
+    // <audio>.muted flag (restorePlayerState can set it from old
+    // localStorage) and volume being left at 0 by toggleMute() (which
+    // never touches .muted, only .volume) - either one alone silences
+    // playback with everything else looking normal. Pressing play is a
+    // clear enough signal they want to actually hear it.
+    function thEnsureAudible() {
+      if (!globalAudio) return;
+      globalAudio.muted = false;
+      if (globalAudio.volume === 0) globalAudio.volume = previousVolume || 1;
+      isMuted = false;
+      updateMuteIcon();
+    }
 
     function togglePlayerMenu() {
       const menu = document.getElementById('playerMobileMenu');
