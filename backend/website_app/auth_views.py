@@ -21,6 +21,7 @@ from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -28,6 +29,17 @@ from django.views.decorators.http import require_POST
 from backend.main_app.models import PasswordResetCode, UserAccount
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+
+def _safe_next_path(request, candidate):
+    """A relative in-site path to bounce back to, or '/' if candidate is
+    missing/unsafe (open-redirect check - Google echoes 'state' back
+    verbatim, so it must be re-validated, not just trusted)."""
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+    ):
+        return candidate
+    return '/'
 
 
 def _json_body(request):
@@ -251,14 +263,27 @@ def google_login_start(request):
         'response_type': 'code',
         'scope': 'openid email profile',
         'prompt': 'select_account',
+        # Google echoes 'state' back verbatim to the callback - carrying
+        # the page the visitor started from here is what lets the
+        # callback return them to it (a song page, mid-playback-gate)
+        # instead of always landing on the homepage.
+        'state': _safe_next_path(request, request.GET.get('next')),
     }
     return redirect(f'{GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}')
 
 
 def google_login_callback(request):
+    # The exact page the visitor started from (set by google_login_start,
+    # already re-validated there) - every redirect below returns them to
+    # it instead of always landing on the homepage.
+    next_path = _safe_next_path(request, request.GET.get('state'))
+    error_redirect = redirect(
+        next_path + ('&' if '?' in next_path else '?') + 'google_auth_error=1',
+    )
+
     code = request.GET.get('code')
     if not code or not settings.GOOGLE_OAUTH_CLIENT_ID:
-        return redirect('/?google_auth_error=1')
+        return error_redirect
 
     try:
         token_data = urllib.parse.urlencode({
@@ -278,11 +303,11 @@ def google_login_callback(request):
         with urllib.request.urlopen(userinfo_request, timeout=10) as response:
             profile = json.loads(response.read())
     except Exception:
-        return redirect('/?google_auth_error=1')
+        return error_redirect
 
     email = (profile.get('email') or '').strip().lower()
     if not email:
-        return redirect('/?google_auth_error=1')
+        return error_redirect
 
     user = UserAccount.objects.filter(email__iexact=email).first()
     if not user:
@@ -299,4 +324,4 @@ def google_login_callback(request):
         user.save()
 
     auth_login(request, user)
-    return redirect('/')
+    return redirect(next_path)
