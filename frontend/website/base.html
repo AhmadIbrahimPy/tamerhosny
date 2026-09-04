@@ -754,9 +754,9 @@
       }
     }
 
-    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
+    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
       if (requireAuthForPlayback(function () {
-        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
       })) return;
 
       // Check if this is the same song - don't reset position
@@ -808,14 +808,17 @@
       if (album) {
         document.getElementById('playerAlbum').textContent = album;
         document.getElementById('playerAlbum').style.display = 'block';
+        document.getElementById('playerAlbum').setAttribute('href', albumLink || '#');
       } else {
         document.getElementById('playerAlbum').style.display = 'none';
       }
 
-      // For Mix - show songs count instead of album
+      // For Mix - show songs count instead of album (nothing sensible
+      // to link to there, so this isn't itself a real destination)
       if (isMix && songs) {
         document.getElementById('playerAlbum').textContent = songs;
         document.getElementById('playerAlbum').style.display = 'block';
+        document.getElementById('playerAlbum').setAttribute('href', '#');
       }
 
       // Store basic song data for player page (don't overwrite if more detailed data exists)
@@ -889,12 +892,12 @@
       });
     }
 
-    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
+    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
       if (globalAudio && globalAudio.src) {
         // Check if current audio is the same song (compare URLs more loosely)
         const currentUrl = globalAudio.src;
         const isSameSong = currentUrl.includes(url) || url.includes(currentUrl);
-        
+
         if (isSameSong) {
           currentPlayBtn = playBtn;
           if (!globalAudio.paused) {
@@ -904,7 +907,7 @@
           } else {
             // Currently paused - resume from current position
             if (requireAuthForPlayback(function () {
-              toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+              toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
             })) return;
             thEnsureAudible();
             globalAudio.play();
@@ -913,7 +916,7 @@
         }
       }
       // Different song or no audio - play new song
-      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
     }
 
     function openPlayerPage() {
@@ -930,14 +933,50 @@
     // to every <a>/<form> under it). So: build one, have htmx process
     // it (applying that inherited config, marking it boosted), and
     // click it - a real boosted link click in every way that matters.
+    //
+    // Two htmx quirks fight each other here, so this can't be simpler:
+    //  - It has to be a *fresh* element every call. htmx reads and
+    //    closes over the href only once, when it first marks an
+    //    element boosted - reusing one anchor for a second, different
+    //    destination would silently keep going to the first path.
+    //  - It has to stay in the DOM, attached exactly where htmx
+    //    processed it, until the response actually arrives - htmx
+    //    re-resolves hx-target/hx-select from it at swap time, not just
+    //    at request time. Removing it right after the synchronous
+    //    click() looked fine at request time but left it detached (no
+    //    ancestors left to find body's config on) by the time the
+    //    response came back, so htmx fell back to no selection at all -
+    //    swapping the *entire* fetched page (nav included) into
+    //    #th-page-root instead of just its own #th-page-root.
+    // htmx:afterRequest fires on the element right after the swap it
+    // triggered has already happened, so that's the first safe point to
+    // remove it.
     window.thBoostedNavigate = function (path) {
       var a = document.createElement('a');
       a.href = path;
       a.style.display = 'none';
       document.body.appendChild(a);
       htmx.process(a);
+      a.addEventListener('htmx:afterRequest', function () { a.remove(); });
       a.click();
-      a.remove();
+    };
+
+    // #playerLink/#playerAlbum (the audio bar's song/album links) start
+    // out as href="#" (no song loaded yet) and get their real href set
+    // later, in JS, once a song actually plays - htmx only ever decides
+    // whether an <a> is "boosted" once, the first time it processes the
+    // page, so by then these always looked like dead "#" links and were
+    // permanently skipped. A real onclick handles it instead: a
+    // modifier/middle click still gets the browser's native "open in a
+    // new tab" (returning true lets the default happen), anything else
+    // is a boosted navigation to whatever the href currently is.
+    window.thPlayerNavClick = function (event, elId) {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return true;
+      var el = document.getElementById(elId);
+      var href = el && el.getAttribute('href');
+      if (!href || href === '#') return false;
+      thBoostedNavigate(href);
+      return false;
     };
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -1023,11 +1062,11 @@
           <i class="bi bi-music-note-beamed" style="color:var(--muted); font-size:24px;" id="playerImageIcon"></i>
         </div>
         <div style="flex:1; min-width:0;">
-          <a id="playerLink" href="#" style="text-decoration:none; color:inherit;">
+          <a id="playerLink" href="#" onclick="return thPlayerNavClick(event, 'playerLink')" style="text-decoration:none; color:inherit;">
             <div id="playerTitle" style="font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
             <div id="playerArtist" style="color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
-            <div id="playerAlbum" style="color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></div>
           </a>
+          <a id="playerAlbum" href="#" onclick="return thPlayerNavClick(event, 'playerAlbum')" style="display:block; text-decoration:none; color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></a>
         </div>
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
           <i class="bi bi-heart"></i>
@@ -1203,6 +1242,7 @@
           currentSongTitle: playerTitle ? playerTitle.textContent : null,
           currentSongArtist: playerArtist ? playerArtist.textContent : null,
           currentSongAlbum: playerAlbum ? playerAlbum.textContent : null,
+          currentSongAlbumLink: playerAlbum ? playerAlbum.getAttribute('href') : null,
           currentSongImage: playerImageImg ? playerImageImg.src : null,
           currentSongLink: playerLink ? playerLink.href : null,
           isRepeat: isRepeat,
@@ -1313,7 +1353,10 @@
             
             if (state.currentSongAlbum) {
               const albumEl = document.getElementById('playerAlbum');
-              if (albumEl) albumEl.textContent = state.currentSongAlbum;
+              if (albumEl) {
+                albumEl.textContent = state.currentSongAlbum;
+                albumEl.setAttribute('href', state.currentSongAlbumLink || '#');
+              }
             }
             
             if (state.currentSongImage) {
@@ -1400,7 +1443,7 @@
 
       const song = list[targetIndex];
       const btn = currentPlayBtn || document.getElementById('playerPlayBtn');
-      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link || null, song.artist, song.album, false, song.songId);
+      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link || null, song.artist, song.album, false, song.songId, song.albumLink);
     }
 
     // No queue set up yet (e.g. next/prev pressed outside the player page

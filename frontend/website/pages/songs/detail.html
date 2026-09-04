@@ -3106,6 +3106,7 @@
     const isDuet = {% if duet %}true{% else %}false{% endif %};
     const songArtist = '{% for singer in singers %}{{ singer.person.name }}{% if not forloop.last %}، {% endif %}{% endfor %}'.trim();
     const songAlbum = '{% if song.album %}{{ song.album|localized_field:"title" }}{% endif %}';
+    const songAlbumLink = '{% if song.album %}{% url "website_app:album-detail" song.album.slug %}{% endif %}';
 
     // Check if this is the same song and just toggle play/pause
     if (typeof globalAudio !== 'undefined' && globalAudio.src) {
@@ -3176,7 +3177,7 @@
     localStorage.setItem('currentSongData', JSON.stringify(songData));
 
     if (typeof toggleAudio === 'function') {
-      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }});
+      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink);
     } else {
       console.error('Global audio player not available');
     }
