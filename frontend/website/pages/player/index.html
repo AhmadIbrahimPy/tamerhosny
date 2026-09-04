@@ -1063,12 +1063,39 @@ function updatePlayerBar() {
   if (currentSongData.url) {
     const audio = document.getElementById('globalAudioElement');
     if (audio) {
-      // Remove old event listeners to avoid duplicates
+      // A boosted revisit to /player/ (or arriving here while the song
+      // was already playing from the audio bar's cover-art click) reruns
+      // this whole function - resetting and reloading unconditionally
+      // restarted whatever was already playing from 0 every time.
+      const isSameSong = audio.src && (
+        audio.src.includes(currentSongData.url) || currentSongData.url.includes(audio.src)
+      );
+
+      // Remove old event listeners to avoid duplicates - always needed
+      // even for the same song, since a fresh run of this script means
+      // handleTimeUpdate etc. are new function instances that the DOM
+      // currently on the page (this run's) actually needs updated.
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleAudioEnded);
       audio.removeEventListener('play', handleAudioPlay);
       audio.removeEventListener('pause', handleAudioPause);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('ended', handleAudioEnded);
+      audio.addEventListener('play', handleAudioPlay);
+      audio.addEventListener('pause', handleAudioPause);
+
+      if (isSameSong) {
+        // Already loaded (playing or paused) - just reflect its real
+        // state instead of restarting it.
+        document.getElementById('playerPlayBtn').innerHTML = audio.paused
+          ? '<i class="bi bi-play-fill"></i>'
+          : '<i class="bi bi-pause-fill"></i>';
+        if (audio.duration) handleLoadedMetadata();
+        handleTimeUpdate();
+        return;
+      }
 
       // Stop current playback
       audio.pause();
@@ -1077,13 +1104,6 @@ function updatePlayerBar() {
       // Load new audio source
       audio.src = currentSongData.url;
       audio.load();
-
-      // Add event listeners for progress tracking
-      audio.addEventListener('timeupdate', handleTimeUpdate);
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.addEventListener('ended', handleAudioEnded);
-      audio.addEventListener('play', handleAudioPlay);
-      audio.addEventListener('pause', handleAudioPause);
 
       // Auto-play the song
       audio.play().then(() => {
