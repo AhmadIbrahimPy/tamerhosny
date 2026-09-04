@@ -755,10 +755,6 @@
     }
 
     function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
-      if (requireAuthForPlayback(function () {
-        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
-      })) return;
-
       // Check if this is the same song - don't reset position
       let isSameSong = false;
       if (globalAudio.src) {
@@ -906,9 +902,6 @@
             globalAudio.pause();
           } else {
             // Currently paused - resume from current position
-            if (requireAuthForPlayback(function () {
-              toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
-            })) return;
             thEnsureAudible();
             globalAudio.play();
           }
@@ -1408,7 +1401,6 @@
       // audioPlayPause is dispatched from the native play/pause listeners
       // above, not here - this just needs to trigger them.
       if (globalAudio.paused) {
-        if (requireAuthForPlayback(toggleGlobalAudio)) return;
         thEnsureAudible();
         globalAudio.play();
       } else {
@@ -2039,10 +2031,6 @@
       openAuthModal('login', message);
       return true;
     };
-
-    function requireAuthForPlayback(retry) {
-      return requireAuth(retry, '{% translate "سجل دخولك عشان تقدر تسمع الأغاني" %}');
-    }
 
     window.openAuthModal = function (view, message) {
       const overlay = document.getElementById('authModalOverlay');

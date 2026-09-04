@@ -1312,6 +1312,32 @@
     padding: 40px 20px;
     font-size: 13.5px;
   }
+  .leaderboard-row-anon { cursor: default; }
+  .leaderboard-row-anon .leaderboard-avatar-fallback { color: var(--muted); }
+  .leaderboard-guest-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(212,175,55,.08);
+    border: 1px solid rgba(212,175,55,.25);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .leaderboard-guest-banner button {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
   .leaderboard-live-dot {
     display: inline-block;
     width: 8px;
@@ -2403,7 +2429,6 @@
             if (audio) {
               audio.currentTime = start;
               if (audio.paused) {
-                if (typeof requireAuth === 'function' && requireAuth(function () { audio.currentTime = start; audio.play(); })) return;
                 audio.play();
               }
             }
@@ -3124,7 +3149,6 @@
           }
         } else {
           // Resume from current position
-          if (typeof requireAuth === 'function' && requireAuth(function () { toggleGlobalSongAudio(button); })) return;
           if (typeof thEnsureAudible === 'function') thEnsureAudible();
           globalAudio.play();
           button.innerHTML = '<i class="bi bi-pause-fill"></i>';
@@ -3366,17 +3390,15 @@
       return;
     }
 
-    list.innerHTML = entries.map(function (entry) {
+    const rowsHtml = entries.map(function (entry) {
       const trendClass = entry.trend ? 'trend-' + entry.trend.toLowerCase() : 'trend-live';
       const trendIcon = entry.trend ? (TREND_ICON[entry.trend] || TREND_ICON.SAME) : '<i class="bi bi-broadcast"></i>';
       const avatar = entry.avatar_url
         ? `<img class="leaderboard-avatar" src="${escapeHtml(entry.avatar_url)}" alt="">`
-        : `<div class="leaderboard-avatar-fallback">${escapeHtml(entry.display_name.slice(0, 1).toUpperCase())}</div>`;
+        : `<div class="leaderboard-avatar-fallback">${entry.is_anonymous ? '<i class="bi bi-person-fill"></i>' : escapeHtml(entry.display_name.slice(0, 1).toUpperCase())}</div>`;
       const liveDot = entry.is_live ? '<span class="leaderboard-live-dot" title="{% translate "بيسمعها دلوقتي" %}"></span>' : '';
       const likeBadge = entry.is_liked ? '<i class="bi bi-heart-fill"></i>' : '';
-
-      return `
-        <a class="leaderboard-row" href="/u/${encodeURIComponent(entry.username)}/">
+      const inner = `
           <div class="leaderboard-rank">${entry.rank ? "#" + entry.rank : "<i class=\"bi bi-headphones\"></i>"}</div>
           ${avatar}
           <div class="leaderboard-info">
@@ -3384,9 +3406,25 @@
             <div class="leaderboard-meta">${entry.full_listen_count} {% translate "استماع كامل" %} ${likeBadge}</div>
           </div>
           <div class="leaderboard-trend ${trendClass}">${trendIcon}</div>
-        </a>
-      `;
+        `;
+      // An anonymous ("#1234") entry has no profile page to link to.
+      return entry.is_anonymous
+        ? `<div class="leaderboard-row leaderboard-row-anon">${inner}</div>`
+        : `<a class="leaderboard-row" href="/u/${encodeURIComponent(entry.username)}/">${inner}</a>`;
     }).join('');
+
+    // A logged-out viewer playing this song right now is quite likely
+    // one of these anonymous rows themselves - tell them why (no
+    // account to attribute a name/avatar/rank to) and let them fix it
+    // without leaving the list.
+    const guestBanner = window.isAuthenticated ? '' : `
+      <div class="leaderboard-guest-banner">
+        <span>{% translate "سجل دخولك عشان يظهر اسمك وصورتك وترتيبك في القايمة" %}</span>
+        <button type="button" onclick="window.requireAuth(null, '{% translate "سجل دخولك عشان يظهر اسمك وصورتك وترتيبك في القايمة" %}')">{% translate "تسجيل الدخول" %}</button>
+      </div>
+    `;
+
+    list.innerHTML = guestBanner + rowsHtml;
   }
 
   window.toggleFavorite = function (button) {

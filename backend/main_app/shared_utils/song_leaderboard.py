@@ -21,8 +21,18 @@ so up/down/same/new trend arrows and the live-set ranks stay meaningful
 across recomputes; only the *displayed* board is filtered down to who's
 live right now. Broadcast over `song_{id}_leaderboard` on every score
 change or presence change (start/stop listening).
+
+Playback itself needs no account (see CurrentSongListener.session_key),
+so a guest listening right now shows up here too - just with no score
+of their own to rank by (nothing to attribute it to across visits), as
+an anonymous "#1234"-style entry instead of a name/avatar. The number
+is derived from the exact set of session keys currently listening
+anonymously to this song, so it stays put while that set doesn't change
+and only reshuffles when someone joins or leaves - not re-randomized on
+every single broadcast.
 """
 import math
+import random
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -87,6 +97,49 @@ def _current_live_user_ids(song_id):
     )
 
 
+def _current_live_anonymous_session_keys(song_id):
+    from backend.main_app.models import CurrentSongListener
+
+    return set(
+        CurrentSongListener.objects.filter(song_id=song_id, user__isnull=True)
+        .exclude(session_key__isnull=True).exclude(session_key='')
+        .values_list('session_key', flat=True)
+    )
+
+
+def _serialize_anonymous(number):
+    return {
+        'rank': None,
+        'trend': None,
+        'full_listen_count': 0,
+        'is_liked': False,
+        'is_live': True,
+        'username': None,
+        'display_name': f'مستمع #{number}',
+        'avatar_url': None,
+        'is_anonymous': True,
+    }
+
+
+def _anonymous_entries(song_id):
+    """A guest listening right now with no numbers of their own to earn
+    a rank by - shown unranked, same as a logged-in listener too new to
+    have one yet (see _live_only_entries), just anonymized.
+    """
+    session_keys = _current_live_anonymous_session_keys(song_id)
+    if not session_keys:
+        return []
+
+    # Deterministic *given this exact set* of session keys (order
+    # doesn't matter, sorted first) - stays put while who's listening
+    # doesn't change, reshuffles only when someone joins or leaves,
+    # rather than every broadcast looking like a different person.
+    ordered = sorted(session_keys)
+    rng = random.Random('|'.join(ordered))
+    numbers = rng.sample(range(1000, 10000), len(ordered))
+    return [_serialize_anonymous(number) for number in numbers]
+
+
 def _live_only_entries(song_id, live_user_ids, already_ranked_user_ids):
     """Anyone currently listening who hasn't earned a ranked spot yet
     (no full listen, or too new for the decay to have caught up) still
@@ -138,7 +191,7 @@ def get_cached_leaderboard(song_id):
         for row in rows
     ]
     entries += _live_only_entries(song_id, live_user_ids, {row.user_id for row in rows})
-    return _filter_to_live(entries)
+    return _filter_to_live(entries) + _anonymous_entries(song_id)
 
 
 def broadcast_current_leaderboard(song_id):
@@ -214,7 +267,7 @@ def refresh_song_leaderboard(song_id, broadcast=True):
         for row in new_rows
     ]
     entries += _live_only_entries(song_id, live_user_ids, {row.user_id for row in new_rows})
-    entries = _filter_to_live(entries)
+    entries = _filter_to_live(entries) + _anonymous_entries(song_id)
 
     if broadcast:
         channel_layer = get_channel_layer()
