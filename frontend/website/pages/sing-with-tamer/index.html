@@ -4654,29 +4654,69 @@ async function createSong() {
     const result = await response.json();
 
     if (response.ok) {
-      // Success - redirect to the user's own "My Duets" page (this is
-      // a private duet, not a public catalog song, so it has no
-      // song-detail page of its own).
-      thBoostedNavigate(result.data.redirect_url || '/my-duets/');
+      // The mix itself (vocal removal + mixing) runs as a background
+      // Celery task now - this only started it. The loading card stays
+      // up (it already says "جاري إنشاء الأغنية...") until the task's
+      // result comes back over this socket.
+      waitForDuetCompletion(result.data.project_id);
     } else {
-      alert('حدث خطأ في إنشاء الأغنية: ' + (result.message || 'يرجى المحاولة مرة أخرى'));
-      // Show complete card again on error
-      document.getElementById('songLoadingCard').style.display = 'none';
-      document.getElementById('songCreationCard').style.display = 'block';
-      document.querySelector('.lyric-meta').style.display = 'flex';
-      document.querySelector('.loading-steps').style.display = 'block';
+      showCreateSongError('حدث خطأ في إنشاء الأغنية: ' + (result.message || 'يرجى المحاولة مرة أخرى'));
     }
 
   } catch (error) {
     console.error('Create song error:', error);
-    alert('حدث خطأ في إنشاء الأغنية. يرجى المحاولة مرة أخرى.');
-    // Show complete card again on error
-    document.getElementById('songLoadingCard').style.display = 'none';
-    document.getElementById('songCreationCard').style.display = 'block';
-    document.querySelector('.lyric-meta').style.display = 'flex';
-    document.querySelector('.loading-steps').style.display = 'block';
+    showCreateSongError('حدث خطأ في إنشاء الأغنية. يرجى المحاولة مرة أخرى.');
   }
 
+}
+
+function showCreateSongError(message) {
+  alert(message);
+  // Show complete card again on error
+  document.getElementById('songLoadingCard').style.display = 'none';
+  document.getElementById('songCreationCard').style.display = 'block';
+  document.querySelector('.lyric-meta').style.display = 'flex';
+  document.querySelector('.loading-steps').style.display = 'block';
+}
+
+function waitForDuetCompletion(projectId) {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/duets/${projectId}/status/`);
+
+  // A dropped connection (network hiccup, server restart) shouldn't
+  // strand the visitor on the loading card forever with no way out -
+  // the task itself keeps running server-side regardless, so a reload
+  // of this page would just show the completed duet once it catches up,
+  // but they have no way to know that without being told something.
+  const giveUpTimer = setTimeout(function () {
+    socket.close();
+    showCreateSongError('الإنشاء لسه شغال في الخلفية - جرب تفتح صفحة "غنيت إيه مع تامر" كمان شوية.');
+  }, 10 * 60 * 1000);
+
+  socket.addEventListener('message', function (event) {
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (error) {
+      return;
+    }
+    if (data.type !== 'status') return;
+
+    if (data.status === 'COMPLETED') {
+      clearTimeout(giveUpTimer);
+      socket.close();
+      thBoostedNavigate(data.redirect_url || '/my-duets/');
+    } else if (data.status === 'FAILED') {
+      clearTimeout(giveUpTimer);
+      socket.close();
+      showCreateSongError('حدث خطأ في إنشاء الأغنية: ' + (data.error || 'يرجى المحاولة مرة أخرى'));
+    }
+    // 'PROCESSING' - still working, nothing to do but keep waiting.
+  });
+
+  socket.addEventListener('error', function () {
+    clearTimeout(giveUpTimer);
+  });
 }
 
 

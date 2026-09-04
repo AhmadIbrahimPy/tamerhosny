@@ -197,11 +197,17 @@ class SongLyricSegment(models.Model):
 
 class SingWithTamerProject(models.Model):
     """Represents a user's project for singing along with a song."""
-    
+
     class DivisionType(models.TextChoices):
         TAMER_STARTS = 'EVEN', _('Tamer Starts')
         USER_STARTS = 'ODD', _('You Start')
-    
+
+    class ProcessingStatus(models.TextChoices):
+        NOT_STARTED = 'NOT_STARTED', _('Not Started')
+        PROCESSING = 'PROCESSING', _('Processing')
+        COMPLETED = 'COMPLETED', _('Completed')
+        FAILED = 'FAILED', _('Failed')
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sing_projects')
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='sing_projects')
     division_type = models.CharField(max_length=10, choices=DivisionType.choices, default=DivisionType.TAMER_STARTS)
@@ -216,6 +222,14 @@ class SingWithTamerProject(models.Model):
         default=False,
         help_text=_('When on, the duet can be opened via its link by anyone, and a share option is shown.'),
     )
+    # The vocal-removal + mixing step (create_duet_song, a Celery task -
+    # too slow to run in the request/response cycle) - separate from
+    # is_completed, which only ever means "final_audio_file is ready to
+    # play" and says nothing about a job in flight or one that failed.
+    processing_status = models.CharField(
+        max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NOT_STARTED,
+    )
+    processing_error = models.TextField(blank=True, default='')
 
     class Meta:
         unique_together = ('user', 'song', 'division_type')

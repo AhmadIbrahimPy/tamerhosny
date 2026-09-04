@@ -18,3 +18,4 @@ python-dotenv==1.2.3
 redis==5.0.8
 requests==2.32.3
 sqlparse==0.6.0
+celery==5.4.0

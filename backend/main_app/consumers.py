@@ -181,3 +181,59 @@ class SongLeaderboardConsumer(WebsocketConsumer):
             'type': 'leaderboard',
             'entries': event['entries'],
         }))
+
+
+class DuetProjectStatusConsumer(WebsocketConsumer):
+    """Progress for one "Sing With Tamer" duet mix - a Celery task
+    (backend.music_app.tasks.create_duet_song), too slow to run inline,
+    so CreateSongAPIView enqueues it and returns immediately; this is
+    how the frontend finds out it actually finished (or failed).
+    Private to the project's own owner - it's an unlisted duet, not
+    catalog content.
+    """
+
+    def connect(self):
+        from backend.music_app.models import SingWithTamerProject
+
+        project_id = self.scope['url_route']['kwargs']['project_id']
+        user = self.scope.get('user')
+
+        try:
+            project = SingWithTamerProject.objects.get(pk=project_id)
+        except SingWithTamerProject.DoesNotExist:
+            self.close()
+            return
+
+        if not user or not user.is_authenticated or project.user_id != user.id:
+            self.close()
+            return
+
+        self.project_id = project_id
+        self.group_name = f'duet_project_{project_id}_status'
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name,
+        )
+        self.accept()
+
+        # In case it already finished (or failed) between the POST that
+        # kicked it off and this socket connecting.
+        self.send(text_data=json.dumps({
+            'type': 'status',
+            'status': project.processing_status,
+            'error': project.processing_error,
+            'redirect_url': '/my-duets/' if project.is_completed else None,
+        }))
+
+    def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            async_to_sync(self.channel_layer.group_discard)(
+                self.group_name, self.channel_name,
+            )
+
+    def project_status(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'status',
+            'status': event['status'],
+            'error': event.get('error', ''),
+            'redirect_url': event.get('redirect_url'),
+        }))

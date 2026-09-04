@@ -169,6 +169,23 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Background jobs (e.g. the "Sing With Tamer" duet mix - AI vocal
+# removal + audio mixing takes far too long to run in the request/
+# response cycle without blocking every other visitor behind it on this
+# single-process ASGI server). Same Redis instance as CHANNEL_LAYERS,
+# just a different logical DB index so the two don't share a keyspace.
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/1')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/1')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_TRACK_STARTED = True
+# The duet mix is one long CPU-bound job per worker process at a time
+# anyway (Spleeter/ffmpeg) - one prefetched task per worker keeps a
+# slow job from starving others queued behind it.
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 AUTH_USER_MODEL = 'main_app.UserAccount'
 
 

@@ -19,4 +19,8 @@ websocket_urlpatterns = [
         r'^ws/songs/(?P<song_id>\d+)/leaderboard/$',
         consumers.SongLeaderboardConsumer.as_asgi(),
     ),
+    re_path(
+        r'^ws/duets/(?P<project_id>\d+)/status/$',
+        consumers.DuetProjectStatusConsumer.as_asgi(),
+    ),
 ]

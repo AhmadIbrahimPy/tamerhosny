@@ -31,3 +31,7 @@ jobs:
             sudo systemctl restart th-lexora.service
             sudo systemctl restart th-lexora-2.service
             sudo systemctl restart th-lexora-3.service
+            # Background jobs (Sing With Tamer's duet mix) - has its own
+            # process since a slow job in it must never be able to
+            # queue up behind (or block) a Daphne worker's own requests.
+            sudo systemctl restart th-lexora-celery.service

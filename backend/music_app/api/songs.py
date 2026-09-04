@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 
 from backend.main_app.shared_utils.authentication_manager import UserAuthenticationManager
 from backend.music_app.core.songs import SongsHandle
-from backend.music_app.models import Song, SingWithTamerProject, LyricRecording, SongLyricSegment, InstrumentalVersion
+from backend.music_app.models import Song, SingWithTamerProject, LyricRecording, SongLyricSegment
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -230,89 +230,43 @@ class LyricRecordingAPIView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateSongAPIView(APIView):
-    """API endpoint to create a song from Sing With Tamer project."""
+    """Kicks off the duet mix (vocal removal + mixing, both slow) as a
+    Celery background task (backend.music_app.tasks.create_duet_song)
+    instead of running it inline - returns immediately with a
+    "processing" status; the frontend gets the real result over
+    /ws/duets/<project_id>/status/ once the task finishes.
+    """
     permission_classes = [IsAuthenticated]
     authentication_classes = [SessionAuthentication]
 
     def post(self, request, **kwargs):
-        from backend.music_app.core.vocal_remover import VocalRemover
-        from backend.music_app.core.song_mixer import SongMixer
-        
+        from backend.music_app.tasks import create_duet_song
+
         project_id = request.POST.get('project_id')
-        
+
         if not project_id:
             return Response({
                 'status': 'error',
                 'message': 'Missing required field: project_id'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            project = get_object_or_404(SingWithTamerProject, pk=project_id, user=request.user)
-            song = project.song
-            
-            # Check if instrumental version exists
-            instrumental, created = InstrumentalVersion.objects.get_or_create(
-                song=song,
-                defaults={
-                    'status': InstrumentalVersion.ProcessingStatus.PENDING
-                }
-            )
-            
-            # Process instrumental if not completed
-            if instrumental.status != InstrumentalVersion.ProcessingStatus.COMPLETED:
-                instrumental.status = InstrumentalVersion.ProcessingStatus.PROCESSING
-                instrumental.save()
-                
-                try:
-                    # Use advanced AI to remove vocals
-                    vocal_remover = VocalRemover()
-                    instrumental_path = vocal_remover.remove_vocals(song.audio_file.path)
-                    
-                    instrumental.instrumental_file.name = instrumental_path
-                    instrumental.status = InstrumentalVersion.ProcessingStatus.COMPLETED
-                    # Quality score not set - Spleeter provides AI-based separation
-                    instrumental.save()
-                except Exception as e:
-                    instrumental.status = InstrumentalVersion.ProcessingStatus.FAILED
-                    instrumental.processing_error = str(e)
-                    instrumental.save()
-                    raise
-            
-            # Mix user recordings with instrumental
-            mixer = SongMixer()
-            final_song_path = mixer.create_final_song(
-                project,
-                instrumental.instrumental_file.path,
-                song.audio_file.path,
-            )
-            
-            # Store the mixed duet directly on the project. This is
-            # intentionally NOT a catalog Song: it must never show up
-            # in song browsing, search, or the admin song list -
-            # it's private to this user, visible only on their own
-            # "My Duets" page (same as their liked songs).
-            project.final_audio_file.name = final_song_path
-            project.is_completed = True
-            project.save()
 
-            # The per-line takes are already baked into final_audio_file
-            # above and are never read again - delete them to stop the
-            # server disk from filling up with duplicate audio.
-            for recording in project.lyric_recordings.all():
-                recording.audio_file.delete(save=False)
-            project.lyric_recordings.all().delete()
+        project = get_object_or_404(SingWithTamerProject, pk=project_id, user=request.user)
 
+        if project.processing_status == SingWithTamerProject.ProcessingStatus.PROCESSING:
             return Response({
                 'status': 'success',
-                'message': 'Song created successfully',
-                'data': {
-                    'project_id': project.pk,
-                    'redirect_url': '/my-duets/',
-                }
-            }, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'message': 'Already processing',
+                'data': {'project_id': project.pk, 'processing_status': project.processing_status},
+            }, status=status.HTTP_202_ACCEPTED)
+
+        project.processing_status = SingWithTamerProject.ProcessingStatus.PROCESSING
+        project.processing_error = ''
+        project.save(update_fields=['processing_status', 'processing_error'])
+
+        create_duet_song.delay(project.pk)
+
+        return Response({
+            'status': 'success',
+            'message': 'Processing started',
+            'data': {'project_id': project.pk, 'processing_status': project.processing_status},
+        }, status=status.HTTP_202_ACCEPTED)
