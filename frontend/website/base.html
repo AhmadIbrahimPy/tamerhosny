@@ -659,6 +659,12 @@
         if (currentSongId !== null) {
           connectGlobalListenerSocket(currentSongId);
           sendGlobalListenerAction('start');
+          // The one place every playback route (cover-art button, list
+          // row, bar itself, next/prev, resuming after a pause...) ends
+          // up going through - nothing was ever calling thTrack('PLAY',
+          // ...), so the dashboard's "Plays" stat was permanently 0
+          // despite the event type existing.
+          thTrack('PLAY', 'song', currentSongId);
         }
       });
 

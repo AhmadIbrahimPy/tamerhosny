@@ -281,6 +281,23 @@ def _build_analytics_context(request):
     daily_views_labels = json.dumps([row['bucket'].strftime(label_format) for row in timeline])
     daily_views_data = json.dumps([row['total'] for row in timeline])
 
+    # Live, not date-range-scoped: who's actually listening right now,
+    # same CurrentSongListener presence the public "يستمع الآن" leaderboard
+    # is driven from (a row exists only between a play starting and
+    # stopping - see backend.main_app.consumers).
+    live_listeners_now = CurrentSongListener.objects.count()
+    live_now_by_song = [
+        {
+            'song': row['song__title_ar'],
+            'song_id': row['song_id'],
+            'count': row['total'],
+        }
+        for row in (
+            CurrentSongListener.objects.values('song_id', 'song__title_ar')
+            .annotate(total=Count('id')).order_by('-total')[:5]
+        )
+    ]
+
     top_people = _top_viewed(Person, 'full_name_ar', 'dashboard_app:person-view', events)
     top_songs = _top_viewed(Song, 'title_ar', 'dashboard_app:song-view', events)
     top_media = _top_viewed(Media, 'title_ar', 'dashboard_app:media-view', events)
@@ -292,6 +309,8 @@ def _build_analytics_context(request):
         'range_key': range_key,
         'range_start': request.GET.get('start', ''),
         'range_end': request.GET.get('end', ''),
+        'live_listeners_now': live_listeners_now,
+        'live_now_by_song': live_now_by_song,
         'totals_all_time': totals_all_time,
         'totals_range': totals_range,
         'content_type_breakdown': content_type_breakdown,
