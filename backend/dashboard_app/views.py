@@ -27,7 +27,7 @@ from backend.dashboard_app.forms import (
     StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
-from backend.main_app.models import UserAccount
+from backend.main_app.models import CurrentSongListener, Like, Playlist, UserAccount, UserSongPlay
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
@@ -1637,9 +1637,15 @@ def cinema_venue_delete(request, pk):
 # Users
 # ---------------------------------------------------------------------------
 
+# Same safety-net window the listener socket uses to sweep rows an
+# abrupt disconnect (process kill, not a normal tab close) left behind -
+# see backend.main_app.consumers.STALE_LISTENER_CUTOFF.
+LISTENING_NOW_CUTOFF = timedelta(minutes=5)
+
+
 @dashboard_required
 def users_list(request):
-    queryset = UserAccount.objects.all()
+    queryset = UserAccount.objects.all().order_by('-date_joined')
     q = request.GET.get('q')
     if q:
         queryset = queryset.filter(Q(username__icontains=q) | Q(email__icontains=q))
@@ -1647,6 +1653,15 @@ def users_list(request):
     if role_filter:
         queryset = queryset.filter(role=role_filter)
     accounts = _paginate(request, queryset)
+
+    listening = CurrentSongListener.objects.filter(
+        user_id__in=[account.pk for account in accounts],
+        last_heartbeat__gte=timezone.now() - LISTENING_NOW_CUTOFF,
+    ).select_related('song')
+    listening_by_user = {row.user_id: row.song for row in listening}
+    for account in accounts:
+        account.now_listening = listening_by_user.get(account.pk)
+
     return render(request, 'dashboard/pages/users/all.html', {
         'accounts': accounts,
         'filter_choices': UserAccount.Role.choices,
@@ -1675,15 +1690,73 @@ def user_edit(request, pk):
 @dashboard_required
 def user_view(request, pk):
     account = get_object_or_404(UserAccount, pk=pk)
+
+    now_listening = CurrentSongListener.objects.filter(
+        user=account, last_heartbeat__gte=timezone.now() - LISTENING_NOW_CUTOFF,
+    ).select_related('song').first()
+
     fields = [
         (_('اسم المستخدم'), account.username),
         (_('البريد الإلكتروني'), account.email),
+        (_('الدور'), account.get_role_display()),
         (_('الحالة'), _('مفعّل') if account.is_active else _('موقوف')),
+        (_('يستمع الآن'), f'🟢 {now_listening.song.title_ar}' if now_listening else _('غير متصل')),
+        (_('تاريخ الانضمام'), account.date_joined),
+        (_('آخر تسجيل دخول'), account.last_login),
     ]
+
+    recent_plays = UserSongPlay.objects.filter(user=account).select_related('song').order_by('-last_played_at')[:10]
+    liked_song_ids = list(
+        Like.objects.filter(
+            user=account, content_type=ContentType.objects.get_for_model(Song),
+        ).values_list('object_id', flat=True)[:10]
+    )
+    liked_songs = Song.objects.filter(pk__in=liked_song_ids)
+    playlists = Playlist.objects.filter(user=account).order_by('-created_at')[:10]
+
+    related_sections = [
+        {
+            'title': _('آخر الأغاني التي استمع لها'),
+            'items': [
+                {
+                    'label': play.song.title_ar,
+                    'url': reverse('dashboard_app:song-view', args=[play.song_id]),
+                    'meta': f'{play.play_count} {_("مرة")}',
+                }
+                for play in recent_plays
+            ],
+        },
+        {
+            'title': _('الأغاني المفضلة'),
+            'items': [
+                {'label': song.title_ar, 'url': reverse('dashboard_app:song-view', args=[song.pk])}
+                for song in liked_songs
+            ],
+        },
+        {
+            'title': _('قوائم التشغيل'),
+            'items': [
+                {'label': playlist.name, 'meta': _('عامة') if playlist.is_public else _('خاصة')}
+                for playlist in playlists
+            ],
+        },
+    ]
+
+    extra_actions = [
+        {
+            'label': _('البروفايل العام'),
+            'url': reverse('website_app:public-profile', args=[account.username]),
+            'external': True,
+        },
+    ]
+
     return render(request, 'dashboard/pages/_detail_generic.html', {
         'page_title': account.username,
-        'subtitle': account.get_role_display(),
+        'subtitle': now_listening.song.title_ar if now_listening else account.get_role_display(),
+        'image_url': account.profile_image.url if account.profile_image else None,
         'fields': fields,
+        'related_sections': related_sections,
+        'extra_actions': extra_actions,
         'edit_url': reverse('dashboard_app:user-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:users')),
     })

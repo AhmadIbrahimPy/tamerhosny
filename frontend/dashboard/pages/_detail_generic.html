@@ -22,7 +22,7 @@
           </div>
           <div class="d-flex gap-2">
             {% for action in extra_actions %}
-              <a href="{{ action.url }}" class="btn btn-sm btn-outline-primary">{{ action.label }}</a>
+              <a href="{{ action.url }}" {% if action.external %}target="_blank" rel="noopener"{% endif %} class="btn btn-sm btn-outline-primary">{{ action.label }}</a>
             {% endfor %}
             {% if edit_url %}<a href="{{ edit_url }}" class="btn btn-sm btn-primary">{% translate "تعديل" %}</a>{% endif %}
             <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>

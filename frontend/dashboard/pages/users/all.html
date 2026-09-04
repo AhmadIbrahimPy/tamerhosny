@@ -6,7 +6,7 @@
 <div class="custom-container">
   <div class="card card-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{% translate "مستخدمو لوحة التحكم" %}</h5>
+      <h5 class="mb-0">{% translate "المستخدمون" %}</h5>
       <div class="d-flex align-items-center gap-2">
         <span class="badge bg-primary-subtle text-primary">{{ accounts.paginator.count }}</span>
         <a href="{% url 'dashboard_app:user-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
@@ -19,6 +19,7 @@
           <tr>
             <th>{% translate "اسم المستخدم" %}</th>
             <th>{% translate "الدور" %}</th>
+            <th>{% translate "يستمع الآن" %}</th>
             <th>{% translate "الحالة" %}</th>
             <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
@@ -28,11 +29,25 @@
           <tr>
             <td>
               <a href="{% url 'dashboard_app:user-view' account.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
-                <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ account.username|slice:":1"|upper }}</span>
+                {% if account.profile_image %}
+                  <img src="{{ account.profile_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ account.username|slice:":1"|upper }}</span>
+                {% endif %}
                 <span>{{ account.username }}</span>
               </a>
             </td>
             <td>{{ account.get_role_display }}</td>
+            <td>
+              {% if account.now_listening %}
+                <a href="{% url 'dashboard_app:song-view' account.now_listening.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                  <span class="rounded-circle bg-success flex-shrink-0" style="width:8px;height:8px;"></span>
+                  <span>{{ account.now_listening.title_ar }}</span>
+                </a>
+              {% else %}
+                <span class="text-muted">{% translate "غير متصل" %}</span>
+              {% endif %}
+            </td>
             <td>
               {% if account.is_active %}
                 <span class="badge bg-success-subtle text-success">{% translate "مفعّل" %}</span>
@@ -60,7 +75,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
