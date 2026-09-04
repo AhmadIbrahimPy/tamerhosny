@@ -99,6 +99,12 @@ LOGIN_URL = 'dashboard_app:login'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Compresses every response (HTML/CSS/JS/JSON) - base.html alone is
+    # ~2000 lines before a single page's own content, so this is a large,
+    # free win on every request. Must sit this early (right after
+    # security) per Django's docs, before anything that varies the
+    # response by Accept-Encoding.
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -176,6 +182,11 @@ DATABASES = {
         'PASSWORD': env('DB_PASSWORD', required=True),
         'HOST': env('DB_HOST', 'localhost'),
         'PORT': env('DB_PORT', '5432'),
+        # Reuse the TCP connection (and Postgres auth handshake) across
+        # requests within a worker instead of opening a fresh one every
+        # single time (Django's default, CONN_MAX_AGE=0) - a real
+        # per-request cost even with Postgres on the same host.
+        'CONN_MAX_AGE': int(env('DB_CONN_MAX_AGE', '60')),
     }
 }
 
