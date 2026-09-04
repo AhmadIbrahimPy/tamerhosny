@@ -23,4 +23,11 @@ jobs:
             .venv/bin/pip install -q -r requirements.txt
             .venv/bin/python manage.py migrate --noinput
             .venv/bin/python manage.py collectstatic --noinput
+            .venv/bin/python manage.py compilemessages -l en
+            # Three Daphne processes (8011/8012/8013) load-balanced by nginx
+            # (see /etc/nginx/sites-available/th-lexora's upstream block) -
+            # all three need restarting or two of them keep serving the
+            # previous deploy's code until the next push.
             sudo systemctl restart th-lexora.service
+            sudo systemctl restart th-lexora-2.service
+            sudo systemctl restart th-lexora-3.service

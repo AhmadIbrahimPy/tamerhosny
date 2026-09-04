@@ -428,24 +428,18 @@ msgstr "Song Cover Image"
 
 #: backend/dashboard_app/forms.py:112
 #: frontend/dashboard/pages/_detail_generic.html:53
-#, fuzzy
-#| msgid "كل الصفحات"
 msgid "ملف الصوت"
-msgstr "All Pages"
+msgstr "Audio File"
 
 #: backend/dashboard_app/forms.py:115 backend/dashboard_app/views.py:781
 #: frontend/dashboard/pages/songs/all.html:22
-#, fuzzy
-#| msgid "نوع الوصول"
 msgid "النوع الموسيقي"
-msgstr "Access Type"
+msgstr "Musical Genre"
 
 #: backend/dashboard_app/forms.py:116 backend/dashboard_app/views.py:782
 #: frontend/dashboard/pages/songs/all.html:23
-#, fuzzy
-#| msgid "الجهة المنظمة"
 msgid "الحالة المزاجية"
-msgstr "Organizer"
+msgstr "Mood"
 
 #: backend/dashboard_app/forms.py:117
 msgid "المدة (بالثواني)"
@@ -631,10 +625,8 @@ msgid "النص"
 msgstr "Text"
 
 #: backend/dashboard_app/forms.py:390
-#, fuzzy
-#| msgid "دار العرض"
 msgid "تكرار الصوت"
-msgstr "Cinema"
+msgstr "Loop Audio"
 
 #: backend/dashboard_app/forms.py:391
 msgid "تتبع مزدوج"
@@ -1225,36 +1217,26 @@ msgid "Viewer"
 msgstr "Viewer"
 
 #: backend/main_app/models.py:19
-#, fuzzy
-#| msgid "صورة الغلاف"
 msgid "صورة الملف الشخصي"
-msgstr "Cover Image"
+msgstr "Profile Image"
 
 #: backend/main_app/models.py:35 backend/main_app/models.py:73
 #: backend/main_app/models.py:118 backend/main_app/models.py:175
 #: backend/main_app/models.py:237
-#, fuzzy
-#| msgid "المستخدمون"
 msgid "المستخدم"
-msgstr "Users"
+msgstr "User"
 
 #: backend/main_app/models.py:45
-#, fuzzy
-#| msgid "نوع الوصول"
 msgid "نوع المحتوى"
-msgstr "Access Type"
+msgstr "Content Type"
 
 #: backend/main_app/models.py:47
-#, fuzzy
-#| msgid "اسم المستخدم"
 msgid "معرف المحتوى"
-msgstr "Username"
+msgstr "Content ID"
 
 #: backend/main_app/models.py:50 backend/main_app/models.py:214
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "تاريخ الإضافة"
-msgstr "Release Date"
+msgstr "Date Added"
 
 #: backend/main_app/models.py:53 frontend/website/pages/player/index.html:688
 #: frontend/website/pages/songs/detail.html:1649
@@ -1272,87 +1254,63 @@ msgstr "Likes"
 
 #: backend/main_app/models.py:80 backend/main_app/models.py:134
 #: backend/main_app/models.py:211
-#, fuzzy
-#| msgid "الأغاني"
 msgid "الأغنية"
-msgstr "Songs"
+msgstr "Song"
 
 #: backend/main_app/models.py:83
-#, fuzzy
-#| msgid "تشغيل"
 msgid "آخر تشغيل"
-msgstr "Plays"
+msgstr "Last Played"
 
 #: backend/main_app/models.py:84
-#, fuzzy
-#| msgid "اسم المستخدم"
 msgid "عدد مرات التشغيل للمستخدم"
-msgstr "Username"
+msgstr "User's Play Count"
 
 #: backend/main_app/models.py:93
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "عدد مرات الاستماع الكامل"
-msgstr "Playlist"
+msgstr "Full Listen Count"
 
 #: backend/main_app/models.py:94
 msgid "نقاط التفاعل (متناقصة زمنياً)"
 msgstr "Engagement score (decaying over time)"
 
 #: backend/main_app/models.py:95
-#, fuzzy
-#| msgid "تشغيل"
 msgid "آخر تحديث للنقاط"
-msgstr "Plays"
+msgstr "Score Last Updated"
 
 #: backend/main_app/models.py:98
-#, fuzzy
-#| msgid "إضافة مستخدم"
 msgid "تشغيل مستخدم"
-msgstr "Add User"
+msgstr "User Play"
 
 #: backend/main_app/models.py:99
-#, fuzzy
-#| msgid "المستخدمون"
 msgid "تشغيلات المستخدمين"
-msgstr "Users"
+msgstr "User Plays"
 
 #: backend/main_app/models.py:127
 msgid "مفتاح الجلسة"
 msgstr "Session key"
 
 #: backend/main_app/models.py:137
-#, fuzzy
-#| msgid "منصات البث"
 msgid "وقت البدء"
-msgstr "Streaming Platforms"
+msgstr "Start Time"
 
 #: backend/main_app/models.py:138
-#, fuzzy
-#| msgid "آخر شهر"
 msgid "آخر نبض"
-msgstr "Last Month"
+msgstr "Last Heartbeat"
 
 #: backend/main_app/models.py:141
-#, fuzzy
-#| msgid "مستخدمو لوحة التحكم"
 msgid "مستخدم حالي"
-msgstr "Dashboard Users"
+msgstr "Current Listener"
 
 #: backend/main_app/models.py:142
-#, fuzzy
-#| msgid "المستخدمون"
 msgid "المستخدمون الحاليون"
-msgstr "Users"
+msgstr "Current Listeners"
 
 #: backend/main_app/models.py:177
 #: frontend/website/pages/songs/detail.html:2222
 #: frontend/website/pages/user/playlist_detail.html:77
 #: frontend/website/pages/user/playlists.html:66
-#, fuzzy
-#| msgid "القائمة"
 msgid "اسم القائمة"
-msgstr "Menu"
+msgstr "Playlist Name"
 
 #: backend/main_app/models.py:179
 #: frontend/website/pages/songs/detail.html:1760
@@ -1360,20 +1318,14 @@ msgid "عامة"
 msgstr "Public"
 
 #: backend/main_app/models.py:186 backend/main_app/models.py:240
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "تاريخ الإنشاء"
-msgstr "Release Date"
+msgstr "Created At"
 
 #: backend/main_app/models.py:187
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "تاريخ التحديث"
-msgstr "Release Date"
+msgstr "Updated At"
 
 #: backend/main_app/models.py:190
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "قائمة تشغيل"
 msgstr "Playlist"
 
@@ -1394,26 +1346,20 @@ msgid "الترتيب"
 msgstr "Rank"
 
 #: backend/main_app/models.py:217
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "عنصر قائمة التشغيل"
-msgstr "Playlist"
+msgstr "Playlist Item"
 
 #: backend/main_app/models.py:218
-#, fuzzy
-#| msgid "قوائم التشغيل"
 msgid "عناصر قوائم التشغيل"
-msgstr "Playlists"
+msgstr "Playlist Items"
 
 #: backend/main_app/models.py:239 frontend/website/base.html:1666
 msgid "الكود"
 msgstr "Code"
 
 #: backend/main_app/models.py:241
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "تاريخ الاستخدام"
-msgstr "Release Date"
+msgstr "Used At"
 
 #: backend/main_app/models.py:244 backend/website_app/auth_views.py:177
 msgid "كود استعادة كلمة السر"
@@ -1506,10 +1452,8 @@ msgid "Religious / Duaa"
 msgstr "Religious / Duaa"
 
 #: backend/music_app/models.py:57 backend/music_app/models.py:69
-#, fuzzy
-#| msgid "غير مرتبط"
 msgid "غير محدد / Auto"
-msgstr "Not linked"
+msgstr "Unspecified / Auto"
 
 #: backend/music_app/models.py:58
 msgid "Pop / بوب"
@@ -1584,10 +1528,8 @@ msgid "Song mood/vibe"
 msgstr "Song mood/vibe"
 
 #: backend/music_app/models.py:106
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "عدد مرات التشغيل"
-msgstr "Playlist"
+msgstr "Play Count"
 
 #: backend/music_app/models.py:109
 msgid "Beats per minute"
@@ -1754,28 +1696,20 @@ msgid "من فضلك أدخل الاسم."
 msgstr "Please enter your name."
 
 #: backend/website_app/auth_views.py:79
-#, fuzzy
-#| msgid "البريد الإلكتروني"
 msgid "بريد إلكتروني غير صالح."
-msgstr "Email"
+msgstr "Invalid email address."
 
 #: backend/website_app/auth_views.py:81 backend/website_app/auth_views.py:213
-#, fuzzy
-#| msgid "وقت النهاية لازم يكون بعد وقت البداية."
 msgid "كلمة السر لازم تكون 8 حروف على الأقل."
-msgstr "End time must be after start time."
+msgstr "Password must be at least 8 characters."
 
 #: backend/website_app/auth_views.py:83
-#, fuzzy
-#| msgid "البريد الإلكتروني"
 msgid "البريد الإلكتروني ده مسجل بالفعل."
-msgstr "Email"
+msgstr "This email is already registered."
 
 #: backend/website_app/auth_views.py:113 backend/website_app/auth_views.py:119
-#, fuzzy
-#| msgid "البريد الإلكتروني"
 msgid "البريد الإلكتروني أو كلمة السر غير صحيحة."
-msgstr "Email"
+msgstr "Incorrect email or password."
 
 #: backend/website_app/auth_views.py:115
 msgid "الحساب ده اتعمل بجوجل - سجل دخولك بجوجل بدل كده."
@@ -1796,10 +1730,8 @@ msgid "الكود غير صحيح أو منتهي."
 msgstr "The code is incorrect or has expired."
 
 #: backend/website_app/views.py:1095
-#, fuzzy
-#| msgid "البريد الإلكتروني"
 msgid "اسم المستخدم ده مأخوذ بالفعل."
-msgstr "Email"
+msgstr "This username is already taken."
 
 #: frontend/dashboard/index.html:7
 #: frontend/dashboard/partials/sidebar-collapse.html:5
@@ -1835,10 +1767,8 @@ msgid "متصفحك لا يدعم تشغيل الصوت"
 msgstr "Your browser doesn't support audio playback"
 
 #: frontend/dashboard/pages/_detail_generic.html:62
-#, fuzzy
-#| msgid "تبديل اللغة"
 msgid "تحميل الملف"
-msgstr "Switch language"
+msgstr "Download File"
 
 #: frontend/dashboard/pages/_detail_generic.html:91
 msgid "لا يوجد"
@@ -2332,17 +2262,13 @@ msgstr ""
 "commercials and concerts."
 
 #: frontend/dashboard/pages/analytics.html:30
-#, fuzzy
-#| msgid "الفيديوهات"
 msgid "الاستوديوهات"
-msgstr "Videos"
+msgstr "Studios"
 
 #: frontend/dashboard/pages/analytics.html:54
 #: frontend/website/pages/user/favorites.html:39
-#, fuzzy
-#| msgid "الأفلام والمسلسلات والإعلانات"
 msgid "الأفلام والمسلسلات"
-msgstr "Movies, Series & Commercials"
+msgstr "Movies & Series"
 
 #: frontend/dashboard/pages/analytics.html:73
 msgid "اليوم"
@@ -2562,26 +2488,20 @@ msgid "توقيت الكلمات"
 msgstr "Lyrics Timing"
 
 #: frontend/dashboard/pages/songs/segments.html:289
-#, fuzzy
-#| msgid "بانرات إعلانية"
 msgid "تأثيرات الصوت"
-msgstr "Ad Banners"
+msgstr "Audio Effects"
 
 #: frontend/dashboard/pages/songs/segments.html:335
 msgid "لا توجد مقاطع بعد"
 msgstr "No segments yet"
 
 #: frontend/dashboard/pages/songs/segments.html:422
-#, fuzzy
-#| msgid "كل الوقت"
 msgid "مشغل الصوت"
-msgstr "All Time"
+msgstr "Audio Player"
 
 #: frontend/dashboard/pages/songs/segments.html:424
-#, fuzzy
-#| msgid "عرض الكل"
 msgid "عرض الكلمات"
-msgstr "See All"
+msgstr "Show Lyrics"
 
 #: frontend/dashboard/pages/songs/segments.html:446
 msgid "ترجيع 5 ثواني"
@@ -2605,10 +2525,8 @@ msgstr "Set as end time"
 
 #: frontend/dashboard/pages/songs/segments.html:478
 #: frontend/website/pages/songs/detail.html:2273
-#, fuzzy
-#| msgid "توقيت كلمات الأغنية"
 msgid "كلمات الأغنية"
-msgstr "Song Lyrics Timing"
+msgstr "Song Lyrics"
 
 #: frontend/dashboard/pages/songs/segments.html:491
 msgid "إضافة مقطع جديد"
@@ -2736,22 +2654,16 @@ msgid "حذف الصورة"
 msgstr "Delete photo"
 
 #: frontend/website/base.html:29 frontend/website/base.html:39
-#, fuzzy
-#| msgid ""
-#| "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات "
-#| "والحفلات."
 msgid ""
 "الأرشيف الفني الكامل لتامر حسني - الأغاني، الألبومات، الأفلام، المسلسلات، "
 "الحفلات والإعلانات في مكان واحد."
 msgstr ""
-"Tamer Hosny's complete artistic archive — movies, series, songs, albums, "
-"commercials and concerts."
+"Tamer Hosny's complete artistic archive - songs, albums, movies, series, "
+"concerts and commercials, all in one place."
 
 #: frontend/website/base.html:883
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "تشغيل الصوت"
-msgstr "Log Out"
+msgstr "Play Audio"
 
 #: frontend/website/base.html:1412
 #: frontend/website/pages/songs/detail.html:3379
@@ -2759,16 +2671,12 @@ msgid "سجل دخولك عشان تقدر تعمل إعجاب"
 msgstr "Sign in to like this"
 
 #: frontend/website/base.html:1434
-#, fuzzy
-#| msgid "حدد مكان الحفلة على الخريطة"
 msgid "تمت الإضافة إلى المفضلة"
-msgstr "Pin the concert location on the map"
+msgstr "Added to favorites"
 
 #: frontend/website/base.html:1434
-#, fuzzy
-#| msgid "الجهة المنظمة"
 msgid "تمت الإزالة من المفضلة"
-msgstr "Organizer"
+msgstr "Removed from favorites"
 
 #: frontend/website/base.html:1441
 #: frontend/website/pages/songs/detail.html:3570
@@ -2791,10 +2699,8 @@ msgid "إغلاق"
 msgstr "Close"
 
 #: frontend/website/base.html:1583 frontend/website/base.html:1643
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "تسجيل الدخول"
-msgstr "Log Out"
+msgstr "Log In"
 
 #: frontend/website/base.html:1584 frontend/website/base.html:1897
 msgid "سجل دخولك عشان تقدر تسمع وتحفظ المفضلة عندك"
@@ -2805,14 +2711,10 @@ msgid "المتابعة بجوجل"
 msgstr "Continue with Google"
 
 #: frontend/website/base.html:1591 frontend/website/base.html:1620
-#, fuzzy
-#| msgid "أمس"
 msgid "أو"
-msgstr "Yesterday"
+msgstr "Or"
 
 #: frontend/website/base.html:1599 frontend/website/base.html:1636
-#, fuzzy
-#| msgid "كلمة المرور"
 msgid "كلمة السر"
 msgstr "Password"
 
@@ -2821,10 +2723,8 @@ msgid "دخول"
 msgstr "Sign in"
 
 #: frontend/website/base.html:1606
-#, fuzzy
-#| msgid "توقيت كلمات الأغنية"
 msgid "نسيت كلمة السر؟"
-msgstr "Song Lyrics Timing"
+msgstr "Forgot password?"
 
 #: frontend/website/base.html:1607
 msgid "مش عندي حساب"
@@ -2835,10 +2735,8 @@ msgid "إنشاء حساب"
 msgstr "Create account"
 
 #: frontend/website/base.html:1613
-#, fuzzy
-#| msgid "أرشيف تامر حسني"
 msgid "انضم لأرشيف تامر حسني"
-msgstr "Tamer Hosny Archive"
+msgstr "Join the Tamer Hosny Archive"
 
 #: frontend/website/base.html:1640
 msgid "إنشاء الحساب"
@@ -2849,22 +2747,16 @@ msgid "عندي حساب بالفعل"
 msgstr "I already have an account"
 
 #: frontend/website/base.html:1648
-#, fuzzy
-#| msgid "كلمة المرور"
 msgid "استعادة كلمة السر"
-msgstr "Password"
+msgstr "Reset Password"
 
 #: frontend/website/base.html:1651
-#, fuzzy
-#| msgid "البريد الإلكتروني"
 msgid "اكتب بريدك الإلكتروني وهنبعتلك كود"
-msgstr "Email"
+msgstr "Enter your email and we'll send you a code"
 
 #: frontend/website/base.html:1658
-#, fuzzy
-#| msgid "عرض الكل"
 msgid "إرسال الكود"
-msgstr "See All"
+msgstr "Send Code"
 
 #: frontend/website/base.html:1663
 msgid "اكتب الكود اللي وصلك على بريدك"
@@ -2875,42 +2767,30 @@ msgid "تأكيد"
 msgstr "Confirm"
 
 #: frontend/website/base.html:1675
-#, fuzzy
-#| msgid "التشغيل (الفترة المحددة)"
 msgid "اكتب كلمة السر الجديدة"
-msgstr "Plays (selected period)"
+msgstr "Enter your new password"
 
 #: frontend/website/base.html:1678
-#, fuzzy
-#| msgid "كلمة المرور"
 msgid "كلمة السر الجديدة"
-msgstr "Password"
+msgstr "New Password"
 
 #: frontend/website/base.html:1682
-#, fuzzy
-#| msgid "كلمة المرور"
 msgid "حفظ كلمة السر"
-msgstr "Password"
+msgstr "Save Password"
 
 #: frontend/website/base.html:1686
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "رجوع لتسجيل الدخول"
-msgstr "Log Out"
+msgstr "Back to Log In"
 
 #: frontend/website/base.html:1886
-#, fuzzy
-#| msgid "الأكثر مشاهدة: الأغاني"
 msgid "سجل دخولك عشان تقدر تسمع الأغاني"
-msgstr "Most Viewed: Songs"
+msgstr "Sign in to listen to songs"
 
 #: frontend/website/base.html:1972 frontend/website/base.html:2010
 #: frontend/website/base.html:2027 frontend/website/base.html:2045
 #: frontend/website/base.html:2060
-#, fuzzy
-#| msgid "أحدث الأغاني"
 msgid "حدث خطأ، حاول تاني"
-msgstr "Latest Songs"
+msgstr "Something went wrong, try again"
 
 #: frontend/website/base.html:2086
 msgid "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني"
@@ -2918,10 +2798,9 @@ msgstr "Google sign-in isn't available right now, try email instead"
 
 #: frontend/website/pages/albums/detail.html:6
 #: frontend/website/pages/albums/detail.html:11
-#, fuzzy, python-format
-#| msgid "أرشيف تامر حسني"
+#, python-format
 msgid "ألبوم %(title)s لتامر حسني"
-msgstr "Tamer Hosny Archive"
+msgstr "%(title)s album by Tamer Hosny"
 
 #: frontend/website/pages/albums/detail.html:6
 msgid "تراك ليست، أغاني الألبوم والمزيد على أرشيف تامر حسني."
@@ -2947,8 +2826,6 @@ msgstr "Tamer Hosny"
 
 #: frontend/website/pages/albums/detail.html:64
 #: frontend/website/pages/albums/detail.html:107
-#, fuzzy
-#| msgid "الألبوم"
 msgid "ألبوم"
 msgstr "Album"
 
@@ -2974,10 +2851,8 @@ msgid "نسخ الرابط"
 msgstr "Copy Link"
 
 #: frontend/website/pages/albums/detail.html:118
-#, fuzzy
-#| msgid "الألبوم"
 msgid "تشغيل الألبوم"
-msgstr "Album"
+msgstr "Play Album"
 
 #: frontend/website/pages/albums/detail.html:153
 #: frontend/website/pages/player/index.html:681
@@ -3010,10 +2885,6 @@ msgid "جميع ألبومات تامر حسني الغنائية على أرش�
 msgstr "All of Tamer Hosny's albums on the Tamer Hosny Archive."
 
 #: frontend/website/pages/bio.html:7 frontend/website/pages/bio.html:12
-#, fuzzy
-#| msgid ""
-#| "من أول لحن كتبه وهو طفل، لأصبح واحداً من أكثر نجوم الوطن العربي تأثيراً في "
-#| "الغناء والتلحين والتمثيل."
 msgid ""
 "قصة تامر حسني الفنية - من أول لحن كتبه وهو طفل إلى واحد من أكثر نجوم الوطن "
 "العربي تأثيراً في الغناء والتلحين والتمثيل."
@@ -3057,10 +2928,8 @@ msgstr ""
 "millions across the Arab world and beyond."
 
 #: frontend/website/pages/bio.html:225
-#, fuzzy
-#| msgid "غناءك"
 msgid "الغناء"
-msgstr "Your Version"
+msgstr "Singing"
 
 #: frontend/website/pages/bio.html:226
 msgid "التلحين"
@@ -3071,10 +2940,8 @@ msgid "التمثيل"
 msgstr "Acting"
 
 #: frontend/website/pages/bio.html:228
-#, fuzzy
-#| msgid "شركة الإنتاج"
 msgid "الإنتاج"
-msgstr "Record Label"
+msgstr "Production"
 
 #: frontend/website/pages/bio.html:234
 #: frontend/website/partials/footer.html:22
@@ -3163,10 +3030,8 @@ msgid "ج.م"
 msgstr "EGP"
 
 #: frontend/website/pages/media/detail.html:200
-#, fuzzy
-#| msgid "عرض الكل"
 msgid "عرض المزيد"
-msgstr "See All"
+msgstr "Show More"
 
 #: frontend/website/pages/media/detail.html:288
 msgid "أعمال أخرى مشابهة"
@@ -3174,10 +3039,9 @@ msgstr "Similar Titles"
 
 #: frontend/website/pages/media/list.html:6
 #: frontend/website/pages/media/list.html:9
-#, fuzzy, python-format
-#| msgid "أرشيف تامر حسني"
+#, python-format
 msgid "%(list_title)s تامر حسني - على أرشيف تامر حسني."
-msgstr "Tamer Hosny Archive"
+msgstr "%(list_title)s Tamer Hosny - on the Tamer Hosny Archive."
 
 #: frontend/website/pages/people/detail.html:6
 #, python-format
@@ -3197,10 +3061,8 @@ msgstr ""
 
 #: frontend/website/pages/player/index.html:4
 #: frontend/website/partials/footer.html:26
-#, fuzzy
-#| msgid "المشاهدات"
 msgid "المشغل"
-msgstr "Views"
+msgstr "Player"
 
 #: frontend/website/pages/player/index.html:7
 msgid "استمع لأغاني تامر حسني - مشغل الموسيقى الكامل على أرشيف تامر حسني."
@@ -3232,30 +3094,22 @@ msgid "فريق العمل"
 msgstr "Crew"
 
 #: frontend/website/pages/player/index.html:718
-#, fuzzy
-#| msgid "لا توجد إعلانات بعد"
 msgid "لا توجد أغاني أخرى"
-msgstr "No ads yet"
+msgstr "No other songs"
 
 #: frontend/website/pages/player/index.html:724
 #: frontend/website/pages/player/index.html:1302
 #: frontend/website/pages/songs/detail.html:2362
-#, fuzzy
-#| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد كلمات متاحة"
-msgstr "No data available yet"
+msgstr "No lyrics available"
 
 #: frontend/website/pages/player/index.html:730
-#, fuzzy
-#| msgid "لا توجد مقاطع بعد"
 msgid "لا توجد معلومات عن فريق العمل"
-msgstr "No segments yet"
+msgstr "No crew information available"
 
 #: frontend/website/pages/player/index.html:736
-#, fuzzy
-#| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد روابط منصات متاحة"
-msgstr "No data available yet"
+msgstr "No platform links available"
 
 #: frontend/website/pages/player/index.html:746
 #: frontend/website/pages/songs/detail.html:2242
@@ -3264,32 +3118,24 @@ msgstr "Live"
 
 #: frontend/website/pages/player/index.html:756
 #: frontend/website/pages/songs/detail.html:2257
-#, fuzzy
-#| msgid "أكثر المستمعين تفاعلاً - تكرار الاستماع والإعجاب"
 msgid "مرتبين حسب الأكثر تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب"
-msgstr "The most engaged listeners - repeat plays and likes"
+msgstr "Ranked by engagement - recent repeat full listens and likes"
 
 #: frontend/website/pages/player/index.html:922
 #: frontend/website/pages/songs/detail.html:3351
-#, fuzzy
-#| msgid "محدش بيسمعها دلوقتي"
 msgid "محدش بيسمعها دلوقتي"
 msgstr "No one is listening right now"
 
 #: frontend/website/pages/player/index.html:932
 #: frontend/website/pages/songs/detail.html:3361
-#, fuzzy
-#| msgid "محدش بيسمعها دلوقتي"
 msgid "بيسمعها دلوقتي"
-msgstr "No one is listening right now"
+msgstr "listening right now"
 
 #: frontend/website/pages/player/index.html:941
 #: frontend/website/pages/songs/detail.html:3370
 #: frontend/website/pages/user/public_profile.html:117
-#, fuzzy
-#| msgid "استمع الآن"
 msgid "استماع كامل"
-msgstr "Listen Now"
+msgstr "Full listen"
 
 #: frontend/website/pages/player/index.html:1316
 msgid "موسيقى"
@@ -3297,22 +3143,16 @@ msgstr "Music"
 
 #: frontend/website/pages/player/index.html:1320
 #: frontend/website/pages/songs/detail.html:2382
-#, fuzzy
-#| msgid "أمس"
 msgid "صمت"
-msgstr "Yesterday"
+msgstr "Silence"
 
 #: frontend/website/pages/player/index.html:1354
-#, fuzzy
-#| msgid "إدارة توقيت الكلمات"
 msgid "حدث خطأ في تحميل الكلمات"
-msgstr "Manage Lyrics Timing"
+msgstr "An error occurred while loading the lyrics"
 
 #: frontend/website/pages/remix_result.html:3
-#, fuzzy
-#| msgid "فكرة الحملة"
 msgid "نتيجة الريمكس"
-msgstr "Campaign Concept"
+msgstr "Remix Result"
 
 #: frontend/website/pages/remix_result.html:87
 msgid "تم إنشاء الريمكس بنجاح!"
@@ -3323,10 +3163,8 @@ msgid "يمكنك الآن الاستماع إلى الريمكس وتحميله
 msgstr "You can now listen to the remix and download it"
 
 #: frontend/website/pages/remix_result.html:95
-#, fuzzy
-#| msgid "الأغاني المرتبطة"
 msgid "الأغاني المستخدمة"
-msgstr "Related Songs"
+msgstr "Songs Used"
 
 #: frontend/website/pages/remix_result.html:111
 #: frontend/website/pages/songs/detail.html:2165
@@ -3339,22 +3177,16 @@ msgid "الصوت"
 msgstr "Vocals"
 
 #: frontend/website/pages/remix_result.html:143
-#, fuzzy
-#| msgid "الريمكسات"
 msgid "الريمكس"
-msgstr "Remixes"
+msgstr "The Remix"
 
 #: frontend/website/pages/remix_result.html:154
-#, fuzzy
-#| msgid "المدينة"
 msgid "المدة"
-msgstr "City"
+msgstr "Duration"
 
 #: frontend/website/pages/remix_result.html:154
-#, fuzzy
-#| msgid "من (ثانية)"
 msgid "ثانية"
-msgstr "From (seconds)"
+msgstr "sec"
 
 #: frontend/website/pages/remix_result.html:155
 msgid "الحجم"
@@ -3366,16 +3198,12 @@ msgid "تحميل"
 msgstr "Download"
 
 #: frontend/website/pages/remix_result.html:188
-#, fuzzy
-#| msgid "صورة الأغنية"
 msgid "العودة للأغنية"
-msgstr "Song Cover Image"
+msgstr "Back to the song"
 
 #: frontend/website/pages/sing-with-tamer/index.html:946
-#, fuzzy
-#| msgid "الأغاني"
 msgid "سجلت أغنية"
-msgstr "Songs"
+msgstr "Songs Recorded"
 
 #: frontend/website/pages/sing-with-tamer/index.html:946
 msgid "قبل كده"
@@ -3386,30 +3214,24 @@ msgid "دي التسجيلة اللي عملتها"
 msgstr "This is the recording you made"
 
 #: frontend/website/pages/sing-with-tamer/index.html:953
-#, fuzzy
-#| msgid "رابط صورة الأيقونة"
 msgid "افتح صفحة الدويتو"
-msgstr "Icon Image URL"
+msgstr "Open the duet page"
 
 #: frontend/website/pages/sing-with-tamer/index.html:955
 #: frontend/website/pages/sing-with-tamer/index.html:968
-#, fuzzy
-#| msgid "صورة الأغنية"
 msgid "رجوع لصفحة الأغنية"
-msgstr "Song Cover Image"
+msgstr "Back to song page"
 
 #: frontend/website/pages/sing-with-tamer/index.html:963
-#, fuzzy
-#| msgid "ضغطات المنصات الخارجية"
 msgid "استخدمت الميزة دي النهاردة"
-msgstr "External Clicks"
+msgstr "You already used this feature today"
 
 #: frontend/website/pages/sing-with-tamer/index.html:965
 #, python-format
 msgid "هتبقى متاحة تاني بعد %(hours)s ساعة"
 msgid_plural "هتبقى متاحة تاني بعد %(hours)s ساعة"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "It'll be available again in %(hours)s hour"
+msgstr[1] "It'll be available again in %(hours)s hours"
 
 #: frontend/website/pages/sing-with-tamer/index.html:989
 msgid "غني مع تامر 🎤"
@@ -3451,10 +3273,9 @@ msgstr "This feature will be available soon"
 
 #: frontend/website/pages/songs/detail.html:7
 #: frontend/website/pages/songs/detail.html:12
-#, fuzzy, python-format
-#| msgid "أرشيف تامر حسني"
+#, python-format
 msgid "استمع لأغنية %(title)s لتامر حسني"
-msgstr "Tamer Hosny Archive"
+msgstr "Listen to %(title)s by Tamer Hosny"
 
 #: frontend/website/pages/songs/detail.html:7
 msgid "كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني."
@@ -3514,10 +3335,8 @@ msgid "استمع الآن"
 msgstr "Listen Now"
 
 #: frontend/website/pages/songs/detail.html:1892
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "تحليل الصوت"
-msgstr "Log Out"
+msgstr "Audio Analysis"
 
 #: frontend/website/pages/songs/detail.html:1905
 msgid "المفتاح"
@@ -3532,10 +3351,8 @@ msgid "الطاقة"
 msgstr "Energy"
 
 #: frontend/website/pages/songs/detail.html:1926
-#, fuzzy
-#| msgid "كلمة المرور"
 msgid "قابلية الرقص"
-msgstr "Password"
+msgstr "Danceability"
 
 #: frontend/website/pages/songs/detail.html:1950
 msgid "المشاركون"
@@ -3588,43 +3405,31 @@ msgid "إنشاء الريمكس"
 msgstr "Create Remix"
 
 #: frontend/website/pages/songs/detail.html:2205
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "إضافة إلى قائمة التشغيل"
-msgstr "Playlist"
+msgstr "Add to Playlist"
 
 #: frontend/website/pages/songs/detail.html:2212
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "ابحث عن قائمة التشغيل"
-msgstr "Playlist"
+msgstr "Search playlists"
 
 #: frontend/website/pages/songs/detail.html:2215
 #: frontend/website/pages/user/playlists.html:10
-#, fuzzy
-#| msgid "إضافة رابط جديد"
 msgid "إنشاء قائمة جديدة"
-msgstr "Add New Link"
+msgstr "Create New Playlist"
 
 #: frontend/website/pages/songs/detail.html:2220
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "رجوع للبحث"
-msgstr "Log Out"
+msgstr "Back to search"
 
 #: frontend/website/pages/songs/detail.html:2223
-#, fuzzy
-#| msgid "كود التضمين (اختياري)"
 msgid "وصف القائمة (اختياري)"
-msgstr "Embed Code (optional)"
+msgstr "Playlist description (optional)"
 
 #: frontend/website/pages/songs/detail.html:2226
 #: frontend/website/pages/user/playlist_detail.html:13
 #: frontend/website/pages/user/playlist_detail.html:87
 #: frontend/website/pages/user/playlists.html:39
 #: frontend/website/pages/user/playlists.html:77
-#, fuzzy
-#| msgid "خاصة"
 msgid "خاص"
 msgstr "Private"
 
@@ -3633,20 +3438,14 @@ msgstr "Private"
 #: frontend/website/pages/user/playlist_detail.html:88
 #: frontend/website/pages/user/playlists.html:37
 #: frontend/website/pages/user/playlists.html:76
-#, fuzzy
-#| msgid "عامة"
 msgid "عام"
 msgstr "Public"
 
 #: frontend/website/pages/songs/detail.html:2231
-#, fuzzy
-#| msgid "إضافة"
 msgid "إنشاء وإضافة"
-msgstr "Add"
+msgstr "Create and Add"
 
 #: frontend/website/pages/songs/detail.html:2262
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "جارِ التحميل..."
 msgstr "Loading..."
 
@@ -3655,10 +3454,8 @@ msgid " موسيقى "
 msgstr " Music "
 
 #: frontend/website/pages/songs/detail.html:2420
-#, fuzzy
-#| msgid "إدارة توقيت الكلمات"
 msgid "حدث خطأ أثناء تحميل الكلمات"
-msgstr "Manage Lyrics Timing"
+msgstr "An error occurred while loading the lyrics"
 
 #: frontend/website/pages/songs/detail.html:2938
 msgid "ابحث عن أغنية لعمل ريمكس"
@@ -3673,10 +3470,8 @@ msgid "لم يتم العثور على نتائج"
 msgstr "No results found"
 
 #: frontend/website/pages/songs/detail.html:3068
-#, fuzzy
-#| msgid "تاريخ الإصدار"
 msgid "جاري الإنشاء..."
-msgstr "Release Date"
+msgstr "Creating..."
 
 #: frontend/website/pages/songs/detail.html:3089
 #: frontend/website/pages/songs/detail.html:3093
@@ -3688,10 +3483,8 @@ msgid "حدث خطأ أثناء تحميل القوائم"
 msgstr "An error occurred while loading the playlists"
 
 #: frontend/website/pages/songs/detail.html:3493
-#, fuzzy
-#| msgid "قوائم التشغيل"
 msgid "لا توجد قوائم تشغيل"
-msgstr "Playlists"
+msgstr "No playlists"
 
 #: frontend/website/pages/songs/detail.html:3511
 msgid "موجودة بالفعل"
@@ -3740,22 +3533,16 @@ msgid "العودة للقوائم"
 msgstr "Back to playlists"
 
 #: frontend/website/pages/user/playlist_detail.html:47
-#, fuzzy
-#| msgid "القائمة"
 msgid "حذف من القائمة"
-msgstr "Menu"
+msgstr "Remove from playlist"
 
 #: frontend/website/pages/user/playlist_detail.html:61
-#, fuzzy
-#| msgid "القائمة"
 msgid "هذه القائمة فارغة"
-msgstr "Menu"
+msgstr "This playlist is empty"
 
 #: frontend/website/pages/user/playlist_detail.html:70
-#, fuzzy
-#| msgid "تبديل اللغة"
 msgid "تعديل القائمة"
-msgstr "Switch language"
+msgstr "Edit Playlist"
 
 #: frontend/website/pages/user/playlist_detail.html:85
 #: frontend/website/pages/user/playlists.html:74
@@ -3763,10 +3550,8 @@ msgid "الوضع"
 msgstr "Mode"
 
 #: frontend/website/pages/user/playlist_detail.html:92
-#, fuzzy
-#| msgid "سعر التذكرة"
 msgid "حفظ التغييرات"
-msgstr "Ticket Price"
+msgstr "Save Changes"
 
 #: frontend/website/pages/user/playlist_detail.html:293
 msgid "تم تحديث القائمة بنجاح"
@@ -3777,32 +3562,24 @@ msgid "هل أنت متأكد من حذف هذه الأغنية من القائ�
 msgstr "Are you sure you want to remove this song from the playlist?"
 
 #: frontend/website/pages/user/playlist_detail.html:323
-#, fuzzy
-#| msgid "الأغنية الأصلية"
 msgid "تم حذف الأغنية من القائمة"
-msgstr "Original Song"
+msgstr "Song removed from the playlist"
 
 #: frontend/website/pages/user/playlists.html:48
 msgid "لم تقم بإنشاء أي قائمة تشغيل بعد"
 msgstr "You haven't created any playlists yet"
 
 #: frontend/website/pages/user/playlists.html:57
-#, fuzzy
-#| msgid "قائمة التشغيل"
 msgid "إنشاء قائمة تشغيل جديدة"
-msgstr "Playlist"
+msgstr "Create New Playlist"
 
 #: frontend/website/pages/user/playlists.html:67
-#, fuzzy
-#| msgid "الاسم بالعربية"
 msgid "أدخل اسم القائمة"
-msgstr "Name (Arabic)"
+msgstr "Enter playlist name"
 
 #: frontend/website/pages/user/playlists.html:71
-#, fuzzy
-#| msgid "كود التضمين (اختياري)"
 msgid "أدخل وصف القائمة (اختياري)"
-msgstr "Embed Code (optional)"
+msgstr "Enter playlist description (optional)"
 
 #: frontend/website/pages/user/playlists.html:81
 msgid "إنشاء"
@@ -3818,22 +3595,17 @@ msgid "حدث خطأ أثناء إنشاء القائمة"
 msgstr "An error occurred while creating the playlist"
 
 #: frontend/website/pages/user/public_profile.html:6
-#, fuzzy, python-format
-#| msgid "أرشيف تامر حسني"
+#, python-format
 msgid "الملف الشخصي لـ %(name)s على أرشيف تامر حسني."
-msgstr "Tamer Hosny Archive"
+msgstr "%(name)s's profile on the Tamer Hosny Archive."
 
 #: frontend/website/pages/user/public_profile.html:71
-#, fuzzy
-#| msgid "تسجيل الخروج"
 msgid "تغيير الصورة"
-msgstr "Log Out"
+msgstr "Change Photo"
 
 #: frontend/website/pages/user/public_profile.html:85
-#, fuzzy
-#| msgid "تبديل اللغة"
 msgid "تعديل الاسم"
-msgstr "Switch language"
+msgstr "Edit Name"
 
 #: frontend/website/pages/user/public_profile.html:96
 #, python-format
@@ -3841,22 +3613,16 @@ msgid "عضو منذ %(date)s"
 msgstr "Member since %(date)s"
 
 #: frontend/website/pages/user/public_profile.html:102
-#, fuzzy
-#| msgid "الأكثر استماعاً"
 msgid "الأكثر استماعاً لها"
-msgstr "Top Listeners"
+msgstr "Most Listened"
 
 #: frontend/website/pages/user/public_profile.html:127
-#, fuzzy
-#| msgid "غني مع تامر"
 msgid "غنى مع تامر"
-msgstr "Sing With Tamer"
+msgstr "Sang with Tamer"
 
 #: frontend/website/pages/user/public_profile.html:153
-#, fuzzy
-#| msgid "الأغاني المرتبطة"
 msgid "الأغاني المفضلة"
-msgstr "Related Songs"
+msgstr "Favorite Songs"
 
 #: frontend/website/pages/user/public_profile.html:176
 msgid "مفيش نشاط عام يتعرض هنا لسه"
@@ -3881,10 +3647,8 @@ msgid "الريمكسات"
 msgstr "Remixes"
 
 #: frontend/website/pages/user/remixes.html:48
-#, fuzzy
-#| msgid "الريمكسات"
 msgid "ابحث في الريمكسات..."
-msgstr "Remixes"
+msgstr "Search remixes..."
 
 #: frontend/website/pages/user/remixes.html:135
 msgid "لم تقم بإنشاء أي ريمكس بعد"
@@ -3938,10 +3702,8 @@ msgid "تسجيل خروج"
 msgstr "Log Out"
 
 #: frontend/website/partials/header.html:74
-#, fuzzy
-#| msgid "تسجيل خروج"
 msgid "تسجيل دخول"
-msgstr "Log Out"
+msgstr "Log In"
 
 #: frontend/website/partials/header.html:78
 msgid "القائمة"
@@ -3966,7 +3728,6 @@ msgstr "Sign in / Create account"
 #~ msgid "الترتيب بيتحدث لحظة بلحظة"
 #~ msgstr "The ranking updates live, moment by moment"
 
-#, fuzzy
 #~ msgid "استماع"
 #~ msgstr "listens"
 
