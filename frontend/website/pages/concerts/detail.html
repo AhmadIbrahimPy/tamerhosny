@@ -221,7 +221,7 @@
 {% if concert.has_location %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+thOnReady(function() {
   if (typeof L === 'undefined') return;
   var map = L.map('concertLocationMap', { scrollWheelZoom: false }).setView([{{ concert.latitude|unlocalize }}, {{ concert.longitude|unlocalize }}], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

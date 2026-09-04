@@ -51,6 +51,34 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12/dist/htmx.min.js"></script>
+  <script>
+    // Per-page scripts (each page's extra_js block) run again on
+    // every boosted navigation - htmx re-executes <script> tags inside
+    // the swapped #th-page-root fragment - but 'DOMContentLoaded' itself
+    // only ever fires once for the whole document, so a page script
+    // that waits for it would silently never run after the first load.
+    // Pages call thOnReady(fn) instead: it runs fn immediately once the
+    // document has already loaded (true on every boosted swap), and
+    // falls back to a real DOMContentLoaded listener on the first load.
+    window.thOnReady = function (fn) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fn);
+      } else {
+        fn();
+      }
+    };
+
+    // htmx normally restores browser back/forward from its own snapshot
+    // of the *entire* <body> it took before leaving the page - that
+    // snapshot would include the persistent audio bar, so restoring it
+    // replaces the live <audio> element and kills playback. Disabling
+    // the cache makes back/forward issue a normal boosted GET instead,
+    // which only ever touches #th-page-root like every other nav.
+    document.addEventListener('DOMContentLoaded', function () {
+      htmx.config.historyCacheSize = 0;
+    });
+  </script>
 
   <style>
     :root{
@@ -527,13 +555,24 @@
       }
     }
   </style>
-  {% block extra_css %}{% endblock %}
+  <style>
+    .th-nav-progress{position:fixed; top:0; left:0; right:0; height:3px; z-index:2000; background:transparent; pointer-events:none;}
+    .th-nav-progress::before{content:""; display:block; height:100%; width:0; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .2s ease; opacity:0;}
+    body.htmx-request .th-nav-progress::before{width:70%; opacity:1; transition:width 3s cubic-bezier(.1,.7,.3,1), opacity .2s ease;}
+    body:not(.htmx-request) .th-nav-progress::before{width:100%;}
+  </style>
 </head>
 
-<body>
+<body hx-boost="true" hx-target="#th-page-root" hx-select="#th-page-root" hx-swap="outerHTML" hx-indicator="#th-nav-progress">
+  <div id="th-nav-progress" class="th-nav-progress"></div>
+
   {% include "website/partials/header.html" %}
 
-  {% block content %}{% endblock %}
+  <div id="th-page-root">
+    {% block extra_css %}{% endblock %}
+    {% block content %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+  </div>
 
   {% include "website/partials/footer.html" %}
 
@@ -1091,7 +1130,12 @@
 
     // Save player state to localStorage
     function savePlayerState() {
-      if (globalAudio) {
+      // No song has ever loaded yet - there's nothing to save. Skipping
+      // this avoids a browser quirk where an <img> left with its default
+      // empty src="" reports its .src property as the *current page's*
+      // URL (not ""), which would otherwise get persisted and later
+      // restored as the player's cover art.
+      if (globalAudio && currentSongId !== null) {
         const playerTitle = document.getElementById('playerTitle');
         const playerArtist = document.getElementById('playerArtist');
         const playerAlbum = document.getElementById('playerAlbum');
@@ -1124,8 +1168,12 @@
         try {
           const state = JSON.parse(savedState);
 
-          // Only show the player bar if the saved state actually has a song in it.
-          if (!state.currentSongUrl) {
+          // Only show the player bar if the saved state actually has a
+          // song in it. currentSongId is required too (not just
+          // currentSongUrl) to reject state saved by an older, buggy
+          // build of savePlayerState() that could persist the *page's
+          // own URL* as the song/image src (see savePlayerState above).
+          if (!state.currentSongUrl || !state.currentSongId) {
             return;
           }
           const playerBar = document.getElementById('globalAudioPlayer');
@@ -2091,7 +2139,55 @@
     });
   </script>
 
-  {% block extra_js %}{% endblock %}
+  <script>
+    // AJAX page navigation (htmx hx-boost, configured on <body>): only
+    // #th-page-root is fetched and swapped on link/form navigation, so
+    // the header, footer and the persistent global audio player never
+    // get torn down or reloaded mid-playback.
+
+    // The nav links' "active" state is normally decided server-side
+    // (request.resolver_match.url_name in header.html), but the header
+    // sits outside the swapped region so it's never re-rendered after
+    // the first load - recompute it here on every boosted navigation.
+    function thSyncActiveNav() {
+      var path = window.location.pathname;
+      document.querySelectorAll('.th-nav-links a[href], .th-mobile-panel a[href]').forEach(function (link) {
+        var href = link.getAttribute('href');
+        if (!href) return;
+        var isActive = href === '/' ? path === '/' : (path === href || path.indexOf(href) === 0);
+        link.classList.toggle('active', isActive);
+      });
+    }
+
+    document.body.addEventListener('htmx:afterSettle', function (evt) {
+      thSyncActiveNav();
+      window.scrollTo(0, 0);
+      var mobilePanel = document.getElementById('thMobilePanel');
+      if (mobilePanel) mobilePanel.classList.remove('open');
+      // GA only auto-tracks the initial hard load; boosted navigations
+      // never reload gtag.js, so fire a virtual pageview ourselves.
+      if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+          page_path: window.location.pathname + window.location.search,
+          page_location: window.location.href,
+          page_title: document.title,
+        });
+      }
+      if (typeof clarity === 'function') {
+        clarity('set', 'page_path', window.location.pathname);
+      }
+    });
+
+    // A boosted request that fails (network error, 4xx/5xx) would
+    // otherwise leave the user stuck on stale content with no feedback -
+    // fall back to a real navigation so they always land somewhere.
+    document.body.addEventListener('htmx:responseError', function (evt) {
+      window.location.href = evt.detail.requestConfig.path;
+    });
+    document.body.addEventListener('htmx:sendError', function (evt) {
+      window.location.href = evt.detail.requestConfig.path;
+    });
+  </script>
 </body>
 
 </html>

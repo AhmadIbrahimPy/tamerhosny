@@ -2479,7 +2479,7 @@
   }
 
   // Stop updating when modal is hidden
-  document.addEventListener('DOMContentLoaded', function() {
+  thOnReady(function() {
     const lyricsModal = document.getElementById('lyricsModal');
     if (lyricsModal) {
       lyricsModal.addEventListener('hidden.bs.modal', function() {
@@ -3599,7 +3599,7 @@
       });
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  thOnReady(function () {
     const songId = {{ song.pk }};
     const searchInput = document.getElementById('songSearchInput');
     if (searchInput) {

@@ -947,7 +947,7 @@ function renderLeaderboard(entries) {
 }
 
 // Ensure player bar is always visible on this page
-document.addEventListener('DOMContentLoaded', function() {
+thOnReady(function() {
   const playerBar = document.getElementById('globalAudioPlayer');
   if (playerBar) {
     playerBar.style.display = 'block';
@@ -1403,7 +1403,7 @@ function switchPlayerTab(tabName) {
 }
 
 // Load data when page loads
-document.addEventListener('DOMContentLoaded', loadPlayerPageData);
+thOnReady(loadPlayerPageData);
 
 window.addEventListener('beforeunload', function () {
   disconnectListenerSocket();
