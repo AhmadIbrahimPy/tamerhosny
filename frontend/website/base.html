@@ -729,7 +729,9 @@
     }
 
     function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId) {
-      if (requireAuthForPlayback()) return;
+      if (requireAuthForPlayback(function () {
+        playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+      })) return;
 
       // Check if this is the same song - don't reset position
       let isSameSong = false;
@@ -874,7 +876,9 @@
             globalAudio.pause();
           } else {
             // Currently paused - resume from current position
-            if (requireAuthForPlayback()) return;
+            if (requireAuthForPlayback(function () {
+              toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId);
+            })) return;
             globalAudio.play();
           }
           return;
@@ -1314,7 +1318,7 @@
       // audioPlayPause is dispatched from the native play/pause listeners
       // above, not here - this just needs to trigger them.
       if (globalAudio.paused) {
-        if (requireAuthForPlayback()) return;
+        if (requireAuthForPlayback(toggleGlobalAudio)) return;
         globalAudio.play();
       } else {
         isManualPause = true;
