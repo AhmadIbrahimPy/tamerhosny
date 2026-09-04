@@ -86,6 +86,38 @@
 
   <div class="th-section">
     <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الألبومات" %}</h2>
+      <a href="{% url 'website_app:albums' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for album in albums %}
+        <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
+          <div class="th-img-wrap">
+            {% if album.cover_image %}
+              <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
+            {% elif album.cover_art_url %}
+              <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
+            {% else %}
+              <i class="bi bi-disc icon-fallback"></i>
+            {% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ album|localized_field:'title' }}</div>
+            {% if album.release_date %}<div class="th-meta">{{ album.release_date|date:"Y" }}</div>{% endif %}
+          </div>
+        </a>
+        {% empty %}
+        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
       <h2 class="th-section-title">{% translate "أحدث المسلسلات" %}</h2>
       <a href="{% url 'website_app:series' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
     </div>
@@ -137,38 +169,6 @@
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
             {% if item.release_date %}<div class="th-meta">{{ item.release_date|date:"Y" }}</div>{% endif %}
-          </div>
-        </a>
-        {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
-        {% endfor %}
-      </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
-    </div>
-  </div>
-
-  <div class="th-section">
-    <div class="th-section-head">
-      <h2 class="th-section-title">{% translate "الألبومات" %}</h2>
-      <a href="{% url 'website_app:albums' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
-    </div>
-    <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
-      <div class="th-slider">
-        {% for album in albums %}
-        <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
-          <div class="th-img-wrap">
-            {% if album.cover_image %}
-              <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
-            {% elif album.cover_art_url %}
-              <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
-            {% else %}
-              <i class="bi bi-disc icon-fallback"></i>
-            {% endif %}
-          </div>
-          <div class="th-body">
-            <div class="th-title">{{ album|localized_field:'title' }}</div>
-            {% if album.release_date %}<div class="th-meta">{{ album.release_date|date:"Y" }}</div>{% endif %}
           </div>
         </a>
         {% empty %}
