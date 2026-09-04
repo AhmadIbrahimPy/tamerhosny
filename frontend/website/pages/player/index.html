@@ -833,7 +833,7 @@ function sendListenerAction(action) {
   }
 }
 
-document.addEventListener('audioPlayPause', function (e) {
+const onPlayerPageAudioPlayPause = function (e) {
   if (!currentSongData.songId || Number(e.detail.songId) !== Number(currentSongData.songId)) return;
   if (e.detail.playing) {
     isCurrentlyListening = true;
@@ -842,7 +842,8 @@ document.addEventListener('audioPlayPause', function (e) {
     isCurrentlyListening = false;
     sendListenerAction('stop');
   }
-});
+};
+document.addEventListener('audioPlayPause', onPlayerPageAudioPlayPause);
 
 window.openLeaderboardModal = function () {
   if (!currentSongData.songId) return;
@@ -1405,8 +1406,11 @@ function switchPlayerTab(tabName) {
 // Load data when page loads
 thOnReady(loadPlayerPageData);
 
-window.addEventListener('beforeunload', function () {
-  disconnectListenerSocket();
-});
+if (typeof thOnTeardown === 'function') {
+  thOnTeardown(function () {
+    document.removeEventListener('audioPlayPause', onPlayerPageAudioPlayPause);
+    disconnectListenerSocket();
+  });
+}
 </script>
 {% endblock %}

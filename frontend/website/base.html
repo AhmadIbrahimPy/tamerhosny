@@ -69,6 +69,30 @@
       }
     };
 
+    // A page's extra_js used to rely on 'beforeunload' to close its
+    // WebSockets and unhook any document/globalAudio-level listeners it
+    // added - a real page reload made that reliable. Boosted navigation
+    // never unloads the document, so that cleanup silently stopped
+    // running: every page visited left its sockets connected and its
+    // listeners stacked on top of the last page's forever (each new
+    // navigation adds another 'songChanged'/'ended'/etc. handler, none
+    // ever removed), which is what was crashing with "Cannot read
+    // properties of null (reading 'send')" and other stale-callback
+    // errors. Pages register real cleanup with thOnTeardown(fn) instead;
+    // it fires right before #th-page-root's old content is thrown away
+    // (see htmx:beforeCleanupElement below) - same idea as thOnReady,
+    // just for the opposite end of the page's lifetime.
+    var thTeardownQueue = [];
+    window.thOnTeardown = function (fn) {
+      thTeardownQueue.push(fn);
+    };
+    function thRunTeardown() {
+      while (thTeardownQueue.length) {
+        try { thTeardownQueue.pop()(); } catch (e) {}
+      }
+    }
+    window.addEventListener('beforeunload', thRunTeardown);
+
     // htmx normally restores browser back/forward from its own snapshot
     // of the *entire* <body> it took before leaving the page - that
     // snapshot would include the persistent audio bar, so restoring it
@@ -563,7 +587,10 @@
   </style>
 </head>
 
-<body hx-boost="true" hx-target="#th-page-root" hx-select="#th-page-root" hx-swap="outerHTML" hx-indicator="#th-nav-progress">
+<!-- show:none - htmx scrolls the swapped target into view by default;
+     the explicit window.scrollTo(0, 0) in htmx:afterSettle below is what
+     should decide scroll position on every boosted navigation instead. -->
+<body hx-boost="true" hx-target="#th-page-root" hx-select="#th-page-root" hx-swap="outerHTML show:none" hx-indicator="#th-nav-progress">
   <div id="th-nav-progress" class="th-nav-progress"></div>
 
   {% include "website/partials/header.html" %}
@@ -2114,20 +2141,14 @@
     };
 
     window.startGoogleAuth = function () {
-      // Google is a full-page round trip (out to accounts.google.com
-      // and back) - it drops any in-memory JS state, unlike the
-      // email/password login which stays on the page and can just call
+      // Google is a full-page round trip (out to accounts.google.com and
+      // back) - it drops any in-memory JS state, unlike the email/
+      // password login which stays on the page and can just call
       // pendingAuthAction() again. 'next' is how the callback (see
       // auth_views.google_login_callback) knows to land back on this
-      // exact page instead of the homepage; the sessionStorage flag is
-      // how this page then knows to resume the playback that was
-      // blocked (see the DOMContentLoaded handler below), same as
-      // pendingAuthAction() does for the AJAX login path.
-      try {
-        if (window.pendingAuthAction) {
-          sessionStorage.setItem('thResumePlayAfterLogin', '1');
-        }
-      } catch (e) {}
+      // exact page instead of the homepage - playback itself can't be
+      // resumed automatically here (see the DOMContentLoaded handler
+      // below for why), but at least they land back where they were.
       var next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = '{% url "website_app:auth-google-start" %}?next=' + next;
     };
@@ -2155,19 +2176,15 @@
         window.history.replaceState({}, '', url);
       }
 
-      // Signed in with Google after being gated on playback: this is a
-      // fresh page load (Google's redirect back landed here), so - unlike
-      // the AJAX login path's pendingAuthAction() - there's no JS state
-      // left to replay. The cover-art play button is the one thing every
-      // playable page has in common, so click it once, same as they did
-      // right before the login gate stopped them.
-      try {
-        if (window.isAuthenticated && sessionStorage.getItem('thResumePlayAfterLogin') === '1') {
-          sessionStorage.removeItem('thResumePlayAfterLogin');
-          const playBtn = document.getElementById('audioPlayBtn');
-          if (playBtn) playBtn.click();
-        }
-      } catch (e) {}
+      // Signed in with Google after being gated on playback: landing back
+      // on this exact page (see startGoogleAuth / the callback view) is
+      // as far as this can go automatically. A synthetic playBtn.click()
+      // was tried here too, but Google's redirect is a fresh page load
+      // with no real user gesture on it yet, so the browser blocks the
+      // actual play() - while still firing the native 'play' event and
+      // updating the UI as if it worked (icon, listener count, lyrics
+      // sync), leaving a page that visibly shows "playing" with no
+      // sound. One more tap, which now works immediately, beats that.
     });
   </script>
 
@@ -2194,6 +2211,15 @@
     document.body.addEventListener('htmx:afterSettle', function (evt) {
       thSyncActiveNav();
       window.scrollTo(0, 0);
+      // #th-extra-js (the OOB swap carrying each page's extra_js, since
+      // it can't live inside #th-page-root - see its own comment) sits
+      // right before </body>, and htmx scrolls a freshly OOB-swapped
+      // element into view by default with no per-element way to opt out
+      // (unlike the main target, "show:none" on hx-swap-oob silently
+      // breaks the OOB swap itself). That auto-scroll runs sometime
+      // after this event, so it wins over the line above unless undone
+      // again once it's had its turn.
+      setTimeout(function () { window.scrollTo(0, 0); }, 0);
       var mobilePanel = document.getElementById('thMobilePanel');
       if (mobilePanel) mobilePanel.classList.remove('open');
       // GA only auto-tracks the initial hard load; boosted navigations
@@ -2208,6 +2234,15 @@
       if (typeof clarity === 'function') {
         clarity('set', 'page_path', window.location.pathname);
       }
+    });
+
+    // Fires for every element htmx is about to discard - #th-page-root's
+    // old content included, right before the new page's content (and
+    // extra_js) replaces it. This is the actual "leaving this page" hook
+    // pages register cleanup against via thOnTeardown (see its
+    // definition up top for why 'beforeunload' can't be that hook here).
+    document.body.addEventListener('htmx:beforeCleanupElement', function (evt) {
+      if (evt.detail.elt && evt.detail.elt.id === 'th-page-root') thRunTeardown();
     });
 
     // A boosted request that fails (network error, 4xx/5xx) would

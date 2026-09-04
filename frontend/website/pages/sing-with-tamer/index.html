@@ -4776,10 +4776,15 @@ function stopListening(songId) {
 
 // Stop listener tracking when user leaves the page - closing the
 // socket is enough, the server's disconnect() handler cleans up.
-window.addEventListener('beforeunload', function() {
-  listenerSocketClosingDeliberately = true;
-  if (listenerSocket) listenerSocket.close();
-});
+// thOnTeardown (base.html) fires this on a boosted navigation away from
+// the page too, not just a real unload - see its definition for why
+// 'beforeunload' alone stopped being enough once navigation went AJAX.
+if (typeof thOnTeardown === 'function') {
+  thOnTeardown(function () {
+    listenerSocketClosingDeliberately = true;
+    if (listenerSocket) listenerSocket.close();
+  });
+}
 /* =========================================================
    CLOSE MODAL OUTSIDE
 ========================================================= */
@@ -4800,9 +4805,8 @@ document
 /* =========================================================
    CLEANUP
 ========================================================= */
-window.addEventListener(
-  'beforeunload',
-  function () {
+if (typeof thOnTeardown === 'function') {
+  thOnTeardown(function () {
     if (mediaStream) {
       mediaStream
         .getTracks()
@@ -4818,8 +4822,8 @@ window.addEventListener(
     if (audio) {
       audio.pause();
     }
-  }
-);
+  });
+}
 </script>
 {% endif %}
 {% endblock %}

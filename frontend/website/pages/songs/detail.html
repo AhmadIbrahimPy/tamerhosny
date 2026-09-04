@@ -3633,7 +3633,7 @@
       };
 
       // Listen for song changes from global player
-      document.addEventListener('songChanged', function (e) {
+      const onSongChanged = function (e) {
         const newSongId = e.detail.songId;
         if (newSongId === songId) {
           // Song changed to this page's song - connect socket
@@ -3643,7 +3643,8 @@
           // Song changed away from this page's song - disconnect socket
           disconnectListenerSocket();
         }
-      });
+      };
+      document.addEventListener('songChanged', onSongChanged);
 
       // Listen for play/pause events from global player bar. This is the
       // one place that sends 'start'/'stop' over the listener socket -
@@ -3653,7 +3654,7 @@
       // Swap the "listening now" stat icon to a spinner while this
       // page's song is buffering (initial load or a mid-stream stall),
       // so it doesn't look stuck while nothing audible is happening yet.
-      document.addEventListener('audioLoading', function (e) {
+      const onAudioLoading = function (e) {
         if (e.detail.songId !== songId) return;
         const icon = document.getElementById('listeningStatIcon');
         if (!icon) return;
@@ -3664,9 +3665,10 @@
           icon.classList.remove('bi-arrow-repeat', 'icon-spin');
           icon.classList.add('bi-headphones');
         }
-      });
+      };
+      document.addEventListener('audioLoading', onAudioLoading);
 
-      document.addEventListener('audioPlayPause', function (e) {
+      const onAudioPlayPause = function (e) {
         if (e.detail.songId === songId) {
           if (e.detail.playing) {
             isCurrentlyListening = true;
@@ -3688,7 +3690,8 @@
             }
           }
         }
-      });
+      };
+      document.addEventListener('audioPlayPause', onAudioPlayPause);
 
       // A page refresh restores playback from localStorage (see
       // restorePlayerState in base.html) on a ~300ms delay, after this
@@ -3697,7 +3700,7 @@
       // "listening now" count in sync. This is just a safety net for
       // any other path that could leave the two out of sync (e.g. a
       // slow/late 'play' event): reconcile once, shortly after load.
-      setTimeout(function () {
+      const reconcileTimer = setTimeout(function () {
         if (
           typeof globalAudio !== 'undefined' && globalAudio &&
           !globalAudio.paused && Number(currentSongId) === songId && !isCurrentlyListening
@@ -3713,7 +3716,7 @@
         }
       }, 600);
 
-      globalAudio.addEventListener('ended', function () {
+      const onSongEnded = function () {
         if (!isThisSongPlaying()) return;
         // isCurrentlyListening / sendListenerAction('stop') are handled
         // by the audioPlayPause listener above - base.html's global
@@ -3724,7 +3727,29 @@
         if (syncedLyrics) {
           syncedLyrics.classList.remove('visible');
         }
-      });
+      };
+      globalAudio.addEventListener('ended', onSongEnded);
+
+      // globalAudio (the header/footer's persistent <audio>) and
+      // document itself both live outside #th-page-root, so listeners
+      // added on them survive every boosted navigation on their own -
+      // without this, each song page visited would stack another full
+      // set of these on top of the last, all reacting to every future
+      // song change/play/pause at once (this is what was crashing with
+      // "Cannot read properties of null (reading 'send')": a stale
+      // page's onSongChanged calling a listener socket that page had
+      // already torn down).
+      if (typeof thOnTeardown === 'function') {
+        thOnTeardown(function () {
+          clearTimeout(reconcileTimer);
+          document.removeEventListener('songChanged', onSongChanged);
+          document.removeEventListener('audioLoading', onAudioLoading);
+          document.removeEventListener('audioPlayPause', onAudioPlayPause);
+          globalAudio.removeEventListener('ended', onSongEnded);
+          disconnectListenerSocket();
+          if (leaderboardSocket) leaderboardSocket.close();
+        });
+      }
     }
     {% endif %}
 
@@ -3750,20 +3775,19 @@
     });
   });
 
-  document.addEventListener('keydown', function (event) {
+  const onEscapeKey = function (event) {
     if (event.key !== 'Escape') return;
     const playlistModal = document.getElementById('playlistModal');
     if (playlistModal && playlistModal.style.display === 'flex') {
       closePlaylistModal();
     }
-  });
-
-  window.addEventListener('beforeunload', function () {
-    // Closing the socket is enough - the server's disconnect() handler
-    // removes this listener and broadcasts the updated count itself.
-    disconnectListenerSocket();
-    if (leaderboardSocket) leaderboardSocket.close();
-  });
+  };
+  document.addEventListener('keydown', onEscapeKey);
+  if (typeof thOnTeardown === 'function') {
+    thOnTeardown(function () {
+      document.removeEventListener('keydown', onEscapeKey);
+    });
+  }
 
 })();
 </script>
