@@ -15,307 +15,307 @@ msgstr ""
 
 #: backend/ads_app/models.py:28
 msgid "Home Page"
-msgstr ""
+msgstr "Home Page"
 
 #: backend/ads_app/models.py:29
 msgid "Artists & Crew Pages"
-msgstr ""
+msgstr "Artists & Crew Pages"
 
 #: backend/ads_app/models.py:30
 msgid "Songs Pages"
-msgstr ""
+msgstr "Songs Pages"
 
 #: backend/ads_app/models.py:31
 msgid "Albums Pages"
-msgstr ""
+msgstr "Albums Pages"
 
 #: backend/ads_app/models.py:32
 msgid "Movies & Series Pages"
-msgstr ""
+msgstr "Movies & Series Pages"
 
 #: backend/ads_app/models.py:33
 msgid "Concerts Pages"
-msgstr ""
+msgstr "Concerts Pages"
 
 #: backend/ai_remix_app/models.py:10
 msgid "Vocal Track"
-msgstr ""
+msgstr "Vocal Track"
 
 #: backend/ai_remix_app/models.py:11
 msgid "Instrumental"
-msgstr ""
+msgstr "Instrumental"
 
 #: backend/ai_remix_app/models.py:12
 msgid "Drums"
-msgstr ""
+msgstr "Drums"
 
 #: backend/ai_remix_app/models.py:13
 msgid "Bass"
-msgstr ""
+msgstr "Bass"
 
 #: backend/ai_remix_app/models.py:14 backend/analytics_app/models.py:26
 #: backend/links_app/models.py:103 backend/media_app/models.py:81
 #: backend/people_app/models.py:26
 msgid "Other"
-msgstr ""
+msgstr "Other"
 
 #: backend/ai_remix_app/models.py:16
 msgid "Source Name"
-msgstr ""
+msgstr "Source Name"
 
 #: backend/ai_remix_app/models.py:20
 #: frontend/dashboard/pages/ai_remix/index.html:254
 msgid "Audio File"
-msgstr ""
+msgstr "Audio File"
 
 #: backend/ai_remix_app/models.py:26
 #: frontend/dashboard/pages/ai_remix/index.html:258
 msgid "Source Type"
-msgstr ""
+msgstr "Source Type"
 
 #: backend/ai_remix_app/models.py:28
 #: frontend/dashboard/pages/ai_remix/index.html:79
 msgid "BPM"
-msgstr ""
+msgstr "BPM"
 
 #: backend/ai_remix_app/models.py:29
 msgid "Musical Key"
-msgstr ""
+msgstr "Musical Key"
 
 #: backend/ai_remix_app/models.py:30 backend/ai_remix_app/models.py:136
 msgid "Duration (seconds)"
-msgstr ""
+msgstr "Duration (seconds)"
 
 #: backend/ai_remix_app/models.py:31
 msgid "Uploaded At"
-msgstr ""
+msgstr "Uploaded At"
 
 #: backend/ai_remix_app/models.py:35 backend/ai_remix_app/models.py:99
 #: frontend/dashboard/pages/ai_remix/index.html:341
 msgid "Audio Source"
-msgstr ""
+msgstr "Audio Source"
 
 #: backend/ai_remix_app/models.py:36
 #: frontend/dashboard/pages/ai_remix/index.html:26
 #: frontend/dashboard/pages/ai_remix/index.html:68
 msgid "Audio Sources"
-msgstr ""
+msgstr "Audio Sources"
 
 #: backend/ai_remix_app/models.py:46
 msgid "Draft"
-msgstr ""
+msgstr "Draft"
 
 #: backend/ai_remix_app/models.py:47 backend/music_app/models.py:257
 msgid "Processing"
-msgstr ""
+msgstr "Processing"
 
 #: backend/ai_remix_app/models.py:48 backend/concerts_app/models.py:16
 #: backend/music_app/models.py:258
 msgid "Completed"
-msgstr ""
+msgstr "Completed"
 
 #: backend/ai_remix_app/models.py:49 backend/music_app/models.py:259
 msgid "Failed"
-msgstr ""
+msgstr "Failed"
 
 #: backend/ai_remix_app/models.py:51
 #: frontend/dashboard/pages/ai_remix/index.html:288
 msgid "Project Name"
-msgstr ""
+msgstr "Project Name"
 
 #: backend/ai_remix_app/models.py:52 backend/ai_remix_app/models.py:155
 #: frontend/dashboard/pages/ai_remix/index.html:292
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: backend/ai_remix_app/models.py:57
 #: frontend/dashboard/pages/ai_remix/index.html:51
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: backend/ai_remix_app/models.py:59
 #: frontend/dashboard/pages/ai_remix/index.html:52
 #: frontend/dashboard/pages/ai_remix/index.html:111
 #: frontend/dashboard/pages/ai_remix/index.html:296
 msgid "Target BPM"
-msgstr ""
+msgstr "Target BPM"
 
 #: backend/ai_remix_app/models.py:60
 #: frontend/dashboard/pages/ai_remix/index.html:53
 #: frontend/dashboard/pages/ai_remix/index.html:116
 #: frontend/dashboard/pages/ai_remix/index.html:300
 msgid "Target Key"
-msgstr ""
+msgstr "Target Key"
 
 #: backend/ai_remix_app/models.py:71 backend/ai_remix_app/models.py:138
 #: backend/ai_remix_app/models.py:158
 msgid "Created At"
-msgstr ""
+msgstr "Created At"
 
 #: backend/ai_remix_app/models.py:72
 msgid "Updated At"
-msgstr ""
+msgstr "Updated At"
 
 #: backend/ai_remix_app/models.py:76
 msgid "Remix Project"
-msgstr ""
+msgstr "Remix Project"
 
 #: backend/ai_remix_app/models.py:77
 #: frontend/dashboard/pages/ai_remix/index.html:41
 msgid "Remix Projects"
-msgstr ""
+msgstr "Remix Projects"
 
 #: backend/ai_remix_app/models.py:93 backend/ai_remix_app/models.py:126
 msgid "Project"
-msgstr ""
+msgstr "Project"
 
 #: backend/ai_remix_app/models.py:101
 #: frontend/dashboard/pages/ai_remix/index.html:347
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: backend/ai_remix_app/models.py:102
 #: frontend/dashboard/pages/ai_remix/index.html:352
 msgid "Start Time (seconds)"
-msgstr ""
+msgstr "Start Time (seconds)"
 
 #: backend/ai_remix_app/models.py:103
 #: frontend/dashboard/pages/ai_remix/index.html:356
 msgid "End Time (seconds)"
-msgstr ""
+msgstr "End Time (seconds)"
 
 #: backend/ai_remix_app/models.py:104
 #: frontend/dashboard/pages/ai_remix/index.html:371
 msgid "Loop"
-msgstr ""
+msgstr "Loop"
 
 #: backend/ai_remix_app/models.py:105
 #: frontend/dashboard/pages/ai_remix/index.html:360
 msgid "Fade In (seconds)"
-msgstr ""
+msgstr "Fade In (seconds)"
 
 #: backend/ai_remix_app/models.py:106
 #: frontend/dashboard/pages/ai_remix/index.html:364
 msgid "Fade Out (seconds)"
-msgstr ""
+msgstr "Fade Out (seconds)"
 
 #: backend/ai_remix_app/models.py:107
 #: frontend/dashboard/pages/ai_remix/index.html:376
 msgid "Order"
-msgstr ""
+msgstr "Order"
 
 #: backend/ai_remix_app/models.py:111
 msgid "Remix Source"
-msgstr ""
+msgstr "Remix Source"
 
 #: backend/ai_remix_app/models.py:112
 msgid "Remix Sources"
-msgstr ""
+msgstr "Remix Sources"
 
 #: backend/ai_remix_app/models.py:131
 msgid "Output File"
-msgstr ""
+msgstr "Output File"
 
 #: backend/ai_remix_app/models.py:133
 #: frontend/dashboard/pages/ai_remix/index.html:762
 msgid "Format"
-msgstr ""
+msgstr "Format"
 
 #: backend/ai_remix_app/models.py:134
 msgid "Bitrate"
-msgstr ""
+msgstr "Bitrate"
 
 #: backend/ai_remix_app/models.py:135
 msgid "Sample Rate"
-msgstr ""
+msgstr "Sample Rate"
 
 #: backend/ai_remix_app/models.py:137
 msgid "File Size (bytes)"
-msgstr ""
+msgstr "File Size (bytes)"
 
 #: backend/ai_remix_app/models.py:142
 msgid "Remix Output"
-msgstr ""
+msgstr "Remix Output"
 
 #: backend/ai_remix_app/models.py:143
 msgid "Remix Outputs"
-msgstr ""
+msgstr "Remix Outputs"
 
 #: backend/ai_remix_app/models.py:152
 msgid "Model Name"
-msgstr ""
+msgstr "Model Name"
 
 #: backend/ai_remix_app/models.py:153
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: backend/ai_remix_app/models.py:154
 msgid "Model Type"
-msgstr ""
+msgstr "Model Type"
 
 #: backend/ai_remix_app/models.py:156
 msgid "Is Active"
-msgstr ""
+msgstr "Is Active"
 
 #: backend/ai_remix_app/models.py:157
 msgid "Model Path"
-msgstr ""
+msgstr "Model Path"
 
 #: backend/ai_remix_app/models.py:162
 msgid "AI Model"
-msgstr ""
+msgstr "AI Model"
 
 #: backend/ai_remix_app/models.py:163
 msgid "AI Models"
-msgstr ""
+msgstr "AI Models"
 
 #: backend/analytics_app/models.py:15
 msgid "Page View"
-msgstr ""
+msgstr "Page View"
 
 #: backend/analytics_app/models.py:16
 msgid "Play"
-msgstr ""
+msgstr "Play"
 
 #: backend/analytics_app/models.py:17
 msgid "Share"
-msgstr ""
+msgstr "Share"
 
 #: backend/analytics_app/models.py:18
 msgid "External Platform Click"
-msgstr ""
+msgstr "External Platform Click"
 
 #: backend/analytics_app/models.py:21
 msgid "WhatsApp"
-msgstr ""
+msgstr "WhatsApp"
 
 #: backend/analytics_app/models.py:22 backend/links_app/models.py:100
 msgid "Facebook"
-msgstr ""
+msgstr "Facebook"
 
 #: backend/analytics_app/models.py:23
 msgid "X / Twitter"
-msgstr ""
+msgstr "X / Twitter"
 
 #: backend/analytics_app/models.py:24
 msgid "Telegram"
-msgstr ""
+msgstr "Telegram"
 
 #: backend/analytics_app/models.py:25
 msgid "Copy Link"
-msgstr ""
+msgstr "Copy Link"
 
 #: backend/concerts_app/models.py:15
 msgid "Upcoming"
-msgstr ""
+msgstr "Upcoming"
 
 #: backend/concerts_app/models.py:17
 msgid "Cancelled"
-msgstr ""
+msgstr "Cancelled"
 
 #: backend/concerts_app/models.py:18
 msgid "Postponed"
-msgstr ""
+msgstr "Postponed"
 
 #: backend/dashboard_app/forms.py:26
 msgid "-- بدون --"
@@ -345,7 +345,8 @@ msgstr "Photo"
 
 #: backend/dashboard_app/forms.py:54 backend/dashboard_app/views.py:552
 #: frontend/dashboard/pages/people/all.html:20
-#: frontend/dashboard/pages/studios/all.html:20 frontend/website/base.html:1628
+#: frontend/dashboard/pages/studios/all.html:20
+#: frontend/website/base.html:1628
 msgid "الاسم"
 msgstr "Name"
 
@@ -475,15 +476,16 @@ msgid "العمل الفني المرتبط"
 msgstr "Related Media"
 
 #: backend/dashboard_app/forms.py:150
-msgid "بيتحدد تلقائيًا من سنة إصدار الألبوم لو اخترت ألبوم، وتقدر تعدّله يدويًا."
+msgid ""
+"بيتحدد تلقائيًا من سنة إصدار الألبوم لو اخترت ألبوم، وتقدر تعدّله يدويًا."
 msgstr ""
 "Automatically set from the album's release year if you pick an album, and "
 "you can edit it manually."
 
 #: backend/dashboard_app/forms.py:153
 msgid ""
-"بعد حفظ الأغنية، زوّد المشارك التاني من قسم \"طقم العمل والمشاركين\" في صفحة "
-"الأغنية."
+"بعد حفظ الأغنية، زوّد المشارك التاني من قسم \"طقم العمل والمشاركين\" في صفحة"
+" الأغنية."
 msgstr ""
 "After saving the song, add the other artist from the \"Credits\" section on "
 "the song page."
@@ -636,7 +638,7 @@ msgstr "Cinema"
 
 #: backend/dashboard_app/forms.py:391
 msgid "تتبع مزدوج"
-msgstr ""
+msgstr "Dual tracking"
 
 #: backend/dashboard_app/forms.py:407
 msgid "وقت النهاية لازم يكون بعد وقت البداية."
@@ -674,12 +676,11 @@ msgstr "Icon Image URL"
 
 #: backend/dashboard_app/forms.py:441
 msgid ""
-"رابط مباشر لصورة الأيقونة (لازم ينتهي بامتداد صورة زي .png أو .jpg أو .svg)، "
-"مش رابط صفحة عادية زي رابط تطبيق أو موقع."
+"رابط مباشر لصورة الأيقونة (لازم ينتهي بامتداد صورة زي .png أو .jpg أو .svg)،"
+" مش رابط صفحة عادية زي رابط تطبيق أو موقع."
 msgstr ""
-"A direct link to the icon image (must end with an image extension "
-"like .png, .jpg, or .svg), not a regular page link like an app store or "
-"website link."
+"A direct link to the icon image (must end with an image extension like .png,"
+" .jpg, or .svg), not a regular page link like an app store or website link."
 
 #: backend/dashboard_app/forms.py:453
 msgid "كلمة المرور"
@@ -744,7 +745,8 @@ msgstr "Choose at least one page, or enable \"Shown on all pages\"."
 #: frontend/dashboard/pages/cinema_venues/all.html:22
 #: frontend/dashboard/partials/sidebar-collapse.html:95
 #: frontend/dashboard/partials/sidebar-collapse.html:219
-#: frontend/website/pages/bio.html:238 frontend/website/partials/footer.html:17
+#: frontend/website/pages/bio.html:238
+#: frontend/website/partials/footer.html:17
 #: frontend/website/partials/header.html:18
 #: frontend/website/partials/header.html:88
 msgid "الأفلام"
@@ -1046,7 +1048,8 @@ msgstr "Not linked"
 msgid "اسم الإعلان"
 msgstr "Ad Name"
 
-#: backend/dashboard_app/views.py:1485 frontend/dashboard/pages/ads/all.html:21
+#: backend/dashboard_app/views.py:1485
+#: frontend/dashboard/pages/ads/all.html:21
 msgid "يظهر في"
 msgstr "Shown on"
 
@@ -1054,7 +1057,8 @@ msgstr "Shown on"
 msgid "نشط"
 msgstr "Active"
 
-#: backend/dashboard_app/views.py:1490 frontend/dashboard/pages/ads/all.html:64
+#: backend/dashboard_app/views.py:1490
+#: frontend/dashboard/pages/ads/all.html:64
 msgid "متوقف"
 msgstr "Inactive"
 
@@ -1083,7 +1087,8 @@ msgstr "Add Screening Venue"
 msgid "إضافة مستخدم"
 msgstr "Add User"
 
-#: backend/dashboard_app/views.py:1681 frontend/dashboard/pages/ads/all.html:25
+#: backend/dashboard_app/views.py:1681
+#: frontend/dashboard/pages/ads/all.html:25
 #: frontend/dashboard/pages/albums/all.html:23
 #: frontend/dashboard/pages/concerts/all.html:21
 #: frontend/dashboard/pages/media/all.html:22
@@ -1099,124 +1104,125 @@ msgstr "Suspended"
 
 #: backend/links_app/models.py:35
 msgid "Hidden (draft)"
-msgstr ""
+msgstr "Hidden (draft)"
 
 #: backend/links_app/models.py:36
 msgid "Scheduled"
-msgstr ""
+msgstr "Scheduled"
 
 #: backend/links_app/models.py:37
 msgid "Coming Soon"
-msgstr ""
+msgstr "Coming Soon"
 
 #: backend/links_app/models.py:38
 msgid "Published"
-msgstr ""
+msgstr "Published"
 
 #: backend/links_app/models.py:45
 msgid ""
 "When this becomes fully visible/open (used by Scheduled and Coming Soon)."
 msgstr ""
+"When this becomes fully visible/open (used by Scheduled and Coming Soon)."
 
 #: backend/links_app/models.py:84
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: backend/links_app/models.py:85
 msgid "Spotify"
-msgstr ""
+msgstr "Spotify"
 
 #: backend/links_app/models.py:86
 msgid "Anghami"
-msgstr ""
+msgstr "Anghami"
 
 #: backend/links_app/models.py:87
 msgid "Apple Music"
-msgstr ""
+msgstr "Apple Music"
 
 #: backend/links_app/models.py:88
 msgid "Deezer"
-msgstr ""
+msgstr "Deezer"
 
 #: backend/links_app/models.py:89
 msgid "Amazon Music"
-msgstr ""
+msgstr "Amazon Music"
 
 #: backend/links_app/models.py:90
 msgid "SoundCloud"
-msgstr ""
+msgstr "SoundCloud"
 
 #: backend/links_app/models.py:91
 msgid "Netflix"
-msgstr ""
+msgstr "Netflix"
 
 #: backend/links_app/models.py:92
 msgid "Shahid"
-msgstr ""
+msgstr "Shahid"
 
 #: backend/links_app/models.py:93
 msgid "WATCH IT"
-msgstr ""
+msgstr "WATCH IT"
 
 #: backend/links_app/models.py:94
 msgid "Yango Play"
-msgstr ""
+msgstr "Yango Play"
 
 #: backend/links_app/models.py:95
 msgid "OSN+"
-msgstr ""
+msgstr "OSN+"
 
 #: backend/links_app/models.py:96
 msgid "Amazon Prime Video"
-msgstr ""
+msgstr "Amazon Prime Video"
 
 #: backend/links_app/models.py:97
 msgid "Disney+"
-msgstr ""
+msgstr "Disney+"
 
 #: backend/links_app/models.py:98
 msgid "Tazkarti"
-msgstr ""
+msgstr "Tazkarti"
 
 #: backend/links_app/models.py:99
 msgid "Ticketmaster"
-msgstr ""
+msgstr "Ticketmaster"
 
 #: backend/links_app/models.py:101
 msgid "Instagram"
-msgstr ""
+msgstr "Instagram"
 
 #: backend/links_app/models.py:102
 msgid "TikTok"
-msgstr ""
+msgstr "TikTok"
 
 #: backend/links_app/models.py:123
 msgid "Free"
-msgstr ""
+msgstr "Free"
 
 #: backend/links_app/models.py:124
 msgid "Subscription"
-msgstr ""
+msgstr "Subscription"
 
 #: backend/links_app/models.py:125
 msgid "Rental"
-msgstr ""
+msgstr "Rental"
 
 #: backend/links_app/models.py:126
 msgid "Purchase"
-msgstr ""
+msgstr "Purchase"
 
 #: backend/main_app/models.py:14
 msgid "Admin"
-msgstr ""
+msgstr "Admin"
 
 #: backend/main_app/models.py:15
 msgid "Editor"
-msgstr ""
+msgstr "Editor"
 
 #: backend/main_app/models.py:16
 msgid "Viewer"
-msgstr ""
+msgstr "Viewer"
 
 #: backend/main_app/models.py:19
 #, fuzzy
@@ -1291,7 +1297,7 @@ msgstr "Playlist"
 
 #: backend/main_app/models.py:94
 msgid "نقاط التفاعل (متناقصة زمنياً)"
-msgstr ""
+msgstr "Engagement score (decaying over time)"
 
 #: backend/main_app/models.py:95
 #, fuzzy
@@ -1313,7 +1319,7 @@ msgstr "Users"
 
 #: backend/main_app/models.py:127
 msgid "مفتاح الجلسة"
-msgstr ""
+msgstr "Session key"
 
 #: backend/main_app/models.py:137
 #, fuzzy
@@ -1339,7 +1345,8 @@ msgstr "Dashboard Users"
 msgid "المستخدمون الحاليون"
 msgstr "Users"
 
-#: backend/main_app/models.py:177 frontend/website/pages/songs/detail.html:2222
+#: backend/main_app/models.py:177
+#: frontend/website/pages/songs/detail.html:2222
 #: frontend/website/pages/user/playlist_detail.html:77
 #: frontend/website/pages/user/playlists.html:66
 #, fuzzy
@@ -1347,7 +1354,8 @@ msgstr "Users"
 msgid "اسم القائمة"
 msgstr "Menu"
 
-#: backend/main_app/models.py:179 frontend/website/pages/songs/detail.html:1760
+#: backend/main_app/models.py:179
+#: frontend/website/pages/songs/detail.html:1760
 msgid "عامة"
 msgstr "Public"
 
@@ -1376,13 +1384,14 @@ msgstr "Playlist"
 msgid "قوائم التشغيل"
 msgstr "Playlists"
 
-#: backend/main_app/models.py:205 frontend/website/pages/songs/detail.html:1779
+#: backend/main_app/models.py:205
+#: frontend/website/pages/songs/detail.html:1779
 msgid "قائمة التشغيل"
 msgstr "Playlist"
 
 #: backend/main_app/models.py:213
 msgid "الترتيب"
-msgstr ""
+msgstr "Rank"
 
 #: backend/main_app/models.py:217
 #, fuzzy
@@ -1398,7 +1407,7 @@ msgstr "Playlists"
 
 #: backend/main_app/models.py:239 frontend/website/base.html:1666
 msgid "الكود"
-msgstr ""
+msgstr "Code"
 
 #: backend/main_app/models.py:241
 #, fuzzy
@@ -1408,23 +1417,23 @@ msgstr "Release Date"
 
 #: backend/main_app/models.py:244 backend/website_app/auth_views.py:177
 msgid "كود استعادة كلمة السر"
-msgstr ""
+msgstr "Password reset code"
 
 #: backend/main_app/models.py:245
 msgid "أكواد استعادة كلمة السر"
-msgstr ""
+msgstr "Password reset codes"
 
 #: backend/main_app/models.py:274
 msgid "صاعد"
-msgstr ""
+msgstr "Up"
 
 #: backend/main_app/models.py:275
 msgid "هابط"
-msgstr ""
+msgstr "Down"
 
 #: backend/main_app/models.py:276
 msgid "ثابت"
-msgstr ""
+msgstr "Same"
 
 #: backend/main_app/models.py:277 frontend/website/pages/player/index.html:914
 #: frontend/website/pages/songs/detail.html:3343
@@ -1433,68 +1442,68 @@ msgstr "New"
 
 #: backend/media_app/models.py:20
 msgid "Movie"
-msgstr ""
+msgstr "Movie"
 
 #: backend/media_app/models.py:21
 msgid "TV Series"
-msgstr ""
+msgstr "TV Series"
 
 #: backend/media_app/models.py:22
 msgid "Commercial"
-msgstr ""
+msgstr "Commercial"
 
 #: backend/media_app/models.py:23
 msgid "Program / Show"
-msgstr ""
+msgstr "Program / Show"
 
 #: backend/media_app/models.py:75 backend/people_app/models.py:20
 msgid "Director"
-msgstr ""
+msgstr "Director"
 
 #: backend/media_app/models.py:76 backend/people_app/models.py:21
 msgid "Producer"
-msgstr ""
+msgstr "Producer"
 
 #: backend/media_app/models.py:77 backend/people_app/models.py:22
 msgid "Screenwriter"
-msgstr ""
+msgstr "Screenwriter"
 
 #: backend/media_app/models.py:78 backend/people_app/models.py:23
 msgid "Cinematographer"
-msgstr ""
+msgstr "Cinematographer"
 
 #: backend/media_app/models.py:79 backend/music_app/models.py:143
 #: backend/people_app/models.py:13
 msgid "Composer"
-msgstr ""
+msgstr "Composer"
 
 #: backend/media_app/models.py:80 backend/people_app/models.py:24
 msgid "Actor"
-msgstr ""
+msgstr "Actor"
 
 #: backend/music_app/models.py:49
 msgid "Single"
-msgstr ""
+msgstr "Single"
 
 #: backend/music_app/models.py:50
 msgid "Album Track"
-msgstr ""
+msgstr "Album Track"
 
 #: backend/music_app/models.py:51
 msgid "Movie Theme"
-msgstr ""
+msgstr "Movie Theme"
 
 #: backend/music_app/models.py:52
 msgid "Series Theme"
-msgstr ""
+msgstr "Series Theme"
 
 #: backend/music_app/models.py:53
 msgid "Commercial Jingle"
-msgstr ""
+msgstr "Commercial Jingle"
 
 #: backend/music_app/models.py:54
 msgid "Religious / Duaa"
-msgstr ""
+msgstr "Religious / Duaa"
 
 #: backend/music_app/models.py:57 backend/music_app/models.py:69
 #, fuzzy
@@ -1504,75 +1513,75 @@ msgstr "Not linked"
 
 #: backend/music_app/models.py:58
 msgid "Pop / بوب"
-msgstr ""
+msgstr "Pop"
 
 #: backend/music_app/models.py:59
 msgid "Egyptian Pop / بوب مصري"
-msgstr ""
+msgstr "Egyptian Pop"
 
 #: backend/music_app/models.py:60
 msgid "Arabic Pop / بوب عربي"
-msgstr ""
+msgstr "Arabic Pop"
 
 #: backend/music_app/models.py:61
 msgid "Oriental & Tarab / شرقي وطربي"
-msgstr ""
+msgstr "Oriental & Tarab"
 
 #: backend/music_app/models.py:62
 msgid "R&B / آر أند بي"
-msgstr ""
+msgstr "R&B"
 
 #: backend/music_app/models.py:63
 msgid "Ballad / بالاد"
-msgstr ""
+msgstr "Ballad"
 
 #: backend/music_app/models.py:64
 msgid "Dance / Electronic / دانس وإلكترونيك"
-msgstr ""
+msgstr "Dance / Electronic"
 
 #: backend/music_app/models.py:65
 msgid "Acoustic / أكوستيك"
-msgstr ""
+msgstr "Acoustic"
 
 #: backend/music_app/models.py:66
 msgid "Soft Rock / روك خفيف"
-msgstr ""
+msgstr "Soft Rock"
 
 #: backend/music_app/models.py:70
 msgid "Romantic / رومانسي"
-msgstr ""
+msgstr "Romantic"
 
 #: backend/music_app/models.py:71
 msgid "Sad & Heartbreak / حزين / دراما / جرح"
-msgstr ""
+msgstr "Sad & Heartbreak"
 
 #: backend/music_app/models.py:72
 msgid "Energetic & Upbeat / حماسي / طاقة عالية / أفراح"
-msgstr ""
+msgstr "Energetic & Upbeat"
 
 #: backend/music_app/models.py:73
 msgid "Motivational & Hopeful / تحفيزي / أمل وتفاؤل"
-msgstr ""
+msgstr "Motivational & Hopeful"
 
 #: backend/music_app/models.py:74
 msgid "Chill & Relaxing / رايق / هادئ للاسترخاء"
-msgstr ""
+msgstr "Chill & Relaxing"
 
 #: backend/music_app/models.py:75
 msgid "Nostalgic / ذكريات وحنين"
-msgstr ""
+msgstr "Nostalgic"
 
 #: backend/music_app/models.py:76
 msgid "Confident & Playful / واثق / فريش"
-msgstr ""
+msgstr "Confident & Playful"
 
 #: backend/music_app/models.py:90
 msgid "Musical genre"
-msgstr ""
+msgstr "Musical genre"
 
 #: backend/music_app/models.py:91
 msgid "Song mood/vibe"
-msgstr ""
+msgstr "Song mood/vibe"
 
 #: backend/music_app/models.py:106
 #, fuzzy
@@ -1582,163 +1591,167 @@ msgstr "Playlist"
 
 #: backend/music_app/models.py:109
 msgid "Beats per minute"
-msgstr ""
+msgstr "Beats per minute"
 
 #: backend/music_app/models.py:110
 msgid "Musical key (e.g., C, Am, F#m)"
-msgstr ""
+msgstr "Musical key (e.g., C, Am, F#m)"
 
 #: backend/music_app/models.py:111
 msgid "Mood of the song (e.g., happy, sad, energetic)"
-msgstr ""
+msgstr "Mood of the song (e.g., happy, sad, energetic)"
 
 #: backend/music_app/models.py:112
 msgid "Energy level (0.0 to 1.0)"
-msgstr ""
+msgstr "Energy level (0.0 to 1.0)"
 
 #: backend/music_app/models.py:113
 msgid "Danceability (0.0 to 1.0)"
-msgstr ""
+msgstr "Danceability (0.0 to 1.0)"
 
 #: backend/music_app/models.py:114
 msgid "Detailed audio analysis data"
-msgstr ""
+msgstr "Detailed audio analysis data"
 
 #: backend/music_app/models.py:141 backend/people_app/models.py:11
 msgid "Singer"
-msgstr ""
+msgstr "Singer"
 
 #: backend/music_app/models.py:142
 msgid "Lyricist / Poet"
-msgstr ""
+msgstr "Lyricist / Poet"
 
 #: backend/music_app/models.py:144 backend/people_app/models.py:14
 msgid "Arranger"
-msgstr ""
+msgstr "Arranger"
 
 #: backend/music_app/models.py:145 backend/people_app/models.py:15
 msgid "Music Producer"
-msgstr ""
+msgstr "Music Producer"
 
 #: backend/music_app/models.py:146 backend/people_app/models.py:16
 msgid "Recording Engineer"
-msgstr ""
+msgstr "Recording Engineer"
 
 #: backend/music_app/models.py:147 backend/people_app/models.py:17
 msgid "Mixing Engineer"
-msgstr ""
+msgstr "Mixing Engineer"
 
 #: backend/music_app/models.py:148 backend/people_app/models.py:18
 msgid "Mastering Engineer"
-msgstr ""
+msgstr "Mastering Engineer"
 
 #: backend/music_app/models.py:149 backend/people_app/models.py:19
 msgid "Mix & Master Engineer"
-msgstr ""
+msgstr "Mix & Master Engineer"
 
 #: backend/music_app/models.py:150
 msgid "Featured Artist"
-msgstr ""
+msgstr "Featured Artist"
 
 #: backend/music_app/models.py:171
 msgid "Lyrics"
-msgstr ""
+msgstr "Lyrics"
 
 #: backend/music_app/models.py:172
 msgid "Music (instrumental)"
-msgstr ""
+msgstr "Music (instrumental)"
 
 #: backend/music_app/models.py:173
 msgid "Silence"
-msgstr ""
+msgstr "Silence"
 
 #: backend/music_app/models.py:179
 msgid "Required only when the segment type is Lyrics."
-msgstr ""
+msgstr "Required only when the segment type is Lyrics."
 
 #: backend/music_app/models.py:180
 msgid "Enable vocal doubling effect for this segment"
-msgstr ""
+msgstr "Enable vocal doubling effect for this segment"
 
 #: backend/music_app/models.py:181
 msgid "Enable double tracking effect for this segment"
-msgstr ""
+msgstr "Enable double tracking effect for this segment"
 
 #: backend/music_app/models.py:190
 msgid "End time must be after start time."
-msgstr ""
+msgstr "End time must be after start time."
 
 #: backend/music_app/models.py:192
 msgid "Text is required for a lyrics segment."
-msgstr ""
+msgstr "Text is required for a lyrics segment."
 
 #: backend/music_app/models.py:202
 msgid "Tamer Starts"
-msgstr ""
+msgstr "Tamer Starts"
 
 #: backend/music_app/models.py:203
 msgid "You Start"
-msgstr ""
+msgstr "You Start"
 
 #: backend/music_app/models.py:213
 msgid ""
 "The mixed duet (Tamer + user vocal). Private to the user, never a catalog "
 "Song."
 msgstr ""
+"The mixed duet (Tamer + user vocal). Private to the user, never a catalog "
+"Song."
 
 #: backend/music_app/models.py:217
 msgid ""
 "When on, the duet can be opened via its link by anyone, and a share option "
 "is shown."
 msgstr ""
+"When on, the duet can be opened via its link by anyone, and a share option "
+"is shown."
 
 #: backend/music_app/models.py:238
 msgid "Recording duration in seconds"
-msgstr ""
+msgstr "Recording duration in seconds"
 
 #: backend/music_app/models.py:256
 msgid "Pending"
-msgstr ""
+msgstr "Pending"
 
 #: backend/music_app/models.py:264
 msgid "Error message if processing failed"
-msgstr ""
+msgstr "Error message if processing failed"
 
 #: backend/music_app/models.py:265
 msgid "Quality score of vocal removal (0.0 to 1.0)"
-msgstr ""
+msgstr "Quality score of vocal removal (0.0 to 1.0)"
 
 #: backend/people_app/models.py:12
 msgid "Poet / Lyricist"
-msgstr ""
+msgstr "Poet / Lyricist"
 
 #: backend/people_app/models.py:25
 msgid "Co-Artist / Featured Artist"
-msgstr ""
+msgstr "Co-Artist / Featured Artist"
 
 #: backend/studios_app/models.py:8
 msgid "Recording Studio"
-msgstr ""
+msgstr "Recording Studio"
 
 #: backend/studios_app/models.py:9
 msgid "Record Label"
-msgstr ""
+msgstr "Record Label"
 
 #: backend/studios_app/models.py:10
 msgid "Production Company"
-msgstr ""
+msgstr "Production Company"
 
 #: backend/studios_app/models.py:11
 msgid "Distribution"
-msgstr ""
+msgstr "Distribution"
 
 #: backend/website_app/auth_views.py:69 backend/website_app/auth_views.py:105
 msgid "أنت مسجل الدخول بالفعل."
-msgstr ""
+msgstr "You're already signed in."
 
 #: backend/website_app/auth_views.py:77
 msgid "من فضلك أدخل الاسم."
-msgstr ""
+msgstr "Please enter your name."
 
 #: backend/website_app/auth_views.py:79
 #, fuzzy
@@ -1766,7 +1779,7 @@ msgstr "Email"
 
 #: backend/website_app/auth_views.py:115
 msgid "الحساب ده اتعمل بجوجل - سجل دخولك بجوجل بدل كده."
-msgstr ""
+msgstr "This account was created with Google - sign in with Google instead."
 
 #: backend/website_app/auth_views.py:178
 #, python-format
@@ -1774,11 +1787,13 @@ msgid ""
 "كود استعادة كلمة السر بتاعك هو: %(code)s\n"
 "صالح لمدة 15 دقيقة."
 msgstr ""
+"Your password reset code is: %(code)s\n"
+"Valid for 15 minutes."
 
 #: backend/website_app/auth_views.py:195 backend/website_app/auth_views.py:199
 #: backend/website_app/auth_views.py:217 backend/website_app/auth_views.py:221
 msgid "الكود غير صحيح أو منتهي."
-msgstr ""
+msgstr "The code is incorrect or has expired."
 
 #: backend/website_app/views.py:1095
 #, fuzzy
@@ -1817,7 +1832,7 @@ msgstr "Details"
 
 #: frontend/dashboard/pages/_detail_generic.html:58
 msgid "متصفحك لا يدعم تشغيل الصوت"
-msgstr ""
+msgstr "Your browser doesn't support audio playback"
 
 #: frontend/dashboard/pages/_detail_generic.html:62
 #, fuzzy
@@ -1985,263 +2000,263 @@ msgstr "No ads yet"
 #: frontend/dashboard/pages/ai_remix/index.html:4
 #: frontend/dashboard/pages/ai_remix/index.html:13
 msgid "AI Remix Generator"
-msgstr ""
+msgstr "AI Remix Generator"
 
 #: frontend/dashboard/pages/ai_remix/index.html:21
 msgid "Projects"
-msgstr ""
+msgstr "Projects"
 
 #: frontend/dashboard/pages/ai_remix/index.html:31
 msgid "Create Remix"
-msgstr ""
+msgstr "Create Remix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:43
 msgid "New Project"
-msgstr ""
+msgstr "New Project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:50
 #: frontend/dashboard/pages/ai_remix/index.html:77
 #: frontend/dashboard/pages/ai_remix/index.html:250
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: frontend/dashboard/pages/ai_remix/index.html:54
 msgid "Created"
-msgstr ""
+msgstr "Created"
 
 #: frontend/dashboard/pages/ai_remix/index.html:55
 #: frontend/dashboard/pages/ai_remix/index.html:83
 msgid "Actions"
-msgstr ""
+msgstr "Actions"
 
 #: frontend/dashboard/pages/ai_remix/index.html:70
 msgid "Upload Audio"
-msgstr ""
+msgstr "Upload Audio"
 
 #: frontend/dashboard/pages/ai_remix/index.html:78
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: frontend/dashboard/pages/ai_remix/index.html:80
 msgid "Key"
-msgstr ""
+msgstr "Key"
 
 #: frontend/dashboard/pages/ai_remix/index.html:81
 #: frontend/dashboard/pages/ai_remix/index.html:761
 msgid "Duration"
-msgstr ""
+msgstr "Duration"
 
 #: frontend/dashboard/pages/ai_remix/index.html:82
 msgid "Uploaded"
-msgstr ""
+msgstr "Uploaded"
 
 #: frontend/dashboard/pages/ai_remix/index.html:99
 msgid "Project Settings"
-msgstr ""
+msgstr "Project Settings"
 
 #: frontend/dashboard/pages/ai_remix/index.html:104
 msgid "Select Project"
-msgstr ""
+msgstr "Select Project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:106
 #: frontend/dashboard/pages/ai_remix/index.html:488
 msgid "Choose a project..."
-msgstr ""
+msgstr "Choose a project..."
 
 #: frontend/dashboard/pages/ai_remix/index.html:118
 msgid "Keep original"
-msgstr ""
+msgstr "Keep original"
 
 #: frontend/dashboard/pages/ai_remix/index.html:140
 msgid "Auto Arrange Sources"
-msgstr ""
+msgstr "Auto Arrange Sources"
 
 #: frontend/dashboard/pages/ai_remix/index.html:149
 msgid "Intelligent Mix"
-msgstr ""
+msgstr "Intelligent Mix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:156
 msgid "Audio Effects"
-msgstr ""
+msgstr "Audio Effects"
 
 #: frontend/dashboard/pages/ai_remix/index.html:162
 msgid "Compressor"
-msgstr ""
+msgstr "Compressor"
 
 #: frontend/dashboard/pages/ai_remix/index.html:171
 msgid "Reverb"
-msgstr ""
+msgstr "Reverb"
 
 #: frontend/dashboard/pages/ai_remix/index.html:180
 msgid "Delay"
-msgstr ""
+msgstr "Delay"
 
 #: frontend/dashboard/pages/ai_remix/index.html:189
 msgid "Limiter"
-msgstr ""
+msgstr "Limiter"
 
 #: frontend/dashboard/pages/ai_remix/index.html:196
 msgid "Generate Remix"
-msgstr ""
+msgstr "Generate Remix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:199
 msgid "Neural AI Remix"
-msgstr ""
+msgstr "Neural AI Remix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:210
 msgid "Project Sources"
-msgstr ""
+msgstr "Project Sources"
 
 #: frontend/dashboard/pages/ai_remix/index.html:214
 msgid "Select a project to view its sources"
-msgstr ""
+msgstr "Select a project to view its sources"
 
 #: frontend/dashboard/pages/ai_remix/index.html:221
 msgid "Output"
-msgstr ""
+msgstr "Output"
 
 #: frontend/dashboard/pages/ai_remix/index.html:225
 msgid "Generated remix will appear here"
-msgstr ""
+msgstr "Generated remix will appear here"
 
 #: frontend/dashboard/pages/ai_remix/index.html:244
 msgid "Upload Audio Source"
-msgstr ""
+msgstr "Upload Audio Source"
 
 #: frontend/dashboard/pages/ai_remix/index.html:270
 #: frontend/dashboard/pages/ai_remix/index.html:322
 #: frontend/dashboard/pages/ai_remix/index.html:382
 msgid "Cancel"
-msgstr ""
+msgstr "Cancel"
 
 #: frontend/dashboard/pages/ai_remix/index.html:271
 msgid "Upload"
-msgstr ""
+msgstr "Upload"
 
 #: frontend/dashboard/pages/ai_remix/index.html:282
 msgid "Create New Project"
-msgstr ""
+msgstr "Create New Project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:302
 msgid "Not specified"
-msgstr ""
+msgstr "Not specified"
 
 #: frontend/dashboard/pages/ai_remix/index.html:323
 msgid "Create"
-msgstr ""
+msgstr "Create"
 
 #: frontend/dashboard/pages/ai_remix/index.html:334
 msgid "Add Source to Project"
-msgstr ""
+msgstr "Add Source to Project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:343
 #: frontend/dashboard/pages/ai_remix/index.html:569
 msgid "Choose a source..."
-msgstr ""
+msgstr "Choose a source..."
 
 #: frontend/dashboard/pages/ai_remix/index.html:383
 msgid "Add"
-msgstr ""
+msgstr "Add"
 
 #: frontend/dashboard/pages/ai_remix/index.html:506
 msgid "No sources in this project"
-msgstr ""
+msgstr "No sources in this project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:532
 msgid "Add Source"
-msgstr ""
+msgstr "Add Source"
 
 #: frontend/dashboard/pages/ai_remix/index.html:594
 msgid "Audio uploaded successfully!"
-msgstr ""
+msgstr "Audio uploaded successfully!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:596
 #: frontend/dashboard/pages/ai_remix/index.html:600
 msgid "Error uploading audio"
-msgstr ""
+msgstr "Error uploading audio"
 
 #: frontend/dashboard/pages/ai_remix/index.html:623
 msgid "Project created successfully!"
-msgstr ""
+msgstr "Project created successfully!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:625
 #: frontend/dashboard/pages/ai_remix/index.html:629
 msgid "Error creating project"
-msgstr ""
+msgstr "Error creating project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:656
 msgid "Source added successfully!"
-msgstr ""
+msgstr "Source added successfully!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:658
 #: frontend/dashboard/pages/ai_remix/index.html:662
 msgid "Error adding source"
-msgstr ""
+msgstr "Error adding source"
 
 #: frontend/dashboard/pages/ai_remix/index.html:667
 msgid "Are you sure you want to remove this source?"
-msgstr ""
+msgstr "Are you sure you want to remove this source?"
 
 #: frontend/dashboard/pages/ai_remix/index.html:679
 msgid "Error removing source"
-msgstr ""
+msgstr "Error removing source"
 
 #: frontend/dashboard/pages/ai_remix/index.html:689
 #: frontend/dashboard/pages/ai_remix/index.html:732
 msgid "Please select a project"
-msgstr ""
+msgstr "Please select a project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:718
 msgid "Remix generated successfully!"
-msgstr ""
+msgstr "Remix generated successfully!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:721
 msgid "Error generating remix: "
-msgstr ""
+msgstr "Error generating remix: "
 
 #: frontend/dashboard/pages/ai_remix/index.html:725
 msgid "Error generating remix"
-msgstr ""
+msgstr "Error generating remix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:745
 msgid "Neural remix generated successfully!"
-msgstr ""
+msgstr "Neural remix generated successfully!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:748
 msgid "Error generating neural remix: "
-msgstr ""
+msgstr "Error generating neural remix: "
 
 #: frontend/dashboard/pages/ai_remix/index.html:752
 msgid "Error generating neural remix"
-msgstr ""
+msgstr "Error generating neural remix"
 
 #: frontend/dashboard/pages/ai_remix/index.html:760
 msgid "Remix Generated!"
-msgstr ""
+msgstr "Remix Generated!"
 
 #: frontend/dashboard/pages/ai_remix/index.html:767
 msgid "Download"
-msgstr ""
+msgstr "Download"
 
 #: frontend/dashboard/pages/ai_remix/index.html:788
 msgid "Error analyzing source"
-msgstr ""
+msgstr "Error analyzing source"
 
 #: frontend/dashboard/pages/ai_remix/index.html:796
 msgid "Are you sure you want to delete this project?"
-msgstr ""
+msgstr "Are you sure you want to delete this project?"
 
 #: frontend/dashboard/pages/ai_remix/index.html:807
 msgid "Error deleting project"
-msgstr ""
+msgstr "Error deleting project"
 
 #: frontend/dashboard/pages/ai_remix/index.html:815
 msgid "Are you sure you want to delete this source?"
-msgstr ""
+msgstr "Are you sure you want to delete this source?"
 
 #: frontend/dashboard/pages/ai_remix/index.html:825
 msgid "Error deleting source"
-msgstr ""
+msgstr "Error deleting source"
 
 #: frontend/dashboard/pages/albums/all.html:12
 #: frontend/dashboard/pages/cinema_venues/all.html:12
@@ -2570,23 +2585,23 @@ msgstr "See All"
 
 #: frontend/dashboard/pages/songs/segments.html:446
 msgid "ترجيع 5 ثواني"
-msgstr ""
+msgstr "Rewind 5 seconds"
 
 #: frontend/dashboard/pages/songs/segments.html:450
 msgid "تقديم 5 ثواني"
-msgstr ""
+msgstr "Forward 5 seconds"
 
 #: frontend/dashboard/pages/songs/segments.html:456
 msgid "انتقل"
-msgstr ""
+msgstr "Go"
 
 #: frontend/dashboard/pages/songs/segments.html:462
 msgid "تعيين كوقت بداية"
-msgstr ""
+msgstr "Set as start time"
 
 #: frontend/dashboard/pages/songs/segments.html:465
 msgid "تعيين كوقت نهاية"
-msgstr ""
+msgstr "Set as end time"
 
 #: frontend/dashboard/pages/songs/segments.html:478
 #: frontend/website/pages/songs/detail.html:2273
@@ -2741,7 +2756,7 @@ msgstr "Log Out"
 #: frontend/website/base.html:1412
 #: frontend/website/pages/songs/detail.html:3379
 msgid "سجل دخولك عشان تقدر تعمل إعجاب"
-msgstr ""
+msgstr "Sign in to like this"
 
 #: frontend/website/base.html:1434
 #, fuzzy
@@ -2766,13 +2781,14 @@ msgstr "Organizer"
 #: frontend/website/pages/user/playlist_detail.html:331
 #: frontend/website/pages/user/public_profile.html:228
 msgid "حدث خطأ"
-msgstr ""
+msgstr "Something went wrong"
 
-#: frontend/website/base.html:1573 frontend/website/pages/player/index.html:747
+#: frontend/website/base.html:1573
+#: frontend/website/pages/player/index.html:747
 #: frontend/website/pages/songs/detail.html:2206
 #: frontend/website/pages/songs/detail.html:2243
 msgid "إغلاق"
-msgstr ""
+msgstr "Close"
 
 #: frontend/website/base.html:1583 frontend/website/base.html:1643
 #, fuzzy
@@ -2782,11 +2798,11 @@ msgstr "Log Out"
 
 #: frontend/website/base.html:1584 frontend/website/base.html:1897
 msgid "سجل دخولك عشان تقدر تسمع وتحفظ المفضلة عندك"
-msgstr ""
+msgstr "Sign in to listen and save your favorites"
 
 #: frontend/website/base.html:1588 frontend/website/base.html:1617
 msgid "المتابعة بجوجل"
-msgstr ""
+msgstr "Continue with Google"
 
 #: frontend/website/base.html:1591 frontend/website/base.html:1620
 #, fuzzy
@@ -2802,7 +2818,7 @@ msgstr "Password"
 
 #: frontend/website/base.html:1603
 msgid "دخول"
-msgstr ""
+msgstr "Sign in"
 
 #: frontend/website/base.html:1606
 #, fuzzy
@@ -2812,11 +2828,11 @@ msgstr "Song Lyrics Timing"
 
 #: frontend/website/base.html:1607
 msgid "مش عندي حساب"
-msgstr ""
+msgstr "I don't have an account"
 
 #: frontend/website/base.html:1607 frontend/website/base.html:1612
 msgid "إنشاء حساب"
-msgstr ""
+msgstr "Create account"
 
 #: frontend/website/base.html:1613
 #, fuzzy
@@ -2826,11 +2842,11 @@ msgstr "Tamer Hosny Archive"
 
 #: frontend/website/base.html:1640
 msgid "إنشاء الحساب"
-msgstr ""
+msgstr "Create Account"
 
 #: frontend/website/base.html:1643
 msgid "عندي حساب بالفعل"
-msgstr ""
+msgstr "I already have an account"
 
 #: frontend/website/base.html:1648
 #, fuzzy
@@ -2852,11 +2868,11 @@ msgstr "See All"
 
 #: frontend/website/base.html:1663
 msgid "اكتب الكود اللي وصلك على بريدك"
-msgstr ""
+msgstr "Enter the code sent to your email"
 
 #: frontend/website/base.html:1670
 msgid "تأكيد"
-msgstr ""
+msgstr "Confirm"
 
 #: frontend/website/base.html:1675
 #, fuzzy
@@ -2898,7 +2914,7 @@ msgstr "Latest Songs"
 
 #: frontend/website/base.html:2086
 msgid "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني"
-msgstr ""
+msgstr "Google sign-in isn't available right now, try email instead"
 
 #: frontend/website/pages/albums/detail.html:6
 #: frontend/website/pages/albums/detail.html:11
@@ -2909,7 +2925,7 @@ msgstr "Tamer Hosny Archive"
 
 #: frontend/website/pages/albums/detail.html:6
 msgid "تراك ليست، أغاني الألبوم والمزيد على أرشيف تامر حسني."
-msgstr ""
+msgstr "Tracklist, album songs and more on the Tamer Hosny Archive."
 
 #: frontend/website/pages/albums/detail.html:10
 #: frontend/website/pages/albums/list.html:8 frontend/website/pages/bio.html:4
@@ -2991,7 +3007,7 @@ msgstr "See All"
 #: frontend/website/pages/albums/list.html:6
 #: frontend/website/pages/albums/list.html:9
 msgid "جميع ألبومات تامر حسني الغنائية على أرشيف تامر حسني."
-msgstr ""
+msgstr "All of Tamer Hosny's albums on the Tamer Hosny Archive."
 
 #: frontend/website/pages/bio.html:7 frontend/website/pages/bio.html:12
 #, fuzzy
@@ -3048,11 +3064,11 @@ msgstr "Your Version"
 
 #: frontend/website/pages/bio.html:226
 msgid "التلحين"
-msgstr ""
+msgstr "Composing"
 
 #: frontend/website/pages/bio.html:227
 msgid "التمثيل"
-msgstr ""
+msgstr "Acting"
 
 #: frontend/website/pages/bio.html:228
 #, fuzzy
@@ -3060,7 +3076,8 @@ msgstr ""
 msgid "الإنتاج"
 msgstr "Record Label"
 
-#: frontend/website/pages/bio.html:234 frontend/website/partials/footer.html:22
+#: frontend/website/pages/bio.html:234
+#: frontend/website/partials/footer.html:22
 msgid "اكتشف"
 msgstr "Discover"
 
@@ -3070,16 +3087,18 @@ msgstr "The Full Archive"
 
 #: frontend/website/pages/bio.html:235
 msgid "كل الأغاني، الألبومات، الأفلام والحفلات في مكان واحد."
-msgstr ""
+msgstr "All the songs, albums, movies and concerts in one place."
 
 #: frontend/website/pages/concerts/detail.html:6
 #, python-format
 msgid "%(title)s - تفاصيل الحفلة، الموعد ومواقع الحجز على أرشيف تامر حسني."
 msgstr ""
+"%(title)s - concert details, date and booking venues on the Tamer Hosny "
+"Archive."
 
 #: frontend/website/pages/concerts/detail.html:138
 msgid "قريباً"
-msgstr ""
+msgstr "Coming soon"
 
 #: frontend/website/pages/concerts/detail.html:161
 msgid "الموقع"
@@ -3099,8 +3118,11 @@ msgid ""
 "جميع حفلات تامر حسني - القادمة والسابقة، المواعيد والمواقع على أرشيف تامر "
 "حسني."
 msgstr ""
+"All of Tamer Hosny's concerts - upcoming and past, dates and venues on the "
+"Tamer Hosny Archive."
 
-#: frontend/website/pages/home.html:15 frontend/website/partials/footer.html:10
+#: frontend/website/pages/home.html:15
+#: frontend/website/partials/footer.html:10
 msgid ""
 "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات "
 "والحفلات."
@@ -3129,7 +3151,7 @@ msgstr "Latest TV Series"
 #: frontend/website/pages/media/detail.html:6
 #, python-format
 msgid "%(title)s - تفاصيل، فريق العمل ودور العرض على أرشيف تامر حسني."
-msgstr ""
+msgstr "%(title)s - details, crew and cinemas on the Tamer Hosny Archive."
 
 #: frontend/website/pages/media/detail.html:168
 msgid "شاهد الآن"
@@ -3160,7 +3182,7 @@ msgstr "Tamer Hosny Archive"
 #: frontend/website/pages/people/detail.html:6
 #, python-format
 msgid "%(name)s - أعمال، أغاني وتفاصيل على أرشيف تامر حسني."
-msgstr ""
+msgstr "%(name)s - works, songs and details on the Tamer Hosny Archive."
 
 #: frontend/website/pages/people/detail.html:126
 msgid "فنانون آخرون"
@@ -3170,6 +3192,8 @@ msgstr "Other Artists"
 #: frontend/website/pages/people/list.html:9
 msgid "كل الفنانين والعاملين في أعمال تامر حسني الفنية على أرشيف تامر حسني."
 msgstr ""
+"All the artists and crew who worked on Tamer Hosny's projects, on the Tamer "
+"Hosny Archive."
 
 #: frontend/website/pages/player/index.html:4
 #: frontend/website/partials/footer.html:26
@@ -3181,6 +3205,8 @@ msgstr "Views"
 #: frontend/website/pages/player/index.html:7
 msgid "استمع لأغاني تامر حسني - مشغل الموسيقى الكامل على أرشيف تامر حسني."
 msgstr ""
+"Listen to Tamer Hosny's songs - the full music player on the Tamer Hosny "
+"Archive."
 
 #: frontend/website/pages/player/index.html:691
 #: frontend/website/pages/player/index.html:695
@@ -3234,7 +3260,7 @@ msgstr "No data available yet"
 #: frontend/website/pages/player/index.html:746
 #: frontend/website/pages/songs/detail.html:2242
 msgid "مباشر"
-msgstr ""
+msgstr "Live"
 
 #: frontend/website/pages/player/index.html:756
 #: frontend/website/pages/songs/detail.html:2257
@@ -3267,7 +3293,7 @@ msgstr "Listen Now"
 
 #: frontend/website/pages/player/index.html:1316
 msgid "موسيقى"
-msgstr ""
+msgstr "Music"
 
 #: frontend/website/pages/player/index.html:1320
 #: frontend/website/pages/songs/detail.html:2382
@@ -3290,11 +3316,11 @@ msgstr "Campaign Concept"
 
 #: frontend/website/pages/remix_result.html:87
 msgid "تم إنشاء الريمكس بنجاح!"
-msgstr ""
+msgstr "Remix created successfully!"
 
 #: frontend/website/pages/remix_result.html:88
 msgid "يمكنك الآن الاستماع إلى الريمكس وتحميله"
-msgstr ""
+msgstr "You can now listen to the remix and download it"
 
 #: frontend/website/pages/remix_result.html:95
 #, fuzzy
@@ -3332,12 +3358,12 @@ msgstr "From (seconds)"
 
 #: frontend/website/pages/remix_result.html:155
 msgid "الحجم"
-msgstr ""
+msgstr "Size"
 
 #: frontend/website/pages/remix_result.html:160
 #: frontend/website/pages/user/remixes.html:93
 msgid "تحميل"
-msgstr ""
+msgstr "Download"
 
 #: frontend/website/pages/remix_result.html:188
 #, fuzzy
@@ -3353,7 +3379,7 @@ msgstr "Songs"
 
 #: frontend/website/pages/sing-with-tamer/index.html:946
 msgid "قبل كده"
-msgstr ""
+msgstr "Before"
 
 #: frontend/website/pages/sing-with-tamer/index.html:947
 msgid "دي التسجيلة اللي عملتها"
@@ -3391,7 +3417,8 @@ msgstr "Sing With Tamer 🎤"
 
 #: frontend/website/pages/sing-with-tamer/index.html:993
 msgid "اسمع الجملة بتوقيتها الصحيح، وبعدها سجل صوتك عليها."
-msgstr "Listen to the line at its right timing, then record your voice over it."
+msgstr ""
+"Listen to the line at its right timing, then record your voice over it."
 
 #: frontend/website/pages/sing-with-tamer/index.html:1094
 #: frontend/website/pages/songs/detail.html:1673
@@ -3431,7 +3458,7 @@ msgstr "Tamer Hosny Archive"
 
 #: frontend/website/pages/songs/detail.html:7
 msgid "كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني."
-msgstr ""
+msgstr "Lyrics, song details and more on the Tamer Hosny Archive."
 
 #: frontend/website/pages/songs/detail.html:1684
 #: frontend/website/pages/songs/detail.html:1789
@@ -3464,7 +3491,7 @@ msgstr "Like"
 
 #: frontend/website/pages/songs/detail.html:1783
 msgid "المزيد"
-msgstr ""
+msgstr "More"
 
 #: frontend/website/pages/songs/detail.html:1823
 #: frontend/website/pages/user/duets.html:38
@@ -3494,15 +3521,15 @@ msgstr "Log Out"
 
 #: frontend/website/pages/songs/detail.html:1905
 msgid "المفتاح"
-msgstr ""
+msgstr "Key"
 
 #: frontend/website/pages/songs/detail.html:1912
 msgid "المزاج"
-msgstr ""
+msgstr "Mood"
 
 #: frontend/website/pages/songs/detail.html:1919
 msgid "الطاقة"
-msgstr ""
+msgstr "Energy"
 
 #: frontend/website/pages/songs/detail.html:1926
 #, fuzzy
@@ -3625,7 +3652,7 @@ msgstr "Loading..."
 
 #: frontend/website/pages/songs/detail.html:2378
 msgid " موسيقى "
-msgstr ""
+msgstr " Music "
 
 #: frontend/website/pages/songs/detail.html:2420
 #, fuzzy
@@ -3654,11 +3681,11 @@ msgstr "Release Date"
 #: frontend/website/pages/songs/detail.html:3089
 #: frontend/website/pages/songs/detail.html:3093
 msgid "حدث خطأ أثناء إنشاء الريمكس"
-msgstr ""
+msgstr "An error occurred while creating the remix"
 
 #: frontend/website/pages/songs/detail.html:3481
 msgid "حدث خطأ أثناء تحميل القوائم"
-msgstr ""
+msgstr "An error occurred while loading the playlists"
 
 #: frontend/website/pages/songs/detail.html:3493
 #, fuzzy
@@ -3668,24 +3695,26 @@ msgstr "Playlists"
 
 #: frontend/website/pages/songs/detail.html:3511
 msgid "موجودة بالفعل"
-msgstr ""
+msgstr "Already exists"
 
 #: frontend/website/pages/songs/detail.html:3553
 msgid "يرجى إدخال اسم القائمة"
-msgstr ""
+msgstr "Please enter a playlist name"
 
 #: frontend/website/pages/songs/detail.html:3572
 msgid "تم إنشاء القائمة وإضافة الأغنية بنجاح"
-msgstr ""
+msgstr "Playlist created and song added successfully"
 
 #: frontend/website/pages/songs/detail.html:3594
 msgid "تمت إضافة الأغنية للقائمة بنجاح"
-msgstr ""
+msgstr "Song added to the playlist successfully"
 
 #: frontend/website/pages/songs/list.html:6
 #: frontend/website/pages/songs/list.html:9
 msgid "جميع أغاني تامر حسني - استمع لأحدث وأشهر الأغاني على أرشيف تامر حسني."
 msgstr ""
+"All of Tamer Hosny's songs - listen to the latest and most popular songs on "
+"the Tamer Hosny Archive."
 
 #: frontend/website/pages/user/duets.html:3
 #: frontend/website/pages/user/duets.html:20
@@ -3704,11 +3733,11 @@ msgstr "You haven't sung any duets with Tamer yet"
 
 #: frontend/website/pages/user/favorites.html:89
 msgid "لم تقم بالإعجاب بأي محتوى بعد"
-msgstr ""
+msgstr "You haven't liked anything yet"
 
 #: frontend/website/pages/user/playlist_detail.html:21
 msgid "العودة للقوائم"
-msgstr ""
+msgstr "Back to playlists"
 
 #: frontend/website/pages/user/playlist_detail.html:47
 #, fuzzy
@@ -3731,7 +3760,7 @@ msgstr "Switch language"
 #: frontend/website/pages/user/playlist_detail.html:85
 #: frontend/website/pages/user/playlists.html:74
 msgid "الوضع"
-msgstr ""
+msgstr "Mode"
 
 #: frontend/website/pages/user/playlist_detail.html:92
 #, fuzzy
@@ -3741,11 +3770,11 @@ msgstr "Ticket Price"
 
 #: frontend/website/pages/user/playlist_detail.html:293
 msgid "تم تحديث القائمة بنجاح"
-msgstr ""
+msgstr "Playlist updated successfully"
 
 #: frontend/website/pages/user/playlist_detail.html:306
 msgid "هل أنت متأكد من حذف هذه الأغنية من القائمة؟"
-msgstr ""
+msgstr "Are you sure you want to remove this song from the playlist?"
 
 #: frontend/website/pages/user/playlist_detail.html:323
 #, fuzzy
@@ -3755,7 +3784,7 @@ msgstr "Original Song"
 
 #: frontend/website/pages/user/playlists.html:48
 msgid "لم تقم بإنشاء أي قائمة تشغيل بعد"
-msgstr ""
+msgstr "You haven't created any playlists yet"
 
 #: frontend/website/pages/user/playlists.html:57
 #, fuzzy
@@ -3777,16 +3806,16 @@ msgstr "Embed Code (optional)"
 
 #: frontend/website/pages/user/playlists.html:81
 msgid "إنشاء"
-msgstr ""
+msgstr "Create"
 
 #: frontend/website/pages/user/playlists.html:320
 msgid "تم إنشاء القائمة بنجاح"
-msgstr ""
+msgstr "Playlist created successfully"
 
 #: frontend/website/pages/user/playlists.html:323
 #: frontend/website/pages/user/playlists.html:328
 msgid "حدث خطأ أثناء إنشاء القائمة"
-msgstr ""
+msgstr "An error occurred while creating the playlist"
 
 #: frontend/website/pages/user/public_profile.html:6
 #, fuzzy, python-format
@@ -3809,7 +3838,7 @@ msgstr "Switch language"
 #: frontend/website/pages/user/public_profile.html:96
 #, python-format
 msgid "عضو منذ %(date)s"
-msgstr ""
+msgstr "Member since %(date)s"
 
 #: frontend/website/pages/user/public_profile.html:102
 #, fuzzy
@@ -3831,7 +3860,7 @@ msgstr "Related Songs"
 
 #: frontend/website/pages/user/public_profile.html:176
 msgid "مفيش نشاط عام يتعرض هنا لسه"
-msgstr ""
+msgstr "No public activity to show here yet"
 
 #: frontend/website/pages/user/recently_played.html:3
 #: frontend/website/pages/user/recently_played.html:7
@@ -3842,7 +3871,7 @@ msgstr "Recently Played"
 
 #: frontend/website/pages/user/recently_played.html:37
 msgid "لم تستمع إلى أي أغاني بعد"
-msgstr ""
+msgstr "You haven't listened to any songs yet"
 
 #: frontend/website/pages/user/remixes.html:3
 #: frontend/website/pages/user/remixes.html:45
@@ -3859,7 +3888,7 @@ msgstr "Remixes"
 
 #: frontend/website/pages/user/remixes.html:135
 msgid "لم تقم بإنشاء أي ريمكس بعد"
-msgstr ""
+msgstr "You haven't created any remixes yet"
 
 #: frontend/website/partials/ad_banner.html:7
 #: frontend/website/partials/ad_slider.html:10
@@ -3868,7 +3897,7 @@ msgstr "Ad"
 
 #: frontend/website/partials/footer.html:14
 msgid "المحتوى"
-msgstr ""
+msgstr "Content"
 
 #: frontend/website/partials/footer.html:24
 #: frontend/website/partials/header.html:20
@@ -3878,7 +3907,7 @@ msgstr "Ads"
 
 #: frontend/website/partials/footer.html:32
 msgid "جميع الحقوق محفوظة."
-msgstr ""
+msgstr "All rights reserved."
 
 #: frontend/website/partials/footer.html:36
 msgid "تطوير"
@@ -3886,11 +3915,12 @@ msgstr "Developed by"
 
 #: frontend/website/partials/footer.html:47
 msgid ""
-"هذا الموقع مجهود فردي غير رسمي من أحد المعجبين، وليس تابعاً لتامر حسني أو تحت "
-"مسؤوليته أو إشرافه."
+"هذا الموقع مجهود فردي غير رسمي من أحد المعجبين، وليس تابعاً لتامر حسني أو "
+"تحت مسؤوليته أو إشرافه."
 msgstr ""
 "This site is an independent, unofficial fan project. It is not affiliated "
-"with, endorsed by, or under the responsibility or supervision of Tamer Hosny."
+"with, endorsed by, or under the responsibility or supervision of Tamer "
+"Hosny."
 
 #: frontend/website/partials/footer.html:49
 msgid "ونتمنى أن يكون يوماً ما الموقع الرسمي وتحت إشرافه 😄"
@@ -3919,7 +3949,7 @@ msgstr "Menu"
 
 #: frontend/website/partials/header.html:133
 msgid "تسجيل دخول / إنشاء حساب"
-msgstr ""
+msgstr "Sign in / Create account"
 
 #~ msgid "محدش سمعها كفاية عشان يدخل الترتيب لسه"
 #~ msgstr "No one has listened enough yet to make the ranking"
@@ -3937,7 +3967,6 @@ msgstr ""
 #~ msgstr "The ranking updates live, moment by moment"
 
 #, fuzzy
-#~| msgid "استمع الآن"
 #~ msgid "استماع"
 #~ msgstr "listens"
 
@@ -3961,8 +3990,8 @@ msgstr ""
 
 #~ msgid "رابط فيديو يوتيوب (اختياري) يظهر كخلفية الصفحة بدل الصورة."
 #~ msgstr ""
-#~ "An optional YouTube video link that shows as the page background instead "
-#~ "of the image."
+#~ "An optional YouTube video link that shows as the page background instead of "
+#~ "the image."
 
 #~ msgid "فيديوهات وروابط"
 #~ msgstr "Videos & Links"

@@ -17,6 +17,7 @@ from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
 from backend.main_app.models import Like, Playlist, PlaylistItem, UserSongPlay, CurrentSongListener
 from backend.main_app.shared_utils.credits import dedupe_credits
+from backend.main_app.templatetags.bilingual import localized_field
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
 from backend.music_app.models import Album, Song, SongCredit, SingWithTamerProject
@@ -207,12 +208,12 @@ def song_player_data(request):
         song_ct = ContentType.objects.get_for_model(Song)
 
         data = {
-            'title': song.title_ar,
+            'title': localized_field(song, 'title'),
             'title_en': song.title_en,
             'slug': song.slug,
-            'artist': ', '.join([credit.person.full_name_ar for credit in singers]),
+            'artist': ', '.join([localized_field(credit.person, 'full_name') for credit in singers]),
             'artistSlugs': [credit.person.slug for credit in singers],
-            'album': song.album.title_ar if song.album else '',
+            'album': localized_field(song.album, 'title') if song.album else '',
             'albumSlug': song.album.slug if song.album else '',
             'image': song.cover_image.url if song.cover_image else (song.album.cover_image.url if song.album and song.album.cover_image else ''),
             'songId': song.pk,
@@ -223,20 +224,20 @@ def song_player_data(request):
             'listenerCount': CurrentSongListener.objects.filter(song_id=song.pk).count(),
             'otherSongs': [
                 {
-                    'title': s.title_ar,
+                    'title': localized_field(s, 'title'),
                     'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
                     'link': f'/songs/{s.slug}/',
                     'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
                     'songId': s.pk,
                     'url': s.audio_file.url if s.audio_file else '',
-                    'artist': ', '.join([credit.person.full_name_ar for credit in s.credits.select_related('person').all() if credit.role in vocal_roles]),
-                    'album': s.album.title_ar if s.album else ''
+                    'artist': ', '.join([localized_field(credit.person, 'full_name') for credit in s.credits.select_related('person').all() if credit.role in vocal_roles]),
+                    'album': localized_field(s.album, 'title') if s.album else ''
                 }
                 for s in album_songs
             ],
             'credits': [
                 {
-                    'personName': credit.person.full_name_ar,
+                    'personName': localized_field(credit.person, 'full_name'),
                     'personSlug': credit.person.slug,
                     'personImage': credit.person.profile_image.url if credit.person.profile_image else '',
                     'role': credit.get_role_display()
@@ -404,11 +405,11 @@ def song_detail(request, slug, duet_id=None):
         has_audio = bool(duet.final_audio_file) and duet.final_audio_file.storage.exists(duet.final_audio_file.name)
         audio_url = duet.final_audio_file.url if has_audio else ''
         performer_name = duet.user.get_full_name() or duet.user.username
-        player_title = f'{song.title_ar} ({performer_name})'
+        player_title = f'{localized_field(song, "title")} ({performer_name})'
     else:
         has_audio = bool(song.audio_file) and song.audio_file.storage.exists(song.audio_file.name)
         audio_url = song.audio_file.url if has_audio else ''
-        player_title = song.title_ar
+        player_title = localized_field(song, 'title')
 
     return render(request, 'website/pages/songs/detail.html', {
         'song': song,
