@@ -571,7 +571,6 @@
   <div id="th-page-root">
     {% block extra_css %}{% endblock %}
     {% block content %}{% endblock %}
-    {% block extra_js %}{% endblock %}
   </div>
 
   {% include "website/partials/footer.html" %}
@@ -2221,6 +2220,16 @@
       window.location.href = evt.detail.requestConfig.path;
     });
   </script>
+
+  <!-- Each page's extra_js has to run after thTrack/playAudio/etc above
+       are defined (some of it calls them at the top level, not just
+       inside functions), so it can't live inside #th-page-root - that
+       swaps in right after the header, before this script block runs.
+       hx-swap-oob updates it independently on every boosted navigation
+       instead, using the same full-page response. -->
+  <div id="th-extra-js" hx-swap-oob="true">
+    {% block extra_js %}{% endblock %}
+  </div>
 </body>
 
 </html>
