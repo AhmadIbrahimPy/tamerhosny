@@ -1043,6 +1043,14 @@ function updatePlayerBar() {
   if (currentSongData.title) {
     document.getElementById('playerTitle').textContent = currentSongData.title;
   }
+  // #playerLink (the audio bar's title/artist link) - otherSongs items
+  // carry a ready-made 'link', the top-level currentSongData only ever
+  // has 'slug' (see song_player_data), so build it the same way
+  // loadPlayerPageData() already does for the on-page title link below.
+  const playerLinkHref = currentSongData.link || (currentSongData.slug ? `/songs/${currentSongData.slug}/` : null);
+  if (playerLinkHref) {
+    document.getElementById('playerLink').setAttribute('href', playerLinkHref);
+  }
   if (currentSongData.artist) {
     document.getElementById('playerArtist').textContent = currentSongData.artist;
     document.getElementById('playerArtist').style.display = 'block';
@@ -1174,8 +1182,12 @@ function loadPlayerPageData() {
   if (currentSongData.title) {
     const titleLink = document.getElementById('playerPageTitleLink');
     titleLink.textContent = currentSongData.title;
-    if (currentSongData.slug) {
-      titleLink.href = `/songs/${currentSongData.slug}/`;
+    // otherSongs items (picked via playSongFromList) carry a ready-made
+    // 'link'; the initial/API-fetched currentSongData only ever has
+    // 'slug' - same gap as #playerLink in the audio bar (updatePlayerBar).
+    const titleHref = currentSongData.link || (currentSongData.slug ? `/songs/${currentSongData.slug}/` : null);
+    if (titleHref) {
+      titleLink.href = titleHref;
     }
   }
 
@@ -1346,6 +1358,7 @@ function playSongFromList(index) {
     album: song.album || currentSongData.album,
     image: song.image,
     url: song.url,
+    link: song.link,
     otherSongs: window.otherSongsList
   };
 
