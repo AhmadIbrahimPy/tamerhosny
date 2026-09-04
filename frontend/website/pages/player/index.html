@@ -1425,9 +1425,28 @@ function switchPlayerTab(tabName) {
 // Load data when page loads
 thOnReady(loadPlayerPageData);
 
+// The title/artist/album links here are built as raw HTML strings in
+// loadPlayerPageData() (song/artist/album come back from the API, not
+// as fixed template markup like the rest of the site), so htmx never
+// gets a chance to mark them "boosted" the way it does for a real
+// server-rendered <a> - same underlying issue as #playerLink in
+// base.html, just via freshly-inserted innerHTML instead of a static
+// href changed later. One delegated listener covers all three (and any
+// future song/artist/album links added the same way) without needing
+// to reprocess elements by hand every time this data reloads.
+const onPlayerPageLinkClick = function (e) {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+  const link = e.target.closest('#playerPageTitle a, #playerPageArtist a, #playerPageAlbum a');
+  if (!link) return;
+  e.preventDefault();
+  thBoostedNavigate(link.getAttribute('href'));
+};
+document.addEventListener('click', onPlayerPageLinkClick);
+
 if (typeof thOnTeardown === 'function') {
   thOnTeardown(function () {
     document.removeEventListener('audioPlayPause', onPlayerPageAudioPlayPause);
+    document.removeEventListener('click', onPlayerPageLinkClick);
     disconnectListenerSocket();
   });
 }
