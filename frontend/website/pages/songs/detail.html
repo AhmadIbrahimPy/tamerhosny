@@ -3224,18 +3224,29 @@
   let pendingListenerAction = null;
 
   function connectListenerSocket(songId) {
+    if (listenerSocket) return;
     listenerSocketClosingDeliberately = false;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     listenerSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/listening/`);
 
-    listenerSocket.addEventListener('open', function () {
+    const thisSocket = listenerSocket;
+
+    thisSocket.addEventListener('open', function () {
+      // A second connectListenerSocket() call (e.g. this page's own
+      // reconnect timer racing a 'songChanged' disconnect/reconnect) can
+      // replace the outer listenerSocket before this older socket's
+      // 'open' ever fires - acting on the outer variable here would
+      // then send on (or null out) whatever *newer* socket replaced it,
+      // and once that one had already closed, crash on a null send.
+      if (thisSocket !== listenerSocket) return;
       if (pendingListenerAction) {
-        listenerSocket.send(JSON.stringify({ action: pendingListenerAction }));
+        thisSocket.send(JSON.stringify({ action: pendingListenerAction }));
         pendingListenerAction = null;
       }
     });
 
-    listenerSocket.addEventListener('message', function (event) {
+    thisSocket.addEventListener('message', function (event) {
+      if (thisSocket !== listenerSocket) return;
       let data;
       try {
         data = JSON.parse(event.data);
@@ -3245,7 +3256,8 @@
       if (data.type === 'count') updateListenerCount(data.count);
     });
 
-    listenerSocket.addEventListener('close', function () {
+    thisSocket.addEventListener('close', function () {
+      if (thisSocket !== listenerSocket) return;
       listenerSocket = null;
       if (listenerSocketClosingDeliberately) return;
       // Reconnect (network hiccup, not a real page unload), restoring

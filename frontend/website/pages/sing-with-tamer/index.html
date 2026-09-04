@@ -4742,15 +4742,19 @@ let listenerSocket = null;
 let listenerSocketClosingDeliberately = false;
 
 function connectListenerSocket(songId) {
+  if (listenerSocket) return;
   listenerSocketClosingDeliberately = false;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   listenerSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/listening/`);
+  const thisSocket = listenerSocket;
 
-  listenerSocket.addEventListener('open', function () {
+  thisSocket.addEventListener('open', function () {
+    if (thisSocket !== listenerSocket) return;
     if (isCurrentlyListening) sendListenerAction('start');
   });
 
-  listenerSocket.addEventListener('close', function () {
+  thisSocket.addEventListener('close', function () {
+    if (thisSocket !== listenerSocket) return;
     listenerSocket = null;
     if (listenerSocketClosingDeliberately) return;
     setTimeout(function () { connectListenerSocket(songId); }, 2000);

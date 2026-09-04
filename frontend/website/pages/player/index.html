@@ -789,15 +789,22 @@ function connectListenerSocket(songId) {
   listenerSocketSongId = songId;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   listenerSocket = new WebSocket(`${protocol}//${window.location.host}/ws/songs/${songId}/listening/`);
+  const thisSocket = listenerSocket;
 
-  listenerSocket.addEventListener('open', function () {
+  thisSocket.addEventListener('open', function () {
+    // Rapidly switching songs can start a newer socket before an older
+    // one's 'open' fires - acting on the outer listenerSocket variable
+    // here would then send on (or reference) whatever replaced it,
+    // crashing with a null send once that newer one had already closed.
+    if (thisSocket !== listenerSocket) return;
     if (pendingListenerAction) {
-      listenerSocket.send(JSON.stringify({ action: pendingListenerAction }));
+      thisSocket.send(JSON.stringify({ action: pendingListenerAction }));
       pendingListenerAction = null;
     }
   });
 
-  listenerSocket.addEventListener('message', function (event) {
+  thisSocket.addEventListener('message', function (event) {
+    if (thisSocket !== listenerSocket) return;
     let data;
     try {
       data = JSON.parse(event.data);
@@ -810,8 +817,8 @@ function connectListenerSocket(songId) {
     }
   });
 
-  listenerSocket.addEventListener('close', function () {
-    if (listenerSocket && listenerSocketSongId === songId) listenerSocket = null;
+  thisSocket.addEventListener('close', function () {
+    if (thisSocket === listenerSocket && listenerSocketSongId === songId) listenerSocket = null;
   });
 }
 
