@@ -2242,9 +2242,10 @@
     };
 
     // Google OAuth redirected back with an error (e.g. not configured yet).
+    {% translate "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني" as google_auth_error_message %}
     document.addEventListener('DOMContentLoaded', function () {
       if (new URLSearchParams(window.location.search).has('google_auth_error')) {
-        openAuthModal('login', '{% translate "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني" %}');
+        openAuthModal('login', '{{ google_auth_error_message|escapejs }}');
         const url = new URL(window.location.href);
         url.searchParams.delete('google_auth_error');
         window.history.replaceState({}, '', url);
