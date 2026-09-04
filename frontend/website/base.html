@@ -917,9 +917,28 @@
     }
 
     function openPlayerPage() {
-      // Navigate to player page
-      window.location.href = '/player/';
+      thBoostedNavigate('/player/');
     }
+
+    // A plain location.href assignment is indistinguishable from typing
+    // a URL in the address bar - it always does a full, un-boosted
+    // browser navigation. htmx.ajax() can fire the same request, but it
+    // only pushes the new URL into history for a request attributed to
+    // an element htmx has already marked "boosted" - which only ever
+    // happens to real <a>/<form> elements it has processed itself, never
+    // to <body> (hx-boost on <body> just makes htmx apply that marking
+    // to every <a>/<form> under it). So: build one, have htmx process
+    // it (applying that inherited config, marking it boosted), and
+    // click it - a real boosted link click in every way that matters.
+    window.thBoostedNavigate = function (path) {
+      var a = document.createElement('a');
+      a.href = path;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      htmx.process(a);
+      a.click();
+      a.remove();
+    };
 
     document.addEventListener('DOMContentLoaded', function () {
       var isRtl = document.documentElement.getAttribute('dir') === 'rtl';

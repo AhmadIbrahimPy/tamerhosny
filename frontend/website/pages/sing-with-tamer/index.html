@@ -4647,7 +4647,7 @@ async function createSong() {
       // Success - redirect to the user's own "My Duets" page (this is
       // a private duet, not a public catalog song, so it has no
       // song-detail page of its own).
-        window.location.href = result.data.redirect_url || '/my-duets/';
+      thBoostedNavigate(result.data.redirect_url || '/my-duets/');
     } else {
       alert('حدث خطأ في إنشاء الأغنية: ' + (result.message || 'يرجى المحاولة مرة أخرى'));
       // Show complete card again on error

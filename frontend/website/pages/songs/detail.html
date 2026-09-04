@@ -3083,7 +3083,7 @@
       .then(handleJson)
       .then(function (result) {
         if (result.status === 'success') {
-          window.location.href = `/remix-result/${result.remix_id}/`;
+          thBoostedNavigate(`/remix-result/${result.remix_id}/`);
           return;
         }
         throw new Error(result.message || '{% translate "حدث خطأ أثناء إنشاء الريمكس" %}');
