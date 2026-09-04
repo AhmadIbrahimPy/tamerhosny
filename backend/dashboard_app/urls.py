@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout/', views.dashboard_logout, name='logout'),
     path('', views.home, name='home'),
     path('analytics/', views.analytics_overview, name='analytics'),
+    path('analytics/live/', views.analytics_live, name='analytics-live'),
 
     # Platform links (generic across person/album/song/media/concert)
     path('links/<str:kind>/<int:object_id>/', views.entity_links, name='entity-links'),

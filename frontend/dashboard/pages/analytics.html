@@ -17,31 +17,35 @@
   {% endif %}
 
   <!-- Live, not tied to the date-range filter below - same presence
-       signal the public "يستمع الآن" leaderboard uses. -->
+       signal the public "يستمع الآن" leaderboard uses. Re-fetched on a
+       timer (see script at the bottom) since a plain server-rendered
+       number can't update on its own while this tab just sits open. -->
   <div class="row g-6 mb-6">
     <div class="col-xl-4">
       <div class="card card-lg h-100"><div class="card-body d-flex align-items-center gap-3">
         <span style="width:10px; height:10px; border-radius:50%; background:#2eb85c; flex-shrink:0; box-shadow:0 0 0 4px rgba(46,184,92,.15);"></span>
         <div>
           <div class="text-muted small mb-1">{% translate "يستمع الآن" %}</div>
-          <div class="fs-3 fw-bold">{{ live_listeners_now }}</div>
+          <div class="fs-3 fw-bold" id="liveListenersNow">{{ live_listeners_now }}</div>
         </div>
       </div></div>
     </div>
     <div class="col-xl-8">
       <div class="card card-lg h-100"><div class="card-body">
         <div class="text-muted small mb-2">{% translate "الأكثر استماعاً الآن" %}</div>
-        {% if live_now_by_song %}
-          <div class="d-flex flex-wrap gap-2">
-            {% for row in live_now_by_song %}
-              <a href="{% url 'dashboard_app:song-view' row.song_id %}" class="badge bg-success-subtle text-success text-decoration-none">
-                {{ row.song }} · {{ row.count }}
-              </a>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted small">{% translate "محدش بيسمع دلوقتي" %}</div>
-        {% endif %}
+        <div id="liveNowBySong">
+          {% if live_now_by_song %}
+            <div class="d-flex flex-wrap gap-2">
+              {% for row in live_now_by_song %}
+                <a href="{% url 'dashboard_app:song-view' row.song_id %}" class="badge bg-success-subtle text-success text-decoration-none">
+                  {{ row.song }} · {{ row.count }}
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">{% translate "محدش بيسمع دلوقتي" %}</div>
+          {% endif %}
+        </div>
       </div></div>
     </div>
   </div>
@@ -328,6 +332,43 @@
       });
       chart.render();
     }
+  })();
+
+  // "يستمع الآن" and the top-songs-now list are snapshots taken when
+  // this page rendered - re-fetch them every few seconds so the numbers
+  // actually move while the dashboard tab is left open, instead of only
+  // updating on a manual reload.
+  (function () {
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value == null ? '' : String(value);
+      return div.innerHTML;
+    }
+
+    function refreshLiveListeners() {
+      fetch('{% url "dashboard_app:analytics-live" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          const countEl = document.getElementById('liveListenersNow');
+          if (countEl) countEl.textContent = data.live_listeners_now;
+
+          const listEl = document.getElementById('liveNowBySong');
+          if (!listEl) return;
+          if (data.live_now_by_song.length) {
+            listEl.innerHTML = '<div class="d-flex flex-wrap gap-2">' +
+              data.live_now_by_song.map(function (row) {
+                return '<a href="' + row.url + '" class="badge bg-success-subtle text-success text-decoration-none">' +
+                  escapeHtml(row.song) + ' · ' + row.count + '</a>';
+              }).join('') +
+              '</div>';
+          } else {
+            listEl.innerHTML = '<div class="text-muted small">{% translate "محدش بيسمع دلوقتي" %}</div>';
+          }
+        })
+        .catch(function () {});
+    }
+
+    setInterval(refreshLiveListeners, 5000);
   })();
 </script>
 {% endblock %}

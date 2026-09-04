@@ -236,6 +236,48 @@ _CONTENT_TYPE_LABELS = {
 # Analytics
 # ---------------------------------------------------------------------------
 
+def _live_listener_snapshot():
+    """Who's actually listening right now, this instant - same
+    CurrentSongListener presence the public "يستمع الآن" leaderboard is
+    driven from (a row exists only between a play starting and
+    stopping - see backend.main_app.consumers). Not date-range-scoped,
+    and NOT pushed live to the dashboard on its own - the page calls
+    analytics-live (below) on a timer to re-fetch this, since a plain
+    server-rendered number obviously can't update on its own while the
+    tab just sits there open.
+    """
+    count = CurrentSongListener.objects.count()
+    by_song = [
+        {
+            'song': row['song__title_ar'],
+            'song_id': row['song_id'],
+            'count': row['total'],
+        }
+        for row in (
+            CurrentSongListener.objects.values('song_id', 'song__title_ar')
+            .annotate(total=Count('id')).order_by('-total')[:5]
+        )
+    ]
+    return count, by_song
+
+
+@dashboard_required
+def analytics_live(request):
+    count, by_song = _live_listener_snapshot()
+    return JsonResponse({
+        'live_listeners_now': count,
+        'live_now_by_song': [
+            {
+                'song_id': row['song_id'],
+                'song': row['song'],
+                'count': row['count'],
+                'url': reverse('dashboard_app:song-view', args=[row['song_id']]),
+            }
+            for row in by_song
+        ],
+    })
+
+
 def _build_analytics_context(request):
     range_key, start, end = _analytics_date_range(request)
 
@@ -281,22 +323,7 @@ def _build_analytics_context(request):
     daily_views_labels = json.dumps([row['bucket'].strftime(label_format) for row in timeline])
     daily_views_data = json.dumps([row['total'] for row in timeline])
 
-    # Live, not date-range-scoped: who's actually listening right now,
-    # same CurrentSongListener presence the public "يستمع الآن" leaderboard
-    # is driven from (a row exists only between a play starting and
-    # stopping - see backend.main_app.consumers).
-    live_listeners_now = CurrentSongListener.objects.count()
-    live_now_by_song = [
-        {
-            'song': row['song__title_ar'],
-            'song_id': row['song_id'],
-            'count': row['total'],
-        }
-        for row in (
-            CurrentSongListener.objects.values('song_id', 'song__title_ar')
-            .annotate(total=Count('id')).order_by('-total')[:5]
-        )
-    ]
+    live_listeners_now, live_now_by_song = _live_listener_snapshot()
 
     top_people = _top_viewed(Person, 'full_name_ar', 'dashboard_app:person-view', events)
     top_songs = _top_viewed(Song, 'title_ar', 'dashboard_app:song-view', events)
