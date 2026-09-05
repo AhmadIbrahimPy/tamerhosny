@@ -142,17 +142,44 @@ html[dir="rtl"] #miniSidebar .nav-link:hover {
    Buttons — subtle lift instead of a flat color swap.
 --------------------------------------------------------------------- */
 .btn {
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--ds-primary), color-mix(in srgb, var(--ds-primary) 70%, var(--ds-info)));
+  border-color: transparent;
+  box-shadow: 0 6px 14px -6px rgba(var(--ds-primary-rgb), 0.5);
 }
 
 .btn-primary:hover,
 .btn-primary:focus-visible {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px -6px rgba(var(--ds-primary-rgb), 0.45);
+  box-shadow: 0 10px 22px -6px rgba(var(--ds-primary-rgb), 0.55);
+  filter: brightness(1.04);
 }
 
 .btn:active {
   transform: translateY(0);
+}
+
+/* Pill-shaped filter/segmented buttons — the date-range row on
+   analytics, and anywhere else opting in with .btn-pill-group. */
+.btn-pill-group .btn {
+  border-radius: var(--ds-border-radius-pill);
+  padding-inline: 1rem;
+  font-weight: 600;
+}
+
+.btn-pill-group .btn-outline-secondary {
+  border-color: var(--ds-border-color);
+  background: transparent;
+}
+
+.btn-pill-group .btn-outline-secondary:hover {
+  background: color-mix(in srgb, var(--ds-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ds-primary) 35%, var(--ds-border-color));
+  color: var(--ds-primary);
+  transform: translateY(-1px);
 }
 
 /* ---------------------------------------------------------------------
@@ -259,16 +286,67 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------
-   Stat & KPI cards — icon badges get a gentle lift with the card.
+   Stat & KPI cards — each carries an accent color (via .accent-*) that
+   drives a top glow bar, a whisper of tinted background, and a colored
+   shadow ring around its icon badge — so the row reads as distinct,
+   purposeful cards instead of identical white boxes with different text.
 --------------------------------------------------------------------- */
+.accent-primary { --accent-color: var(--ds-primary); }
+.accent-info { --accent-color: var(--ds-info); }
+.accent-success { --accent-color: var(--ds-success); }
+.accent-warning { --accent-color: var(--ds-warning); }
+.accent-danger { --accent-color: var(--ds-danger); }
+.accent-secondary { --accent-color: var(--ds-secondary); }
+
+.stat-card,
+.kpi-card {
+  --accent-color: var(--ds-primary);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.stat-card::before,
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 20%, transparent));
+}
+
+.stat-card::after,
+.kpi-card::after {
+  content: "";
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  top: -60px;
+  inset-inline-end: -50px;
+  background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+  filter: blur(28px);
+  z-index: -1;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.stat-card:hover::after,
+.kpi-card:hover::after {
+  opacity: 1;
+}
+
 .stat-card .icon-shape,
 .kpi-card .icon-shape {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-color) 35%, transparent);
 }
 
 .stat-card:hover .icon-shape,
 .kpi-card:hover .icon-shape {
   transform: scale(1.08) rotate(-4deg);
+  box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--accent-color) 55%, transparent);
 }
 
 /* ---------------------------------------------------------------------
