@@ -1193,7 +1193,7 @@
         type="button"
         class="ready-btn"
         id="readyBtn"
-        disabled
+        onclick="startProject()"
       >
 
         <i class="bi bi-play-fill"></i>
@@ -1201,10 +1201,6 @@
         {% translate "ابدأ" %}
 
       </button>
-
-      <p style="color:var(--muted); font-size:13px; margin-top:10px; text-align:center;">
-        {% translate "هتبقى الميزة دي متاحة قريب" %}
-      </p>
 
     </div>
 
@@ -1842,6 +1838,10 @@ function selectDivision(
   document
     .getElementById('divisionAction')
     .style.display = 'block';
+
+  document
+    .getElementById('readyBtn')
+    .disabled = false;
 
   if (save) {
     saveProgress();
