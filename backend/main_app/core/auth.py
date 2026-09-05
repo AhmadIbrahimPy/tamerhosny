@@ -2,6 +2,9 @@ from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from backend.main_app.models import LoginSession
+from backend.main_app.shared_utils.login_sessions import record_login_session
+
 
 class AuthHandle:
     def __init__(self, request):
@@ -16,6 +19,8 @@ class AuthHandle:
         user = authenticate(self.request, username=username, password=password)
         if not user or not user.is_active:
             return status.HTTP_401_UNAUTHORIZED, 'Invalid credentials.', None
+
+        record_login_session(self.request, user, LoginSession.Source.APP)
 
         refresh = RefreshToken.for_user(user)
         data = {

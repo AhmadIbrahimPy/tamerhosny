@@ -93,6 +93,49 @@
         </div>
       </div>
       {% endfor %}
+
+      <!-- Login sessions -->
+      {% if login_sessions is not None %}
+      <div class="card card-lg mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">{% translate "سجل تسجيلات الدخول" %}</h6>
+          <span class="badge bg-primary-subtle text-primary">{{ login_sessions|length }}</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{% translate "الوقت" %}</th>
+                <th>{% translate "الجهاز" %}</th>
+                <th>{% translate "عنوان IP" %}</th>
+                <th>{% translate "الموقع التقريبي" %}</th>
+                <th>{% translate "النوع" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for session in login_sessions %}
+              <tr>
+                <td class="text-nowrap">{{ session.time }}</td>
+                <td>{{ session.device }}</td>
+                <td class="text-nowrap">{{ session.ip_address }}</td>
+                <td>{{ session.location }}</td>
+                <td>
+                  {% if session.is_admin %}
+                  <span class="badge bg-danger-subtle text-danger">{% translate "مسؤول" %}</span>
+                  {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">{% translate "مستخدم عادي" %}</span>
+                  {% endif %}
+                  <span class="badge bg-light text-dark border">{{ session.source }}</span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-muted text-center py-4">{% translate "لا يوجد" %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Analytics sidebar -->

@@ -298,3 +298,35 @@ class SongLeaderboardRank(models.Model):
 
     def __str__(self):
         return f'{self.song} - #{self.rank} {self.user.username}'
+
+
+class LoginSession(models.Model):
+    """A record of one successful login, captured for security auditing:
+    when it happened, from what device/IP, and whether it was a dashboard
+    (admin/editor) login or a regular app/site login.
+    """
+
+    class Source(models.TextChoices):
+        DASHBOARD = 'DASHBOARD', _('لوحة التحكم')
+        APP = 'APP', _('التطبيق / الموقع')
+
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.CASCADE, related_name='login_sessions',
+    )
+    source = models.CharField(max_length=10, choices=Source.choices)
+    is_admin = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    device = models.CharField(max_length=150, blank=True)
+    country_code = models.CharField(max_length=2, blank=True)
+    country_name = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user} - {self.created_at:%Y-%m-%d %H:%M}'

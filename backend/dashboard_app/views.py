@@ -21,13 +21,14 @@ from backend.analytics_app.models import AnalyticsEvent
 from backend.concerts_app.models import Concert
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.decorators import dashboard_required
+from backend.main_app.shared_utils.login_sessions import record_login_session
 from backend.dashboard_app.forms import (
     AdvertisementForm, AlbumForm, CinemaVenueForm, ConcertForm, ExternalLinkForm, MediaCreditForm,
     MEDIA_SECTION_FORMS, PersonForm, PlatformForm, ScreeningForm, SongCreditForm, SongForm, SongLyricSegmentForm,
     StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
-from backend.main_app.models import CurrentSongListener, Like, Playlist, UserAccount, UserSongPlay
+from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserSongPlay
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
@@ -72,6 +73,7 @@ def dashboard_login(request):
         )
         if user and user.is_active and user.role in UserAccount.DASHBOARD_ROLES:
             auth_login(request, user)
+            record_login_session(request, user, LoginSession.Source.DASHBOARD)
             return redirect('dashboard_app:home')
         error = 'اسم المستخدم أو كلمة المرور غير صحيحة.'
 
@@ -1796,12 +1798,25 @@ def user_view(request, pk):
         },
     ]
 
+    login_sessions = [
+        {
+            'time': session.created_at,
+            'device': session.device or _('غير معروف'),
+            'ip_address': session.ip_address or '-',
+            'location': session.country_name or _('غير معروف'),
+            'source': session.get_source_display(),
+            'is_admin': session.is_admin,
+        }
+        for session in LoginSession.objects.filter(user=account).order_by('-created_at')[:50]
+    ]
+
     return render(request, 'dashboard/pages/_detail_generic.html', {
         'page_title': account.username,
         'subtitle': now_listening.song.title_ar if now_listening else account.get_role_display(),
         'image_url': account.profile_image.url if account.profile_image else None,
         'fields': fields,
         'related_sections': related_sections,
+        'login_sessions': login_sessions,
         'extra_actions': extra_actions,
         'edit_url': reverse('dashboard_app:user-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:users')),
