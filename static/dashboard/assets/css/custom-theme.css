@@ -1,0 +1,222 @@
+/*
+ * Visual polish layer for the dashboard.
+ * Loaded after theme.css/theme.rtl.css so it can refine — never replace —
+ * the base "Minimal" design tokens (--ds-primary, --ds-border-radius, ...)
+ * already defined there. Keeps light/dark mode working for free by only
+ * ever referencing those tokens instead of hard-coded colors.
+ */
+
+/* ---------------------------------------------------------------------
+   Base surface — a whisper of depth instead of flat white/near-black.
+--------------------------------------------------------------------- */
+html[data-bs-theme="light"] body,
+html:not([data-bs-theme="dark"]) body {
+  background:
+    radial-gradient(1200px 480px at 100% -10%, rgba(0, 167, 111, 0.06), transparent 60%),
+    radial-gradient(900px 500px at -5% 110%, rgba(0, 184, 217, 0.05), transparent 55%),
+    var(--ds-body-bg);
+  background-attachment: fixed;
+}
+
+html[data-bs-theme="dark"] body {
+  background:
+    radial-gradient(1200px 480px at 100% -10%, rgba(0, 167, 111, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -5% 110%, rgba(0, 184, 217, 0.06), transparent 55%),
+    var(--ds-body-bg);
+  background-attachment: fixed;
+}
+
+* {
+  scrollbar-color: var(--ds-gray-500) transparent;
+}
+
+/* ---------------------------------------------------------------------
+   Cards — a little lift and life on hover, consistent breathing room.
+--------------------------------------------------------------------- */
+.card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.card-lg {
+  border: 1px solid transparent;
+}
+
+.card-lg:hover {
+  box-shadow: 0 20px 40px -12px rgba(var(--ds-primary-rgb), 0.14), var(--ds-box-shadow-xl);
+  border-color: rgba(var(--ds-primary-rgb), 0.12);
+}
+
+.card-header {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Stat-style numbers a touch bolder & tinted so the eye lands on them */
+.card-lg .fs-3.fw-bold {
+  background: linear-gradient(135deg, var(--ds-body-color), rgba(var(--ds-primary-rgb), 0.85));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------------
+   Welcome banner — decorative glow so it doesn't read as a flat block.
+--------------------------------------------------------------------- */
+.bg-gradient-mixed {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bg-gradient-mixed::before,
+.bg-gradient-mixed::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  z-index: -1;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.bg-gradient-mixed::before {
+  width: 240px;
+  height: 240px;
+  background: rgba(var(--ds-primary-rgb), 0.35);
+  top: -90px;
+  inset-inline-end: -60px;
+}
+
+.bg-gradient-mixed::after {
+  width: 180px;
+  height: 180px;
+  background: rgba(var(--ds-info-rgb), 0.3);
+  bottom: -80px;
+  inset-inline-start: 10%;
+}
+
+/* ---------------------------------------------------------------------
+   Sidebar — clearer, softer active state with a gradient pill.
+--------------------------------------------------------------------- */
+#miniSidebar .nav-link {
+  border-radius: var(--ds-border-radius);
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+#miniSidebar .nav-link:hover {
+  background-color: rgba(var(--ds-primary-rgb), 0.06);
+  transform: translateX(-2px);
+}
+
+html[dir="rtl"] #miniSidebar .nav-link:hover {
+  transform: translateX(2px);
+}
+
+#miniSidebar .nav-link.active {
+  background: linear-gradient(135deg, rgba(var(--ds-primary-rgb), 0.16), rgba(var(--ds-primary-rgb), 0.05));
+  color: var(--ds-primary) !important;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(var(--ds-primary-rgb), 0.18);
+}
+
+#miniSidebar .nav-link.active .nav-icon {
+  color: var(--ds-primary);
+}
+
+#miniSidebar .nav-heading {
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* ---------------------------------------------------------------------
+   Topbar — a bit more glass, a soft separation line.
+--------------------------------------------------------------------- */
+.navbar-glass {
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(var(--ds-primary-rgb), 0.08);
+}
+
+/* ---------------------------------------------------------------------
+   Buttons — subtle lift instead of a flat color swap.
+--------------------------------------------------------------------- */
+.btn {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px -6px rgba(var(--ds-primary-rgb), 0.45);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* ---------------------------------------------------------------------
+   Tables — rounded frame, calmer header, a warmer hover tint.
+--------------------------------------------------------------------- */
+.table-responsive {
+  border-radius: var(--ds-border-radius);
+  overflow: hidden;
+}
+
+.table thead th {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--ds-secondary-color);
+  background-color: var(--ds-tertiary-bg);
+  border-bottom-width: 1px;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: rgba(var(--ds-primary-rgb), 0.05);
+}
+
+/* ---------------------------------------------------------------------
+   Badges & avatars — a touch of shape and shadow.
+--------------------------------------------------------------------- */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.avatar img,
+.rounded-circle img {
+  transition: transform 0.2s ease;
+}
+
+a:hover > .rounded-circle img {
+  transform: scale(1.04);
+}
+
+/* ---------------------------------------------------------------------
+   Focus states — one consistent, visible ring everywhere.
+--------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid rgba(var(--ds-primary-rgb), 0.5);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Gentle entrance for page content — calm, not distracting.
+--------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .custom-container > .row {
+    animation: th-fade-in 0.35s ease both;
+  }
+
+  .custom-container > .row:nth-child(2) { animation-delay: 0.03s; }
+  .custom-container > .row:nth-child(3) { animation-delay: 0.06s; }
+  .custom-container > .row:nth-child(4) { animation-delay: 0.09s; }
+}
+
+@keyframes th-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
