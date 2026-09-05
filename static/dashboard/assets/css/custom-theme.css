@@ -220,3 +220,86 @@ button:focus-visible,
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------------------------------------------------------------------
+   Section markers — a small colored bar to separate dashboard groups
+   instead of every card row looking like an undifferentiated stack.
+--------------------------------------------------------------------- */
+.section-bar {
+  display: inline-block;
+  width: 4px;
+  height: 1.05rem;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--ds-primary), var(--ds-info));
+}
+
+/* ---------------------------------------------------------------------
+   Live indicator dot — pulsing glow used for "listening now" signals.
+--------------------------------------------------------------------- */
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2eb85c;
+  box-shadow: 0 0 0 0 rgba(46, 184, 92, 0.55);
+  flex-shrink: 0;
+  animation: th-pulse 1.8s ease-out infinite;
+}
+
+.live-dot-abs {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -2px;
+}
+
+@keyframes th-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(46, 184, 92, 0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(46, 184, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 184, 92, 0); }
+}
+
+/* ---------------------------------------------------------------------
+   Stat & KPI cards — icon badges get a gentle lift with the card.
+--------------------------------------------------------------------- */
+.stat-card .icon-shape,
+.kpi-card .icon-shape {
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover .icon-shape,
+.kpi-card:hover .icon-shape {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+/* ---------------------------------------------------------------------
+   Rank badges — numbered pill for leaderboard lists, gold/silver/bronze
+   for the top three so the eye finds the winners immediately.
+--------------------------------------------------------------------- */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--ds-tertiary-bg);
+  color: var(--ds-secondary-color);
+}
+
+.rank-badge.rank-1 {
+  background: linear-gradient(135deg, #f6d365, #d4a017);
+  color: #4a3300;
+}
+
+.rank-badge.rank-2 {
+  background: linear-gradient(135deg, #e0e0e0, #a8a8a8);
+  color: #333;
+}
+
+.rank-badge.rank-3 {
+  background: linear-gradient(135deg, #e6b17e, #b3703a);
+  color: #3a1f00;
+}
