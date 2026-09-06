@@ -3113,6 +3113,40 @@ msgstr "EGP"
 msgid "عرض المزيد"
 msgstr "Show More"
 
+#: frontend/website/pages/user/public_profile.html
+msgid "الملخص"
+msgstr "Recap"
+
+#: frontend/website/pages/user/profile_most_listened.html
+#: frontend/website/pages/user/profile_favorites.html
+msgid "العودة للبروفايل"
+msgstr "Back to profile"
+
+#: frontend/website/pages/user/profile_most_listened.html
+#: frontend/website/pages/user/profile_favorites.html
+msgid "جاري تحميل المزيد..."
+msgstr "Loading more..."
+
+#: frontend/website/pages/user/profile_most_listened.html
+msgid "الأكثر استماعاً"
+msgstr "Most Listened"
+
+#: frontend/website/pages/user/profile_most_listened.html
+msgid "مفيش نشاط استماع يتعرض هنا لسه"
+msgstr "No listening activity to show yet"
+
+#: frontend/website/pages/user/profile_favorites.html
+msgid "مفيش أغاني مفضلة لسه"
+msgstr "No favorite songs yet"
+
+#: frontend/website/pages/user/profile_most_listened.html
+msgid "الأكثر استماعاً عند %(name)s"
+msgstr "%(name)s's most listened"
+
+#: frontend/website/pages/user/profile_favorites.html
+msgid "الأغاني المفضلة عند %(name)s"
+msgstr "%(name)s's favorite songs"
+
 #: frontend/website/pages/media/detail.html:288
 msgid "أعمال أخرى مشابهة"
 msgstr "Similar Titles"

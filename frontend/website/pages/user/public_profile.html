@@ -95,29 +95,45 @@
       </div>
       <div class="profile-meta"><i class="bi bi-calendar3"></i> {% blocktranslate with date=profile_user.date_joined|date:"Y-m-d" %}عضو منذ {{ date }}{% endblocktranslate %}</div>
     </div>
+    <a href="{% url 'website_app:recap' profile_user.username %}" class="th-see-all" style="margin-inline-start:auto;">
+      <i class="bi bi-stars"></i> {% translate "الملخص" %}
+    </a>
   </div>
 
   {% if full_listens %}
   <div class="profile-section">
-    <h2 class="th-section-title">{% translate "الأكثر استماعاً لها" %}</h2>
-    <div class="th-grid cols-6">
-      {% for play in full_listens %}
-      <a href="{% url 'website_app:song-detail' play.song.slug %}" class="th-card aspect-square th-card-song plain">
-        <div class="th-img-wrap">
-          {% if play.song.cover_image %}
-            <img src="{{ play.song.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
-          {% elif play.song.album.cover_image %}
-            <img src="{{ play.song.album.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
-          {% else %}
-            <i class="bi bi-music-note-beamed icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body">
-          <div class="th-title">{{ play.song|localized_field:'title' }}</div>
-          <div class="th-meta">{{ play.full_listen_count }} {% translate "استماع كامل" %}</div>
-        </div>
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الأكثر استماعاً لها" %}</h2>
+      {% if full_listens_total > full_listens|length %}
+      <a href="{% url 'website_app:profile-most-listened' profile_user.username %}" class="th-see-all">
+        {% translate "عرض المزيد" %} <i class="bi bi-arrow-left"></i>
       </a>
-      {% endfor %}
+      {% endif %}
+    </div>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for play in full_listens %}
+        <a href="{% url 'website_app:song-detail' play.song.slug %}" class="th-card aspect-square th-card-song plain slider-item"
+          {% if play.song.audio_file %}data-song-id="{{ play.song.pk }}" data-audio-url="{{ play.song.audio_file.url }}"{% endif %}>
+          <div class="th-img-wrap">
+            {% if play.song.cover_image %}
+              <img src="{{ play.song.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
+            {% elif play.song.album.cover_image %}
+              <img src="{{ play.song.album.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
+            {% else %}
+              <i class="bi bi-music-note-beamed icon-fallback"></i>
+            {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ play.song|localized_field:'title' }}</div>
+            <div class="th-meta">{{ play.full_listen_count }} {% translate "استماع كامل" %}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}
@@ -151,22 +167,35 @@
 
   {% if liked_songs %}
   <div class="profile-section">
-    <h2 class="th-section-title">{% translate "الأغاني المفضلة" %}</h2>
-    <div class="th-grid cols-6">
-      {% for song in liked_songs %}
-      <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
-        <div class="th-img-wrap">
-          {% if song.cover_image %}
-            <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-          {% elif song.album.cover_image %}
-            <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-          {% else %}
-            <i class="bi bi-music-note-beamed icon-fallback"></i>
-          {% endif %}
-        </div>
-        <div class="th-body"><div class="th-title">{{ song|localized_field:'title' }}</div></div>
+    <div class="th-section-head">
+      <h2 class="th-section-title">{% translate "الأغاني المفضلة" %}</h2>
+      {% if liked_songs_total > liked_songs|length %}
+      <a href="{% url 'website_app:profile-favorites' profile_user.username %}" class="th-see-all">
+        {% translate "عرض المزيد" %} <i class="bi bi-arrow-left"></i>
       </a>
-      {% endfor %}
+      {% endif %}
+    </div>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <div class="th-slider">
+        {% for song in liked_songs %}
+        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain slider-item"
+          {% if song.audio_file %}data-song-id="{{ song.pk }}" data-audio-url="{{ song.audio_file.url }}"{% endif %}>
+          <div class="th-img-wrap">
+            {% if song.cover_image %}
+              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+            {% elif song.album.cover_image %}
+              <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+            {% else %}
+              <i class="bi bi-music-note-beamed icon-fallback"></i>
+            {% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+          </div>
+          <div class="th-body"><div class="th-title">{{ song|localized_field:'title' }}</div></div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
     </div>
   </div>
   {% endif %}

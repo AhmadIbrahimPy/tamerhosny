@@ -1,0 +1,108 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% blocktranslate with name=profile_user.username %}الأغاني المفضلة عند {{ name }}{% endblocktranslate %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-mini-header{
+    display:flex; align-items:center; gap:14px; padding-block:24px; margin-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .profile-mini-avatar, .profile-mini-avatar-fallback{
+    width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid var(--border); flex-shrink:0;
+  }
+  .profile-mini-avatar-fallback{
+    display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent);
+    font-weight:900; font-size:20px;
+  }
+  .profile-mini-header .name{font-weight:800; font-size:16px;}
+  .profile-mini-header .back-link{margin-inline-start:auto; color:var(--muted); font-size:13px; text-decoration:none;}
+  .profile-mini-header .back-link:hover{color:var(--accent);}
+  .profile-section-title{margin-block:24px 16px;}
+  #scrollSentinel{height:1px;}
+  #loadingMore{text-align:center; padding:20px; color:var(--muted); display:none;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+  <div class="profile-mini-header">
+    {% if profile_user.profile_image %}
+      <img src="{{ profile_user.profile_image.url }}" alt="{{ profile_user.username }}" class="profile-mini-avatar">
+    {% else %}
+      <span class="profile-mini-avatar-fallback">{{ profile_user.username|slice:":1"|upper }}</span>
+    {% endif %}
+    <div class="name">{{ profile_user.username }}</div>
+    <a href="{% url 'website_app:public-profile' profile_user.username %}" class="back-link">
+      <i class="bi bi-arrow-right"></i> {% translate "العودة للبروفايل" %}
+    </a>
+  </div>
+
+  <h1 class="th-section-title profile-section-title">{% translate "الأغاني المفضلة" %}</h1>
+
+  {% if liked_songs %}
+  <div class="th-grid cols-6" id="itemsGrid">
+    {% include "website/partials/_profile_favorites_items.html" %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-heart" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "مفيش أغاني مفضلة لسه" %}</p>
+  </div>
+  {% endif %}
+
+  <div id="loadingMore">
+    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% translate "جاري تحميل المزيد..." %}
+  </div>
+  <div id="scrollSentinel"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var grid = document.getElementById('itemsGrid');
+  var sentinel = document.getElementById('scrollSentinel');
+  var loadingEl = document.getElementById('loadingMore');
+  var page = 1;
+  var hasNext = {{ has_next|yesno:"true,false" }};
+  var loading = false;
+
+  if (!sentinel || !hasNext) return;
+
+  function loadNextPage() {
+    if (loading || !hasNext) return;
+    loading = true;
+    loadingEl.style.display = 'block';
+    page += 1;
+    fetch(window.location.pathname + '?page=' + page, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (grid) grid.insertAdjacentHTML('beforeend', data.html);
+        hasNext = data.has_next;
+        loading = false;
+        loadingEl.style.display = 'none';
+        if (!hasNext && observer) observer.disconnect();
+      })
+      .catch(function (error) {
+        console.error('Error loading more:', error);
+        loading = false;
+        loadingEl.style.display = 'none';
+      });
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    if (entries[0].isIntersecting) loadNextPage();
+  }, { rootMargin: '400px' });
+
+  observer.observe(sentinel);
+
+  if (typeof thOnTeardown === 'function') {
+    thOnTeardown(function () { observer.disconnect(); });
+  }
+})();
+</script>
+{% endblock %}

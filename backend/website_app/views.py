@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -1054,32 +1055,108 @@ def my_duets_list(request):
     })
 
 
+PROFILE_PREVIEW_SIZE = 12
+
+
 def public_profile(request, username):
     """صفحة عامة تظهر لأي زائر - إحصائيات ونشاط المستخدم اللي هو نفسه
     اختار مشاركتها (ثنائيات 'غني مع تامر' العامة فقط، مش الخاصة).
+
+    "الأكثر استماعاً" و"المفضلة" بيتعرضوا هنا كمعاينة سلايدر بس (أول
+    PROFILE_PREVIEW_SIZE عنصر) - عرض القائمة كاملة على طول كان بيكسر
+    شكل الصفحة لو المستخدم عنده مية أغنية مفضلة مثلاً؛ "عرض المزيد"
+    بياخد لصفحة مخصصة فيها القائمة كاملة بترقيم صفحات أثناء التمرير.
     """
     from django.contrib.auth import get_user_model
     User = get_user_model()
     profile_user = get_object_or_404(User, username=username)
 
+    liked_songs_qs = Like.objects.filter(
+        user=profile_user, content_type__model='song',
+    ).select_related('content_type')
+    liked_songs_total = liked_songs_qs.count()
     liked_songs = [
-        like.content_object for like in
-        Like.objects.filter(user=profile_user, content_type__model='song').select_related('content_type')
+        like.content_object for like in liked_songs_qs[:PROFILE_PREVIEW_SIZE]
         if like.content_object is not None
     ]
+
     public_duets = SingWithTamerProject.objects.filter(
         user=profile_user, is_completed=True, is_public=True,
     ).exclude(final_audio_file='').select_related('song').order_by('-updated_at')
-    full_listens = UserSongPlay.objects.filter(
+
+    full_listens_qs = UserSongPlay.objects.filter(
         user=profile_user, full_listen_count__gt=0,
-    ).select_related('song').order_by('-decayed_score')[:20]
+    ).select_related('song', 'song__album').order_by('-decayed_score')
+    full_listens_total = full_listens_qs.count()
+    full_listens = full_listens_qs[:PROFILE_PREVIEW_SIZE]
 
     return render(request, 'website/pages/user/public_profile.html', {
         'profile_user': profile_user,
         'liked_songs': liked_songs,
+        'liked_songs_total': liked_songs_total,
         'public_duets': public_duets,
         'full_listens': full_listens,
+        'full_listens_total': full_listens_total,
         'is_own_profile': request.user.is_authenticated and request.user.pk == profile_user.pk,
+    })
+
+
+def profile_most_listened(request, username):
+    """القائمة الكاملة لأكتر أغاني استمعلها المستخدم - بترقيم صفحات
+    أثناء التمرير (الطلب الأول بيرجع الصفحة كاملة، وأي طلب AJAX تالي
+    بيرجع بطاقات الأغاني بس عشان JS يضيفها تحت الموجودة).
+    """
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    profile_user = get_object_or_404(User, username=username)
+
+    qs = UserSongPlay.objects.filter(
+        user=profile_user, full_listen_count__gt=0,
+    ).select_related('song', 'song__album').order_by('-decayed_score')
+    page_obj = _paginate(request, qs)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'html': render_to_string(
+                'website/partials/_profile_most_listened_items.html',
+                {'full_listens': page_obj}, request=request,
+            ),
+            'has_next': page_obj.has_next(),
+        })
+
+    return render(request, 'website/pages/user/profile_most_listened.html', {
+        'profile_user': profile_user,
+        'full_listens': page_obj,
+        'has_next': page_obj.has_next(),
+    })
+
+
+def profile_favorites(request, username):
+    """القائمة الكاملة للأغاني المفضلة عند المستخدم - نفس فكرة الترقيم
+    أثناء التمرير في profile_most_listened."""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    profile_user = get_object_or_404(User, username=username)
+
+    qs = Like.objects.filter(
+        user=profile_user, content_type__model='song',
+    ).select_related('content_type').order_by('-created_at')
+    page_obj = _paginate(request, qs)
+    songs = [like.content_object for like in page_obj if like.content_object is not None]
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'html': render_to_string(
+                'website/partials/_profile_favorites_items.html',
+                {'liked_songs': songs}, request=request,
+            ),
+            'has_next': page_obj.has_next(),
+        })
+
+    return render(request, 'website/pages/user/profile_favorites.html', {
+        'profile_user': profile_user,
+        'liked_songs': songs,
+        'has_next': page_obj.has_next(),
     })
 
 

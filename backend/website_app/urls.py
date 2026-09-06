@@ -50,6 +50,8 @@ urlpatterns = [
     # User Features
     path('u/<str:username>/', views.public_profile, name='public-profile'),
     path('u/<str:username>/recap/', views.recap, name='recap'),
+    path('u/<str:username>/most-listened/', views.profile_most_listened, name='profile-most-listened'),
+    path('u/<str:username>/favorites/', views.profile_favorites, name='profile-favorites'),
     path('profile/update/', views.update_profile, name='update-profile'),
 
     path('likes/', views.likes_list, name='likes'),
