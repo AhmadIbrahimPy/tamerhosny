@@ -87,9 +87,28 @@
   color: var(--bs-primary, #206bc4);
 }
 
+/* Secondary row: segment nav + manual seek, visually lighter than the
+   main transport row so play/progress/time stays the obvious focus. */
+.audio-utility-row {
+  padding-top: 14px;
+  margin-top: 2px;
+  border-top: 1px dashed var(--bs-border-color, #dee2e6);
+  flex-wrap: wrap;
+}
+
+.audio-utility-row .utility-label {
+  font-size: 12px;
+  color: var(--bs-secondary-color, #6c757d);
+  font-weight: 600;
+}
+
 .input-group .form-control {
   text-align: center;
   font-weight: 600;
+}
+
+#seekInput {
+  max-width: 76px;
 }
 
 #setStartTimeBtn,
@@ -315,42 +334,46 @@
         <div class="audio-player-container">
           <audio id="audioPlayer" src="{{ song.audio_file.url }}" preload="metadata"></audio>
           
-          <div class="audio-controls d-flex align-items-center gap-3 mb-3">
+          <div class="audio-controls d-flex align-items-center gap-3 mb-0">
             <button id="playPauseBtn" class="btn btn-primary btn-sm" type="button">
               <i class="ti ti-player-play" id="playIcon"></i>
             </button>
-            
+
             <div class="flex-grow-1">
               <div class="progress" style="height: 8px; cursor: pointer;" id="progressBar">
                 <div class="progress-bar" id="progressBarFill" role="progressbar" style="width: 0%"></div>
               </div>
             </div>
-            
+
             <span class="text-muted small" id="currentTime">0:00</span>
             <span class="text-muted small">/</span>
             <span class="text-muted small" id="duration">0:00</span>
-            
+          </div>
+
+          <div class="audio-utility-row d-flex align-items-center gap-3">
+            <span class="utility-label">{% translate "الانتقال" %}</span>
+
             <button id="rewindBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "المقطع السابق" %}">
               <i class="ti ti-player-skip-back"></i>
             </button>
-            
+
             <button id="forwardBtn" class="btn btn-outline-secondary btn-sm" type="button" title="{% translate "المقطع التالي" %}">
               <i class="ti ti-player-skip-forward"></i>
             </button>
-            
-            <div class="input-group input-group-sm" style="width: 100px;">
-              <input type="number" class="form-control" id="seekInput" placeholder="ثانية" min="0">
+
+            <div class="input-group input-group-sm" style="width: auto;">
+              <input type="number" class="form-control" id="seekInput" placeholder="{% translate "ثانية" %}" min="0" title="{% translate "بيتحدث تلقائي مع التشغيل - عدّله وادوس انتقل عشان تنط لثانية تانية" %}">
               <button class="btn btn-outline-secondary" type="button" id="seekBtn">{% translate "انتقل" %}</button>
             </div>
-          </div>
-          
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-info" type="button" id="setStartTimeBtn">
-              <i class="ti ti-player-play"></i> {% translate "تعيين كوقت بداية" %}
-            </button>
-            <button class="btn btn-sm btn-outline-success" type="button" id="setEndTimeBtn">
-              <i class="ti ti-player-stop"></i> {% translate "تعيين كوقت نهاية" %}
-            </button>
+
+            <div class="d-flex gap-2 ms-auto">
+              <button class="btn btn-sm btn-outline-info" type="button" id="setStartTimeBtn">
+                <i class="ti ti-player-play"></i> {% translate "تعيين كوقت بداية" %}
+              </button>
+              <button class="btn btn-sm btn-outline-success" type="button" id="setEndTimeBtn">
+                <i class="ti ti-player-stop"></i> {% translate "تعيين كوقت نهاية" %}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -436,6 +459,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const percent = (audio.currentTime / audio.duration) * 100;
     progressBarFill.style.width = `${percent}%`;
     currentTimeEl.textContent = formatTime(audio.currentTime);
+
+    // Keep the seek field tracking the current second automatically -
+    // but not while the admin is actively typing a value into it, or
+    // every keystroke would get overwritten mid-edit.
+    if (seekInput && document.activeElement !== seekInput) {
+      seekInput.value = Math.floor(audio.currentTime);
+    }
   }
 
   // Load metadata when audio is ready
@@ -802,6 +832,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('id_text').value = text;
         document.getElementById('id_vocal_doubling').checked = vocalDoubling;
         document.getElementById('id_double_tracking').checked = doubleTracking;
+
+        // Jump the seek field (and the player itself) to this segment's
+        // start, so editing a line also cues up listening to it.
+        if (seekInput) seekInput.value = startSeconds;
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          audio.currentTime = Math.min(startSeconds, audio.duration);
+        } else {
+          audio.currentTime = startSeconds;
+        }
 
         editingSegmentId = segmentId;
         submitSegmentBtn.textContent = 'حفظ التعديلات';

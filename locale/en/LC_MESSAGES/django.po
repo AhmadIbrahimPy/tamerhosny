@@ -2511,6 +2511,22 @@ msgstr "Rewind 5 seconds"
 msgid "تقديم 5 ثواني"
 msgstr "Forward 5 seconds"
 
+#: frontend/dashboard/pages/songs/segments.html:333
+msgid "المقطع السابق"
+msgstr "Previous segment"
+
+#: frontend/dashboard/pages/songs/segments.html:337
+msgid "المقطع التالي"
+msgstr "Next segment"
+
+#: frontend/dashboard/pages/songs/segments.html:340
+msgid "الانتقال"
+msgstr "Seek"
+
+#: frontend/dashboard/pages/songs/segments.html:342
+msgid "بيتحدث تلقائي مع التشغيل - عدّله وادوس انتقل عشان تنط لثانية تانية"
+msgstr "Updates automatically as it plays - edit it and press Go to jump to a different second"
+
 #: frontend/dashboard/pages/songs/segments.html:456
 msgid "انتقل"
 msgstr "Go"
