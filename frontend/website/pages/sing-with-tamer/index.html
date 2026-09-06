@@ -1584,6 +1584,27 @@ const RECORDINGS_URL =
 const LYRICS_URL =
   `/v1/music/songs/${SONG_ID}/lyrics-segments/`;
 
+// Recording your own line over a song that's still playing (or even just
+// the persistent player bar sitting there) doesn't make sense on this
+// page - stop whatever's playing site-wide and hide the bar the moment
+// this page loads.
+function stopAndHideGlobalPlayer() {
+  if (typeof globalAudio !== 'undefined' && globalAudio && !globalAudio.paused) {
+    isManualPause = true;
+    globalAudio.pause();
+  }
+  const bar = document.getElementById('globalAudioPlayer');
+  if (bar) {
+    bar.style.display = 'none';
+  }
+}
+stopAndHideGlobalPlayer();
+// base.html's restorePlayerState() runs on a delayed DOMContentLoaded
+// timer (see its own comment) and would otherwise re-show the bar (and
+// resume playback, if it was mid-song) right after the line above hid
+// it - reassert once that's had its turn.
+setTimeout(stopAndHideGlobalPlayer, 400);
+
 
 /* =========================================================
    STATE
