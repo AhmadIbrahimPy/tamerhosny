@@ -3307,6 +3307,18 @@ msgstr "Start"
 msgid "هتبقى الميزة دي متاحة قريب"
 msgstr "This feature will be available soon"
 
+#: frontend/website/pages/sing-with-tamer/index.html:1501
+msgid "جاري إنشاء الأغنية..."
+msgstr "Creating your song..."
+
+#: frontend/website/pages/sing-with-tamer/index.html:1505
+msgid "نعمل على دمج صوتك مع الموسيقى"
+msgstr "We're mixing your voice with the music"
+
+#: frontend/website/pages/sing-with-tamer/index.html:1509
+msgid "تقدر تخرج من الصفحة دي عادي، العملية هتفضل شغالة في الخلفية - وأول ما الأغنية تخلص هتلاقيها في"
+msgstr "You can leave this page - the process will keep running in the background, and once it's done you'll find it in"
+
 #: frontend/website/pages/songs/detail.html:7
 #: frontend/website/pages/songs/detail.html:12
 #, python-format

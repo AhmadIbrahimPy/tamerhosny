@@ -1498,46 +1498,17 @@
     </div>
 
     <h3>
-      جاري إنشاء الأغنية...
+      {% translate "جاري إنشاء الأغنية..." %}
     </h3>
 
     <p>
-      نعمل على دمج صوتك مع الموسيقى
+      {% translate "نعمل على دمج صوتك مع الموسيقى" %}
     </p>
 
     <p class="section-description">
-      تقدر تخرج من الصفحة دي عادي، العملية هتفضل شغالة في الخلفية - وأول ما الأغنية تخلص هتلاقيها في
-      <a href="{% url 'website_app:my-duets' %}">غنيت إيه مع تامر</a>.
+      {% blocktranslate %}تقدر تخرج من الصفحة دي عادي، العملية هتفضل شغالة في الخلفية - وأول ما الأغنية تخلص هتلاقيها في{% endblocktranslate %}
+      <a href="{% url 'website_app:my-duets' %}">{% translate "غنيت إيه مع تامر" %}</a>.
     </p>
-
-    <div class="loading-steps">
-
-      <div class="loading-step" id="loadingStep1">
-        <i class="bi bi-circle"></i>
-        تجهيز الموسيقى الأصلية
-      </div>
-
-      <div class="loading-step" id="loadingStep2">
-        <i class="bi bi-circle"></i>
-        عزل الصوت عن الموسيقى
-      </div>
-
-      <div class="loading-step" id="loadingStep3">
-        <i class="bi bi-circle"></i>
-        دمج التسجيلات مع الموسيقى
-      </div>
-
-      <div class="loading-step" id="loadingStep4">
-        <i class="bi bi-circle"></i>
-        معالجة وتحسين الصوت
-      </div>
-
-      <div class="loading-step" id="loadingStep5">
-        <i class="bi bi-circle"></i>
-        إنهاء الأغنية
-      </div>
-
-    </div>
 
   </div>
 
@@ -4685,9 +4656,8 @@ async function createSong() {
   document.getElementById('songCreationCard').style.display = 'none';
   document.getElementById('songLoadingCard').style.display = 'block';
 
-  // Hide lyric meta and loading steps during song creation
+  // Hide lyric meta during song creation
   document.querySelector('.lyric-meta').style.display = 'none';
-  document.querySelector('.loading-steps').style.display = 'none';
 
   // Nothing left to record or listen to at this point - hide the whole
   // recording area and the "listen to your line" card instead of leaving
@@ -4741,7 +4711,6 @@ function showCreateSongError(message) {
   document.getElementById('songLoadingCard').style.display = 'none';
   document.getElementById('songCreationCard').style.display = 'block';
   document.querySelector('.lyric-meta').style.display = 'flex';
-  document.querySelector('.loading-steps').style.display = 'block';
   const recordingArea = document.querySelector('.recording-area');
   if (recordingArea) recordingArea.style.display = '';
   const originalSongCard = document.getElementById('originalSongCard');
