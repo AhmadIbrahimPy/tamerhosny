@@ -56,6 +56,7 @@ urlpatterns = [
     path('my-duets/', views.my_duets_list, name='my-duets'),
     path('my-duets/<int:pk>/toggle-privacy/', views.toggle_duet_privacy, name='toggle-duet-privacy'),
     path('recently-played/', views.recently_played, name='recently-played'),
+    path('my-recap/', views.my_recap, name='my-recap'),
     path('playlists/list/', views.list_playlists, name='list-playlists'),
     path('playlists/add-song/', views.add_song_to_playlist, name='add-song-to-playlist'),
     path('playlists/create-with-song/', views.create_playlist_with_song, name='create-playlist-with-song'),

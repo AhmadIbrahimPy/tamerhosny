@@ -1,0 +1,183 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "ملخصي" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .recap-page{padding-block:40px 64px;}
+  .recap-hero{
+    position:relative; overflow:hidden; border-radius:28px; padding:44px 28px;
+    text-align:center; margin-bottom:28px;
+    background:
+      radial-gradient(700px 360px at 20% 0%, rgba(138,92,255,.25), transparent 60%),
+      radial-gradient(600px 320px at 85% 100%, rgba(212,175,55,.2), transparent 55%),
+      linear-gradient(160deg, var(--card), var(--bg-2, var(--bg)));
+    border:1px solid var(--border);
+  }
+  .recap-hero .mark{
+    width:60px;height:60px;border-radius:16px;margin:0 auto 18px;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:22px;color:#0b0c14;
+  }
+  .recap-hero h1{font-size:26px;font-weight:900;margin:0 0 8px;}
+  .recap-hero p{color:var(--muted);font-size:14px;margin:0;}
+
+  .recap-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:18px;margin-bottom:24px;}
+  .recap-stat{
+    background:var(--card); border:1px solid var(--border); border-radius:20px;
+    padding:26px 22px; text-align:center;
+  }
+  .recap-stat .icon{font-size:26px;color:var(--accent);margin-bottom:10px;}
+  .recap-stat .value{font-size:34px;font-weight:900;margin-bottom:4px;}
+  .recap-stat .label{font-size:13px;color:var(--muted);}
+
+  .recap-top-song{
+    background:linear-gradient(135deg, rgba(212,175,55,.12), rgba(138,92,255,.1));
+    border:1px solid var(--border); border-radius:24px; padding:28px;
+    display:flex; align-items:center; gap:22px; margin-bottom:24px; text-decoration:none; color:var(--text);
+    transition:transform .2s ease, border-color .2s ease;
+  }
+  .recap-top-song:hover{transform:translateY(-3px); border-color:var(--accent);}
+  .recap-top-song .cover{
+    width:100px;height:100px;border-radius:16px;overflow:hidden;flex-shrink:0;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .recap-top-song .cover img{width:100%;height:100%;object-fit:cover;}
+  .recap-top-song .cover .icon-fallback{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:var(--card); color:var(--accent); font-size:34px;
+  }
+  .recap-top-song .info .eyebrow{font-size:12px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .recap-top-song .info .title{font-size:22px;font-weight:900;margin-bottom:4px;}
+  .recap-top-song .info .meta{font-size:13px;color:var(--muted);}
+
+  .recap-top-list{background:var(--card); border:1px solid var(--border); border-radius:20px; padding:8px; margin-bottom:28px;}
+  .recap-top-list-row{
+    display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:14px;
+    text-decoration:none; color:var(--text); transition:background .15s ease;
+  }
+  .recap-top-list-row:hover{background:var(--card-hover, rgba(255,255,255,.04));}
+  .recap-top-list-row .rank{font-weight:900; color:var(--muted); width:22px; text-align:center; flex-shrink:0;}
+  .recap-top-list-row .cover{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--bg);}
+  .recap-top-list-row .cover img{width:100%;height:100%;object-fit:cover;}
+  .recap-top-list-row .name{flex:1;min-width:0;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .recap-top-list-row .count{font-size:12.5px;color:var(--muted);flex-shrink:0;}
+
+  .recap-share-bar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+  .recap-share-btn{
+    display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:12px;
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    font-weight:700; font-size:13.5px; cursor:pointer; text-decoration:none;
+  }
+  .recap-share-btn:hover{border-color:var(--accent); color:var(--accent);}
+
+  .recap-empty{text-align:center; padding:40px 20px; color:var(--muted);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl recap-page">
+
+  <div class="recap-hero" id="recapCard">
+    <div class="mark">TH</div>
+    <h1>{% blocktranslate with name=request.user.username %}ملخص {{ name }} على أرشيف تامر حسني{% endblocktranslate %}</h1>
+    <p>{% blocktranslate with date=member_since|date:"Y" %}عضو من سنة {{ date }}{% endblocktranslate %}</p>
+  </div>
+
+  {% if not top_song and not total_likes and not total_duets %}
+  <div class="recap-empty">
+    <i class="bi bi-music-note-beamed" style="font-size:40px;opacity:.5;margin-bottom:14px;display:block;"></i>
+    <p>{% translate "لسه معملتش نشاط كفاية عشان نطلعلك ملخص - استمع لكام أغنية وارجع تاني!" %}</p>
+  </div>
+  {% else %}
+
+  {% if top_song %}
+  <a href="{% url 'website_app:song-detail' top_song.slug %}" class="recap-top-song">
+    <div class="cover">
+      {% if top_song.cover_image %}
+        <img src="{{ top_song.cover_image.url }}" alt="{{ top_song|localized_field:'title' }}">
+      {% elif top_song.album.cover_image %}
+        <img src="{{ top_song.album.cover_image.url }}" alt="{{ top_song|localized_field:'title' }}">
+      {% else %}
+        <div class="icon-fallback"><i class="bi bi-music-note-beamed"></i></div>
+      {% endif %}
+    </div>
+    <div class="info">
+      <div class="eyebrow">{% translate "الأغنية الأكتر استماعًا عندك" %}</div>
+      <div class="title">{{ top_song|localized_field:'title' }}</div>
+      {% if top_song.album %}<div class="meta">{{ top_song.album|localized_field:'title' }}</div>{% endif %}
+    </div>
+  </a>
+  {% endif %}
+
+  <div class="recap-grid">
+    <div class="recap-stat">
+      <div class="icon"><i class="bi bi-play-circle-fill"></i></div>
+      <div class="value">{{ total_plays }}</div>
+      <div class="label">{% translate "إجمالي مرات التشغيل" %}</div>
+    </div>
+    <div class="recap-stat">
+      <div class="icon"><i class="bi bi-headphones"></i></div>
+      <div class="value">{{ total_full_listens }}</div>
+      <div class="label">{% translate "أغاني سمعتها لآخرها" %}</div>
+    </div>
+    <div class="recap-stat">
+      <div class="icon"><i class="bi bi-heart-fill"></i></div>
+      <div class="value">{{ total_likes }}</div>
+      <div class="label">{% translate "إعجابات" %}</div>
+    </div>
+    <div class="recap-stat">
+      <div class="icon"><i class="bi bi-mic-fill"></i></div>
+      <div class="value">{{ total_duets }}</div>
+      <div class="label">{% translate "دويتوهات مع تامر" %}</div>
+    </div>
+  </div>
+
+  {% if top_plays %}
+  <div class="recap-top-list">
+    {% for play in top_plays %}
+    <a href="{% url 'website_app:song-detail' play.song.slug %}" class="recap-top-list-row">
+      <span class="rank">{{ forloop.counter }}</span>
+      <span class="cover">
+        {% if play.song.cover_image %}
+          <img src="{{ play.song.cover_image.url }}" alt="">
+        {% elif play.song.album.cover_image %}
+          <img src="{{ play.song.album.cover_image.url }}" alt="">
+        {% endif %}
+      </span>
+      <span class="name">{{ play.song|localized_field:'title' }}</span>
+      <span class="count">{% blocktranslate count counter=play.play_count %}{{ counter }} تشغيلة{% plural %}{{ counter }} تشغيلة{% endblocktranslate %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="recap-share-bar">
+    <button type="button" class="recap-share-btn" id="recapCopyLinkBtn">
+      <i class="bi bi-link-45deg"></i> {% translate "نسخ الرابط" %}
+    </button>
+    {% translate "شوف ملخصي على أرشيف تامر حسني" as recap_share_text %}
+    <a href="https://wa.me/?text={{ recap_share_text|urlencode }}%20{{ request.scheme }}://{{ request.get_host }}{% url 'website_app:my-recap' %}"
+       target="_blank" rel="noopener" class="recap-share-btn">
+      <i class="bi bi-whatsapp"></i> {% translate "شارك على واتساب" %}
+    </a>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var btn = document.getElementById('recapCopyLinkBtn');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(window.location.href);
+      var original = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> {% translate "اتنسخ!" %}';
+      setTimeout(function () { btn.innerHTML = original; }, 1800);
+    });
+  }
+});
+</script>
+{% endblock %}

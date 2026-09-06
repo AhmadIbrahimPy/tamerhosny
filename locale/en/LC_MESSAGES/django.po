@@ -1252,6 +1252,62 @@ msgstr "Likes"
 msgid "الإعجاب"
 msgstr "Likes"
 
+#: frontend/website/partials/header.html:51
+#: frontend/website/partials/header.html:108
+#: frontend/website/pages/user/recap.html:3
+msgid "ملخصي"
+msgstr "My Recap"
+
+#: frontend/website/pages/user/recap.html
+msgid "ملخص %(name)s على أرشيف تامر حسني"
+msgstr "%(name)s's recap on the Tamer Hosny archive"
+
+#: frontend/website/pages/user/recap.html
+msgid "عضو من سنة %(date)s"
+msgstr "Member since %(date)s"
+
+#: frontend/website/pages/user/recap.html
+msgid "لسه معملتش نشاط كفاية عشان نطلعلك ملخص - استمع لكام أغنية وارجع تاني!"
+msgstr "You don't have enough activity yet for a recap - listen to a few songs and check back!"
+
+#: frontend/website/pages/user/recap.html
+msgid "الأغنية الأكتر استماعًا عندك"
+msgstr "Your most-played song"
+
+#: frontend/website/pages/user/recap.html
+msgid "إجمالي مرات التشغيل"
+msgstr "Total plays"
+
+#: frontend/website/pages/user/recap.html
+msgid "أغاني سمعتها لآخرها"
+msgstr "Songs you listened to in full"
+
+#: frontend/website/pages/user/recap.html
+msgid "إعجابات"
+msgstr "Likes"
+
+#: frontend/website/pages/user/recap.html
+msgid "دويتوهات مع تامر"
+msgstr "Duets with Tamer"
+
+#: frontend/website/pages/user/recap.html
+msgid "اتنسخ!"
+msgstr "Copied!"
+
+#: frontend/website/pages/user/recap.html
+msgid "شارك على واتساب"
+msgstr "Share on WhatsApp"
+
+#: frontend/website/pages/user/recap.html
+msgid "شوف ملخصي على أرشيف تامر حسني"
+msgstr "Check out my recap on the Tamer Hosny archive"
+
+#: frontend/website/pages/user/recap.html
+msgid "%(counter)s تشغيلة"
+msgid_plural "%(counter)s تشغيلة"
+msgstr[0] "%(counter)s play"
+msgstr[1] "%(counter)s plays"
+
 #: backend/main_app/models.py:80 backend/main_app/models.py:134
 #: backend/main_app/models.py:211
 msgid "الأغنية"
