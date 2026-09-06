@@ -34,6 +34,9 @@ urlpatterns = [
     path('songs/<str:slug>/duet/<int:duet_id>/', views.song_detail, name='song-detail-duet'),
     path('sing-with-tamer/<str:slug>/', views.sing_with_tamer, name='sing-with-tamer'),
 
+    path('guess/', views.daily_guess_game, name='daily-guess'),
+    path('guess/attempt/', views.daily_guess_attempt, name='daily-guess-attempt'),
+
     path('albums/', views.albums_list, name='albums'),
     path('albums/<str:slug>/', views.album_detail, name='album-detail'),
 

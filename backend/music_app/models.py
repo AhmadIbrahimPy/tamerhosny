@@ -79,6 +79,10 @@ class Song(PublishableModel, HeroMediaMixin):
     title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     cover_image = models.ImageField(upload_to='songs/covers/', blank=True, null=True)
+    # Alternative to uploading a file - a link to an already-hosted image,
+    # same as Album.cover_art_url. Saves server storage for a song whose
+    # cover is only ever going to match its album's anyway.
+    cover_art_url = models.URLField(blank=True, validators=[URLValidator(schemes=['http', 'https'])])
     audio_file = models.FileField(upload_to='songs/audio/', blank=True, null=True, max_length=500)
     duration_seconds = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
     lyrics = models.TextField(blank=True)
@@ -131,6 +135,24 @@ class Song(PublishableModel, HeroMediaMixin):
         if not self.slug:
             self.slug = generate_ascii_slug(Song, self.title_en, 'song')
         super().save(*args, **kwargs)
+
+    @property
+    def display_cover_url(self):
+        """Uploaded cover_image wins if both are set; falls back to the
+        linked cover_art_url, then to the album's own cover (uploaded or
+        linked) - a song with no cover of its own usually just shares
+        its album's.
+        """
+        if self.cover_image:
+            return self.cover_image.url
+        if self.cover_art_url:
+            return self.cover_art_url
+        if self.album_id and self.album:
+            if self.album.cover_image:
+                return self.album.cover_image.url
+            if self.album.cover_art_url:
+                return self.album.cover_art_url
+        return None
 
     def __str__(self):
         return self.title_ar
@@ -199,6 +221,24 @@ class SongLyricSegment(models.Model):
 
     def __str__(self):
         return f'{self.song} [{self.start_seconds}s–{self.end_seconds}s] {self.get_segment_type_display()}'
+
+
+class DailyGuessChallenge(models.Model):
+    """The one song picked as the "guess the song" daily challenge for a
+    given calendar date. Created lazily (get_or_create) the first time
+    anyone opens the game that day, not by a scheduled job - there's
+    nothing to precompute, the pick itself is just a random song.
+    """
+
+    date = models.DateField(unique=True)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-date',)
+
+    def __str__(self):
+        return f'{self.date}: {self.song}'
 
 
 class SingWithTamerProject(models.Model):

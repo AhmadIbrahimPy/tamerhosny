@@ -20,6 +20,7 @@
       <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
       <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
+      <a href="{% url 'website_app:daily-guess' %}" class="{% if request.resolver_match.url_name == 'daily-guess' %}active{% endif %}">{% translate "خمّن الأغنية" %}</a>
 
       <button type="button" class="lang-btn" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
@@ -93,6 +94,7 @@
       <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
       <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
+      <a href="{% url 'website_app:daily-guess' %}" class="{% if request.resolver_match.url_name == 'daily-guess' %}active{% endif %}">{% translate "خمّن الأغنية" %}</a>
 
       <div class="th-user-dropdown-divider mt-2"></div>
 

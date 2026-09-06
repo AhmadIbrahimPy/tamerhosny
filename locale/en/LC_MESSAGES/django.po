@@ -395,6 +395,10 @@ msgstr "Cover Image"
 msgid "رابط صورة الغلاف (اختياري)"
 msgstr "Cover Art URL (optional)"
 
+#: backend/dashboard_app/forms.py
+msgid "رابط صورة الأغنية (اختياري)"
+msgstr "Song Cover Image URL (optional)"
+
 #: backend/dashboard_app/forms.py:78 backend/dashboard_app/forms.py:113
 #: backend/dashboard_app/forms.py:189 backend/dashboard_app/forms.py:243
 #: backend/dashboard_app/forms.py:346
@@ -3951,6 +3955,51 @@ msgstr "Sign in / Create account"
 
 #~ msgid "الأفلام والمسلسلات والإعلانات والبرامج"
 #~ msgstr "Movies, Series, Commercials & Programs"
+
+#: frontend/website/pages/daily_guess.html
+#: frontend/website/partials/header.html
+msgid "خمّن الأغنية"
+msgstr "Guess the Song"
+
+#: frontend/website/pages/daily_guess.html
+msgid "اسمع جزء من الأغنية وحاول تعرفها في 6 محاولات - كل محاولة غلط بتزوّد وقت المقطع"
+msgstr "Listen to a clip and try to guess it in 6 tries - each wrong guess makes the clip longer"
+
+#: frontend/website/pages/daily_guess.html
+msgid "كل يوم أغنية جديدة لتامر حسني - اسمع جزء صغير وحاول تخمّن اسمها في 6 محاولات."
+msgstr "A new Tamer Hosny song every day - listen to a short clip and try to guess it in 6 tries."
+
+#: frontend/website/pages/daily_guess.html
+msgid "مفيش أغاني متاحة للتحدي دلوقتي"
+msgstr "No songs available for the challenge right now"
+
+#: frontend/website/pages/daily_guess.html
+msgid "اكتب اسم الأغنية..."
+msgstr "Type the song name..."
+
+#: frontend/website/pages/daily_guess.html
+msgid "برافو! 🎉"
+msgstr "Nice! 🎉"
+
+#: frontend/website/pages/daily_guess.html
+msgid "المرة الجاية! 😅"
+msgstr "Next time! 😅"
+
+#: frontend/website/pages/daily_guess.html
+msgid "الأغنية كانت: %(title)s"
+msgstr "The song was: %(title)s"
+
+#: frontend/website/pages/daily_guess.html
+msgid "شارك نتيجتك"
+msgstr "Share your result"
+
+#: frontend/website/pages/daily_guess.html
+msgid "اسمع الأغنية كاملة"
+msgstr "Listen to the full song"
+
+#: frontend/website/pages/daily_guess.html
+msgid "اتنسخت النتيجة!"
+msgstr "Result copied!"
 
 #~ msgid "شارك"
 #~ msgstr "Share"

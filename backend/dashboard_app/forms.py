@@ -101,7 +101,7 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         fields = [
-            'title_ar', 'title_en', 'cover_image', 'audio_file', 'cover_video', 'song_type',
+            'title_ar', 'title_en', 'cover_image', 'cover_art_url', 'audio_file', 'cover_video', 'song_type',
             'genre', 'mood', 'duration_seconds', 'release_year', 'is_duet', 'recording_studio', 'album', 'related_media',
             'visibility', 'publish_at',
         ]
@@ -109,6 +109,7 @@ class SongForm(forms.ModelForm):
             'title_ar': _('العنوان بالعربية'),
             'title_en': _('العنوان بالإنجليزية'),
             'cover_image': _('صورة الأغنية'),
+            'cover_art_url': _('رابط صورة الأغنية (اختياري)'),
             'audio_file': _('ملف الصوت'),
             'cover_video': _('فيديو خلفية الصفحة (اختياري)'),
             'song_type': _('النوع'),
@@ -127,6 +128,7 @@ class SongForm(forms.ModelForm):
             'title_ar': forms.TextInput(attrs=WIDGET_ATTRS),
             'title_en': forms.TextInput(attrs=WIDGET_ATTRS),
             'cover_image': SquareCoverWidget(),
+            'cover_art_url': forms.URLInput(attrs=WIDGET_ATTRS),
             'audio_file': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'audio/*'}),
             'cover_video': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'video/*'}),
             'song_type': forms.Select(attrs=SELECT_ATTRS),

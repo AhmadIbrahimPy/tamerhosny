@@ -1,3 +1,4 @@
+import random
 from datetime import timedelta
 
 from django.conf import settings
@@ -21,7 +22,7 @@ from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.templatetags.bilingual import localized_field
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
-from backend.music_app.models import Album, Song, SongCredit, SingWithTamerProject
+from backend.music_app.models import Album, DailyGuessChallenge, Song, SongCredit, SingWithTamerProject
 from backend.people_app.models import Person
 
 PAGE_SIZE = 35
@@ -908,6 +909,171 @@ def increment_play_count(request):
 
 
 SING_WITH_TAMER_COOLDOWN = timedelta(hours=24)
+
+
+# "Guess the song" daily challenge - one song a day, six tries, each
+# wrong guess reveals a longer clip (same idea as Heardle/Wordle). The
+# clip itself is never trimmed server-side - the browser just pauses
+# playback at `revealed_seconds`, so the full audio file stays the one
+# already served for the normal song page; nothing extra to compute or
+# store per attempt.
+DAILY_GUESS_REVEAL_SCHEDULE = [1, 2, 4, 7, 11, 16]
+DAILY_GUESS_MAX_ATTEMPTS = len(DAILY_GUESS_REVEAL_SCHEDULE)
+DAILY_GUESS_NO_REPEAT_DAYS = 30
+
+
+def _get_or_create_daily_challenge(today):
+    challenge = DailyGuessChallenge.objects.filter(date=today).select_related('song').first()
+    if challenge:
+        return challenge
+
+    recent_song_ids = list(
+        DailyGuessChallenge.objects.order_by('-date')[:DAILY_GUESS_NO_REPEAT_DAYS].values_list('song_id', flat=True)
+    )
+    eligible = Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
+    song = eligible.exclude(pk__in=recent_song_ids).order_by('?').first() or eligible.order_by('?').first()
+    if not song:
+        return None
+
+    challenge, _created = DailyGuessChallenge.objects.get_or_create(date=today, defaults={'song': song})
+    return challenge
+
+
+def _daily_guess_session_key(today):
+    return f'daily_guess_{today.isoformat()}'
+
+
+def _daily_guess_build_choices(challenge):
+    """Correct answer + 2 random wrong songs, shuffled once and then
+    kept fixed for this session (stored alongside the rest of the game
+    state) - regenerating them on every request would let someone just
+    refresh until the correct one is obviously the odd one out, and
+    would also reshuffle the options mid-game.
+    """
+    distractors = list(
+        Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
+        .exclude(pk=challenge.song_id).order_by('?')[:2]
+    )
+    choices = [{'id': challenge.song_id, 'title': str(challenge.song)}]
+    choices += [{'id': song.pk, 'title': str(song)} for song in distractors]
+    random.shuffle(choices)
+    return choices
+
+
+def daily_guess_game(request):
+    """صفحة لعبة 'خمّن الأغنية' اليومية."""
+    today = timezone.localdate()
+    challenge = _get_or_create_daily_challenge(today)
+
+    if challenge is None:
+        return render(request, 'website/pages/daily_guess.html', {'no_songs': True})
+
+    session_key = _daily_guess_session_key(today)
+    state = request.session.get(session_key)
+    if state is None:
+        state = {'guesses': [], 'won': False, 'lost': False, 'choices': _daily_guess_build_choices(challenge)}
+        request.session[session_key] = state
+        request.session.modified = True
+
+    attempts_used = len(state['guesses'])
+    finished = state['won'] or state['lost']
+
+    if finished:
+        revealed_seconds = float(challenge.song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
+        answer = {
+            'title': str(challenge.song),
+            'slug': challenge.song.slug,
+            'cover_url': (
+                challenge.song.cover_image.url if challenge.song.cover_image
+                else (challenge.song.album.cover_image.url if challenge.song.album_id and challenge.song.album.cover_image else None)
+            ),
+        }
+    else:
+        revealed_seconds = DAILY_GUESS_REVEAL_SCHEDULE[min(attempts_used, DAILY_GUESS_MAX_ATTEMPTS - 1)]
+        answer = None
+
+    return render(request, 'website/pages/daily_guess.html', {
+        'audio_url': challenge.song.audio_file.url,
+        'revealed_seconds': revealed_seconds,
+        'attempts_used': attempts_used,
+        'max_attempts': DAILY_GUESS_MAX_ATTEMPTS,
+        'guesses': state['guesses'],
+        'won': state['won'],
+        'lost': state['lost'],
+        'finished': finished,
+        'answer': answer,
+        'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
+        'remaining_attempts': DAILY_GUESS_MAX_ATTEMPTS - attempts_used,
+        'choices': state['choices'],
+    })
+
+
+@require_POST
+def daily_guess_attempt(request):
+    """معالجة محاولة تخمين واحدة - session-based، مفيش تسجيل دخول لازم."""
+    today = timezone.localdate()
+    challenge = _get_or_create_daily_challenge(today)
+    if challenge is None:
+        return JsonResponse({'error': 'no songs available'}, status=400)
+
+    session_key = _daily_guess_session_key(today)
+    state = request.session.get(session_key)
+    if state is None:
+        return JsonResponse({'error': 'open the game page first'}, status=400)
+
+    if state['won'] or state['lost']:
+        return JsonResponse({'error': 'already finished'}, status=400)
+    if len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
+        return JsonResponse({'error': 'no attempts left'}, status=400)
+
+    try:
+        guessed_song_id = int(request.POST.get('song_id', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'invalid song_id'}, status=400)
+
+    # Only one of the 3 choices actually shown to this session is a
+    # valid guess - looking the title up from there too (not the DB)
+    # means a guess always matches what the player actually saw.
+    guessed_choice = next((c for c in state['choices'] if c['id'] == guessed_song_id), None)
+    if guessed_choice is None:
+        return JsonResponse({'error': 'not one of the shown choices'}, status=400)
+
+    is_correct = guessed_song_id == challenge.song_id
+    state['guesses'].append({'song_id': guessed_song_id, 'title': guessed_choice['title'], 'correct': is_correct})
+
+    if is_correct:
+        state['won'] = True
+    elif len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
+        state['lost'] = True
+
+    request.session[session_key] = state
+    request.session.modified = True
+
+    finished = state['won'] or state['lost']
+    attempts_used = len(state['guesses'])
+
+    if finished:
+        revealed_seconds = float(challenge.song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
+        answer = {
+            'title': str(challenge.song),
+            'slug': challenge.song.slug,
+            'cover_url': (
+                challenge.song.cover_image.url if challenge.song.cover_image
+                else (challenge.song.album.cover_image.url if challenge.song.album_id and challenge.song.album.cover_image else None)
+            ),
+        }
+    else:
+        revealed_seconds = DAILY_GUESS_REVEAL_SCHEDULE[min(attempts_used, DAILY_GUESS_MAX_ATTEMPTS - 1)]
+        answer = None
+
+    return JsonResponse({
+        'correct': is_correct,
+        'finished': finished,
+        'won': state['won'],
+        'attempts_used': attempts_used,
+        'revealed_seconds': revealed_seconds,
+        'answer': answer,
+    })
 
 
 def sing_with_tamer(request, slug):
