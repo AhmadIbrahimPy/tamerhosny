@@ -8,23 +8,27 @@
 
     <div class="col-xl-8">
       <!-- Header -->
-      <div class="card card-lg mb-4">
-        <div class="card-body d-flex align-items-center gap-4 flex-wrap">
+      <div class="card card-lg mb-4 detail-hero">
+        <div class="card-body d-flex align-items-center gap-4 flex-wrap position-relative">
           {% if image_url %}
             <a href="{{ image_url }}" target="_blank" rel="noopener"
-               class="rounded-circle overflow-hidden border flex-shrink-0" style="width:96px;height:96px;display:block;">
+               class="rounded-circle overflow-hidden flex-shrink-0 detail-avatar" style="width:96px;height:96px;display:block;">
               <img src="{{ image_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
             </a>
+          {% else %}
+            <span class="rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold flex-shrink-0 detail-avatar" style="width:96px;height:96px;font-size:34px;">
+              {{ page_title|slice:":1" }}
+            </span>
           {% endif %}
           <div class="flex-grow-1">
             <h4 class="mb-1">{{ page_title }}</h4>
-            {% if subtitle %}<span class="badge bg-secondary-subtle text-secondary">{{ subtitle }}</span>{% endif %}
+            {% if subtitle %}<span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ subtitle }}</span>{% endif %}
           </div>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 flex-wrap">
             {% for action in extra_actions %}
               <a href="{{ action.url }}" {% if action.external %}target="_blank" rel="noopener"{% endif %} class="btn btn-sm btn-outline-primary">{{ action.label }}</a>
             {% endfor %}
-            {% if edit_url %}<a href="{{ edit_url }}" class="btn btn-sm btn-primary">{% translate "تعديل" %}</a>{% endif %}
+            {% if edit_url %}<a href="{{ edit_url }}" class="btn btn-sm btn-primary"><i class="ti ti-pencil me-1"></i>{% translate "تعديل" %}</a>{% endif %}
             <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
           </div>
         </div>
@@ -32,9 +36,9 @@
 
       <!-- Basic info -->
       <div class="card card-lg mb-4">
-        <div class="card-header"><h6 class="mb-0">{% translate "التفاصيل" %}</h6></div>
-        <div class="card-body">
-          <table class="table table-borderless mb-0">
+        <div class="card-header"><h6 class="mb-0"><i class="ti ti-info-circle text-muted me-1"></i>{% translate "التفاصيل" %}</h6></div>
+        <div class="card-body p-0">
+          <table class="table detail-fields-table mb-0">
             <tbody>
               {% for label, value in fields %}
               <tr>
@@ -70,8 +74,8 @@
       {% for section in related_sections %}
       <div class="card card-lg mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">{{ section.title }}</h6>
-          <span class="badge bg-primary-subtle text-primary">{{ section.items|length }}</span>
+          <h6 class="mb-0"><i class="ti ti-list text-muted me-1"></i>{{ section.title }}</h6>
+          <span class="badge rounded-pill bg-primary-subtle text-primary">{{ section.items|length }}</span>
         </div>
         <div class="list-group list-group-flush">
           {% for item in section.items %}
@@ -98,8 +102,8 @@
       {% if login_sessions is not None %}
       <div class="card card-lg mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">{% translate "سجل تسجيلات الدخول" %}</h6>
-          <span class="badge bg-primary-subtle text-primary">{{ login_sessions|length }}</span>
+          <h6 class="mb-0"><i class="ti ti-history text-muted me-1"></i>{% translate "سجل تسجيلات الدخول" %}</h6>
+          <span class="badge rounded-pill bg-primary-subtle text-primary">{{ login_sessions|length }}</span>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -142,22 +146,26 @@
     {% if stats %}
     <div class="col-xl-4">
       <div class="card card-lg" style="position: sticky; top: 20px;">
-        <div class="card-header"><h6 class="mb-0">{% translate "إحصائيات الأداء" %}</h6></div>
+        <div class="card-header"><h6 class="mb-0"><i class="ti ti-chart-bar text-muted me-1"></i>{% translate "إحصائيات الأداء" %}</h6></div>
         <div class="card-body d-flex flex-column gap-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">{% translate "المشاهدات" %}</span>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-primary-subtle text-primary"><i class="ti ti-eye"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاهدات" %}</span>
             <span class="fs-5 fw-bold">{{ stats.VIEW }}</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">{% translate "التشغيل" %}</span>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-success-subtle text-success"><i class="ti ti-player-play"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "التشغيل" %}</span>
             <span class="fs-5 fw-bold">{{ stats.PLAY }}</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">{% translate "المشاركات" %}</span>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-info-subtle text-info"><i class="ti ti-share-3"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاركات" %}</span>
             <span class="fs-5 fw-bold">{{ stats.SHARE }}</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">{% translate "ضغطات المنصات الخارجية" %}</span>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-warning-subtle text-warning"><i class="ti ti-external-link"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "ضغطات المنصات الخارجية" %}</span>
             <span class="fs-5 fw-bold">{{ stats.EXTERNAL_CLICK }}</span>
           </div>
         </div>

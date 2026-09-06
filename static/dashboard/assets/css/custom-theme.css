@@ -183,7 +183,8 @@ html[dir="rtl"] #miniSidebar .nav-link:hover {
 }
 
 /* ---------------------------------------------------------------------
-   Tables — rounded frame, calmer header, a warmer hover tint.
+   Tables — rounded frame, calmer header, a warmer hover tint, and
+   breathing room in each row instead of the cramped Bootstrap default.
 --------------------------------------------------------------------- */
 .table-responsive {
   border-radius: var(--ds-border-radius);
@@ -197,10 +198,58 @@ html[dir="rtl"] #miniSidebar .nav-link:hover {
   color: var(--ds-secondary-color);
   background-color: var(--ds-tertiary-bg);
   border-bottom-width: 1px;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.table > :not(caption) > * > * {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.table-hover > tbody > tr {
+  transition: background-color 0.12s ease;
 }
 
 .table-hover > tbody > tr:hover > * {
   background-color: rgba(var(--ds-primary-rgb), 0.05);
+}
+
+/* Row action buttons (عرض / تعديل / حذف) read as one compact, rounded
+   segmented control instead of three separate boxy buttons colliding. */
+td .btn-sm + .btn-sm,
+td form.d-inline + .btn-sm,
+td .btn-sm + form.d-inline {
+  margin-inline-start: 0.25rem;
+}
+
+td .btn-outline-secondary.btn-sm,
+td .btn-outline-primary.btn-sm,
+td .btn-outline-danger.btn-sm {
+  border-radius: var(--ds-border-radius-pill);
+  padding-inline: 0.85rem;
+}
+
+/* Shared entity-detail "التفاصيل" field table: quieter separators, a
+   tinted label column instead of a plain borderless list. */
+.detail-fields-table > tbody > tr > th,
+.detail-fields-table > tbody > tr > td {
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px dashed var(--ds-border-color);
+}
+
+.detail-fields-table > tbody > tr:last-child > * {
+  border-bottom: none;
+}
+
+.detail-fields-table > tbody > tr > th {
+  font-weight: 600;
+  background: transparent;
+}
+
+.detail-fields-table > tbody > tr:hover > * {
+  background-color: rgba(var(--ds-primary-rgb), 0.04);
 }
 
 /* ---------------------------------------------------------------------
@@ -380,6 +429,31 @@ button:focus-visible,
 .rank-badge.rank-3 {
   background: linear-gradient(135deg, #e6b17e, #b3703a);
   color: #3a1f00;
+}
+
+/* ---------------------------------------------------------------------
+   Shared entity-detail hero (pages/_detail_generic.html) — a soft
+   gradient wash behind the header card and a ringed avatar so the
+   "view" screen for every entity type feels designed, not a plain box.
+--------------------------------------------------------------------- */
+.detail-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.detail-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(320px 160px at 0% 0%, rgba(var(--ds-primary-rgb), 0.08), transparent 70%),
+    radial-gradient(260px 140px at 100% 100%, rgba(var(--ds-info-rgb), 0.06), transparent 70%);
+  z-index: -1;
+}
+
+.detail-avatar {
+  box-shadow: 0 0 0 4px var(--ds-card-bg), 0 0 0 6px rgba(var(--ds-primary-rgb), 0.25), var(--ds-box-shadow-sm);
 }
 
 /* ---------------------------------------------------------------------
