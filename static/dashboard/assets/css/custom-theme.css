@@ -127,6 +127,60 @@ html[dir="rtl"] #miniSidebar .nav-link:hover {
   letter-spacing: 0.06em;
   font-weight: 700;
   opacity: 0.6;
+  margin-top: 0.5rem;
+}
+
+/* Nav icons — a tinted rounded badge instead of a bare stroke icon
+   floating in space, so the sidebar reads as designed at a glance. */
+#miniSidebar .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  background: rgba(var(--ds-primary-rgb), 0.06);
+  color: var(--ds-secondary-color);
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+#miniSidebar .nav-link:hover .nav-icon {
+  background: rgba(var(--ds-primary-rgb), 0.14);
+  color: var(--ds-primary);
+  transform: scale(1.06);
+}
+
+#miniSidebar .nav-link.active .nav-icon {
+  background: var(--ds-primary);
+  color: var(--ds-white);
+  box-shadow: 0 6px 14px -4px rgba(var(--ds-primary-rgb), 0.55);
+}
+
+/* Logout reads as an exit action, not just another menu item. */
+#miniSidebar .nav-link[href*="logout"] {
+  color: var(--ds-danger);
+}
+
+#miniSidebar .nav-link[href*="logout"] .nav-icon {
+  background: rgba(var(--ds-danger-rgb), 0.08);
+  color: var(--ds-danger);
+}
+
+#miniSidebar .nav-link[href*="logout"]:hover {
+  background-color: rgba(var(--ds-danger-rgb), 0.06);
+}
+
+#miniSidebar .nav-link[href*="logout"]:hover .nav-icon {
+  background: var(--ds-danger);
+  color: var(--ds-white);
+}
+
+/* Brand area — a soft separator so the logo doesn't float against the
+   first nav item with zero visual break. */
+#miniSidebar .brand-logo {
+  border-bottom: 1px dashed var(--ds-border-color);
+  margin-bottom: 0.5rem;
 }
 
 /* ---------------------------------------------------------------------
@@ -250,6 +304,26 @@ td .btn-outline-danger.btn-sm {
 
 .detail-fields-table > tbody > tr:hover > * {
   background-color: rgba(var(--ds-primary-rgb), 0.04);
+}
+
+/* ---------------------------------------------------------------------
+   Pagination — round page pills instead of square-edged links.
+--------------------------------------------------------------------- */
+.pagination .page-link {
+  border-radius: var(--ds-border-radius-pill);
+  margin-inline: 0.15rem;
+  border: none;
+  color: var(--ds-secondary-color);
+}
+
+.pagination .page-item.active .page-link {
+  background: linear-gradient(135deg, var(--ds-primary), color-mix(in srgb, var(--ds-primary) 70%, var(--ds-info)));
+  box-shadow: 0 4px 10px -3px rgba(var(--ds-primary-rgb), 0.5);
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+  background-color: rgba(var(--ds-primary-rgb), 0.08);
+  color: var(--ds-primary);
 }
 
 /* ---------------------------------------------------------------------
