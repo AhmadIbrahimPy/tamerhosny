@@ -191,6 +191,12 @@ class SongLyricSegment(models.Model):
         if self.segment_type == self.SegmentType.LYRICS and not self.text.strip():
             raise ValidationError(_('Text is required for a lyrics segment.'))
 
+    @property
+    def duration_seconds(self):
+        if self.end_seconds is None or self.start_seconds is None:
+            return None
+        return self.end_seconds - self.start_seconds
+
     def __str__(self):
         return f'{self.song} [{self.start_seconds}s–{self.end_seconds}s] {self.get_segment_type_display()}'
 

@@ -981,8 +981,17 @@ def song_segments(request, pk):
         from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song
         fetch_and_save_lyrics_for_song(song)
     
-    segments = song.lyric_segments.all()
-    last_end = segments.aggregate(Max('end_seconds'))['end_seconds__max']
+    all_segments = song.lyric_segments.all()
+    last_end = all_segments.aggregate(Max('end_seconds'))['end_seconds__max']
+
+    segments_qs = all_segments
+    q = request.GET.get('q')
+    if q:
+        segments_qs = segments_qs.filter(text__icontains=q)
+    type_filter = request.GET.get('filter')
+    if type_filter:
+        segments_qs = segments_qs.filter(segment_type=type_filter)
+    segments = _paginate(request, segments_qs)
 
     if request.method == 'POST':
         form = SongLyricSegmentForm(request.POST)
@@ -1019,6 +1028,9 @@ def song_segments(request, pk):
         'song': song,
         'segments': segments,
         'form': form,
+        'filter_choices': SongLyricSegment.SegmentType.choices,
+        'filter_label': _('كل الأنواع'),
+        'querystring': _querystring(request),
         'back_url': _smart_back_url(request, reverse('dashboard_app:song-view', args=[pk])),
     })
 

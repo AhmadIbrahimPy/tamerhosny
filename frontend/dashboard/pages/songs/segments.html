@@ -8,14 +8,12 @@
    clashing gradients (purple play button, blue "start", green "end")
    fighting for attention in one small toolbar. */
 .audio-player-container {
-  background: var(--bs-tertiary-bg, #f8f9fa);
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--bs-border-color, #dee2e6);
 }
 
 .audio-controls {
-  background: var(--bs-body-bg, #fff);
   padding: 16px;
   border-radius: 10px;
   border: 1px solid var(--bs-border-color, #dee2e6);
@@ -184,12 +182,14 @@
         <h5 class="mb-0">{% translate "توقيت الكلمات" %} — {{ song.title_ar }}</h5>
         <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
       </div>
+      {% include "dashboard/partials/_search_filter_bar.html" %}
       <div class="table-responsive">
         <table class="table text-nowrap mb-0 table-centered table-hover">
           <thead>
             <tr>
               <th style="width: 80px;">{% translate "من (ثانية)" %}</th>
               <th style="width: 80px;">{% translate "إلى (ثانية)" %}</th>
+              <th style="width: 90px;">{% translate "المدة (ثانية)" %}</th>
               <th style="width: 100px;">{% translate "النوع" %}</th>
               <th>{% translate "النص" %}</th>
               <th style="width: 120px;" class="text-center">{% translate "تأثيرات الصوت" %}</th>
@@ -201,6 +201,7 @@
             <tr data-segment-id="{{ segment.pk }}">
               <td>{{ segment.start_seconds }}</td>
               <td>{{ segment.end_seconds }}</td>
+              <td>{{ segment.duration_seconds }}</td>
               <td>
                 {% if segment.segment_type == "LYRICS" %}
                   <span class="badge bg-primary-subtle text-primary">{{ segment.get_segment_type_display }}</span>
@@ -238,22 +239,13 @@
               </td>
             </tr>
             {% empty %}
-            <tr id="emptyRow"><td colspan="6" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
+            <tr id="emptyRow"><td colspan="7" class="text-center py-5 text-muted">{% translate "لا توجد مقاطع بعد" %}</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      
-      <!-- Pagination -->
-      <div class="d-flex justify-content-between align-items-center mt-4 pb-2">
-        <span class="text-muted small" id="paginationInfo">عرض 1-10 من {{ total_segments }}</span>
-        <nav>
-          <ul class="pagination pagination-sm mb-0" id="pagination">
-            <!-- Pagination will be populated by JavaScript -->
-          </ul>
-        </nav>
-      </div>
-      
+      {% include "dashboard/partials/pagination.html" with page_obj=segments %}
+
       <style>
         .pagination .page-link {
           color: var(--bs-body-color);
@@ -279,8 +271,13 @@
           margin: 0;
         }
         
-        /* Ensure buttons and icons are visible */
-        .btn-sm {
+        /* Ensure buttons and icons are visible - scoped to the segment
+           row actions specifically, not every .btn-sm on the page: a
+           blanket min-width here was stretching the round audio-player
+           buttons (#playPauseBtn/#rewindBtn/#forwardBtn, also .btn-sm)
+           into ovals instead of circles. */
+        .edit-segment-btn,
+        .delete-segment-btn {
           padding: 0.25rem 0.5rem;
           min-width: 80px;
           position: relative;
@@ -364,15 +361,6 @@
             <div class="input-group input-group-sm" style="width: auto;">
               <input type="number" class="form-control" id="seekInput" placeholder="{% translate "ثانية" %}" min="0" title="{% translate "بيتحدث تلقائي مع التشغيل - عدّله وادوس انتقل عشان تنط لثانية تانية" %}">
               <button class="btn btn-outline-secondary" type="button" id="seekBtn">{% translate "انتقل" %}</button>
-            </div>
-
-            <div class="d-flex gap-2 ms-auto">
-              <button class="btn btn-sm btn-outline-info" type="button" id="setStartTimeBtn">
-                <i class="ti ti-player-play"></i> {% translate "تعيين كوقت بداية" %}
-              </button>
-              <button class="btn btn-sm btn-outline-success" type="button" id="setEndTimeBtn">
-                <i class="ti ti-player-stop"></i> {% translate "تعيين كوقت نهاية" %}
-              </button>
             </div>
           </div>
         </div>
@@ -616,44 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const submitSegmentBtn = document.getElementById('submitSegmentBtn');
   const cancelEditBtn = document.getElementById('cancelEditBtn');
   const segmentsTableBody = document.getElementById('segmentsTableBody');
-  const emptyRow = document.getElementById('emptyRow');
-  const pagination = document.getElementById('pagination');
-  const paginationInfo = document.getElementById('paginationInfo');
   let editingSegmentId = null;
   const songPk = {{ song.pk }};
-  
-  // Pagination - DISABLED to avoid data loss issues
-  // let currentPage = 1;
-  // const itemsPerPage = 10;
-  // let allSegments = [];
-  
-  // Load all segments from table (initial load only) - DISABLED entirely
-  // (was: function loadSegmentsFromTable() { ...built allSegments from the
-  // table's own DOM... }) - unused now that pagination/client-side
-  // re-rendering is disabled and the table is just server-rendered.
-
-  function renderPagination() {
-    // Pagination disabled - show all segments
-    pagination.innerHTML = '';
-    paginationInfo.textContent = '';
-  }
-  
-  function renderSegmentsPage() {
-    // Pagination disabled - do nothing, keep server-rendered content
-  }
-  
-  // Handle pagination clicks - DISABLED
-  // pagination.addEventListener('click', function(e) {
-  //   const pageLink = e.target.closest('[data-page]');
-  //   if (pageLink) {
-  //     e.preventDefault();
-  //     const page = parseInt(pageLink.dataset.page);
-  //     if (page >= 1 && page <= Math.ceil(allSegments.length / itemsPerPage)) {
-  //       currentPage = page;
-  //       renderSegmentsPage();
-  //     }
-  //   }
-  // });
 
   function getCSRFToken() {
     const cookies = document.cookie.split(';');
@@ -665,54 +617,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return '';
   }
-
-  function createSegmentRow(segment) {
-    let badgeClass = 'bg-secondary-subtle text-secondary';
-    if (segment.segment_type === 'LYRICS') {
-      badgeClass = 'bg-primary-subtle text-primary';
-    } else if (segment.segment_type === 'MUSIC') {
-      badgeClass = 'bg-info-subtle text-info';
-    }
-
-    // Build effects badges HTML
-    let effectsHtml = '';
-    if (segment.vocal_doubling) {
-      effectsHtml += '<span class="badge bg-success text-white" title="تكرار الصوت"><i class="ti ti-wave-sine"></i> تكرار الصوت</span>';
-    }
-    if (segment.double_tracking) {
-      effectsHtml += '<span class="badge bg-warning text-dark" title="تتبع مزدوج"><i class="ti ti-layers"></i> تتبع مزدوج</span>';
-    }
-    if (!segment.vocal_doubling && !segment.double_tracking) {
-      effectsHtml = '<span class="text-muted small">-</span>';
-    }
-
-    const tr = document.createElement('tr');
-    tr.dataset.segmentId = segment.id || segment.pk;
-    tr.innerHTML = `
-      <td>${segment.start_seconds}</td>
-      <td>${segment.end_seconds}</td>
-      <td><span class="badge ${badgeClass}">${segment.segment_type_display || segment.get_segment_type_display}</span></td>
-      <td class="text-wrap" style="max-width: 300px;">${segment.text || '-'}</td>
-      <td class="text-center">
-        <div class="d-flex justify-content-center gap-2">
-          ${effectsHtml}
-        </div>
-      </td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-outline-primary edit-segment-btn" data-segment-id="${segment.id || segment.pk}">
-          <i class="ti ti-pencil"></i> تعديل
-        </button>
-        <button class="btn btn-sm btn-outline-danger delete-segment-btn" data-segment-id="${segment.id || segment.pk}">
-          <i class="ti ti-trash"></i> حذف
-        </button>
-      </td>
-    `;
-    return tr;
-  }
-  
-  // Initialize pagination on page load - DISABLED
-  // loadSegmentsFromTable();
-  // renderSegmentsPage();
 
   if (segmentForm) {
     segmentForm.addEventListener('submit', function(e) {
