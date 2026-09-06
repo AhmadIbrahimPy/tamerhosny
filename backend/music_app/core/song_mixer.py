@@ -208,6 +208,7 @@ class SongMixer:
                         instrumental[start_sample:end_sample],
                         recording,
                         sr,
+                        original[start_sample:end_sample],
                     ),
                     'duet',
                 ))
@@ -232,6 +233,7 @@ class SongMixer:
         instrumental_segment: np.ndarray,
         recording,
         sr: int,
+        original_segment: np.ndarray,
     ) -> np.ndarray:
 
         seg_len = len(instrumental_segment)
@@ -273,6 +275,22 @@ class SongMixer:
             instrumental_segment * instrumental_gain
             + user_audio * vocal_gain
         )
+
+        # _auto_balance_levels normalizes toward its own fixed absolute
+        # loudness target, independent of how loud this particular song
+        # actually is - on a song mastered louder than that target, every
+        # duet segment came out quieter than the untouched original
+        # audio surrounding it, an audible dip each time the user's own
+        # line came up. Match this segment's loudness to what the
+        # original recording measures right here instead, so the duet
+        # blends in at the same perceived volume as the rest of the
+        # track rather than a separately-normalized level.
+        mixed_rms = self.processor._measure_rms(mixed)
+        reference_rms = self.processor._measure_rms(original_segment)
+
+        if mixed_rms > 1e-7 and reference_rms > 1e-7:
+            loudness_gain = float(np.clip(reference_rms / mixed_rms, 0.5, 3.0))
+            mixed = mixed * loudness_gain
 
         peak = float(np.max(np.abs(mixed))) if mixed.size else 0.0
 
