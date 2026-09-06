@@ -198,7 +198,7 @@
           </thead>
           <tbody id="segmentsTableBody">
             {% for segment in segments %}
-            <tr data-segment-id="{{ segment.pk }}">
+            <tr data-segment-id="{{ segment.pk }}" data-segment-type="{{ segment.segment_type }}" data-vocal-doubling="{{ segment.vocal_doubling|yesno:'1,' }}" data-double-tracking="{{ segment.double_tracking|yesno:'1,' }}">
               <td>{{ segment.start_seconds }}</td>
               <td>{{ segment.end_seconds }}</td>
               <td>{{ segment.duration_seconds }}</td>
@@ -394,14 +394,49 @@
         {% endif %}
         <form method="post" id="segmentForm">
           {% csrf_token %}
-          {% for field in form %}
-            <div class="mb-3">
-              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-              {% for error in field.errors %}<div class="text-danger small mt-1 field-error" data-field="{{ field.name }}">{{ error }}</div>{% endfor %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-4" data-field-wrapper="{{ form.start_seconds.name }}">
+              <label class="form-label" for="{{ form.start_seconds.id_for_label }}">{{ form.start_seconds.label }}</label>
+              {{ form.start_seconds }}
+              {% if form.start_seconds.help_text %}<div class="form-text">{{ form.start_seconds.help_text }}</div>{% endif %}
+              {% for error in form.start_seconds.errors %}<div class="text-danger small mt-1 field-error" data-field="start_seconds">{{ error }}</div>{% endfor %}
             </div>
-          {% endfor %}
+            <div class="col-md-4" data-field-wrapper="{{ form.end_seconds.name }}">
+              <label class="form-label" for="{{ form.end_seconds.id_for_label }}">{{ form.end_seconds.label }}</label>
+              {{ form.end_seconds }}
+              {% if form.end_seconds.help_text %}<div class="form-text">{{ form.end_seconds.help_text }}</div>{% endif %}
+              {% for error in form.end_seconds.errors %}<div class="text-danger small mt-1 field-error" data-field="end_seconds">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4" data-field-wrapper="{{ form.segment_type.name }}">
+              <label class="form-label" for="{{ form.segment_type.id_for_label }}">{{ form.segment_type.label }}</label>
+              {{ form.segment_type }}
+              {% if form.segment_type.help_text %}<div class="form-text">{{ form.segment_type.help_text }}</div>{% endif %}
+              {% for error in form.segment_type.errors %}<div class="text-danger small mt-1 field-error" data-field="segment_type">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3" data-field-wrapper="{{ form.text.name }}">
+            <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+            {{ form.text }}
+            {% if form.text.help_text %}<div class="form-text">{{ form.text.help_text }}</div>{% endif %}
+            {% for error in form.text.errors %}<div class="text-danger small mt-1 field-error" data-field="text">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6" data-field-wrapper="{{ form.vocal_doubling.name }}">
+              <label class="form-label" for="{{ form.vocal_doubling.id_for_label }}">{{ form.vocal_doubling.label }}</label>
+              {{ form.vocal_doubling }}
+              {% if form.vocal_doubling.help_text %}<div class="form-text">{{ form.vocal_doubling.help_text }}</div>{% endif %}
+              {% for error in form.vocal_doubling.errors %}<div class="text-danger small mt-1 field-error" data-field="vocal_doubling">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6" data-field-wrapper="{{ form.double_tracking.name }}">
+              <label class="form-label" for="{{ form.double_tracking.id_for_label }}">{{ form.double_tracking.label }}</label>
+              {{ form.double_tracking }}
+              {% if form.double_tracking.help_text %}<div class="form-text">{{ form.double_tracking.help_text }}</div>{% endif %}
+              {% for error in form.double_tracking.errors %}<div class="text-danger small mt-1 field-error" data-field="double_tracking">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
           <button type="submit" class="btn btn-primary" id="submitSegmentBtn">{% translate "إضافة المقطع" %}</button>
           <button type="button" class="btn btn-light" id="cancelEditBtn" style="display: none;">{% translate "إلغاء" %}</button>
         </form>
@@ -607,6 +642,27 @@ document.addEventListener('DOMContentLoaded', function() {
   let editingSegmentId = null;
   const songPk = {{ song.pk }};
 
+  // Text / vocal-doubling / double-tracking only make sense for an
+  // actual sung line - hide them for Music/Silence segments (both on
+  // page load and whenever the type is switched), instead of leaving
+  // fields visible that don't apply and won't even validate.
+  const segmentTypeField = document.getElementById('id_segment_type');
+  const lyricsOnlyFieldNames = ['text', 'vocal_doubling', 'double_tracking'];
+
+  function toggleLyricsOnlyFields() {
+    if (!segmentTypeField) return;
+    const isLyrics = segmentTypeField.value === 'LYRICS';
+    lyricsOnlyFieldNames.forEach(function (name) {
+      const wrapper = segmentForm.querySelector(`[data-field-wrapper="${name}"]`);
+      if (wrapper) wrapper.style.display = isLyrics ? '' : 'none';
+    });
+  }
+
+  if (segmentTypeField) {
+    segmentTypeField.addEventListener('change', toggleLyricsOnlyFields);
+    toggleLyricsOnlyFields();
+  }
+
   function getCSRFToken() {
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
@@ -630,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         : basePath + '/';
       
       submitSegmentBtn.disabled = true;
-      submitSegmentBtn.textContent = editingSegmentId ? 'جاري التعديل...' : 'جاري الإضافة...';
+      submitSegmentBtn.textContent = editingSegmentId ? '{% translate "جاري التعديل..." %}' : '{% translate "جاري الإضافة..." %}';
 
       fetch(url, {
         method: 'POST',
@@ -667,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .finally(() => {
         submitSegmentBtn.disabled = false;
-        submitSegmentBtn.textContent = editingSegmentId ? 'حفظ التعديلات' : 'إضافة المقطع';
+        submitSegmentBtn.textContent = editingSegmentId ? '{% translate "حفظ التعديلات" %}' : '{% translate "إضافة المقطع" %}';
       });
     });
   }
@@ -723,19 +779,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const cells = row.querySelectorAll('td');
         const startSeconds = parseFloat(cells[0].textContent);
         const endSeconds = parseFloat(cells[1].textContent);
-        const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
+        const text = cells[4].textContent === '-' ? '' : cells[4].textContent;
 
-        // Check for effects by text content
-        const effectsCell = cells[4];
-        const effectsText = effectsCell.textContent.trim();
-        const vocalDoubling = effectsText.includes('تكرار الصوت');
-        const doubleTracking = effectsText.includes('تتبع مزدوج');
+        // Read type/effects from data attributes (set server-side from
+        // the actual field values) rather than matching translated
+        // badge text, which broke as soon as the dashboard's language
+        // wasn't Arabic.
+        const segmentType = row.dataset.segmentType || 'LYRICS';
+        const vocalDoubling = row.dataset.vocalDoubling === '1';
+        const doubleTracking = row.dataset.doubleTracking === '1';
 
         document.getElementById('id_start_seconds').value = startSeconds;
         document.getElementById('id_end_seconds').value = endSeconds;
+        if (segmentTypeField) segmentTypeField.value = segmentType;
         document.getElementById('id_text').value = text;
         document.getElementById('id_vocal_doubling').checked = vocalDoubling;
         document.getElementById('id_double_tracking').checked = doubleTracking;
+        toggleLyricsOnlyFields();
 
         // Jump the seek field (and the player itself) to this segment's
         // start, so editing a line also cues up listening to it.
@@ -747,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         editingSegmentId = segmentId;
-        submitSegmentBtn.textContent = 'حفظ التعديلات';
+        submitSegmentBtn.textContent = '{% translate "حفظ التعديلات" %}';
         cancelEditBtn.style.display = 'inline-block';
 
         // Mark which row is actually being edited - the form filled in
@@ -768,7 +828,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (cancelEditBtn) {
     cancelEditBtn.addEventListener('click', function() {
       editingSegmentId = null;
-      submitSegmentBtn.textContent = 'إضافة المقطع';
+      submitSegmentBtn.textContent = '{% translate "إضافة المقطع" %}';
       cancelEditBtn.style.display = 'none';
 
       segmentsTableBody.querySelectorAll('tr.table-warning').forEach(function (r) {
@@ -806,15 +866,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const segmentId = row.dataset.segmentId;
       const startSeconds = parseFloat(cells[0].textContent);
       const endSeconds = parseFloat(cells[1].textContent);
-      const typeBadge = cells[2].querySelector('.badge');
-      const segmentType = typeBadge ? typeBadge.textContent.trim() : '';
-      const text = cells[3].textContent === '-' ? '' : cells[3].textContent;
-      
+      const text = cells[4].textContent === '-' ? '' : cells[4].textContent;
+
       segments.push({
         id: segmentId,
         start: startSeconds,
         end: endSeconds,
-        type: segmentType === 'كلمات' ? 'LYRICS' : (segmentType === 'موسيقى' ? 'MUSIC' : 'SILENCE'),
+        type: row.dataset.segmentType || 'LYRICS',
         text: text
       });
     });

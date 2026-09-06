@@ -2715,6 +2715,16 @@ function displayCurrentLyric() {
   }
 
 
+  // There's a specific line to sing again (e.g. after a restart from
+  // the completed state) - bring the "الجملة اللي عليك" label back.
+  const lyricLabel =
+    document.querySelector('.lyric-label');
+
+  if (lyricLabel) {
+    lyricLabel.style.display = '';
+  }
+
+
   /*
    * THE SENTENCE IS ALWAYS VISIBLE.
    */
@@ -4582,6 +4592,17 @@ function showComplete() {
     'currentLyricText'
   ).textContent =
     'تم تسجيل جميع الجمل الخاصة بك! 🎉';
+
+
+  // "الجملة اللي عليك" only makes sense while there's still a specific
+  // line waiting to be sung - once everything's recorded, the label
+  // above the completion message is just confusing leftover chrome.
+  const lyricLabel =
+    document.querySelector('.lyric-label');
+
+  if (lyricLabel) {
+    lyricLabel.style.display = 'none';
+  }
 
 
   document.getElementById(
