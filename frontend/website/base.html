@@ -1039,21 +1039,27 @@
       return false;
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // Delegated on document (not bound per-button on DOMContentLoaded,
+    // which only ever fires once) so slider arrows on any page reached
+    // via a boosted navigation - which is nearly every page, since
+    // hx-boost is on <body> - actually work. A per-element listener
+    // attached at initial load never reaches buttons that show up
+    // later inside a swapped-in page.
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.th-slider-arrow');
+      if (!btn) return;
+      var row = btn.closest('.th-slider-row');
+      var slider = row && row.querySelector('.th-slider');
+      if (!slider) return;
       var isRtl = document.documentElement.getAttribute('dir') === 'rtl';
-      document.querySelectorAll('.th-slider-arrow').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var row = btn.closest('.th-slider-row');
-          var slider = row && row.querySelector('.th-slider');
-          if (!slider) return;
-          var amount = slider.clientWidth * 0.8;
-          var goingNext = btn.classList.contains('next');
-          var delta = goingNext ? amount : -amount;
-          if (isRtl) delta = -delta;
-          slider.scrollBy({ left: delta, behavior: 'smooth' });
-        });
-      });
+      var amount = slider.clientWidth * 0.8;
+      var goingNext = btn.classList.contains('next');
+      var delta = goingNext ? amount : -amount;
+      if (isRtl) delta = -delta;
+      slider.scrollBy({ left: delta, behavior: 'smooth' });
+    });
 
+    document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('.th-hero-video').forEach(function (video) {
         video.addEventListener('playing', function () {
           var poster = video.parentElement.querySelector('.th-hero-poster-box');
