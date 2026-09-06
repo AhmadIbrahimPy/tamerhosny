@@ -127,8 +127,8 @@ def _visibility_choices_display(obj):
     return obj.get_visibility_display()
 
 
-def _paginate(request, queryset):
-    paginator = Paginator(queryset, PAGE_SIZE)
+def _paginate(request, queryset, page_size=PAGE_SIZE):
+    paginator = Paginator(queryset, page_size)
     return paginator.get_page(request.GET.get('page'))
 
 
@@ -991,7 +991,7 @@ def song_segments(request, pk):
     type_filter = request.GET.get('filter')
     if type_filter:
         segments_qs = segments_qs.filter(segment_type=type_filter)
-    segments = _paginate(request, segments_qs)
+    segments = _paginate(request, segments_qs, page_size=10)
 
     if request.method == 'POST':
         form = SongLyricSegmentForm(request.POST)
