@@ -1126,36 +1126,45 @@ def toggle_duet_privacy(request, pk):
     return JsonResponse({'status': 'success', 'is_public': duet.is_public})
 
 
-@login_required
-def my_recap(request):
-    """ملخص شخصي وقابل للمشاركة لنشاط المستخدم على الأرشيف - بديل عن
+def recap(request, username):
+    """ملخص شخصي وقابل للمشاركة لنشاط مستخدم على الأرشيف - بديل عن
     "Spotify Wrapped" لكن بدون تقييد بسنة معينة: UserSongPlay بيحتفظ
     بصف واحد لكل (مستخدم، أغنية) من غير تاريخ لكل استماع على حدة، فمفيش
     طريقة نستخرج بيها "استمعيت كام مرة في 2026" تحديدًا - الأرقام هنا
     تراكمية من أول ما المستخدم بدأ يستخدم الموقع.
+
+    Public (like public_profile) and scoped to the username in the URL,
+    not request.user - a link shared with someone else has to show the
+    sharer's own recap when THEY open it, not whatever recap happens to
+    match their own logged-in session.
     """
-    totals = UserSongPlay.objects.filter(user=request.user).aggregate(
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    recap_user = get_object_or_404(User, username=username)
+
+    totals = UserSongPlay.objects.filter(user=recap_user).aggregate(
         total_plays=Sum('play_count'), total_full_listens=Sum('full_listen_count'),
     )
 
     top_plays = list(
-        UserSongPlay.objects.filter(user=request.user, play_count__gt=0)
+        UserSongPlay.objects.filter(user=recap_user, play_count__gt=0)
         .select_related('song', 'song__album').order_by('-play_count')[:5]
     )
 
     top_song = top_plays[0].song if top_plays else None
 
-    total_likes = Like.objects.filter(user=request.user).count()
-    total_duets = SingWithTamerProject.objects.filter(user=request.user, is_completed=True).count()
+    total_likes = Like.objects.filter(user=recap_user).count()
+    total_duets = SingWithTamerProject.objects.filter(user=recap_user, is_completed=True).count()
 
     return render(request, 'website/pages/user/recap.html', {
+        'recap_user': recap_user,
         'total_plays': totals['total_plays'] or 0,
         'total_full_listens': totals['total_full_listens'] or 0,
         'top_plays': top_plays,
         'top_song': top_song,
         'total_likes': total_likes,
         'total_duets': total_duets,
-        'member_since': request.user.date_joined,
+        'member_since': recap_user.date_joined,
     })
 
 

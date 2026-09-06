@@ -73,6 +73,61 @@
   .recap-share-btn:hover{border-color:var(--accent); color:var(--accent);}
 
   .recap-empty{text-align:center; padding:40px 20px; color:var(--muted);}
+
+  /* ---- Entrance animations ---- */
+  @keyframes recapFadeUp{
+    from{opacity:0; transform:translateY(22px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  @keyframes recapPopIn{
+    from{opacity:0; transform:scale(.75) rotate(-8deg);}
+    to{opacity:1; transform:scale(1) rotate(0);}
+  }
+  @keyframes recapGlowPulse{
+    0%, 100%{box-shadow:0 10px 30px -8px rgba(212,175,55,.35);}
+    50%{box-shadow:0 10px 44px -6px rgba(212,175,55,.65);}
+  }
+  @keyframes recapShimmer{
+    0%{background-position:-200% 0;}
+    100%{background-position:200% 0;}
+  }
+
+  .recap-hero .mark{animation:recapPopIn .6s cubic-bezier(.34,1.56,.64,1) both, recapGlowPulse 2.8s ease-in-out 1.2s infinite;}
+  .recap-hero h1, .recap-hero p{animation:recapFadeUp .6s ease both;}
+  .recap-hero p{animation-delay:.1s;}
+
+  .recap-top-song{animation:recapFadeUp .55s ease both; animation-delay:.15s;}
+  .recap-top-song .info .eyebrow{
+    background:linear-gradient(90deg, var(--accent) 0%, #fff 50%, var(--accent) 100%);
+    background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:recapShimmer 3.5s linear 1.5s infinite;
+  }
+
+  .recap-grid .recap-stat{animation:recapFadeUp .5s ease both;}
+  .recap-grid .recap-stat:nth-child(1){animation-delay:.22s;}
+  .recap-grid .recap-stat:nth-child(2){animation-delay:.30s;}
+  .recap-grid .recap-stat:nth-child(3){animation-delay:.38s;}
+  .recap-grid .recap-stat:nth-child(4){animation-delay:.46s;}
+  .recap-stat{transition:transform .2s ease, border-color .2s ease;}
+  .recap-stat:hover{transform:translateY(-4px); border-color:var(--accent);}
+
+  .recap-top-list{animation:recapFadeUp .55s ease both; animation-delay:.5s;}
+  .recap-top-list-row{animation:recapFadeUp .4s ease both;}
+  .recap-top-list-row:nth-child(1){animation-delay:.58s;}
+  .recap-top-list-row:nth-child(2){animation-delay:.64s;}
+  .recap-top-list-row:nth-child(3){animation-delay:.70s;}
+  .recap-top-list-row:nth-child(4){animation-delay:.76s;}
+  .recap-top-list-row:nth-child(5){animation-delay:.82s;}
+
+  .recap-share-bar{animation:recapFadeUp .5s ease both; animation-delay:.9s;}
+  .recap-share-btn{transition:transform .15s ease, border-color .15s ease, color .15s ease;}
+  .recap-share-btn:hover{transform:translateY(-2px);}
+
+  @media (prefers-reduced-motion: reduce){
+    .recap-hero .mark, .recap-hero h1, .recap-hero p, .recap-top-song,
+    .recap-top-song .info .eyebrow, .recap-grid .recap-stat, .recap-top-list,
+    .recap-top-list-row, .recap-share-bar{animation:none !important; opacity:1 !important; transform:none !important;}
+  }
 </style>
 {% endblock %}
 
@@ -81,9 +136,16 @@
 
   <div class="recap-hero" id="recapCard">
     <div class="mark">TH</div>
-    <h1>{% blocktranslate with name=request.user.username %}ملخص {{ name }} على أرشيف تامر حسني{% endblocktranslate %}</h1>
+    <h1>{% blocktranslate with name=recap_user.username %}ملخص {{ name }} على أرشيف تامر حسني{% endblocktranslate %}</h1>
     <p>{% blocktranslate with date=member_since|date:"Y" %}عضو من سنة {{ date }}{% endblocktranslate %}</p>
   </div>
+
+  {% if request.user.is_authenticated and request.user != recap_user %}
+  <p style="text-align:center; color:var(--muted); font-size:13.5px; margin:-14px 0 24px;">
+    {% blocktranslate with name=recap_user.username %}ده ملخص {{ name }}.{% endblocktranslate %}
+    <a href="{% url 'website_app:recap' request.user.username %}" style="color:var(--accent);">{% translate "شوف ملخصك انت" %}</a>
+  </p>
+  {% endif %}
 
   {% if not top_song and not total_likes and not total_duets %}
   <div class="recap-empty">
@@ -158,7 +220,7 @@
       <i class="bi bi-link-45deg"></i> {% translate "نسخ الرابط" %}
     </button>
     {% translate "شوف ملخصي على أرشيف تامر حسني" as recap_share_text %}
-    <a href="https://wa.me/?text={{ recap_share_text|urlencode }}%20{{ request.scheme }}://{{ request.get_host }}{% url 'website_app:my-recap' %}"
+    <a href="https://wa.me/?text={{ recap_share_text|urlencode }}%20{{ request.scheme }}://{{ request.get_host }}{% url 'website_app:recap' recap_user.username %}"
        target="_blank" rel="noopener" class="recap-share-btn">
       <i class="bi bi-whatsapp"></i> {% translate "شارك على واتساب" %}
     </a>
@@ -166,18 +228,56 @@
 
   {% endif %}
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var btn = document.getElementById('recapCopyLinkBtn');
-  if (btn) {
-    btn.addEventListener('click', function () {
-      navigator.clipboard.writeText(window.location.href);
-      var original = btn.innerHTML;
-      btn.innerHTML = '<i class="bi bi-check-lg"></i> {% translate "اتنسخ!" %}';
-      setTimeout(function () { btn.innerHTML = original; }, 1800);
-    });
+(function () {
+// Wrapped in an IIFE + bound directly (not on DOMContentLoaded, which
+// never fires again after the first hard load) so this still runs
+// after a boosted revisit swaps this page's content in - see
+// base.html's #th-extra-js comment for why a plain inline <script>
+// inside {% templatetag openblock %} block content {% templatetag closeblock %}
+// wouldn't run at all in that case.
+var btn = document.getElementById('recapCopyLinkBtn');
+if (btn) {
+  btn.addEventListener('click', function () {
+    navigator.clipboard.writeText(window.location.href);
+    var original = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> {% translate "اتنسخ!" %}';
+    setTimeout(function () { btn.innerHTML = original; }, 1800);
+  });
+}
+
+// Count up each stat from 0 to its real value instead of just
+// appearing - the one bit of "wrapped"-style polish that reads as
+// intentional rather than a plain server-rendered number.
+var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelectorAll('.recap-stat .value').forEach(function (el, index) {
+  var target = parseInt(el.textContent, 10);
+  if (isNaN(target)) return;
+  if (prefersReducedMotion) {
+    el.textContent = target;
+    return;
   }
+  var duration = 900;
+  var startDelay = 220 + index * 80;
+  setTimeout(function () {
+    var start = null;
+    function step(timestamp) {
+      if (start === null) start = timestamp;
+      var progress = Math.min((timestamp - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = target;
+      }
+    }
+    requestAnimationFrame(step);
+  }, startDelay);
 });
+})();
 </script>
 {% endblock %}

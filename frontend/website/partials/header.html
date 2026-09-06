@@ -48,7 +48,7 @@
               <div class="th-dropdown-email">{{ user.email }}</div>
             </div>
           </a>
-          <a href="{% url 'website_app:my-recap' %}" class="th-dropdown-item">
+          <a href="{% url 'website_app:recap' user.username %}" class="th-dropdown-item">
             <i class="bi bi-stars"></i> {% translate "ملخصي" %}
           </a>
           <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
@@ -108,7 +108,7 @@
           <div class="th-dropdown-email">{{ user.email }}</div>
         </div>
       </a>
-      <a href="{% url 'website_app:my-recap' %}" class="th-dropdown-item">
+      <a href="{% url 'website_app:recap' user.username %}" class="th-dropdown-item">
         <i class="bi bi-stars"></i> {% translate "ملخصي" %}
       </a>
       <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">

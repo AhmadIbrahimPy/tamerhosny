@@ -1295,6 +1295,14 @@ msgid "اتنسخ!"
 msgstr "Copied!"
 
 #: frontend/website/pages/user/recap.html
+msgid "ده ملخص %(name)s."
+msgstr "This is %(name)s's recap."
+
+#: frontend/website/pages/user/recap.html
+msgid "شوف ملخصك انت"
+msgstr "See your own recap"
+
+#: frontend/website/pages/user/recap.html
 msgid "شارك على واتساب"
 msgstr "Share on WhatsApp"
 
