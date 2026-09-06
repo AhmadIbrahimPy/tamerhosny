@@ -331,6 +331,7 @@
     .th-card-song .th-play-icon{
       width:44px; height:44px; border-radius:50%; background:var(--accent); color:#171a26;
       display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 6px 18px rgba(0,0,0,.4);
+      cursor:pointer;
     }
 
     /* Album card — vinyl-style circular cover */
@@ -918,6 +919,64 @@
       playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
     }
 
+    // Play-on-hover affordance for every song thumbnail grid (.th-card-song)
+    // site-wide: clicking the icon plays/pauses that song without following
+    // the card's own link, while clicking anywhere else on the thumbnail
+    // still navigates to the song page as normal. One delegated listener
+    // here (rather than one per page) survives boosted navigation without
+    // needing to be rebound, since base.html itself is never swapped.
+    // Capture phase, not bubble: these cards are hx-boost'd <a> elements,
+    // and htmx attaches its own navigation handler directly on each
+    // boosted anchor - a bubble listener on document would only run
+    // after that handler has already kicked off the boosted navigation.
+    // Capturing on document runs before the event ever reaches the
+    // anchor, so stopPropagation here keeps htmx's handler from firing
+    // at all instead of racing it.
+    document.addEventListener('click', function (e) {
+      var icon = e.target.closest('.th-play-icon');
+      if (!icon) return;
+      var card = icon.closest('.th-card-song');
+      if (!card || !card.dataset.audioUrl) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // Title/image/link fall back to what's already rendered in the
+      // card itself, so every song-card template only needs to add
+      // data-song-id/data-audio-url (plus data-album* where relevant)
+      // instead of repeating data the markup already has.
+      var titleEl = card.querySelector('.th-title');
+      var imgEl = card.querySelector('.th-img-wrap img');
+      toggleAudio(
+        card.dataset.audioUrl,
+        icon,
+        card.dataset.title || (titleEl ? titleEl.textContent.trim() : ''),
+        null,
+        card.dataset.image || (imgEl ? imgEl.src : ''),
+        card.dataset.link || card.getAttribute('href') || '#',
+        card.dataset.artist || '',
+        card.dataset.album || '',
+        false,
+        card.dataset.songId || null,
+        card.dataset.albumLink || ''
+      );
+    }, true);
+
+    // Keep every card's icon in sync with whichever song is actually
+    // playing right now - the one card that matches shows pause, every
+    // other card (including ones for the song that just got paused/
+    // swapped out) falls back to play.
+    function thSyncPlayIconCards() {
+      var playingId = (typeof globalAudio !== 'undefined' && globalAudio && !globalAudio.paused)
+        ? currentSongId : null;
+      document.querySelectorAll('.th-card-song[data-song-id]').forEach(function (card) {
+        var icon = card.querySelector('.th-play-icon i');
+        if (!icon) return;
+        var isThis = playingId !== null && String(card.dataset.songId) === String(playingId);
+        icon.classList.toggle('bi-pause-fill', isThis);
+        icon.classList.toggle('bi-play-fill', !isThis);
+      });
+    }
+    document.addEventListener('audioPlayPause', thSyncPlayIconCards);
+
     function openPlayerPage() {
       thBoostedNavigate('/player/');
     }
@@ -1394,6 +1453,7 @@
         if (globalAudio) {
           restorePlayerState();
         }
+        thSyncPlayIconCards();
       }, 300);
     });
 
@@ -2285,6 +2345,7 @@
 
     document.body.addEventListener('htmx:afterSettle', function (evt) {
       thSyncActiveNav();
+      thSyncPlayIconCards();
       window.scrollTo(0, 0);
       // #th-extra-js (the OOB swap carrying each page's extra_js, since
       // it can't live inside #th-page-root - see its own comment) sits

@@ -53,6 +53,47 @@
     transform: scale(1.15);
   }
 
+  /* Faint sea-wave motion behind the hero, only while this song is
+     actually playing - kept very low-opacity on purpose (see .is-playing
+     below) so it reads as ambience, not a loud decoration. */
+  .song-wave-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .song-hero.is-playing .song-wave-bg {
+    opacity: 0.16;
+  }
+  .song-wave-bg svg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 55%;
+  }
+  .song-wave-path {
+    fill: #ffffff;
+  }
+  .song-wave-path-1 {
+    opacity: 0.5;
+    animation: song-wave-drift 14s linear infinite;
+  }
+  .song-wave-path-2 {
+    opacity: 0.35;
+    animation: song-wave-drift 20s linear infinite reverse;
+  }
+  @keyframes song-wave-drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .song-wave-path { animation: none; }
+  }
+
 
   /* Mobile-first: stacked and fluid by default, since a fixed-width
      column here is what was pushing content off-screen on narrow
@@ -1643,8 +1684,15 @@
   <div class="song-container">
 
     <!-- Hero Section -->
-    <div class="song-hero">
+    <div class="song-hero" id="songHero">
         <div class="song-hero-bg" style="background-image:url('{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}');"></div>
+
+        <div class="song-wave-bg" aria-hidden="true">
+            <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
+                <path class="song-wave-path song-wave-path-1" d="M0,110 C150,180 350,40 600,110 C850,180 1050,40 1200,110 L1200,220 L0,220 Z"></path>
+                <path class="song-wave-path song-wave-path-2" d="M0,120 C200,60 400,170 600,120 C800,70 1000,160 1200,120 L1200,220 L0,220 Z"></path>
+            </svg>
+        </div>
 
         <div class="song-hero-inner">
 
@@ -2002,7 +2050,8 @@
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other in album_songs %}
-              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item">
+              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other.cover_image %}
                     <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
@@ -2037,7 +2086,8 @@
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other in other_songs %}
-              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item">
+              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other.cover_image %}
                     <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
@@ -2070,7 +2120,8 @@
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other_duet in duets %}
-              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item">
+              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.cover_image %}
                     <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2104,7 +2155,8 @@
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other_duet in user_other_duets %}
-              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item">
+              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.cover_image %}
                     <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2134,7 +2186,8 @@
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other_duet in discover_duets %}
-              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item">
+              <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.cover_image %}
                     <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -3722,6 +3775,7 @@
 
       const onAudioPlayPause = function (e) {
         if (e.detail.songId === songId) {
+          const hero = document.getElementById('songHero');
           if (e.detail.playing) {
             isCurrentlyListening = true;
             sendListenerAction('start');
@@ -3731,6 +3785,7 @@
               icon.classList.remove('bi-play-fill');
               icon.classList.add('bi-pause-fill');
             }
+            if (hero) hero.classList.add('is-playing');
           } else {
             isCurrentlyListening = false;
             sendListenerAction('stop');
@@ -3740,6 +3795,7 @@
               icon.classList.remove('bi-pause-fill');
               icon.classList.add('bi-play-fill');
             }
+            if (hero) hero.classList.remove('is-playing');
           }
         }
       };
@@ -3765,6 +3821,8 @@
             icon.classList.remove('bi-play-fill');
             icon.classList.add('bi-pause-fill');
           }
+          const hero = document.getElementById('songHero');
+          if (hero) hero.classList.add('is-playing');
         }
       }, 600);
 
@@ -3775,6 +3833,8 @@
         // 'ended' handler dispatches it (playing:false) before switching
         // songs, same as a manual pause.
         stopLyricsSync();
+        const hero = document.getElementById('songHero');
+        if (hero) hero.classList.remove('is-playing');
         const syncedLyrics = document.getElementById('syncedLyrics');
         if (syncedLyrics) {
           syncedLyrics.classList.remove('visible');

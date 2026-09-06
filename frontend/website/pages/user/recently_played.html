@@ -9,7 +9,8 @@
   {% if songs %}
   <div class="th-grid">
     {% for song in songs %}
-    <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card th-card-song">
+    <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card th-card-song"
+      {% if song.audio_file %}data-song-id="{{ song.pk }}" data-audio-url="{{ song.audio_file.url }}"{% endif %}>
       <div class="th-img-wrap aspect-square">
         {% if song.cover_image %}
           <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">

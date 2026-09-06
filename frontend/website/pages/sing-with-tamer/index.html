@@ -1645,6 +1645,12 @@ let recordedLyrics = {};
 
 let currentProject = null;
 let selectedDivisionType = null;
+// Set by loadProjectRecordings() from the server's processing_status -
+// lets a page refresh mid-mix resume the loading card and reconnect the
+// status socket instead of dropping back to the recording screen with
+// no sign the mix is still running (the socket connection itself is
+// only in-memory and does not survive a reload on its own).
+let projectProcessingStatus = null;
 
 let pendingRecording = null;
 
@@ -2391,6 +2397,25 @@ async function loadLyrics() {
       ).style.display =
         'none';
 
+      if (projectProcessingStatus === 'PROCESSING') {
+        // The mix was already kicked off before this load (e.g. the
+        // visitor refreshed the page while it was running) - resume the
+        // loading card and reconnect the status socket instead of
+        // showing the recording screen as if nothing had happened. The
+        // socket sends the project's current status as soon as it
+        // connects, so this also catches a completion/failure that
+        // happened while the page was reloading.
+        document.getElementById('practiceCard').style.display = 'none';
+        document.getElementById('songCreationCard').style.display = 'none';
+        document.getElementById('songLoadingCard').style.display = 'block';
+        document.getElementById('startFreshBtn').style.display = 'block';
+        document.getElementById('swtTitle').style.display = 'none';
+        waitForDuetCompletion(
+          currentProject.project_id || currentProject.pk || currentProject.id
+        );
+        return;
+      }
+
       document.getElementById(
         'practiceCard'
       ).style.display =
@@ -2493,6 +2518,7 @@ async function loadProjectRecordings() {
     const data =
       result.data;
 
+    projectProcessingStatus = data?.processing_status || null;
 
     recordedLyrics = {};
 

@@ -141,6 +141,8 @@ class SingWithTamerProjectAPIView(APIView):
                     'project_id': project.pk,
                     'division_type': project.division_type,
                     'is_completed': project.is_completed,
+                    'processing_status': project.processing_status,
+                    'processing_error': project.processing_error,
                     'recordings': list(recordings)
                 }
             }, status=status.HTTP_200_OK)

@@ -97,6 +97,14 @@
     }
 
     .footer-note{text-align:center;font-size:11.5px;color:#514e63;margin-top:22px;}
+
+    .btn-secondary{
+      width:100%;padding:13px;border-radius:10px;cursor:pointer;
+      background:transparent;color:var(--text);font-weight:700;font-size:14px;
+      border:1px solid var(--border);transition:border-color .15s, background .15s;
+    }
+    .btn-secondary:hover{border-color:var(--accent);background:rgba(255,255,255,.04);}
+    .btn-secondary:disabled{opacity:.6;cursor:default;}
   </style>
 </head>
 <body>
@@ -112,25 +120,42 @@
     </div>
 
     <div class="card">
-      <h2>تسجيل الدخول</h2>
-      <p class="sub">أدخل بياناتك للوصول إلى لوحة التحكم</p>
+      {% if blocked %}
+        <h2>لازم تسجّل خروج الأول</h2>
+        <p class="sub">أنت داخل حاليًا بحساب زائر على الموقع. سجّل خروجك من الحساب ده الأول عشان تقدر تدخل بحساب لوحة التحكم.</p>
+        <button type="button" class="btn-secondary" id="logout-btn">تسجيل الخروج من الحساب الحالي</button>
+        <script>
+          document.getElementById('logout-btn').addEventListener('click', async function () {
+            this.disabled = true;
+            this.textContent = 'جارٍ تسجيل الخروج...';
+            try {
+              await fetch('{% url "website_app:auth-logout" %}', { method: 'POST', credentials: 'same-origin' });
+            } finally {
+              window.location.reload();
+            }
+          });
+        </script>
+      {% else %}
+        <h2>تسجيل الدخول</h2>
+        <p class="sub">أدخل بياناتك للوصول إلى لوحة التحكم</p>
 
-      {% if error %}
-        <div class="alert">{{ error }}</div>
+        {% if error %}
+          <div class="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="field">
+            <label for="id_username">اسم المستخدم</label>
+            <input type="text" id="id_username" name="username" placeholder="ادخل اسم المستخدم" required autofocus>
+          </div>
+          <div class="field">
+            <label for="id_password">كلمة المرور</label>
+            <input type="password" id="id_password" name="password" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn">دخول</button>
+        </form>
       {% endif %}
-
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="field">
-          <label for="id_username">اسم المستخدم</label>
-          <input type="text" id="id_username" name="username" placeholder="ادخل اسم المستخدم" required autofocus>
-        </div>
-        <div class="field">
-          <label for="id_password">كلمة المرور</label>
-          <input type="password" id="id_password" name="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn">دخول</button>
-      </form>
     </div>
 
     <p class="footer-note">وصول مقيّد للمصرح لهم فقط</p>

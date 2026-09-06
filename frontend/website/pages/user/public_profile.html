@@ -127,7 +127,8 @@
     <h2 class="th-section-title">{% translate "غنى مع تامر" %}</h2>
     <div class="th-grid">
       {% for duet in public_duets %}
-      <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song">
+      <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song"
+        {% if duet.final_audio_file %}data-song-id="{{ duet.song.pk }}" data-audio-url="{{ duet.final_audio_file.url }}"{% endif %}>
         <div class="th-img-wrap aspect-square">
           {% if duet.song.cover_image %}
             <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">

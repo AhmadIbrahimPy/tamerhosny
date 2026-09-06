@@ -30,7 +30,8 @@
   {% if items %}
   <div class="th-grid">
     {% for item in items %}
-    <div class="th-card th-card-song">
+    <div class="th-card th-card-song"
+      {% if item.song.audio_file %}data-song-id="{{ item.song.pk }}" data-audio-url="{{ item.song.audio_file.url }}" data-link="{% url 'website_app:song-detail' item.song.slug %}"{% endif %}>
       <div class="th-img-wrap aspect-square">
         <a href="{% url 'website_app:song-detail' item.song.slug %}">
           {% if item.song.cover_image %}

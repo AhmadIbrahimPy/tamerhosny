@@ -62,7 +62,13 @@ PAGE_SIZE = 35
 
 def dashboard_login(request):
     if request.user.is_authenticated:
-        return redirect('dashboard_app:home')
+        if request.user.role in UserAccount.DASHBOARD_ROLES:
+            return redirect('dashboard_app:home')
+        # Signed in on the public site with a non-admin account: block the
+        # login form entirely rather than let them guess at admin
+        # credentials while a normal-user session is still active - they
+        # have to log out of that account first.
+        return render(request, 'dashboard/login.html', {'blocked': True})
 
     error = None
     if request.method == 'POST':

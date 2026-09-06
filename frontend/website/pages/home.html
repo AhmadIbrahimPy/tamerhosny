@@ -28,7 +28,8 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
       <div class="th-slider">
         {% for song in songs %}
-        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain">
+        <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain"
+          {% if song.audio_file %}data-song-id="{{ song.pk }}" data-audio-url="{{ song.audio_file.url }}"{% endif %}>
           <div class="th-img-wrap">
             {% if song.cover_image %}
               <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
