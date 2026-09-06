@@ -68,6 +68,12 @@ class RemixProject(models.Model):
     source_song_2 = models.ForeignKey(
         'music_app.Song', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
     )
+    # Generation (Demucs separation + mixing) runs as a background Celery
+    # task - too slow to fit in the request/response cycle without hitting
+    # nginx's gateway timeout. Surfaced to the frontend so remix_result.html
+    # can show *why* a PROCESSING project ended up FAILED instead of just
+    # silently never finishing.
+    error_message = models.TextField(blank=True, default='', verbose_name=_('Error Message'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated At'))
 

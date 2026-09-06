@@ -1505,6 +1505,11 @@
       نعمل على دمج صوتك مع الموسيقى
     </p>
 
+    <p class="section-description">
+      تقدر تخرج من الصفحة دي عادي، العملية هتفضل شغالة في الخلفية - وأول ما الأغنية تخلص هتلاقيها في
+      <a href="{% url 'website_app:my-duets' %}">غنيت إيه مع تامر</a>.
+    </p>
+
     <div class="loading-steps">
 
       <div class="loading-step" id="loadingStep1">
@@ -4684,6 +4689,14 @@ async function createSong() {
   document.querySelector('.lyric-meta').style.display = 'none';
   document.querySelector('.loading-steps').style.display = 'none';
 
+  // Nothing left to record or listen to at this point - hide the whole
+  // recording area and the "listen to your line" card instead of leaving
+  // them sitting there above the loading card.
+  const recordingArea = document.querySelector('.recording-area');
+  if (recordingArea) recordingArea.style.display = 'none';
+  const originalSongCard = document.getElementById('originalSongCard');
+  if (originalSongCard) originalSongCard.style.display = 'none';
+
   try {
     // Call backend API to create the song immediately
     const formData = new FormData();
@@ -4729,6 +4742,10 @@ function showCreateSongError(message) {
   document.getElementById('songCreationCard').style.display = 'block';
   document.querySelector('.lyric-meta').style.display = 'flex';
   document.querySelector('.loading-steps').style.display = 'block';
+  const recordingArea = document.querySelector('.recording-area');
+  if (recordingArea) recordingArea.style.display = '';
+  const originalSongCard = document.getElementById('originalSongCard');
+  if (originalSongCard) originalSongCard.style.display = 'block';
 }
 
 function waitForDuetCompletion(projectId) {

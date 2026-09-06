@@ -3162,6 +3162,22 @@ msgstr "Remix created successfully!"
 msgid "يمكنك الآن الاستماع إلى الريمكس وتحميله"
 msgstr "You can now listen to the remix and download it"
 
+#: frontend/website/pages/remix_result.html:97
+msgid "جاري إنشاء الريمكس..."
+msgstr "Creating the remix..."
+
+#: frontend/website/pages/remix_result.html:98
+msgid "العملية بتاخد شوية وقت (فصل الصوت والمكس) - الصفحة هتتحدث لوحدها لما يخلص"
+msgstr "This takes a little while (separating the vocals and mixing) - the page will update on its own when it's done"
+
+#: frontend/website/pages/remix_result.html:104
+msgid "حصل خطأ أثناء إنشاء الريمكس"
+msgstr "Something went wrong creating the remix"
+
+#: frontend/website/pages/remix_result.html:107
+msgid "حاول تاني بعد شوية."
+msgstr "Please try again in a bit."
+
 #: frontend/website/pages/remix_result.html:95
 msgid "الأغاني المستخدمة"
 msgstr "Songs Used"

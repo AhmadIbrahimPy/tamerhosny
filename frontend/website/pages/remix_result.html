@@ -77,9 +77,26 @@
 
 {% block content %}
 <div class="container-xl">
-  <div class="th-remix-header">
+  <div class="th-remix-header" id="remixHeader">
     <div class="th-remix-header-bg"></div>
     <div class="th-remix-header-inner">
+      {% if project.status == 'PROCESSING' %}
+      <div class="th-remix-success-icon" style="background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%);">
+        <span class="spinner-border spinner-border-sm" style="color:#fff;" aria-hidden="true"></span>
+      </div>
+      <div class="th-remix-header-text">
+        <h1>{% trans "جاري إنشاء الريمكس..." %}</h1>
+        <p>{% trans "العملية بتاخد شوية وقت (فصل الصوت والمكس) - الصفحة هتتحدث لوحدها لما يخلص" %}</p>
+      </div>
+      {% elif project.status == 'FAILED' %}
+      <div class="th-remix-success-icon" style="background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+        <i class="bi bi-x-lg"></i>
+      </div>
+      <div class="th-remix-header-text">
+        <h1>{% trans "حصل خطأ أثناء إنشاء الريمكس" %}</h1>
+        <p>{% if project.error_message %}{{ project.error_message }}{% else %}{% trans "حاول تاني بعد شوية." %}{% endif %}</p>
+      </div>
+      {% else %}
       <div class="th-remix-success-icon">
         <i class="bi bi-check-lg"></i>
       </div>
@@ -87,9 +104,10 @@
         <h1>{% trans "تم إنشاء الريمكس بنجاح!" %}</h1>
         <p>{% trans "يمكنك الآن الاستماع إلى الريمكس وتحميله" %}</p>
       </div>
+      {% endif %}
     </div>
   </div>
-  
+
   {% if project %}
   <div class="th-section">
     <h2 class="th-section-title">{% trans "الأغاني المستخدمة" %}</h2>
@@ -193,6 +211,7 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if output %}
 <script>
 (function () {
 // Wrapped in an IIFE so a boosted revisit to this page doesn't throw
@@ -290,4 +309,35 @@ if (progressSlider) {
 }
 })();
 </script>
+{% endif %}
+
+{% if project.status == 'PROCESSING' %}
+<script>
+(function () {
+// Generation runs in the background (Celery) - this page loaded before
+// it finished, so poll the project's own status until it's COMPLETED or
+// FAILED, then reload to show the real result (player or error message).
+// RemixProjectViewSet's default retrieve already serializes status - no
+// dedicated status endpoint needed for this.
+var remixProjectId = {{ project.id }};
+var pollTimer = setInterval(function () {
+  fetch('/v1/ai-remix/remix-projects/' + remixProjectId + '/')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+        clearInterval(pollTimer);
+        window.location.reload();
+      }
+    })
+    .catch(function (error) {
+      console.error('Error polling remix status:', error);
+    });
+}, 4000);
+
+if (typeof thOnTeardown === 'function') {
+  thOnTeardown(function () { clearInterval(pollTimer); });
+}
+})();
+</script>
+{% endif %}
 {% endblock %}

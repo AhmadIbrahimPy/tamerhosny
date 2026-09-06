@@ -3172,7 +3172,10 @@
     })
       .then(handleJson)
       .then(function (result) {
-        if (result.status === 'success') {
+        if (result.status === 'success' && result.remix_id) {
+          // Generation itself (Demucs separation + mixing) runs in the
+          // background now - this response only means it started. The
+          // result page polls for completion on its own.
           thBoostedNavigate(`/remix-result/${result.remix_id}/`);
           return;
         }

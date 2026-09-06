@@ -384,63 +384,21 @@ def quick_remix(request, **kwargs):
             order=1
 
         )
-        
-        # توليد الريمكس
-        generator = AIRemixGenerator()
-        
-        sources_data = [
-            {
-                'file_path': source1.audio_file.path,
-                'volume': 1.0,
-                'fade_in': 0.0,
-                'fade_out': 0.0
-            },
-            {
-                'file_path': source2.audio_file.path,
-                'volume': 1.0,
-                'fade_in': 0.0,
-                'fade_out': 0.0
-            }
-        ]
-        
-        target_config = {
-            'target_bpm': None,
-            'target_key': None,
-            'effects': {
-                'compressor': True,
-                'limiter': True
-            }
-        }
-        
-        remix_audio = generator.generate_remix(sources_data, target_config)
-        
-        # حفظ الملف
-        output_filename = f"quick_remix_{uuid.uuid4().hex}.wav"
-        output_path = os.path.join(settings.MEDIA_ROOT, 'ai_remix', 'outputs', output_filename)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        generator.processor.save_audio(remix_audio, output_path, format='wav')
-        
-        # إنشاء سجل المخرجات
-        output = RemixOutput.objects.create(
-            project=project,
-            output_file=f'ai_remix/outputs/{output_filename}',
-            format='wav',
-            duration=len(remix_audio) / generator.processor.sample_rate,
-            file_size=os.path.getsize(output_path)
-        )
-        
-        # تحديث حالة المشروع
-        project.status = RemixProject.Status.COMPLETED
-        project.save()
-        
+
+        # توليد الريمكس (فصل الصوت + المكس) بياخد وقت طويل - بيشتغل في
+        # الخلفية عن طريق Celery بدل ما يشتغل جوه نفس الريكوست، عشان ماكانش
+        # بيوصل لـ nginx's gateway timeout (504) قبل ما يخلص. النتيجة
+        # بتوصل للفرونت عن طريق polling صفحة /remix-result/<id>/.
+        from backend.ai_remix_app.tasks import generate_quick_remix
+        generate_quick_remix.delay(project.id)
+
         return Response({
             'status': 'success',
             'remix_id': project.id,
-            'output_id': output.id,
-            'message': 'Remix created successfully'
-        }, status=status.HTTP_201_CREATED)
-        
+            'processing_status': project.status,
+            'message': 'Remix generation started',
+        }, status=status.HTTP_202_ACCEPTED)
+
     except Exception as e:
         return Response({
             'status': 'error',
