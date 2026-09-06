@@ -63,7 +63,7 @@
       </a>
     </div>
     <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
       <div class="th-slider">
         {% for entry in song_credits %}
         <a href="{% url 'website_app:song-detail' entry.song.slug %}" class="th-card aspect-square plain">
@@ -83,7 +83,7 @@
         </a>
         {% endfor %}
       </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
     </div>
   </div>
   {% endif %}
@@ -97,7 +97,7 @@
       </a>
     </div>
     <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
       <div class="th-slider">
         {% for entry in media_credits %}
         <a href="{% url 'website_app:media-detail' entry.media.slug %}" class="th-card aspect-poster plain">
@@ -115,7 +115,7 @@
         </a>
         {% endfor %}
       </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
     </div>
   </div>
   {% endif %}
@@ -129,7 +129,7 @@
       </a>
     </div>
     <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
       <div class="th-slider">
         {% for other in related_people %}
         <a href="{% url 'website_app:person-detail' other.slug %}" class="th-card th-person-card plain">
@@ -143,7 +143,7 @@
         </a>
         {% endfor %}
       </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
     </div>
   </div>
   {% endif %}

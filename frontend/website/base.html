@@ -287,6 +287,13 @@
     .th-slider-row:hover .th-slider-arrow{opacity:1;}
     .th-slider-arrow.next{inset-inline-end:0; background:linear-gradient(270deg, var(--bg) 15%, transparent);}
     .th-slider-arrow.prev{inset-inline-start:0;}
+    /* Markup always uses the universal chevron-left=back / chevron-right
+       =forward pair - inset-inline-start/end already puts "prev" on
+       whichever side is first for the page's own direction, but the
+       glyph itself doesn't auto-mirror. Flip it here for RTL so it
+       still points toward that same physical side instead of reading
+       backwards. */
+    html[dir="rtl"] .th-slider-arrow i{display:inline-block; transform:scaleX(-1);}
     @media (max-width: 700px){
       .th-slider-arrow{display:none;}
     }
