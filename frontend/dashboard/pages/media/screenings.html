@@ -7,8 +7,11 @@
   <div class="w-100" style="max-width: 780px;">
 
     <div class="card card-lg mb-4">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">{% translate "دور العرض" %} — {{ media.title_ar }}</h5>
+      <div class="card-header d-flex justify-content-between align-items-center accent-danger list-header">
+        <div class="d-flex align-items-center gap-3">
+          <div class="icon-shape icon-md rounded-3 bg-danger-subtle text-danger"><i class="ti ti-building-carousel"></i></div>
+          <h5 class="mb-0">{% translate "دور العرض" %} — {{ media.title_ar }}</h5>
+        </div>
         <div class="d-flex gap-2">
           <a href="{% url 'dashboard_app:cinema-venues' %}" class="btn btn-sm btn-outline-primary">{% translate "إدارة دور العرض" %}</a>
           <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>

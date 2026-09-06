@@ -5,13 +5,10 @@
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{% translate "بانرات إعلانية" %}</h5>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-primary-subtle text-primary">{{ ads.paginator.count }}</span>
-        <a href="{% url 'dashboard_app:ad-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة إعلان" %}</a>
-      </div>
-    </div>
+    {% trans "بانرات إعلانية" as list_title %}
+    {% trans "+ إضافة إعلان" as list_create_label %}
+    {% url 'dashboard_app:ad-create' as list_create_url %}
+    {% include "dashboard/partials/_list_header.html" with header_title=list_title header_icon="ti-ad" header_accent="secondary" header_count=ads.paginator.count header_create_url=list_create_url header_create_label=list_create_label %}
     {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">

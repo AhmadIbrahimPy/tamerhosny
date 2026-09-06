@@ -381,3 +381,32 @@ button:focus-visible,
   background: linear-gradient(135deg, #e6b17e, #b3703a);
   color: #3a1f00;
 }
+
+/* ---------------------------------------------------------------------
+   Shared list-page header (partials/_list_header.html) — an accented
+   icon badge + colored underline so every entity list (people, songs,
+   albums, ads, ...) reads as part of one designed system.
+--------------------------------------------------------------------- */
+.list-header {
+  --accent-color: var(--ds-primary);
+  position: relative;
+}
+
+.list-header::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  inset-inline-start: 0;
+  width: 64px;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 20%, transparent));
+}
+
+.list-header .icon-shape {
+  transition: transform 0.2s ease;
+}
+
+.list-header:hover .icon-shape {
+  transform: scale(1.06) rotate(-3deg);
+}

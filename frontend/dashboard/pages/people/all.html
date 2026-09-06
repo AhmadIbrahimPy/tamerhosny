@@ -5,13 +5,9 @@
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{% translate "الفنانون" %}</h5>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-primary-subtle text-primary">{{ people.paginator.count }}</span>
-        <a href="{% url 'dashboard_app:person-create' %}" class="btn btn-sm btn-primary">{% translate "+ إضافة جديد" %}</a>
-      </div>
-    </div>
+    {% trans "الفنانون" as list_title %}
+    {% url 'dashboard_app:person-create' as list_create_url %}
+    {% include "dashboard/partials/_list_header.html" with header_title=list_title header_icon="ti-users" header_accent="primary" header_count=people.paginator.count header_create_url=list_create_url %}
     {% include "dashboard/partials/_search_filter_bar.html" %}
     <div class="table-responsive">
       <table class="table text-nowrap mb-0 table-centered table-hover">
