@@ -1084,53 +1084,6 @@
 
 
   <!-- =======================================================
-       ORIGINAL SONG
-  ======================================================== -->
-
-  <div class="swt-card audio-card" id="originalSongCard" style="display:none;">
-
-    <h3 class="section-title">
-      <i class="bi bi-headphones"></i>
-      {% translate "الأغنية الأصلية" %}
-    </h3>
-
-    <p class="section-description">
-      {% translate "استمع للجزء اللي المفروض تغنيه قبل ما تسجل صوتك." %}
-    </p>
-
-    <button
-      type="button"
-      class="ready-btn"
-      id="listenToLineBtn"
-      onclick="playCurrentSegment()"
-    >
-      <i class="bi bi-play-fill"></i>
-      {% translate "اسمع الجزء ده" %}
-    </button>
-
-    <audio
-      id="originalSongAudio"
-      preload="metadata"
-      style="display:none;"
-    >
-
-      {% if song.audio_file %}
-
-        <source
-          src="{{ song.audio_file.url }}"
-          type="audio/mpeg"
-        >
-
-      {% endif %}
-
-      {% translate "متصفحك لا يدعم تشغيل الصوت." %}
-
-    </audio>
-
-  </div>
-
-
-  <!-- =======================================================
        DIVISION
   ======================================================== -->
 
@@ -1319,6 +1272,37 @@
         </div>
 
       </div>
+
+
+      <button
+        type="button"
+        class="ready-btn"
+        id="listenToLineBtn"
+        onclick="playCurrentSegment()"
+        style="margin-top:18px;"
+      >
+        <i class="bi bi-play-fill"></i>
+        {% translate "اسمع الجزء ده" %}
+      </button>
+
+      <audio
+        id="originalSongAudio"
+        preload="metadata"
+        style="display:none;"
+      >
+
+        {% if song.audio_file %}
+
+          <source
+            src="{{ song.audio_file.url }}"
+            type="audio/mpeg"
+          >
+
+        {% endif %}
+
+        {% translate "متصفحك لا يدعم تشغيل الصوت." %}
+
+      </audio>
 
     </div>
 
@@ -1890,7 +1874,6 @@ async function startFresh() {
     // Reset UI
     document.getElementById('divisionSelectionCard').style.display = 'block';
     document.getElementById('practiceCard').style.display = 'none';
-    document.getElementById('originalSongCard').style.display = 'none';
     document.getElementById('divisionAction').style.display = 'none';
     document.getElementById('restartBtn').style.display = 'none';
     document.getElementById('startFreshBtn').style.display = 'none';
@@ -2003,10 +1986,6 @@ async function restartProject() {
 
     document.getElementById(
       'practiceCard'
-    ).style.display = 'none';
-
-    document.getElementById(
-      'originalSongCard'
     ).style.display = 'none';
 
     document.getElementById(
@@ -2212,12 +2191,6 @@ async function startProject() {
       )
       .style.display = 'block';
 
-    document
-      .getElementById(
-        'originalSongCard'
-      )
-      .style.display = 'block';
-
 
     updateRole();
 
@@ -2415,11 +2388,6 @@ async function loadLyrics() {
 
       document.getElementById(
         'practiceCard'
-      ).style.display =
-        'block';
-
-      document.getElementById(
-        'originalSongCard'
       ).style.display =
         'block';
 
@@ -4659,13 +4627,13 @@ async function createSong() {
   // Hide lyric meta during song creation
   document.querySelector('.lyric-meta').style.display = 'none';
 
-  // Nothing left to record or listen to at this point - hide the whole
-  // recording area and the "listen to your line" card instead of leaving
-  // them sitting there above the loading card.
+  // Nothing left to record or listen to at this point - hide the
+  // recording area and the "listen to your line" button instead of
+  // leaving them sitting there above the loading card.
   const recordingArea = document.querySelector('.recording-area');
   if (recordingArea) recordingArea.style.display = 'none';
-  const originalSongCard = document.getElementById('originalSongCard');
-  if (originalSongCard) originalSongCard.style.display = 'none';
+  const listenToLineBtn = document.getElementById('listenToLineBtn');
+  if (listenToLineBtn) listenToLineBtn.style.display = 'none';
 
   try {
     // Call backend API to create the song immediately
@@ -4713,8 +4681,8 @@ function showCreateSongError(message) {
   document.querySelector('.lyric-meta').style.display = 'flex';
   const recordingArea = document.querySelector('.recording-area');
   if (recordingArea) recordingArea.style.display = '';
-  const originalSongCard = document.getElementById('originalSongCard');
-  if (originalSongCard) originalSongCard.style.display = 'block';
+  const listenToLineBtn = document.getElementById('listenToLineBtn');
+  if (listenToLineBtn) listenToLineBtn.style.display = '';
 }
 
 function waitForDuetCompletion(projectId) {
