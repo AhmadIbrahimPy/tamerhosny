@@ -24,17 +24,6 @@ jobs:
             .venv/bin/python manage.py migrate --noinput
             .venv/bin/python manage.py collectstatic --noinput
             .venv/bin/python manage.py compilemessages -l en
-            # All four services run as www-data, whose HOME resolves to
-            # /var/www (owned by root, not writable by www-data) - torch/
-            # Demucs then fails vocal-removal (Sing With Tamer, AI Remix)
-            # with PermissionError trying to create ~/.cache there.
-            # Idempotent: only patches a unit file that doesn't already
-            # have this line, so re-running the deploy is a no-op here.
-            for f in th-lexora.service th-lexora-2.service th-lexora-3.service th-lexora-celery.service; do
-              sudo grep -q "Environment=XDG_CACHE_HOME" /etc/systemd/system/$f || \
-                sudo sed -i "/^WorkingDirectory=/a Environment=XDG_CACHE_HOME=/var/www/th-lexora/.cache" /etc/systemd/system/$f
-            done
-            sudo systemctl daemon-reload
             # Three Daphne processes (8011/8012/8013) load-balanced by nginx
             # (see /etc/nginx/sites-available/th-lexora's upstream block) -
             # all three need restarting or two of them keep serving the
