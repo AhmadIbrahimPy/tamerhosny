@@ -57,20 +57,19 @@
      actually playing - kept very low-opacity on purpose (see .is-playing
      below) so it reads as ambience, not a loud decoration. */
   .song-wave-bg {
-    /* Anchored to the hero's TOP edge with a fixed cap, not inset:0 -
-       .song-hero's own height is whatever its stacked content adds up
-       to (on mobile that includes the full lyrics block below the
-       cover, which can run to thousands of pixels), so sizing this off
-       the hero's total height put the visible wave band far down past
-       the fold, behind opaque content, on mobile - invisible in
-       practice even though it was technically rendering. Capping the
-       height and anchoring to the top keeps it in the same physical
-       region (behind the cover/title area) at every viewport width. */
+    /* .song-hero's own height is whatever its stacked content adds up
+       to. On the >=992px 2-column layout that's basically the cover's
+       height, so a band measured off the hero's bottom (below) sits
+       right behind the content column, same region every time. Below
+       992px everything stacks into one column - including the full
+       lyrics block under the cover - so the same bottom-anchored
+       percentage lands far down past the fold; a capped, top-anchored
+       band (below) keeps it in that same cover/title region instead. */
     position: absolute;
     left: 0;
     right: 0;
-    top: 0;
-    height: min(420px, 60%);
+    bottom: 0;
+    height: 55%;
     z-index: -2;
     overflow: hidden;
     opacity: 0;
@@ -86,6 +85,13 @@
     left: 0;
     width: 200%;
     height: 100%;
+  }
+  @media (max-width: 991px) {
+    .song-wave-bg {
+      bottom: auto;
+      top: 0;
+      height: min(420px, 60%);
+    }
   }
   .song-wave-path {
     fill: #ffffff;
