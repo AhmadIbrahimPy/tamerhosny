@@ -12,12 +12,45 @@
     z-index: 2;
   }
   .duet-privacy-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+  .duet-processing-card { position: relative; opacity: 0.75; pointer-events: none; }
+  .duet-processing-overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; background: rgba(11,12,18,.55); color: var(--text); font-size: 13px; font-weight: 700; text-align: center;
+  }
+  .duet-processing-overlay .spinner-border { width: 1.5rem; height: 1.5rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-xl" style="padding-block: 40px;">
   <h1 class="th-section-title">{% translate "غنيت إيه مع تامر" %}</h1>
+
+  {% if processing_duets %}
+  <div class="th-grid" style="margin-bottom: 24px;">
+    {% for duet in processing_duets %}
+    <div class="th-card th-card-song duet-processing-card">
+      <div class="th-img-wrap aspect-square">
+        {% if duet.song.cover_image %}
+          <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% elif duet.song.album.cover_image %}
+          <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% else %}
+          <i class="bi bi-mic-fill icon-fallback"></i>
+        {% endif %}
+        <div class="duet-processing-overlay">
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          {% translate "جاري الإنشاء..." %}
+        </div>
+      </div>
+      <div class="th-body">
+        <div class="th-title">{{ duet.song|localized_field:'title' }} ({% translate "غناءك" %})</div>
+        <div class="th-meta">{{ duet.get_division_type_display }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   {% if duets %}
   <div class="th-grid">
@@ -48,7 +81,7 @@
     </a>
     {% endfor %}
   </div>
-  {% else %}
+  {% elif not processing_duets %}
   <div class="th-empty">
     <i class="bi bi-mic" style="font-size: 48px; margin-bottom: 16px;"></i>
     <p>{% translate "لسه معملتش أي دويتو مع تامر" %}</p>

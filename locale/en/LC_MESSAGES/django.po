@@ -3248,8 +3248,12 @@ msgid "الأغنية الأصلية"
 msgstr "Original Song"
 
 #: frontend/website/pages/sing-with-tamer/index.html:1098
-msgid "تقدر تسمع الأغنية كاملة من هنا."
-msgstr "You can listen to the full song here."
+msgid "استمع للجزء اللي المفروض تغنيه قبل ما تسجل صوتك."
+msgstr "Listen to the part you're supposed to sing before recording your voice."
+
+#: frontend/website/pages/sing-with-tamer/index.html:1105
+msgid "اسمع الجزء ده"
+msgstr "Listen to this part"
 
 #: frontend/website/pages/sing-with-tamer/index.html:1116
 msgid "متصفحك لا يدعم تشغيل الصوت."
@@ -3262,6 +3266,22 @@ msgstr "Choose How to Sing"
 #: frontend/website/pages/sing-with-tamer/index.html:1138
 msgid "مين يبدأ أولاً؟"
 msgstr "Who's Going First?"
+
+#: frontend/website/pages/sing-with-tamer/index.html:1154
+msgid "تامر يبدأ"
+msgstr "Tamer Starts"
+
+#: frontend/website/pages/sing-with-tamer/index.html:1158
+msgid "تامر أولاً — أنت بعده"
+msgstr "Tamer first — then you"
+
+#: frontend/website/pages/sing-with-tamer/index.html:1174
+msgid "أنت تبدأ"
+msgstr "You Start"
+
+#: frontend/website/pages/sing-with-tamer/index.html:1178
+msgid "أنت أولاً — تامر بعدك"
+msgstr "You first — then Tamer"
 
 #: frontend/website/pages/sing-with-tamer/index.html:1201
 msgid "ابدأ"

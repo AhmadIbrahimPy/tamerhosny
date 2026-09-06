@@ -1040,8 +1040,17 @@ def my_duets_list(request):
         is_completed=True,
     ).exclude(final_audio_file='').select_related('song').order_by('-updated_at')
 
+    # Still-mixing duets (the Celery task hasn't finished/failed yet) -
+    # shown as a "still creating" placeholder instead of just vanishing
+    # from this page until the mix completes.
+    processing_duets = SingWithTamerProject.objects.filter(
+        user=request.user,
+        processing_status=SingWithTamerProject.ProcessingStatus.PROCESSING,
+    ).select_related('song').order_by('-updated_at')
+
     return render(request, 'website/pages/user/duets.html', {
         'duets': duets,
+        'processing_duets': processing_duets,
     })
 
 

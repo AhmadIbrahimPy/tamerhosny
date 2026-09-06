@@ -1087,7 +1087,7 @@
        ORIGINAL SONG
   ======================================================== -->
 
-  <div class="swt-card audio-card">
+  <div class="swt-card audio-card" id="originalSongCard" style="display:none;">
 
     <h3 class="section-title">
       <i class="bi bi-headphones"></i>
@@ -1095,13 +1095,23 @@
     </h3>
 
     <p class="section-description">
-      {% translate "تقدر تسمع الأغنية كاملة من هنا." %}
+      {% translate "استمع للجزء اللي المفروض تغنيه قبل ما تسجل صوتك." %}
     </p>
+
+    <button
+      type="button"
+      class="ready-btn"
+      id="listenToLineBtn"
+      onclick="playCurrentSegment()"
+    >
+      <i class="bi bi-play-fill"></i>
+      {% translate "اسمع الجزء ده" %}
+    </button>
 
     <audio
       id="originalSongAudio"
-      controls
       preload="metadata"
+      style="display:none;"
     >
 
       {% if song.audio_file %}
@@ -1151,11 +1161,11 @@
         <i class="bi bi-person-fill"></i>
 
         <strong>
-          تامر يبدأ
+          {% translate "تامر يبدأ" %}
         </strong>
 
         <small>
-          تامر أولاً — أنت بعده
+          {% translate "تامر أولاً — أنت بعده" %}
         </small>
 
       </button>
@@ -1171,11 +1181,11 @@
         <i class="bi bi-mic-fill"></i>
 
         <strong>
-          أنت تبدأ
+          {% translate "أنت تبدأ" %}
         </strong>
 
         <small>
-          أنت أولاً — تامر بعدك
+          {% translate "أنت أولاً — تامر بعدك" %}
         </small>
 
       </button>
@@ -1904,6 +1914,7 @@ async function startFresh() {
     // Reset UI
     document.getElementById('divisionSelectionCard').style.display = 'block';
     document.getElementById('practiceCard').style.display = 'none';
+    document.getElementById('originalSongCard').style.display = 'none';
     document.getElementById('divisionAction').style.display = 'none';
     document.getElementById('restartBtn').style.display = 'none';
     document.getElementById('startFreshBtn').style.display = 'none';
@@ -2016,6 +2027,10 @@ async function restartProject() {
 
     document.getElementById(
       'practiceCard'
+    ).style.display = 'none';
+
+    document.getElementById(
+      'originalSongCard'
     ).style.display = 'none';
 
     document.getElementById(
@@ -2221,6 +2236,12 @@ async function startProject() {
       )
       .style.display = 'block';
 
+    document
+      .getElementById(
+        'originalSongCard'
+      )
+      .style.display = 'block';
+
 
     updateRole();
 
@@ -2418,6 +2439,11 @@ async function loadLyrics() {
 
       document.getElementById(
         'practiceCard'
+      ).style.display =
+        'block';
+
+      document.getElementById(
+        'originalSongCard'
       ).style.display =
         'block';
 

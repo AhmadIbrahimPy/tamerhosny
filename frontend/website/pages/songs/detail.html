@@ -55,22 +55,24 @@
 
   /* Faint sea-wave motion behind the hero, only while this song is
      actually playing - kept very low-opacity on purpose (see .is-playing
-     below) so it reads as ambience, not a loud decoration. */
+     below) so it reads as ambience, not a loud decoration.
+
+     Scoped to .song-content rather than the whole .song-hero: the hero
+     also contains the (opaque) cover image, and its total height varies
+     wildly by breakpoint - on >=992px it's a short 2-column row, below
+     that everything stacks into one column including the full lyrics
+     block. Anchoring a percentage/fixed band to the hero's own edges
+     kept landing either behind the cover or scrolled far past the fold
+     depending on breakpoint. .song-content is just the text/actions
+     column - it never overlaps the cover, and its height already
+     tracks its own (mostly non-opaque) contents at every width. */
+  .song-content {
+    position: relative;
+  }
   .song-wave-bg {
-    /* .song-hero's own height is whatever its stacked content adds up
-       to. On the >=992px 2-column layout that's basically the cover's
-       height, so a band measured off the hero's bottom (below) sits
-       right behind the content column, same region every time. Below
-       992px everything stacks into one column - including the full
-       lyrics block under the cover - so the same bottom-anchored
-       percentage lands far down past the fold; a capped, top-anchored
-       band (below) keeps it in that same cover/title region instead. */
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 55%;
-    z-index: -2;
+    inset: 0;
+    z-index: -1;
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.6s ease;
@@ -85,13 +87,6 @@
     left: 0;
     width: 200%;
     height: 100%;
-  }
-  @media (max-width: 991px) {
-    .song-wave-bg {
-      bottom: auto;
-      top: 0;
-      height: min(420px, 60%);
-    }
   }
   .song-wave-path {
     fill: #ffffff;
@@ -1705,13 +1700,6 @@
     <div class="song-hero" id="songHero">
         <div class="song-hero-bg" style="background-image:url('{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}');"></div>
 
-        <div class="song-wave-bg" aria-hidden="true">
-            <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
-                <path class="song-wave-path song-wave-path-1" d="M0,110 C150,180 350,40 600,110 C850,180 1050,40 1200,110 L1200,220 L0,220 Z"></path>
-                <path class="song-wave-path song-wave-path-2" d="M0,120 C200,60 400,170 600,120 C800,70 1000,160 1200,120 L1200,220 L0,220 Z"></path>
-            </svg>
-        </div>
-
         <div class="song-hero-inner">
 
             <!-- العمود الأول: الصورة وتحت منها الإحصائيات -->
@@ -1772,6 +1760,12 @@
 
             <!-- العمود الثاني: المحتوى والبيانات وأزرار التفاعل -->
             <div class="song-content">
+                <div class="song-wave-bg" aria-hidden="true">
+                    <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
+                        <path class="song-wave-path song-wave-path-1" d="M0,110 C150,180 350,40 600,110 C850,180 1050,40 1200,110 L1200,220 L0,220 Z"></path>
+                        <path class="song-wave-path song-wave-path-2" d="M0,120 C200,60 400,170 600,120 C800,70 1000,160 1200,120 L1200,220 L0,220 Z"></path>
+                    </svg>
+                </div>
                 <div class="song-topline">
                     <span class="song-type">{% if song.album %}{% translate "أغنية من ألبوم" %}{% else %}{% translate "أغنية" %}{% endif %}</span>
                     {% if duet %}
