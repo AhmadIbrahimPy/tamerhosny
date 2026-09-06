@@ -1059,6 +1059,7 @@ class AudioProcessor:
         self,
         instrumental: np.ndarray,
         vocal: np.ndarray,
+        target_vocal_to_music: float = 1.35,
     ) -> Tuple[float, float]:
 
         """
@@ -1124,14 +1125,12 @@ class AudioProcessor:
         # -----------------------------------------------------
         # Desired relationship.
         #
-        # Vocal is normally around 1.35x the RMS of the
-        # instrumental.
+        # Vocal is normally around target_vocal_to_music times the
+        # RMS of the instrumental (1.35 by default).
         #
         # This does NOT mean 1.35x louder perceptually in dB.
         # It simply keeps the vocal clearly present.
         # -----------------------------------------------------
-
-        target_vocal_to_music = 1.35
 
         current_ratio = (
             vocal_rms

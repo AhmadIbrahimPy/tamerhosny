@@ -116,10 +116,6 @@ class SongMixer:
             original = original[:length]
             instrumental = instrumental[:length]
 
-            song_key, song_mode = self.processor._detect_key_and_mode(
-                self.processor._to_mono(original)
-            )
-
             recording_by_segment = {
                 r.lyric_segment_id: r
                 for r in recordings
@@ -136,8 +132,6 @@ class SongMixer:
                 recording_by_segment=recording_by_segment,
                 sr=sr,
                 total_length=length,
-                song_key=song_key,
-                song_mode=song_mode,
             )
 
             final_mix = self._stitch_pieces(pieces, sr)
@@ -181,8 +175,6 @@ class SongMixer:
         recording_by_segment: dict,
         sr: int,
         total_length: int,
-        song_key: str,
-        song_mode: str,
     ) -> list:
         """
         Walk the song's timeline and produce a list of
@@ -216,8 +208,6 @@ class SongMixer:
                         instrumental[start_sample:end_sample],
                         recording,
                         sr,
-                        song_key,
-                        song_mode,
                     ),
                     'duet',
                 ))
@@ -242,8 +232,6 @@ class SongMixer:
         instrumental_segment: np.ndarray,
         recording,
         sr: int,
-        song_key: str,
-        song_mode: str,
     ) -> np.ndarray:
 
         seg_len = len(instrumental_segment)
@@ -262,7 +250,7 @@ class SongMixer:
         if end > start:
             user_audio = user_audio[start:end]
 
-        user_audio = self._engineer_vocal(user_audio, sr, song_key, song_mode)
+        user_audio = self._engineer_vocal(user_audio, sr)
 
         user_audio = self._fit_to_duration(user_audio, seg_len, sr)
 
@@ -270,6 +258,14 @@ class SongMixer:
             self.processor._auto_balance_levels(
                 instrumental_segment,
                 user_audio,
+                # The remix engine's default (1.35) noticeably ducks the
+                # music under the vocal - fine for a two-song remix, but
+                # inside a duet it made the backing track audibly drop
+                # in level for exactly the seconds the user sang,
+                # compared to the untouched original song everywhere
+                # else. A near-1:1 ratio keeps the music as present here
+                # as it is in the rest of the track.
+                target_vocal_to_music=1.05,
             )
         )
 
@@ -293,8 +289,6 @@ class SongMixer:
         self,
         audio: np.ndarray,
         sr: int,
-        song_key: str,
-        song_mode: str,
     ) -> np.ndarray:
         """
         Basic audio-engineering pass on a raw phone-mic recording
@@ -302,12 +296,21 @@ class SongMixer:
 
             1. Band-limit: cut rumble/handling noise below 80Hz and
                hiss above 15kHz.
-            2. Pitch: if the take's overall key is a semitone or two
-               off the song's key, nudge it toward the song's tone.
-               Bigger mismatches are left alone (correcting a full
-               off-key performance would just sound robotic/wrong).
-            3. Loudness: bring a too-quiet take up, tame a too-hot
+            2. Loudness: bring a too-quiet take up, tame a too-hot
                one, before the instrumental/vocal balance pass runs.
+
+        A per-segment pitch "correction" toward the song's key used to
+        run here too, but chroma-based key detection on a few seconds
+        of solo, unaccompanied singing is unreliable enough that it was
+        firing inconsistently line to line - one segment nudged up,
+        the next nudged down, the next left alone - which is exactly
+        what made the same voice sound noticeably thin/childlike in
+        some lines and thick/muffled in others (librosa's pitch_shift
+        doesn't preserve formants, so even the capped ±2 semitones this
+        used to allow was audible). A short vocal line also doesn't
+        really have a single "key" to correct toward in the first
+        place - the mismatch this was trying to fix isn't well-defined
+        for this input. Removed rather than tuned further.
         """
 
         if len(audio) == 0:
@@ -316,19 +319,6 @@ class SongMixer:
         audio = np.nan_to_num(audio, nan=0.0, posinf=0.0, neginf=0.0)
 
         audio = self._band_limit(audio, sr)
-
-        # A reliable chroma/key estimate needs at least ~1s of audio.
-        if len(audio) >= sr:
-            mono = self.processor._to_mono(audio)
-            user_key, user_mode = self.processor._detect_key_and_mode(mono)
-
-            audio = self.processor.match_key(
-                audio,
-                current_key=user_key,
-                target_key=song_key,
-                current_mode=user_mode,
-                target_mode=song_mode,
-            )
 
         audio = self._normalize_loudness(audio)
 
