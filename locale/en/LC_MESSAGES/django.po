@@ -4171,6 +4171,14 @@ msgstr "Your rank is improving"
 msgid "ترتيبك نزل شوية"
 msgstr "Your rank dropped a bit"
 
+#: frontend/website/pages/home.html
+msgid "اكسب نقط من كل نشاطك في الموقع وشوف ترتيبك بين كل الجمهور"
+msgstr "Earn points from everything you do on the site and see your rank among all fans"
+
+#: frontend/website/pages/home.html
+msgid "شوف ترتيبك"
+msgstr "See your rank"
+
 #: frontend/website/pages/leaderboard.html
 msgid "ترتيبك"
 msgstr "Your rank"

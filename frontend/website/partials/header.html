@@ -84,70 +84,93 @@
       </button>
       {% endif %}
     </div>
-    <button type="button" class="th-nav-toggle" onclick="document.getElementById('thMobilePanel').classList.toggle('open');" aria-label="{% translate 'القائمة' %}">
+    <button type="button" class="th-nav-toggle" id="thNavToggle" onclick="thToggleMobilePanel();" aria-label="{% translate 'القائمة' %}" aria-expanded="false">
       <i class="bi bi-list"></i>
     </button>
   </div>
   <div class="container-xl">
     <div class="th-mobile-panel" id="thMobilePanel">
-      <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
-      <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
-      <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
-      <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
-      <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>
-      <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
-      <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
-      <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
-      <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
-      <a href="{% url 'website_app:daily-guess' %}" class="{% if request.resolver_match.url_name == 'daily-guess' %}active{% endif %}">{% translate "خمّن الأغنية" %}</a>
-
-      <div class="th-user-dropdown-divider mt-2"></div>
+      <details class="th-mobile-section" open>
+        <summary>
+          {% translate "التصفح" %}
+          <i class="bi bi-chevron-down th-mobile-chevron"></i>
+        </summary>
+        <div class="th-mobile-section-body">
+          <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
+          <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
+          <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
+          <a href="{% url 'website_app:albums' %}" class="{% if 'album' in request.resolver_match.url_name %}active{% endif %}">{% translate "الألبومات" %}</a>
+          <a href="{% url 'website_app:movies' %}" class="{% if 'movie' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأفلام" %}</a>
+          <a href="{% url 'website_app:series' %}" class="{% if 'series' in request.resolver_match.url_name %}active{% endif %}">{% translate "المسلسلات" %}</a>
+          <a href="{% url 'website_app:commercials' %}" class="{% if 'commercial' in request.resolver_match.url_name %}active{% endif %}">{% translate "الإعلانات" %}</a>
+          <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
+          <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
+          <a href="{% url 'website_app:daily-guess' %}" class="{% if request.resolver_match.url_name == 'daily-guess' %}active{% endif %}">{% translate "خمّن الأغنية" %}</a>
+        </div>
+      </details>
 
       {% if user.is_authenticated %}
-      <a href="{% url 'website_app:public-profile' user.username %}" class="th-user-dropdown-header" style="padding-inline:4px;">
-        {% if user.profile_image %}
-          <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
-        {% else %}
-          <span class="th-dropdown-avatar-fallback">{{ user.username|slice:":1"|upper }}</span>
-        {% endif %}
-        <div class="th-dropdown-info">
-          <div class="th-dropdown-name">{{ user.username }}</div>
-          <div class="th-dropdown-email">{{ user.email }}</div>
+      <details class="th-mobile-section">
+        <summary>
+          <span class="th-mobile-user-summary">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
+            {% else %}
+              <span class="th-dropdown-avatar-fallback">{{ user.username|slice:":1"|upper }}</span>
+            {% endif %}
+            <span>{{ user.username }}</span>
+          </span>
+          <i class="bi bi-chevron-down th-mobile-chevron"></i>
+        </summary>
+        <div class="th-mobile-section-body">
+          <a href="{% url 'website_app:public-profile' user.username %}" class="th-user-dropdown-header" style="padding-inline:4px;">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="th-dropdown-avatar">
+            {% else %}
+              <span class="th-dropdown-avatar-fallback">{{ user.username|slice:":1"|upper }}</span>
+            {% endif %}
+            <div class="th-dropdown-info">
+              <div class="th-dropdown-name">{{ user.username }}</div>
+              <div class="th-dropdown-email">{{ user.email }}</div>
+            </div>
+          </a>
+          <a href="{% url 'website_app:recap' user.username %}" class="th-dropdown-item">
+            <i class="bi bi-stars"></i> {% translate "ملخصي" %}
+          </a>
+          <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
+            <i class="bi bi-heart"></i> {% translate "الإعجاب" %}
+          </a>
+          <a href="{% url 'website_app:recently-played' %}" class="th-dropdown-item">
+            <i class="bi bi-clock-history"></i> {% translate "استمعت مؤخراً" %}
+          </a>
+          <a href="{% url 'website_app:playlists' %}" class="th-dropdown-item">
+            <i class="bi bi-list-ul"></i> {% translate "قوائم التشغيل" %}
+          </a>
+          <a href="{% url 'website_app:remixes' %}" class="th-dropdown-item">
+            <i class="bi bi-music-note-beamed"></i> {% translate "الريمكسات" %}
+          </a>
+          <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
+            <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
+          </a>
+          <div class="th-user-dropdown-divider"></div>
+          <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
+            <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+          </button>
+          <div class="th-user-dropdown-divider"></div>
+          <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
+            <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
+          </button>
         </div>
-      </a>
-      <a href="{% url 'website_app:recap' user.username %}" class="th-dropdown-item">
-        <i class="bi bi-stars"></i> {% translate "ملخصي" %}
-      </a>
-      <a href="{% url 'website_app:likes' %}" class="th-dropdown-item">
-        <i class="bi bi-heart"></i> {% translate "الإعجاب" %}
-      </a>
-      <a href="{% url 'website_app:recently-played' %}" class="th-dropdown-item">
-        <i class="bi bi-clock-history"></i> {% translate "استمعت مؤخراً" %}
-      </a>
-      <a href="{% url 'website_app:playlists' %}" class="th-dropdown-item">
-        <i class="bi bi-list-ul"></i> {% translate "قوائم التشغيل" %}
-      </a>
-      <a href="{% url 'website_app:remixes' %}" class="th-dropdown-item">
-        <i class="bi bi-music-note-beamed"></i> {% translate "الريمكسات" %}
-      </a>
-      <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
-        <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
-      </a>
-      <div class="th-user-dropdown-divider"></div>
-      <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
-        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
-      </button>
-      <div class="th-user-dropdown-divider"></div>
-      <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
-        <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
-      </button>
+      </details>
       {% else %}
-      <button type="button" class="th-login-btn" style="justify-content:center;" onclick="openAuthModal('login')">
-        <i class="bi bi-person"></i> {% translate "تسجيل دخول / إنشاء حساب" %}
-      </button>
-      <button type="button" class="lang-btn mt-2" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
-        <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
-      </button>
+      <div class="th-mobile-guest">
+        <button type="button" class="th-login-btn" style="justify-content:center;" onclick="openAuthModal('login')">
+          <i class="bi bi-person"></i> {% translate "تسجيل دخول / إنشاء حساب" %}
+        </button>
+        <button type="button" class="lang-btn" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
+          <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+        </button>
+      </div>
       {% endif %}
     </div>
   </div>

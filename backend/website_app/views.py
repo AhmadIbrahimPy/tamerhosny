@@ -1233,11 +1233,13 @@ def daily_guess_attempt(request):
 
     play_count = int(state.get('play_count', 0))
     seconds_listened = int(state.get('seconds_listened', 0))
-    # Confident, efficient guesses are worth more: a base 100 points,
-    # docked for every extra play beyond the first and every second
-    # spent actually listening - floored so a win is never worth
-    # (almost) nothing no matter how much was listened to.
-    points_awarded = max(20, 100 - max(0, play_count - 1) * 15 - seconds_listened * 2) if is_correct else 0
+    # Genuinely listening is worth more, not less: hitting play and
+    # guessing after only a second or two of actual audio is exactly
+    # the "barely engaged" behavior this is meant to discourage, so
+    # more plays and more seconds actually listened both raise the
+    # score - each capped so looping the clip forever can't inflate it
+    # without limit.
+    points_awarded = 20 + min(play_count, 10) * 10 + min(seconds_listened, 60) * 3 if is_correct else 0
 
     DailyGuessAttempt.objects.create(
         user=request.user, challenge=challenge, guessed_song_id=guessed_song_id, correct=is_correct,

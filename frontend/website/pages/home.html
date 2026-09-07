@@ -61,6 +61,37 @@
     .th-guess-promo { flex-wrap: wrap; text-align: center; justify-content: center; }
     .th-guess-promo-cta { width: 100%; justify-content: center; }
   }
+
+  .th-leaderboard-promo {
+    background: linear-gradient(120deg, #1b0e3d, #3a1c6e, #17143f, #3a1c6e);
+    background-size: 300% 300%;
+    box-shadow: 0 16px 40px -14px rgba(43, 11, 94, .55);
+  }
+  .th-leaderboard-promo:hover { box-shadow: 0 20px 50px -14px rgba(43, 11, 94, .7); }
+
+  /* Two promo cards, one carousel: rotates on its own, and can also be
+     dragged/swiped by hand - translateX works in raw screen pixels
+     regardless of text direction, but the flex track itself needs an
+     explicit direction so "next slide" always means "the one after
+     it" instead of flipping under RTL - each slide's own direction is
+     then reset back to the page's real one so its text still reads
+     correctly. */
+  .th-promo-carousel { position: relative; margin-block: 24px 8px; overflow: hidden; border-radius: 20px; }
+  .th-promo-track {
+    display: flex; direction: ltr; cursor: grab; touch-action: pan-y;
+    transition: transform .4s cubic-bezier(.22,.68,0,1);
+  }
+  .th-promo-track.dragging { transition: none; cursor: grabbing; }
+  .th-promo-track > .th-guess-promo {
+    direction: {% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %};
+    flex: 0 0 100%; margin-block: 0 !important; min-width: 0;
+  }
+  .th-promo-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; }
+  .th-promo-dots button {
+    width: 7px; height: 7px; border-radius: 50%; border: none; padding: 0; cursor: pointer;
+    background: var(--border); transition: width .2s ease, background .2s ease;
+  }
+  .th-promo-dots button.active { width: 22px; border-radius: 4px; background: var(--accent); }
 </style>
 {% endblock %}
 
@@ -81,16 +112,29 @@
 
 <div class="container-xl">
 
-  {% if not guess_played_today %}
-  <a href="{% url 'website_app:daily-guess' %}" class="th-guess-promo">
-    <div class="th-guess-promo-icon"><i class="bi bi-controller"></i></div>
-    <div class="th-guess-promo-text">
-      <h3>{% translate "خمّن الأغنية" %}</h3>
-      <p>{% translate "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات" %}</p>
+  <div class="th-promo-carousel" id="thPromoCarousel">
+    <div class="th-promo-track" id="thPromoTrack">
+      {% if not guess_played_today %}
+      <a href="{% url 'website_app:daily-guess' %}" class="th-guess-promo">
+        <div class="th-guess-promo-icon"><i class="bi bi-controller"></i></div>
+        <div class="th-guess-promo-text">
+          <h3>{% translate "خمّن الأغنية" %}</h3>
+          <p>{% translate "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات" %}</p>
+        </div>
+        <div class="th-guess-promo-cta">{% translate "العب دلوقتي" %} <i class="bi bi-arrow-left"></i></div>
+      </a>
+      {% endif %}
+      <a href="{% url 'website_app:leaderboard' %}" class="th-guess-promo th-leaderboard-promo">
+        <div class="th-guess-promo-icon"><i class="bi bi-bar-chart-fill"></i></div>
+        <div class="th-guess-promo-text">
+          <h3>{% translate "الترتيب" %}</h3>
+          <p>{% translate "اكسب نقط من كل نشاطك في الموقع وشوف ترتيبك بين كل الجمهور" %}</p>
+        </div>
+        <div class="th-guess-promo-cta">{% translate "شوف ترتيبك" %} <i class="bi bi-arrow-left"></i></div>
+      </a>
     </div>
-    <div class="th-guess-promo-cta">{% translate "العب دلوقتي" %} <i class="bi bi-arrow-left"></i></div>
-  </a>
-  {% endif %}
+    <div class="th-promo-dots" id="thPromoDots"></div>
+  </div>
 
   <div class="th-section">
     <div class="th-section-head">
@@ -351,4 +395,106 @@
   {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var carousel = document.getElementById('thPromoCarousel');
+  if (!carousel) return;
+  var track = document.getElementById('thPromoTrack');
+  var dotsWrap = document.getElementById('thPromoDots');
+  var slides = track.children;
+
+  if (slides.length < 2) {
+    dotsWrap.hidden = true;
+    return;
+  }
+
+  var current = 0;
+  var width = carousel.offsetWidth;
+  var dragStartX = 0;
+  var dragDeltaX = 0;
+  var dragging = false;
+  var timer = null;
+
+  var dots = [];
+  for (var i = 0; i < slides.length; i++) {
+    var dot = document.createElement('button');
+    dot.type = 'button';
+    if (i === 0) dot.className = 'active';
+    (function (index) {
+      dot.addEventListener('click', function () { goTo(index); restartTimer(); });
+    })(i);
+    dotsWrap.appendChild(dot);
+    dots.push(dot);
+  }
+
+  function render(animate) {
+    track.style.transition = animate ? '' : 'none';
+    track.style.transform = 'translateX(' + (-current * width) + 'px)';
+    dots.forEach(function (d, i) { d.classList.toggle('active', i === current); });
+  }
+
+  function goTo(index) {
+    current = (index + slides.length) % slides.length;
+    render(true);
+  }
+
+  function restartTimer() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(function () { goTo(current + 1); }, 6000);
+  }
+
+  window.addEventListener('resize', function () {
+    width = carousel.offsetWidth;
+    render(false);
+  });
+
+  track.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    dragStartX = e.clientX;
+    dragDeltaX = 0;
+    track.classList.add('dragging');
+    if (timer) clearInterval(timer);
+    track.setPointerCapture(e.pointerId);
+  });
+
+  track.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    dragDeltaX = e.clientX - dragStartX;
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(' + (-current * width + dragDeltaX) + 'px)';
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('dragging');
+    if (Math.abs(dragDeltaX) > width * 0.18) {
+      goTo(dragDeltaX < 0 ? current + 1 : current - 1);
+    } else {
+      render(true);
+    }
+    restartTimer();
+  }
+
+  track.addEventListener('pointerup', endDrag);
+  track.addEventListener('pointercancel', endDrag);
+  track.addEventListener('pointerleave', function () { if (dragging) endDrag(); });
+
+  // A drag that moved things shouldn't also fire the card's own link.
+  Array.prototype.forEach.call(track.querySelectorAll('a'), function (a) {
+    a.addEventListener('click', function (e) {
+      if (Math.abs(dragDeltaX) > 5) e.preventDefault();
+    });
+  });
+
+  carousel.addEventListener('mouseenter', function () { if (timer) clearInterval(timer); });
+  carousel.addEventListener('mouseleave', restartTimer);
+
+  render(false);
+  restartTimer();
+})();
+</script>
 {% endblock %}

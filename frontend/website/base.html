@@ -183,18 +183,39 @@
     .th-dropdown-btn{display:flex; align-items:center; gap:10px; padding:0; border:none; background:none; color:var(--text); font-size:13px; font-weight:600; cursor:pointer; width:100%; text-align:start;}
     .th-dropdown-btn:hover{color:var(--accent);}
     .th-nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:22px; flex-shrink:0; cursor:pointer;}
-    .th-mobile-panel{display:none; flex-direction:column; gap:2px; padding:8px 0 16px;}
+    .th-mobile-panel{display:none; flex-direction:column; padding:6px 0 12px;}
+    .th-mobile-panel.open{display:flex;}
+
+    /* Collapsible sections: each group (nav links / account) opens and
+       closes on its own via native <details>, instead of dumping every
+       link into view at once. */
+    .th-mobile-section{border-bottom:1px solid var(--border);}
+    .th-mobile-section:last-child{border-bottom:none;}
+    .th-mobile-section > summary{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 4px; cursor:pointer; list-style:none;
+      color:var(--text); font-size:14px; font-weight:700;
+    }
+    .th-mobile-section > summary::-webkit-details-marker{display:none;}
+    .th-mobile-section > summary::marker{content:"";}
+    .th-mobile-chevron{color:var(--muted); font-size:13px; transition:transform .2s ease; flex-shrink:0;}
+    .th-mobile-section[open] > summary .th-mobile-chevron{transform:rotate(180deg);}
+    .th-mobile-user-summary{display:flex; align-items:center; gap:10px; min-width:0;}
+    .th-mobile-user-summary .th-dropdown-avatar,
+    .th-mobile-user-summary .th-dropdown-avatar-fallback{width:30px; height:30px; font-size:14px; flex-shrink:0;}
+    .th-mobile-user-summary span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .th-mobile-section-body{display:flex; flex-direction:column; gap:2px; padding:0 0 10px;}
     /* Scoped away from .th-dropdown-item/.th-user-dropdown-header - both
        are also <a> tags sharing this panel (the user menu is inlined
        into it on mobile instead of a separate popup), and were getting
        this plain-nav-link styling (small padding, border-bottom) on top
        of their own flex/avatar layout, breaking both. */
-    .th-mobile-panel > a:not(.th-dropdown-item):not(.th-user-dropdown-header){font-size:14.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:10px 4px; border-bottom:1px solid var(--border);}
-    .th-mobile-panel > a:not(.th-dropdown-item):not(.th-user-dropdown-header):hover,
-    .th-mobile-panel > a.active{color:var(--accent);}
-    .th-mobile-panel.open{display:flex;}
+    .th-mobile-section-body > a:not(.th-dropdown-item):not(.th-user-dropdown-header){font-size:14.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:9px 4px;}
+    .th-mobile-section-body > a:not(.th-dropdown-item):not(.th-user-dropdown-header):hover,
+    .th-mobile-section-body > a.active{color:var(--accent);}
     .th-mobile-panel .th-user-dropdown-header{padding-inline:4px; border-radius:10px;}
     .th-mobile-panel .th-dropdown-item{border-radius:10px;}
+    .th-mobile-guest{display:flex; flex-direction:column; gap:8px; padding:12px 4px 4px;}
 
     /* Hero */
     .th-hero{
@@ -2348,6 +2369,15 @@
     // (request.resolver_match.url_name in header.html), but the header
     // sits outside the swapped region so it's never re-rendered after
     // the first load - recompute it here on every boosted navigation.
+    function thToggleMobilePanel() {
+      var panel = document.getElementById('thMobilePanel');
+      var toggle = document.getElementById('thNavToggle');
+      if (!panel || !toggle) return;
+      var isOpen = panel.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      toggle.querySelector('i').className = isOpen ? 'bi bi-x-lg' : 'bi bi-list';
+    }
+
     function thSyncActiveNav() {
       var path = window.location.pathname;
       document.querySelectorAll('.th-nav-links a[href], .th-mobile-panel a[href]').forEach(function (link) {
@@ -2373,6 +2403,11 @@
       setTimeout(function () { window.scrollTo(0, 0); }, 0);
       var mobilePanel = document.getElementById('thMobilePanel');
       if (mobilePanel) mobilePanel.classList.remove('open');
+      var mobileToggle = document.getElementById('thNavToggle');
+      if (mobileToggle) {
+        mobileToggle.setAttribute('aria-expanded', 'false');
+        mobileToggle.querySelector('i').className = 'bi bi-list';
+      }
       // GA only auto-tracks the initial hard load; boosted navigations
       // never reload gtag.js, so fire a virtual pageview ourselves.
       if (typeof gtag === 'function') {
