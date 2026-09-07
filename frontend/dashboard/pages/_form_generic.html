@@ -3,8 +3,28 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
+<style>
+  /* Long forms (many fields) used to be one narrow column, so a form
+     like the song editor turned into a very tall page of mostly-empty
+     scrolling. CSS multi-column flows the same field blocks into 2
+     columns on wide screens instead - each field's own markup is
+     untouched, this only changes how the blocks are laid out, so it
+     works for every form using this template without special-casing
+     field types. break-inside:avoid keeps a single field's label+input
+     from being split across the column break. */
+  .form-fields-columns {
+    column-count: 2;
+    column-gap: 32px;
+  }
+  .form-fields-columns > .mb-3 {
+    break-inside: avoid;
+  }
+  @media (max-width: 760px) {
+    .form-fields-columns { column-count: 1; }
+  }
+</style>
 <div class="custom-container d-flex justify-content-center">
-  <div class="card card-lg mx-auto w-100" style="max-width: 760px;">
+  <div class="card card-lg mx-auto w-100" style="max-width: 1080px;">
     <div class="card-header d-flex justify-content-between align-items-center accent-primary list-header">
       <div class="d-flex align-items-center gap-3">
         <div class="icon-shape icon-md rounded-3 bg-primary-subtle text-primary"><i class="ti ti-edit"></i></div>
@@ -18,6 +38,7 @@
       {% endif %}
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <div class="form-fields-columns">
         {% for field in form %}
           {% if field.field.widget.input_type == 'hidden' %}
             {{ field }}
@@ -40,6 +61,7 @@
           </div>
           {% endif %}
         {% endfor %}
+        </div>
 
         {% if form.latitude %}
         <div class="mb-3">

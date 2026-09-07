@@ -20,12 +20,7 @@ def serialize_album(album, request=None):
 
 
 def serialize_song(song, request=None):
-    if song.cover_image:
-        cover_url = song.cover_image.url
-    elif song.album_id and song.album.cover_image:
-        cover_url = song.album.cover_image.url
-    else:
-        cover_url = None
+    cover_url = song.display_cover_url
     if cover_url and request:
         cover_url = request.build_absolute_uri(cover_url)
 
