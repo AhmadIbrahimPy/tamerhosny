@@ -4058,6 +4058,66 @@ msgstr "Impressive! Nothing gets past you with Tamer's songs"
 msgid "تمام كده، ذوقك في الأغاني موزون"
 msgstr "Spot on, your taste in music is on point"
 
+#: backend/website_app/views.py
+msgid "ماشاء الله عليك، ودنك موسيقية فعلاً 🎧"
+msgstr "Wow, you've got a real musical ear 🎧"
+
+#: backend/website_app/views.py
+msgid "برافو، ده مستوى المحترفين"
+msgstr "Bravo, that's a pro-level guess"
+
+#: backend/website_app/views.py
+msgid "واضح إنك سامع تامر من زمان"
+msgstr "Clearly you've been listening to Tamer for years"
+
+#: backend/website_app/views.py
+msgid "يا سلام، خمّنتها بسهولة!"
+msgstr "Wow, you nailed it so easily!"
+
+#: backend/website_app/views.py
+msgid "أنت فعلاً من عيلة تامر حسني الكبيرة"
+msgstr "You're really part of Tamer Hosny's big family"
+
+#: backend/website_app/views.py
+msgid "حاسس إنك حافظ الألبومات كلها؟ 😄"
+msgstr "Feels like you've memorized every album 😄"
+
+#: backend/website_app/views.py
+msgid "جميل جدًا، جايبها من أول محاولة"
+msgstr "Beautiful, got it on the first try"
+
+#: backend/website_app/views.py
+msgid "ذوقك الموسيقي عالي جدًا"
+msgstr "Your musical taste is top notch"
+
+#: backend/website_app/views.py
+msgid "كده تستاهل تاج جمهور تامر 👑"
+msgstr "You deserve the Tamer fan crown for this 👑"
+
+#: backend/website_app/views.py
+msgid "مستحيل حد يغلبك في اللعبة دي"
+msgstr "No one's beating you at this game"
+
+#: backend/website_app/views.py
+msgid "شكلك بتسمع تامر كل يوم صح؟"
+msgstr "You listen to Tamer every day, don't you?"
+
+#: backend/website_app/views.py
+msgid "عارف كل نغمة قبل ما تخلص 🎶"
+msgstr "You know every tune before it even ends 🎶"
+
+#: backend/website_app/views.py
+msgid "برافو عليك، ده تحدي مش سهل وعديته"
+msgstr "Well done, that wasn't an easy one and you nailed it"
+
+#: backend/website_app/views.py
+msgid "واثق من نفسك واخترت صح - عاش"
+msgstr "Confident and correct - amazing"
+
+#: backend/website_app/views.py
+msgid "ده مستوى تاني خالص، تحفة"
+msgstr "That's a whole different level, superb"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 
