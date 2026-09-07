@@ -71,12 +71,32 @@
         </div>
         {% endif %}
 
-        <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{% translate "حفظ" %}</button>
-        <a href="{{ back_url }}" class="btn btn-light">{% translate "إلغاء" %}</a>
+        <div id="formSubmitRow">
+          <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{% translate "حفظ" %}</button>
+          <a href="{{ back_url }}" class="btn btn-light">{% translate "إلغاء" %}</a>
+        </div>
+        <div id="formSavingIndicator" class="d-none text-muted">
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          {% if form.instance.pk %}{% translate "جاري التعديل..." %}{% else %}{% translate "جاري الحفظ..." %}{% endif %}
+        </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var form = document.querySelector('form[enctype="multipart/form-data"]');
+  var submitRow = document.getElementById('formSubmitRow');
+  var savingIndicator = document.getElementById('formSavingIndicator');
+  if (!form || !submitRow || !savingIndicator) return;
+
+  form.addEventListener('submit', function () {
+    submitRow.classList.add('d-none');
+    savingIndicator.classList.remove('d-none');
+  });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
