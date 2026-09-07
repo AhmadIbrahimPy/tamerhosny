@@ -117,10 +117,8 @@
         <a href="{% url 'website_app:song-detail' play.song.slug %}" class="th-card aspect-square th-card-song plain slider-item"
           {% if play.song.audio_file %}data-song-id="{{ play.song.pk }}" data-audio-url="{{ play.song.audio_file.url }}"{% endif %}>
           <div class="th-img-wrap">
-            {% if play.song.cover_image %}
-              <img src="{{ play.song.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
-            {% elif play.song.album.cover_image %}
-              <img src="{{ play.song.album.cover_image.url }}" alt="{{ play.song|localized_field:'title' }}">
+            {% if play.song.display_cover_url %}
+              <img src="{{ play.song.display_cover_url }}" alt="{{ play.song|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
@@ -146,10 +144,8 @@
       <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song"
         {% if duet.final_audio_file %}data-song-id="{{ duet.song.pk }}" data-audio-url="{{ duet.final_audio_file.url }}"{% endif %}>
         <div class="th-img-wrap aspect-square">
-          {% if duet.song.cover_image %}
-            <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
-          {% elif duet.song.album.cover_image %}
-            <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+          {% if duet.song.display_cover_url %}
+            <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
           {% else %}
             <i class="bi bi-mic-fill icon-fallback"></i>
           {% endif %}
@@ -182,10 +178,8 @@
         <a href="{% url 'website_app:song-detail' song.slug %}" class="th-card aspect-square th-card-song plain slider-item"
           {% if song.audio_file %}data-song-id="{{ song.pk }}" data-audio-url="{{ song.audio_file.url }}"{% endif %}>
           <div class="th-img-wrap">
-            {% if song.cover_image %}
-              <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-            {% elif song.album.cover_image %}
-              <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+            {% if song.display_cover_url %}
+              <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}

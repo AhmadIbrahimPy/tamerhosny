@@ -68,10 +68,8 @@
         {% for entry in song_credits %}
         <a href="{% url 'website_app:song-detail' entry.song.slug %}" class="th-card aspect-square plain">
           <div class="th-img-wrap">
-            {% if entry.song.cover_image %}
-              <img src="{{ entry.song.cover_image.url }}" alt="{{ entry.song|localized_field:'title' }}">
-            {% elif entry.song.album.cover_image %}
-              <img src="{{ entry.song.album.cover_image.url }}" alt="{{ entry.song|localized_field:'title' }}">
+            {% if entry.song.display_cover_url %}
+              <img src="{{ entry.song.display_cover_url }}" alt="{{ entry.song|localized_field:'title' }}">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}

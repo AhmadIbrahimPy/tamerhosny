@@ -1023,17 +1023,10 @@
 
     <div class="song-cover">
 
-      {% if song.cover_image %}
+      {% if song.display_cover_url %}
 
         <img
-          src="{{ song.cover_image.url }}"
-          alt="{{ song|localized_field:'title' }}"
-        >
-
-      {% elif song.album and song.album.cover_image %}
-
-        <img
-          src="{{ song.album.cover_image.url }}"
+          src="{{ song.display_cover_url }}"
           alt="{{ song|localized_field:'title' }}"
         >
 

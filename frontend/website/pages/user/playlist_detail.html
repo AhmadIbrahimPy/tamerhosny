@@ -34,10 +34,8 @@
       {% if item.song.audio_file %}data-song-id="{{ item.song.pk }}" data-audio-url="{{ item.song.audio_file.url }}" data-link="{% url 'website_app:song-detail' item.song.slug %}"{% endif %}>
       <div class="th-img-wrap aspect-square">
         <a href="{% url 'website_app:song-detail' item.song.slug %}">
-          {% if item.song.cover_image %}
-            <img src="{{ item.song.cover_image.url }}" alt="{{ item.song|localized_field:'title' }}">
-          {% elif item.song.album.cover_image %}
-            <img src="{{ item.song.album.cover_image.url }}" alt="{{ item.song|localized_field:'title' }}">
+          {% if item.song.display_cover_url %}
+            <img src="{{ item.song.display_cover_url }}" alt="{{ item.song|localized_field:'title' }}">
           {% else %}
             <i class="bi bi-music-note-beamed icon-fallback"></i>
           {% endif %}

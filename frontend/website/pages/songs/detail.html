@@ -10,7 +10,7 @@
 {% block og_type %}music.song{% endblock %}
 {% block og_title %}{{ song|localized_field:'title' }} - {% translate "تامر حسني" %}{% endblock %}
 {% block og_description %}{% blocktranslate with title=song|localized_field:'title' %}استمع لأغنية {{ title }} لتامر حسني{% endblocktranslate %}{% if song.album %} - {{ song.album|localized_field:'title' }}{% endif %}{% endblock %}
-{% block og_image %}{% if song.cover_image %}{{ request.scheme }}://{{ request.get_host }}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ request.scheme }}://{{ request.get_host }}{{ song.album.cover_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_image %}{% if song.display_cover_url %}{{ request.scheme }}://{{ request.get_host }}{{ song.display_cover_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -1698,14 +1698,14 @@
 
     <!-- Hero Section -->
     <div class="song-hero" id="songHero">
-        <div class="song-hero-bg" style="background-image:url('{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}');"></div>
+        <div class="song-hero-bg" style="background-image:url('{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}');"></div>
 
         <div class="song-hero-inner">
 
             <!-- العمود الأول: الصورة وتحت منها الإحصائيات -->
             <div class="song-hero-media">
                 <div class="song-cover">
-                    <img src="{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}" alt="{{ song|localized_field:'title' }}">
+                    <img src="{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}" alt="{{ song|localized_field:'title' }}">
                     {% if audio_url %}
                     <button id="audioPlayBtn" class="cover-play-btn" onclick="toggleGlobalSongAudio(this)">
                         <i class="bi bi-play-fill" id="playIcon"></i>
@@ -1741,10 +1741,8 @@
                 {% if duet %}
                 <a href="{% url 'website_app:song-detail' song.slug %}" class="original-song-card">
                     <div class="original-song-cover">
-                        {% if song.cover_image %}
-                            <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-                        {% elif song.album.cover_image %}
-                            <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+                        {% if song.display_cover_url %}
+                            <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}">
                         {% else %}
                             <i class="bi bi-music-note-beamed"></i>
                         {% endif %}
@@ -2065,10 +2063,8 @@
               <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
-                  {% if other.cover_image %}
-                    <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-                  {% elif other.album and other.album.cover_image %}
-                    <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% if other.display_cover_url %}
+                    <img src="{{ other.display_cover_url }}" alt="{{ other|localized_field:'title' }}">
                   {% else %}
                     <i class="bi bi-music-note-beamed icon-fallback"></i>
                   {% endif %}
@@ -2101,10 +2097,8 @@
               <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
-                  {% if other.cover_image %}
-                    <img src="{{ other.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
-                  {% elif other.album and other.album.cover_image %}
-                    <img src="{{ other.album.cover_image.url }}" alt="{{ other|localized_field:'title' }}">
+                  {% if other.display_cover_url %}
+                    <img src="{{ other.display_cover_url }}" alt="{{ other|localized_field:'title' }}">
                   {% else %}
                     <i class="bi bi-music-note-beamed icon-fallback"></i>
                   {% endif %}
@@ -2135,10 +2129,8 @@
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
-                  {% if other_duet.song.cover_image %}
-                    <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
-                  {% elif other_duet.song.album.cover_image %}
-                    <img src="{{ other_duet.song.album.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
+                  {% if other_duet.song.display_cover_url %}
+                    <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
                   {% else %}
                     <i class="bi bi-mic-fill icon-fallback"></i>
                   {% endif %}
@@ -2170,10 +2162,8 @@
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
-                  {% if other_duet.song.cover_image %}
-                    <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
-                  {% elif other_duet.song.album.cover_image %}
-                    <img src="{{ other_duet.song.album.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
+                  {% if other_duet.song.display_cover_url %}
+                    <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
                   {% else %}
                     <i class="bi bi-mic-fill icon-fallback"></i>
                   {% endif %}
@@ -2201,10 +2191,8 @@
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
-                  {% if other_duet.song.cover_image %}
-                    <img src="{{ other_duet.song.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
-                  {% elif other_duet.song.album.cover_image %}
-                    <img src="{{ other_duet.song.album.cover_image.url }}" alt="{{ other_duet.song|localized_field:'title' }}">
+                  {% if other_duet.song.display_cover_url %}
+                    <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
                   {% else %}
                     <i class="bi bi-mic-fill icon-fallback"></i>
                   {% endif %}
@@ -2243,10 +2231,8 @@
         <div class="remix-composition">
           <div class="remix-song">
             <div class="remix-cover">
-              {% if song.cover_image %}
-                <img src="{{ song.cover_image.url }}" alt="">
-              {% elif song.album and song.album.cover_image %}
-                <img src="{{ song.album.cover_image.url }}" alt="">
+              {% if song.display_cover_url %}
+                <img src="{{ song.display_cover_url }}" alt="">
               {% else %}
                 <i class="bi bi-music-note-beamed"></i>
               {% endif %}
@@ -2336,10 +2322,8 @@
       </button>
     </div>
     <div class="leaderboard-card">
-      {% if song.cover_image %}
-        <img src="{{ song.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
-      {% elif song.album and song.album.cover_image %}
-        <img src="{{ song.album.cover_image.url }}" alt="{{ song|localized_field:'title' }}">
+      {% if song.display_cover_url %}
+        <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}">
       {% else %}
         <div class="icon-fallback"><i class="bi bi-music-note-beamed"></i></div>
       {% endif %}
@@ -3193,7 +3177,7 @@
     {% if audio_url %}
     const songUrl = '{{ audio_url|escapejs }}';
     const songTitle = '{{ player_title|escapejs }}';
-    const songImage = '{% if song.cover_image %}{{ song.cover_image.url }}{% elif song.album and song.album.cover_image %}{{ song.album.cover_image.url }}{% endif %}';
+    const songImage = '{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}';
     const songLink = window.location.href;
     const songId = {{ song.pk }};
     const isDuet = {% if duet %}true{% else %}false{% endif %};
@@ -3240,7 +3224,7 @@
         {% for song in album_songs %}
         {
           title: '{{ song|localized_field:"title"|escapejs }}',
-          image: '{% if song.cover_image %}{{ song.cover_image.url|escapejs }}{% elif song.album.cover_image %}{{ song.album.cover_image.url|escapejs }}{% endif %}',
+          image: '{% if song.display_cover_url %}{{ song.display_cover_url|escapejs }}{% endif %}',
           link: '/songs/{{ song.slug|escapejs }}/',
           duration: '{% if song.duration_seconds %}{{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}{% endif %}'
         }{% if not forloop.last %},{% endif %}

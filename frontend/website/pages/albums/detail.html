@@ -138,10 +138,8 @@
       <a href="{% url 'website_app:song-detail' song.slug %}" class="th-track-row">
         <span class="th-track-num">{{ forloop.counter }}</span>
         <span class="th-track-thumb">
-          {% if song.cover_image %}
-            <img src="{{ song.cover_image.url }}" alt="">
-          {% elif album.cover_image %}
-            <img src="{{ album.cover_image.url }}" alt="">
+          {% if song.display_cover_url %}
+            <img src="{{ song.display_cover_url }}" alt="">
           {% else %}
             <i class="bi bi-music-note-beamed icon-fallback" style="font-size:16px;"></i>
           {% endif %}
@@ -227,7 +225,7 @@ window.albumTracks = [
   {
     songId: {{ song.pk }},
     title: '{{ song|localized_field:"title"|escapejs }}',
-    image: '{% if song.cover_image %}{{ song.cover_image.url|escapejs }}{% elif album.cover_image %}{{ album.cover_image.url|escapejs }}{% endif %}',
+    image: '{% if song.display_cover_url %}{{ song.display_cover_url|escapejs }}{% endif %}',
     link: '{% url "website_app:song-detail" song.slug %}',
     url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
     duration: '{% if song.duration_seconds %}{{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}{% endif %}',

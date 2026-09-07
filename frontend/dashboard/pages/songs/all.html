@@ -29,12 +29,8 @@
           <tr>
             <td>
               <a href="{% url 'dashboard_app:song-view' song.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
-                {% if song.cover_image %}
-                  <img src="{{ song.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
-                {% elif song.album.cover_image %}
-                  <img src="{{ song.album.cover_image.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
-                {% elif song.album.cover_art_url %}
-                  <img src="{{ song.album.cover_art_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% if song.display_cover_url %}
+                  <img src="{{ song.display_cover_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
                 {% else %}
                   <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ song.title_ar|slice:":1" }}</span>
                 {% endif %}

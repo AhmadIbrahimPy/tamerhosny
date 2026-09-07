@@ -31,10 +31,8 @@
     {% for duet in processing_duets %}
     <div class="th-card th-card-song duet-processing-card">
       <div class="th-img-wrap aspect-square">
-        {% if duet.song.cover_image %}
-          <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
-        {% elif duet.song.album.cover_image %}
-          <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% if duet.song.display_cover_url %}
+          <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
         {% else %}
           <i class="bi bi-mic-fill icon-fallback"></i>
         {% endif %}
@@ -58,10 +56,8 @@
     <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song"
       {% if duet.final_audio_file %}data-song-id="{{ duet.song.pk }}" data-audio-url="{{ duet.final_audio_file.url }}"{% endif %}>
       <div class="th-img-wrap aspect-square">
-        {% if duet.song.cover_image %}
-          <img src="{{ duet.song.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
-        {% elif duet.song.album.cover_image %}
-          <img src="{{ duet.song.album.cover_image.url }}" alt="{{ duet.song|localized_field:'title' }}">
+        {% if duet.song.display_cover_url %}
+          <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
         {% else %}
           <i class="bi bi-mic-fill icon-fallback"></i>
         {% endif %}

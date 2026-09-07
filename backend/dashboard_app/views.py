@@ -809,7 +809,7 @@ def song_edit(request, pk):
     form = SongForm(request.POST or None, request.FILES or None, instance=song)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('dashboard_app:songs')
+        return redirect('dashboard_app:song-view', pk=pk)
     return render(request, 'dashboard/pages/_form_generic.html', {
         'form': form,
         'page_title': f'{_("تعديل")}: {song.title_ar}',
@@ -883,11 +883,7 @@ def song_view(request, pk):
         },
     ]
 
-    image_url = None
-    if song.cover_image:
-        image_url = song.cover_image.url
-    elif song.album and song.album.cover_art_url:
-        image_url = song.album.cover_art_url
+    image_url = song.display_cover_url
 
     # Prev/next through the same order the songs list shows them in, so
     # editing a song and landing back on its view page lets you keep

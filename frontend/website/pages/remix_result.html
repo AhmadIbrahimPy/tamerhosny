@@ -116,10 +116,8 @@
       {% if song1 %}
       <div class="th-song-card">
         <div class="th-song-card-cover">
-          {% if song1.cover_image %}
-            <img src="{{ song1.cover_image.url }}" alt="{{ song1.title_ar }}">
-          {% elif song1.album.cover_image %}
-            <img src="{{ song1.album.cover_image.url }}" alt="{{ song1.title_ar }}">
+          {% if song1.display_cover_url %}
+            <img src="{{ song1.display_cover_url }}" alt="{{ song1.title_ar }}">
           {% else %}
             <i class="bi bi-music-note-beamed icon-fallback"></i>
           {% endif %}
@@ -138,10 +136,8 @@
       {% if song2 %}
       <div class="th-song-card">
         <div class="th-song-card-cover">
-          {% if song2.cover_image %}
-            <img src="{{ song2.cover_image.url }}" alt="{{ song2.title_ar }}">
-          {% elif song2.album.cover_image %}
-            <img src="{{ song2.album.cover_image.url }}" alt="{{ song2.title_ar }}">
+          {% if song2.display_cover_url %}
+            <img src="{{ song2.display_cover_url }}" alt="{{ song2.title_ar }}">
           {% else %}
             <i class="bi bi-music-note-beamed icon-fallback"></i>
           {% endif %}

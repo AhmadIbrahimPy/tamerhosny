@@ -157,10 +157,8 @@
   {% if top_song %}
   <a href="{% url 'website_app:song-detail' top_song.slug %}" class="recap-top-song">
     <div class="cover">
-      {% if top_song.cover_image %}
-        <img src="{{ top_song.cover_image.url }}" alt="{{ top_song|localized_field:'title' }}">
-      {% elif top_song.album.cover_image %}
-        <img src="{{ top_song.album.cover_image.url }}" alt="{{ top_song|localized_field:'title' }}">
+      {% if top_song.display_cover_url %}
+        <img src="{{ top_song.display_cover_url }}" alt="{{ top_song|localized_field:'title' }}">
       {% else %}
         <div class="icon-fallback"><i class="bi bi-music-note-beamed"></i></div>
       {% endif %}
@@ -202,10 +200,8 @@
     <a href="{% url 'website_app:song-detail' play.song.slug %}" class="recap-top-list-row">
       <span class="rank">{{ forloop.counter }}</span>
       <span class="cover">
-        {% if play.song.cover_image %}
-          <img src="{{ play.song.cover_image.url }}" alt="">
-        {% elif play.song.album.cover_image %}
-          <img src="{{ play.song.album.cover_image.url }}" alt="">
+        {% if play.song.display_cover_url %}
+          <img src="{{ play.song.display_cover_url }}" alt="">
         {% endif %}
       </span>
       <span class="name">{{ play.song|localized_field:'title' }}</span>
