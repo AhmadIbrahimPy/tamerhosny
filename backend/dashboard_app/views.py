@@ -7,7 +7,7 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Q
+from django.db.models import Case, Count, IntegerField, Max, Q, Value, When
 from django.db.models.functions import TruncDate, TruncHour
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -453,13 +453,21 @@ def entity_link_delete(request, kind, object_id, link_pk):
 
 @dashboard_required
 def people_list(request):
-    queryset = Person.objects.all()
+    # Tamer Hosny (slug is set once on import/creation - see
+    # media_app.management.commands.import_movie_credits and
+    # website_app.views for the same slug used to look him up elsewhere)
+    # always leads the list, regardless of search/filter/alphabetical
+    # order - he's the site's whole subject, not just another person row.
+    queryset = Person.objects.annotate(
+        is_tamer=Case(When(slug='tamer-hosny', then=Value(0)), default=Value(1), output_field=IntegerField()),
+    )
     q = request.GET.get('q')
     if q:
         queryset = queryset.filter(Q(full_name_ar__icontains=q) | Q(full_name_en__icontains=q))
     role_filter = request.GET.get('filter')
     if role_filter:
         queryset = queryset.filter(primary_role=role_filter)
+    queryset = queryset.order_by('is_tamer', 'full_name_ar')
     people = _paginate(request, queryset)
     return render(request, 'dashboard/pages/people/all.html', {
         'people': people,
@@ -488,6 +496,11 @@ def person_edit(request, pk):
 
 @dashboard_required
 def person_view(request, pk):
+    """One person's dashboard page - Tamer Hosny himself can rack up
+    hundreds of song/media credits, which the old flat page rendered
+    all at once with no paging; split into tabs (one per relation),
+    each independently paginated, same as the song/album/user pages.
+    """
     person = get_object_or_404(Person, pk=pk)
     fields = [
         (_('الاسم بالعربية'), person.full_name_ar),
@@ -495,71 +508,35 @@ def person_view(request, pk):
         (_('نبذة'), person.bio),
     ]
 
+    active_tab = request.GET.get('tab') or 'overview'
+
     song_credits_qs = person.song_credits.select_related('song', 'song__album').order_by('-song__release_year')
     media_credits_qs = person.media_credits.select_related('media').order_by('-media__release_date')
     song_credits = dedupe_credits(song_credits_qs, 'song')
     media_credits = dedupe_credits(media_credits_qs, 'media', extra_label=lambda credit: credit.character_name)
+    song_credits_page = _paginate_named(request, song_credits, 'songs_page')
+    media_credits_page = _paginate_named(request, media_credits, 'media_page')
 
     albums = {}
     for credit in song_credits_qs:
         if credit.song.album_id and credit.song.album_id not in albums:
             albums[credit.song.album_id] = credit.song.album
 
-    related_sections = [
-        {
-            'title': _('الألبومات'),
-            'items': [
-                {'label': album.title_ar, 'url': reverse('dashboard_app:album-view', args=[album.pk])}
-                for album in albums.values()
-            ],
-        },
-        {
-            'title': _('الأغاني'),
-            'items': [
-                {
-                    'label': entry['song'].title_ar,
-                    'url': reverse('dashboard_app:song-view', args=[entry['song'].pk]),
-                    'meta': '، '.join(entry['roles']),
-                }
-                for entry in song_credits
-            ],
-        },
-        {
-            'title': _('الأفلام والمسلسلات والإعلانات'),
-            'items': [
-                {
-                    'label': entry['media'].title_ar,
-                    'url': reverse('dashboard_app:media-view', args=[entry['media'].pk]),
-                    'meta': '، '.join(entry['roles']),
-                }
-                for entry in media_credits
-            ],
-        },
-        {
-            'title': _('روابط المنصات'),
-            'items': [
-                {
-                    'label': link.platform.get_platform_name_display(),
-                    'url': link.direct_url,
-                    'meta': link.get_access_type_display(),
-                    'external': True,
-                }
-                for link in person.links.select_related('platform').all()
-            ],
-        },
-    ]
+    links = person.links.select_related('platform').all()
 
-    return render(request, 'dashboard/pages/_detail_generic.html', {
-        'page_title': person.full_name_ar,
-        'subtitle': person.get_primary_role_display(),
+    return render(request, 'dashboard/pages/person_detail.html', {
+        'person': person,
         'fields': fields,
-        'related_sections': related_sections,
         'image_url': person.profile_image.url if person.profile_image else None,
         'stats': _event_counts_for(person),
-        'extra_actions': [
-            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['person', pk])},
-        ],
+        'active_tab': active_tab,
+        'albums': albums.values(),
+        'song_credits_page': song_credits_page,
+        'media_credits_page': media_credits_page,
+        'links': links,
+        'platform_links_url': reverse('dashboard_app:entity-links', args=['person', pk]),
         'edit_url': reverse('dashboard_app:person-edit', args=[pk]),
+        'delete_url': reverse('dashboard_app:person-delete', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:people')),
     })
 

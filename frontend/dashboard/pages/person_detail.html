@@ -1,0 +1,196 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{{ person.full_name_ar }}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+
+  <!-- Hero -->
+  <div class="card card-lg mb-4">
+    <div class="card-body d-flex align-items-center gap-4 flex-wrap">
+      {% if image_url %}
+        <a href="{{ image_url }}" target="_blank" rel="noopener" class="rounded-circle overflow-hidden flex-shrink-0" style="width:88px;height:88px;display:block;">
+          <img src="{{ image_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+        </a>
+      {% else %}
+        <span class="rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold flex-shrink-0" style="width:88px;height:88px;font-size:32px;">
+          {{ person.full_name_ar|slice:":1" }}
+        </span>
+      {% endif %}
+
+      <div class="flex-grow-1">
+        <h4 class="mb-1">{{ person.full_name_ar }}</h4>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ person.get_primary_role_display }}</span>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ edit_url }}" class="btn btn-sm btn-primary"><i class="ti ti-pencil me-1"></i>{% translate "تعديل" %}</a>
+        <form action="{{ delete_url }}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+        </form>
+        <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Analytics sidebar -->
+    <div class="col-xl-4">
+      <div class="card card-lg" style="position: sticky; top: 20px;">
+        <div class="card-header"><h6 class="mb-0"><i class="ti ti-chart-bar text-muted me-1"></i>{% translate "إحصائيات الأداء" %}</h6></div>
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-primary-subtle text-primary"><i class="ti ti-eye"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاهدات" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.VIEW }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-success-subtle text-success"><i class="ti ti-player-play"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "التشغيل" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.PLAY }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-info-subtle text-info"><i class="ti ti-share-3"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاركات" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.SHARE }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-warning-subtle text-warning"><i class="ti ti-external-link"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "ضغطات المنصات الخارجية" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.EXTERNAL_CLICK }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabbed data -->
+    <div class="col-xl-8">
+      <div class="card card-lg">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'overview' %}active{% endif %}" href="?tab=overview">{% translate "نظرة عامة" %}</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'albums' %}active{% endif %}" href="?tab=albums">
+                {% translate "الألبومات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ albums|length }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'songs' %}active{% endif %}" href="?tab=songs">
+                {% translate "الأغاني" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ song_credits_page.paginator.count }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'media' %}active{% endif %}" href="?tab=media">
+                {% translate "الأفلام والمسلسلات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ media_credits_page.paginator.count }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'links' %}active{% endif %}" href="?tab=links">
+                {% translate "روابط المنصات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ links|length }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-body p-0">
+
+          {% if active_tab == 'overview' %}
+          <table class="table detail-fields-table mb-0">
+            <tbody>
+              {% for label, value in fields %}
+              <tr>
+                <th class="text-muted" style="width: 220px;">{{ label }}</th>
+                <td>{{ value|default:"-"|linebreaksbr }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          {% elif active_tab == 'albums' %}
+          <div class="list-group list-group-flush">
+            {% for album in albums %}
+            <a href="{% url 'dashboard_app:album-view' album.pk %}" class="list-group-item list-group-item-action">{{ album.title_ar }}</a>
+            {% empty %}
+            <div class="list-group-item text-muted text-center py-4">{% translate "لا يوجد" %}</div>
+            {% endfor %}
+          </div>
+
+          {% elif active_tab == 'songs' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "الأغنية" %}</th>
+                <th>{% translate "الأدوار" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for entry in song_credits_page %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:song-view' entry.song.pk %}">{{ entry.song.title_ar }}</a></td>
+                  <td>{{ entry.roles|join:"، " }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=song_credits_page param="songs_page" prefix="tab=songs&" %}
+
+          {% elif active_tab == 'media' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "العمل" %}</th>
+                <th>{% translate "الأدوار" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for entry in media_credits_page %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:media-view' entry.media.pk %}">{{ entry.media.title_ar }}</a></td>
+                  <td>{{ entry.roles|join:"، " }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=media_credits_page param="media_page" prefix="tab=media&" %}
+
+          {% elif active_tab == 'links' %}
+          <div class="d-flex justify-content-end p-3 pb-0">
+            <a href="{{ platform_links_url }}" class="btn btn-sm btn-outline-primary">{% translate "إدارة روابط المنصات" %}</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "المنصة" %}</th>
+                <th>{% translate "نوع الوصول" %}</th>
+                <th>{% translate "الرابط" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for link in links %}
+                <tr>
+                  <td>{{ link.platform.get_platform_name_display }}</td>
+                  <td>{{ link.get_access_type_display }}</td>
+                  <td><a href="{{ link.direct_url }}" target="_blank" rel="noopener">{{ link.direct_url|truncatechars:50 }}</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
