@@ -17,7 +17,6 @@
   }
   .guess-header h1{font-size:22px;font-weight:900;margin:0 0 6px;}
   .guess-header p{color:var(--muted); font-size:13.5px; margin:0;}
-  .guess-hype-line{color:var(--accent) !important; font-weight:700; margin-top:8px !important;}
 
   /* Mystery cover: the actual art stays hidden until the round ends,
      but a plain empty box read as unfinished/broken rather than "the
@@ -137,7 +136,7 @@
   .guess-result .cover img{width:100%;height:100%;object-fit:cover; border-radius:13px; display:block;}
   .guess-result h2{font-size:20px; font-weight:900; margin:0 0 6px; position:relative; z-index:1;}
   .guess-result p{color:var(--muted); font-size:13.5px; margin:0 0 18px; position:relative; z-index:1;}
-  .guess-result-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1;}
+  .guess-result-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px;}
   .guess-btn{
     display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:12px;
     border:1px solid var(--border); background:var(--card); color:var(--text);
@@ -168,11 +167,11 @@
   }
   .guess-result.won{
     padding:26px 22px 22px;
-    background:linear-gradient(120deg, #6a3cff, #d4af37, #ff5c8a, #4fd4ff, #6a3cff);
+    background:linear-gradient(120deg, #2b0b5e, #6d0f8c, #8c0f47, #142a6e, #2b0b5e);
     background-size:300% 300%;
     animation:guessFadeUp .5s ease both, guessWonGradient 10s ease infinite;
     border:1px solid rgba(255,255,255,.25);
-    box-shadow:0 24px 50px -18px rgba(138,92,255,.55);
+    box-shadow:0 24px 50px -18px rgba(43,11,94,.65);
   }
   .guess-result.won .guess-sparkle{
     position:absolute; z-index:0; color:rgba(255,255,255,.75); pointer-events:none;
@@ -185,19 +184,19 @@
   .guess-result.won .guess-sparkle.s5{top:50%; inset-inline-start:6px; font-size:10px; animation-delay:2.4s;}
 
   .guess-result-user{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    margin-bottom:16px; position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin-bottom:18px; position:relative; z-index:1;
   }
   .guess-result-avatar, .guess-result-avatar-fallback{
-    width:34px; height:34px; border-radius:50%; flex-shrink:0;
-    border:2px solid rgba(255,255,255,.8); box-shadow:0 4px 12px rgba(0,0,0,.25);
+    width:52px; height:52px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,255,255,.85); box-shadow:0 4px 14px rgba(0,0,0,.3);
   }
   .guess-result-avatar{object-fit:cover;}
   .guess-result-avatar-fallback{
     display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,.22); color:#fff; font-weight:900; font-size:13px;
+    background:rgba(255,255,255,.22); color:#fff; font-weight:900; font-size:20px;
   }
-  .guess-result-username{color:#fff; font-weight:800; font-size:13.5px;}
+  .guess-result-username{color:#fff; font-weight:800; font-size:17px;}
 
   .guess-result.won .guess-badge{
     width:44px; height:44px; border-radius:50%; margin:0 auto 10px;
@@ -209,11 +208,7 @@
     background:rgba(255,255,255,.35); box-shadow:0 14px 34px rgba(0,0,0,.3);
   }
   .guess-result.won h2{color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.2);}
-  .guess-result.won p{color:rgba(255,255,255,.92);}
-  .guess-result.won .guess-hype-line{color:#fff !important; text-shadow:0 1px 6px rgba(0,0,0,.2);}
-  .guess-result.won .guess-btn{background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.4); color:#fff;}
-  .guess-result.won .guess-btn:hover{background:rgba(255,255,255,.28); color:#fff; border-color:#fff;}
-  .guess-result.won .guess-btn.primary{background:#fff; color:#3d2a7a;}
+  .guess-result.won p{color:#fff; font-size:16px; font-weight:700;}
 
   .guess-result-brand{
     display:flex; align-items:center; justify-content:center; gap:6px;
@@ -314,7 +309,6 @@
         </div>
         <h2>{% translate "برافو! 🎉" %}</h2>
         <p>{{ answer.title }}</p>
-        {% if hype_line %}<p class="guess-hype-line">{{ hype_line }}</p>{% endif %}
       {% else %}
         <div class="cover">
           {% if answer.cover_url %}<img src="{{ answer.cover_url }}" alt="">{% else %}<i class="bi bi-music-note-beamed" style="font-size:40px;"></i>{% endif %}
@@ -323,21 +317,21 @@
         <p>{% blocktranslate with title=answer.title %}الأغنية كانت: {{ title }}{% endblocktranslate %}</p>
       {% endif %}
 
-      <div class="guess-result-actions">
-        <button type="button" class="guess-btn primary" id="guessShareBtn">
-          <i class="bi bi-share-fill"></i> {% translate "شارك نتيجتك" %}
-        </button>
-        {% if answer.slug %}
-        <a href="{% url 'website_app:song-detail' answer.slug %}" class="guess-btn">
-          <i class="bi bi-play-circle"></i> {% translate "اسمع الأغنية كاملة" %}
-        </a>
-        {% endif %}
-      </div>
-
       {% if won %}
       <div class="guess-result-brand">
         <i class="bi bi-music-note-beamed"></i> {% translate "خمّن الأغنية" %} · th.lexora.vip
       </div>
+      {% endif %}
+    </div>
+
+    <div class="guess-result-actions">
+      <button type="button" class="guess-btn primary" id="guessShareBtn">
+        <i class="bi bi-share-fill"></i> {% translate "شارك نتيجتك" %}
+      </button>
+      {% if answer.slug %}
+      <a href="{% url 'website_app:song-detail' answer.slug %}" class="guess-btn">
+        <i class="bi bi-play-circle"></i> {% translate "اسمع الأغنية كاملة" %}
+      </a>
       {% endif %}
     </div>
     {% endif %}

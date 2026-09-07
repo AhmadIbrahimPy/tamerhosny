@@ -924,32 +924,31 @@ DAILY_GUESS_REVEAL_SCHEDULE = [6]
 DAILY_GUESS_MAX_ATTEMPTS = len(DAILY_GUESS_REVEAL_SCHEDULE)
 DAILY_GUESS_NO_REPEAT_DAYS = 30
 
-# A different compliment on a correct guess, so winning doesn't always
-# show the exact same line - shown inside the result card, not as a
-# generic pre-game instructions blurb.
-DAILY_GUESS_WIN_LINES = [
-    _('شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤'),
-    _('ده انت من جمهور تامر الأصليين فعلاً 👏'),
-    _('عارفها من أول ثانية؟ يبقى انت جمهور VIP'),
-    _('احترافية! مفيش حد يفوتك في أغاني تامر'),
-    _('تمام كده، ذوقك في الأغاني موزون'),
-]
+
+def _daily_guess_pick_song(exclude_ids=()):
+    eligible = Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
+    return eligible.exclude(pk__in=exclude_ids).order_by('?').first() or eligible.order_by('?').first()
 
 
-def _get_or_create_daily_challenge(today):
-    challenge = DailyGuessChallenge.objects.filter(date=today).select_related('song').first()
+def _get_or_create_daily_challenge(today, user):
+    """Each signed-in user gets their own random song for the day -
+    stored per (date, user) so it stays the same across refreshes and
+    devices, but two different users opening the game the same day
+    almost certainly get different songs.
+    """
+    challenge = DailyGuessChallenge.objects.filter(date=today, user=user).select_related('song').first()
     if challenge:
         return challenge
 
     recent_song_ids = list(
-        DailyGuessChallenge.objects.order_by('-date')[:DAILY_GUESS_NO_REPEAT_DAYS].values_list('song_id', flat=True)
+        DailyGuessChallenge.objects.filter(user=user).order_by('-date')[:DAILY_GUESS_NO_REPEAT_DAYS]
+        .values_list('song_id', flat=True)
     )
-    eligible = Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
-    song = eligible.exclude(pk__in=recent_song_ids).order_by('?').first() or eligible.order_by('?').first()
+    song = _daily_guess_pick_song(exclude_ids=recent_song_ids)
     if not song:
         return None
 
-    challenge, _created = DailyGuessChallenge.objects.get_or_create(date=today, defaults={'song': song})
+    challenge, _created = DailyGuessChallenge.objects.get_or_create(date=today, user=user, defaults={'song': song})
     return challenge
 
 
@@ -969,7 +968,7 @@ def _daily_guess_clip_start_seconds(song):
     return 0.0
 
 
-def _daily_guess_build_choices(challenge):
+def _daily_guess_build_choices(song):
     """Correct answer + 2 random wrong songs, shuffled once and then
     kept fixed for this session (stored alongside the rest of the game
     state) - regenerating them on every request would let someone just
@@ -978,26 +977,48 @@ def _daily_guess_build_choices(challenge):
     """
     distractors = list(
         Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
-        .exclude(pk=challenge.song_id).order_by('?')[:2]
+        .exclude(pk=song.pk).order_by('?')[:2]
     )
-    choices = [{'id': challenge.song_id, 'title': str(challenge.song)}]
-    choices += [{'id': song.pk, 'title': str(song)} for song in distractors]
+    choices = [{'id': song.pk, 'title': str(song)}]
+    choices += [{'id': other.pk, 'title': str(other)} for other in distractors]
     random.shuffle(choices)
     return choices
 
 
 def daily_guess_game(request):
-    """صفحة لعبة 'خمّن الأغنية' اليومية."""
+    """صفحة لعبة 'خمّن الأغنية' اليومية - كل يوزر بياخد أغنية عشوائية
+    مختلفة، مش نفس الأغنية لكل الناس."""
     today = timezone.localdate()
-    challenge = _get_or_create_daily_challenge(today)
-
-    if challenge is None:
-        return render(request, 'website/pages/daily_guess.html', {'no_songs': True})
-
     session_key = _daily_guess_session_key(today)
     state = request.session.get(session_key)
-    if state is None:
-        state = {'guesses': [], 'won': False, 'lost': False, 'choices': _daily_guess_build_choices(challenge)}
+
+    # A signed-in user's song is authoritative from the DB (so it stays
+    # identical across devices/tabs); an anonymous visitor has no DB row
+    # at all, so whatever is already in their session is authoritative
+    # instead. Either way this resolves the ONE song this request should
+    # use, before touching session state at all.
+    if request.user.is_authenticated:
+        challenge = _get_or_create_daily_challenge(today, request.user)
+        if challenge is None:
+            return render(request, 'website/pages/daily_guess.html', {'no_songs': True})
+        song = challenge.song
+    elif state is not None:
+        song = Song.objects.filter(pk=state.get('song_id')).select_related('album').first()
+    else:
+        song = None
+
+    if song is None:
+        song = _daily_guess_pick_song()
+        if song is None:
+            return render(request, 'website/pages/daily_guess.html', {'no_songs': True})
+
+    # Reset the in-progress state if it's missing, stale (pointed at a
+    # song that's since been deleted), or no longer matches the song
+    # just resolved above (e.g. logging in revealed a different song
+    # already assigned to this account on another device).
+    if state is None or state.get('song_id') != song.pk:
+        state = {'song_id': song.pk, 'guesses': [], 'won': False, 'lost': False}
+        state['choices'] = _daily_guess_build_choices(song)
         request.session[session_key] = state
         request.session.modified = True
 
@@ -1016,8 +1037,6 @@ def daily_guess_game(request):
             }]
             state['won'] = existing_attempt.correct
             state['lost'] = not existing_attempt.correct
-            if state['won']:
-                state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
             request.session[session_key] = state
             request.session.modified = True
 
@@ -1025,19 +1044,19 @@ def daily_guess_game(request):
     finished = state['won'] or state['lost']
 
     if finished:
-        revealed_seconds = float(challenge.song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
+        revealed_seconds = float(song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
         answer = {
-            'title': str(challenge.song),
-            'slug': challenge.song.slug,
-            'cover_url': challenge.song.display_cover_url,
+            'title': str(song),
+            'slug': song.slug,
+            'cover_url': song.display_cover_url,
         }
     else:
         revealed_seconds = DAILY_GUESS_REVEAL_SCHEDULE[min(attempts_used, DAILY_GUESS_MAX_ATTEMPTS - 1)]
         answer = None
 
     return render(request, 'website/pages/daily_guess.html', {
-        'audio_url': challenge.song.audio_file.url,
-        'clip_start_seconds': _daily_guess_clip_start_seconds(challenge.song),
+        'audio_url': song.audio_file.url,
+        'clip_start_seconds': _daily_guess_clip_start_seconds(song),
         'revealed_seconds': revealed_seconds,
         'attempts_used': attempts_used,
         'max_attempts': DAILY_GUESS_MAX_ATTEMPTS,
@@ -1049,10 +1068,6 @@ def daily_guess_game(request):
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
         'remaining_attempts': DAILY_GUESS_MAX_ATTEMPTS - attempts_used,
         'choices': state['choices'],
-        'hype_line': (
-            DAILY_GUESS_WIN_LINES[state['win_line_index'] % len(DAILY_GUESS_WIN_LINES)]
-            if state['won'] and state.get('win_line_index') is not None else None
-        ),
     })
 
 
@@ -1063,7 +1078,7 @@ def daily_guess_attempt(request):
         return JsonResponse({'error': 'login_required'}, status=401)
 
     today = timezone.localdate()
-    challenge = _get_or_create_daily_challenge(today)
+    challenge = _get_or_create_daily_challenge(today, request.user)
     if challenge is None:
         return JsonResponse({'error': 'no songs available'}, status=400)
 
@@ -1101,10 +1116,6 @@ def daily_guess_attempt(request):
 
     if is_correct:
         state['won'] = True
-        # Picked once and stashed in the session (not re-rolled on every
-        # render) so a page refresh keeps showing the same compliment
-        # instead of a new random one each time.
-        state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
     elif len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
         state['lost'] = True
 

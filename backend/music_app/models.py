@@ -224,21 +224,30 @@ class SongLyricSegment(models.Model):
 
 
 class DailyGuessChallenge(models.Model):
-    """The one song picked as the "guess the song" daily challenge for a
-    given calendar date. Created lazily (get_or_create) the first time
-    anyone opens the game that day, not by a scheduled job - there's
-    nothing to precompute, the pick itself is just a random song.
+    """The song picked as a signed-in user's "guess the song" challenge
+    for a given calendar date - one row per (date, user), not one song
+    shared by everyone, so each account gets its own random pick that
+    still stays put across devices/sessions on the same day. Created
+    lazily (get_or_create) the first time that user opens the game that
+    day, not by a scheduled job - there's nothing to precompute, the
+    pick itself is just a random song. Anonymous visitors never get a
+    row here - their in-progress pick lives only in the browser session
+    until they log in.
     """
 
-    date = models.DateField(unique=True)
+    date = models.DateField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_guess_challenges')
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='+')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['date', 'user'], name='unique_daily_guess_challenge_per_user'),
+        ]
         ordering = ('-date',)
 
     def __str__(self):
-        return f'{self.date}: {self.song}'
+        return f'{self.date} ({self.user}): {self.song}'
 
 
 class DailyGuessAttempt(models.Model):
