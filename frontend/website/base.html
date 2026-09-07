@@ -2558,36 +2558,54 @@
         });
       };
 
+      function subscribeAndSave() {
+        return swReady.then(function (registration) {
+          return registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          });
+        }).then(function (subscription) {
+          updateButtonUI('on');
+          return postSubscription('{% url "website_app:push-subscribe" %}', subscription);
+        });
+      }
+
       window.thTogglePushNotifications = function () {
         if (Notification.permission === 'denied') return;
 
-        swReady.then(function (registration) {
-          return registration.pushManager.getSubscription().then(function (existing) {
-            if (existing) {
-              // Already on - toggling again turns it off.
-              var endpoint = existing.endpoint;
-              return existing.unsubscribe().then(function () {
-                return fetch('{% url "website_app:push-unsubscribe" %}', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ endpoint: endpoint }),
-                });
-              }).then(function () { updateButtonUI('off'); });
+        // Permission not decided yet - Notification.requestPermission()
+        // has to be called directly inside this click handler, with
+        // nothing awaited before it. Some browsers only treat a
+        // permission prompt as "asked from a real user gesture" when
+        // it's the very next thing that runs after the click - even one
+        // .then()/await hop earlier (e.g. waiting on the service worker
+        // first) is enough for them to silently refuse to show it at
+        // all instead of prompting, which is what made the button do
+        // nothing.
+        if (Notification.permission !== 'granted') {
+          Notification.requestPermission().then(function (permission) {
+            if (permission !== 'granted') {
+              updateButtonUI(permission === 'denied' ? 'denied' : 'off');
+              return;
             }
-            return Notification.requestPermission().then(function (permission) {
-              if (permission !== 'granted') {
-                updateButtonUI(permission === 'denied' ? 'denied' : 'off');
-                return;
-              }
-              return registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-              }).then(function (subscription) {
-                updateButtonUI('on');
-                return postSubscription('{% url "website_app:push-subscribe" %}', subscription);
-              });
-            });
+            subscribeAndSave();
           });
+          return;
+        }
+
+        // Already granted - toggle: unsubscribe if on, subscribe if not.
+        swReady.then(function (registration) {
+          return registration.pushManager.getSubscription();
+        }).then(function (existing) {
+          if (!existing) return subscribeAndSave();
+          var endpoint = existing.endpoint;
+          return existing.unsubscribe().then(function () {
+            return fetch('{% url "website_app:push-unsubscribe" %}', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: endpoint }),
+            });
+          }).then(function () { updateButtonUI('off'); });
         });
       };
 

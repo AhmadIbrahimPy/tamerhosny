@@ -418,13 +418,28 @@
     if (e.key === 'Escape') { window.cancelEditName(); }
   });
 
-  document.addEventListener('click', function (e) {
+  // This whole script re-runs on every boosted navigation back to a
+  // profile page (it lives inside #th-page-root, not a one-time
+  // <head> script), so without explicit teardown this listener would
+  // never get removed - it'd just keep piling up on `document` on every
+  // visit, each stale copy still trying to look up avatarMenu/avatarWrap
+  // long after they're gone from later pages that don't have them,
+  // throwing "Cannot read properties of null" on every click anywhere
+  // on the site from then on.
+  function closeMenuOnOutsideClick(e) {
     const menu = document.getElementById('avatarMenu');
     const wrap = document.getElementById('avatarWrap');
+    if (!menu || !wrap) return;
     if (menu.classList.contains('open') && !wrap.contains(e.target)) {
       menu.classList.remove('open');
     }
-  });
+  }
+  document.addEventListener('click', closeMenuOnOutsideClick);
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      document.removeEventListener('click', closeMenuOnOutsideClick);
+    });
+  }
 })();
 </script>
 {% endif %}
