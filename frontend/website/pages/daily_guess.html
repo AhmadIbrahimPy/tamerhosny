@@ -47,11 +47,10 @@
     from{opacity:0; transform:translateY(18px);}
     to{opacity:1; transform:translateY(0);}
   }
-  .guess-header, .guess-player, .guess-attempts, .guess-choices, .guess-history-item, .guess-result{
+  .guess-header, .guess-player, .guess-choices, .guess-history-item, .guess-result{
     animation:guessFadeUp .5s ease both;
   }
   .guess-player{animation-delay:.08s;}
-  .guess-attempts{animation-delay:.14s;}
   .guess-choices{animation-delay:.2s;}
   .guess-choice-btn{animation:guessFadeUp .4s ease both;}
   .guess-choices .guess-choice-btn:nth-child(1){animation-delay:.26s;}
@@ -59,7 +58,7 @@
   .guess-choices .guess-choice-btn:nth-child(3){animation-delay:.38s;}
   @media (prefers-reduced-motion: reduce){
     .guess-mystery-cover, .guess-mystery-cover span,
-    .guess-header, .guess-player, .guess-attempts, .guess-choices,
+    .guess-header, .guess-player, .guess-choices,
     .guess-choice-btn, .guess-history-item, .guess-result{
       animation:none !important; opacity:1 !important; transform:none !important;
     }
@@ -80,14 +79,6 @@
   .guess-progress{height:8px; border-radius:8px; background:var(--bg); overflow:hidden; position:relative; margin-bottom:8px;}
   .guess-progress-fill{position:absolute; inset-inline-start:0; top:0; bottom:0; width:0%; background:var(--accent); transition:width .1s linear;}
   .guess-progress-marks{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); font-family:monospace;}
-
-  .guess-attempts{display:flex; gap:6px; justify-content:center; margin-bottom:20px;}
-  .guess-dot{
-    width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
-    font-size:12px; font-weight:800; border:2px solid var(--border); color:var(--muted);
-  }
-  .guess-dot.filled-wrong{background:rgba(220,53,69,.15); border-color:#dc3545; color:#ff9aa5;}
-  .guess-dot.filled-correct{background:rgba(46,204,113,.15); border-color:#2ecc71; color:#4fd486;}
 
   .guess-choices{display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
   .guess-choice-btn{
@@ -257,15 +248,6 @@
         <span>0:00</span>
         <span id="guessRevealLabel">0:{{ revealed_seconds|stringformat:"02d" }}</span>
       </div>
-    </div>
-
-    <div class="guess-attempts" id="guessAttemptsRow">
-      {% for guess in guesses %}
-        <div class="guess-dot {% if guess.correct %}filled-correct{% else %}filled-wrong{% endif %}">{{ forloop.counter }}</div>
-      {% endfor %}
-      {% for _ in ""|ljust:remaining_attempts %}
-        <div class="guess-dot"></div>
-      {% endfor %}
     </div>
 
     <div class="guess-choices" id="guessChoices">

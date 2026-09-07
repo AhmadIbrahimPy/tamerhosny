@@ -1066,7 +1066,6 @@ def daily_guess_game(request):
         'finished': finished,
         'answer': answer,
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
-        'remaining_attempts': DAILY_GUESS_MAX_ATTEMPTS - attempts_used,
         'choices': state['choices'],
     })
 
