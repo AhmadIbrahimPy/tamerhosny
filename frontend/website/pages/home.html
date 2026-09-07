@@ -86,7 +86,7 @@
     direction: {% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %};
     flex: 0 0 100%; margin-block: 0 !important; min-width: 0;
   }
-  .th-promo-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; }
+  .th-promo-dots { display: flex; justify-content: center; gap: 6px; margin-top: 14px; margin-bottom: 24px; }
   .th-promo-dots button {
     width: 7px; height: 7px; border-radius: 50%; border: none; padding: 0; cursor: pointer;
     background: var(--border); transition: width .2s ease, background .2s ease;
@@ -481,7 +481,6 @@
 
   track.addEventListener('pointerup', endDrag);
   track.addEventListener('pointercancel', endDrag);
-  track.addEventListener('pointerleave', function () { if (dragging) endDrag(); });
 
   // A drag that moved things shouldn't also fire the card's own link.
   Array.prototype.forEach.call(track.querySelectorAll('a'), function (a) {
