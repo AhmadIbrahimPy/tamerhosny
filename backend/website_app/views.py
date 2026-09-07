@@ -924,16 +924,15 @@ DAILY_GUESS_REVEAL_SCHEDULE = [6]
 DAILY_GUESS_MAX_ATTEMPTS = len(DAILY_GUESS_REVEAL_SCHEDULE)
 DAILY_GUESS_NO_REPEAT_DAYS = 30
 
-# A different playful line under the page title on every visit, just to
-# keep the page feeling alive rather than a static instructions blurb.
-DAILY_GUESS_HYPE_LINES = [
+# A different compliment on a correct guess, so winning doesn't always
+# show the exact same line - shown inside the result card, not as a
+# generic pre-game instructions blurb.
+DAILY_GUESS_WIN_LINES = [
     _('شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤'),
-    _('متأكد إنك من جمهور تامر الأصليين؟ يلا نشوف'),
-    _('فرصة واحدة بس... خليك مركّز!'),
-    _('لو عرفتها من أول ثانية، يبقى انت جمهور VIP'),
-    _('اسمع كويس، مفيش فرصة تانية النهاردة'),
-    _('3 اختيارات، ثانية واحدة، وخلاص - يلا بينا'),
-    _('كل يوم أغنية جديدة... انهاردة هتعرفها ولا لأ؟'),
+    _('ده انت من جمهور تامر الأصليين فعلاً 👏'),
+    _('عارفها من أول ثانية؟ يبقى انت جمهور VIP'),
+    _('احترافية! مفيش حد يفوتك في أغاني تامر'),
+    _('تمام كده، ذوقك في الأغاني موزون'),
 ]
 
 
@@ -1017,6 +1016,8 @@ def daily_guess_game(request):
             }]
             state['won'] = existing_attempt.correct
             state['lost'] = not existing_attempt.correct
+            if state['won']:
+                state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
             request.session[session_key] = state
             request.session.modified = True
 
@@ -1048,7 +1049,10 @@ def daily_guess_game(request):
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
         'remaining_attempts': DAILY_GUESS_MAX_ATTEMPTS - attempts_used,
         'choices': state['choices'],
-        'hype_line': random.choice(DAILY_GUESS_HYPE_LINES),
+        'hype_line': (
+            DAILY_GUESS_WIN_LINES[state['win_line_index'] % len(DAILY_GUESS_WIN_LINES)]
+            if state['won'] and state.get('win_line_index') is not None else None
+        ),
     })
 
 
@@ -1097,6 +1101,10 @@ def daily_guess_attempt(request):
 
     if is_correct:
         state['won'] = True
+        # Picked once and stashed in the session (not re-rolled on every
+        # render) so a page refresh keeps showing the same compliment
+        # instead of a new random one each time.
+        state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
     elif len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
         state['lost'] = True
 

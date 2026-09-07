@@ -4038,6 +4038,26 @@ msgstr "Log in to keep playing"
 msgid "سجل دخولك عشان تقدر تكمل اللعبة وتتحفظلك النتيجة"
 msgstr "Log in to keep playing and save your result"
 
+#: backend/website_app/views.py
+msgid "شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤"
+msgstr "Looks like you know Tamer's songs by heart 🎤"
+
+#: backend/website_app/views.py
+msgid "ده انت من جمهور تامر الأصليين فعلاً 👏"
+msgstr "You're a true Tamer fan for real 👏"
+
+#: backend/website_app/views.py
+msgid "عارفها من أول ثانية؟ يبقى انت جمهور VIP"
+msgstr "Knew it from the first second? That makes you a VIP fan"
+
+#: backend/website_app/views.py
+msgid "احترافية! مفيش حد يفوتك في أغاني تامر"
+msgstr "Impressive! Nothing gets past you with Tamer's songs"
+
+#: backend/website_app/views.py
+msgid "تمام كده، ذوقك في الأغاني موزون"
+msgstr "Spot on, your taste in music is on point"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 

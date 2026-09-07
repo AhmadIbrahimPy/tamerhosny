@@ -152,7 +152,6 @@
       <div class="mark"><i class="bi bi-music-note-beamed"></i></div>
       <h1>{% translate "خمّن الأغنية" %}</h1>
       <p>{% translate "اسمع جزء من الأغنية واختار الاسم الصح من بين 3 اختيارات - فرصة واحدة بس!" %}</p>
-      {% if hype_line %}<p class="guess-hype-line">{{ hype_line }}</p>{% endif %}
     </div>
 
     {% if no_songs %}
@@ -212,6 +211,7 @@
         </div>
         <h2>{% translate "برافو! 🎉" %}</h2>
         <p>{{ answer.title }}</p>
+        {% if hype_line %}<p class="guess-hype-line">{{ hype_line }}</p>{% endif %}
       {% else %}
         <div class="cover">
           {% if answer.cover_url %}<img src="{{ answer.cover_url }}" alt="">{% else %}<i class="bi bi-music-note-beamed" style="font-size:40px;"></i>{% endif %}
