@@ -37,6 +37,22 @@
               <a href="{{ action.url }}" {% if action.external %}target="_blank" rel="noopener"{% endif %} class="btn btn-sm btn-outline-primary">{{ action.label }}</a>
             {% endfor %}
             {% if edit_url %}<a href="{{ edit_url }}" class="btn btn-sm btn-primary"><i class="ti ti-pencil me-1"></i>{% translate "تعديل" %}</a>{% endif %}
+            {% if toggle_url %}
+              <form action="{{ toggle_url }}" method="post" class="d-inline">
+                {% csrf_token %}
+                {% if is_draft %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">{% translate "إظهار" %}</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إخفاء" %}</button>
+                {% endif %}
+              </form>
+            {% endif %}
+            {% if delete_url %}
+              <form action="{{ delete_url }}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+              </form>
+            {% endif %}
             <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
           </div>
         </div>

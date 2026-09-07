@@ -4009,6 +4009,23 @@ msgstr "A new song every day - listen to a short clip and guess it in 6 tries"
 msgid "العب دلوقتي"
 msgstr "Play now"
 
+#: backend/dashboard_app/views.py
+msgid "ملف صوتي"
+msgstr "Audio file"
+
+#: backend/dashboard_app/views.py
+msgid "كلمات (توقيت)"
+msgstr "Lyrics (timed)"
+
+#: backend/dashboard_app/views.py
+msgid "منصات"
+msgstr "Platforms"
+
+#: backend/dashboard_app/views.py
+#: frontend/dashboard/partials/_search_filter_bar.html
+msgid "مفقود منه..."
+msgstr "Missing..."
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 

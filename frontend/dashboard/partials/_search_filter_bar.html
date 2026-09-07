@@ -13,8 +13,16 @@
       {% endfor %}
     </select>
   {% endif %}
+  {% if missing_choices %}
+    <select name="missing" class="form-select form-select-sm rounded-pill" style="max-width: 220px;">
+      <option value="">{{ missing_label|default:_("مفقود منه...") }}</option>
+      {% for value, label in missing_choices %}
+        <option value="{{ value }}" {% if request.GET.missing == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  {% endif %}
   <button type="submit" class="btn btn-sm btn-primary">{% translate "بحث" %}</button>
-  {% if request.GET.q or request.GET.filter %}
+  {% if request.GET.q or request.GET.filter or request.GET.missing %}
     <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">{% translate "مسح" %}</a>
   {% endif %}
 </form>

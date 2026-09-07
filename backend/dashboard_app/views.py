@@ -764,20 +764,41 @@ def album_toggle_visibility(request, pk):
 # Songs
 # ---------------------------------------------------------------------------
 
+SONG_MISSING_CHOICES = [
+    ('audio', _('ملف صوتي')),
+    ('lyrics', _('كلمات (توقيت)')),
+    ('platforms', _('منصات')),
+]
+
+
 @dashboard_required
 def songs_list(request):
-    queryset = Song.objects.select_related('album', 'recording_studio', 'related_media')
+    queryset = Song.objects.select_related('album', 'recording_studio', 'related_media').annotate(
+        segments_count=Count('lyric_segments', distinct=True),
+        links_count=Count('links', distinct=True),
+    )
     q = request.GET.get('q')
     if q:
         queryset = queryset.filter(Q(title_ar__icontains=q) | Q(title_en__icontains=q))
     type_filter = request.GET.get('filter')
     if type_filter:
         queryset = queryset.filter(song_type=type_filter)
+
+    missing_filter = request.GET.get('missing')
+    if missing_filter == 'audio':
+        queryset = queryset.filter(Q(audio_file='') | Q(audio_file__isnull=True))
+    elif missing_filter == 'lyrics':
+        queryset = queryset.filter(segments_count=0)
+    elif missing_filter == 'platforms':
+        queryset = queryset.filter(links_count=0)
+
     songs = _paginate(request, queryset)
     return render(request, 'dashboard/pages/songs/all.html', {
         'songs': songs,
         'filter_choices': Song.SongType.choices,
         'filter_label': _('كل الأنواع'),
+        'missing_choices': SONG_MISSING_CHOICES,
+        'missing_label': _('مفقود منه...'),
         'querystring': _querystring(request),
     })
 
@@ -915,6 +936,9 @@ def song_view(request, pk):
         'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
         'prev_url': prev_url,
         'next_url': next_url,
+        'toggle_url': reverse('dashboard_app:song-toggle', args=[pk]),
+        'delete_url': reverse('dashboard_app:song-delete', args=[pk]),
+        'is_draft': song.visibility == 'DRAFT',
     })
 
 
@@ -934,7 +958,7 @@ def song_toggle_visibility(request, pk):
             Song.Visibility.DRAFT if song.visibility != Song.Visibility.DRAFT else Song.Visibility.PUBLISHED
         )
         song.save(update_fields=['visibility'])
-    return redirect('dashboard_app:songs')
+    return redirect('dashboard_app:song-view', pk=pk)
 
 
 @dashboard_required
