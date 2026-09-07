@@ -852,6 +852,13 @@ def song_edit(request, pk):
 
 @dashboard_required
 def song_view(request, pk):
+    """One song's full dashboard page: an overview tab with its own
+    fields/audio player, plus one tab per data-heavy relation (credits,
+    platform links, lyric-timing segments, listeners, likes, duets),
+    each independently paginated - a popular song can easily have
+    hundreds of listener rows or dozens of lyric segments, which the
+    old single flat page rendered all at once with no paging at all.
+    """
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), pk=pk,
     )
@@ -880,45 +887,33 @@ def song_view(request, pk):
     ]
 
     audio_url = song.audio_file.url if song.audio_file else None
+    image_url = song.display_cover_url
 
-    related_sections = [
+    active_tab = request.GET.get('tab') or 'overview'
+
+    credits = [
         {
-            'title': _('المشاركون في الأغنية'),
-            'items': [
-                {
-                    'label': entry['person'].full_name_ar,
-                    'url': reverse('dashboard_app:person-view', args=[entry['person'].pk]),
-                    'meta': '، '.join(entry['roles']),
-                }
-                for entry in dedupe_credits(song.credits.select_related('person').all(), 'person')
-            ],
-        },
-        {
-            'title': _('روابط الاستماع والمشاهدة'),
-            'items': [
-                {
-                    'label': link.platform.get_platform_name_display(),
-                    'url': link.direct_url,
-                    'meta': link.get_access_type_display(),
-                    'external': True,
-                }
-                for link in song.links.select_related('platform').all()
-            ],
-        },
-        {
-            'title': _('توقيت الكلمات (المقاطع)'),
-            'items': [
-                {
-                    'label': segment.text if segment.text else segment.get_segment_type_display(),
-                    'url': reverse('dashboard_app:song-segment-edit', args=[pk, segment.pk]),
-                    'meta': f'{segment.start_seconds}s – {segment.end_seconds}s',
-                }
-                for segment in song.lyric_segments.all()
-            ],
-        },
+            'person': entry['person'],
+            'roles': '، '.join(entry['roles']),
+        }
+        for entry in dedupe_credits(song.credits.select_related('person').all(), 'person')
     ]
 
-    image_url = song.display_cover_url
+    links = song.links.select_related('platform').all()
+
+    segments_qs = song.lyric_segments.all().order_by('start_seconds')
+    segments_page = _paginate_named(request, segments_qs, 'segments_page')
+
+    listeners_qs = song.user_plays.select_related('user').order_by('-decayed_score')
+    listeners_page = _paginate_named(request, listeners_qs, 'listeners_page')
+
+    likes_qs = Like.objects.filter(
+        content_type=ContentType.objects.get_for_model(Song), object_id=song.pk,
+    ).select_related('user').order_by('-created_at')
+    likes_page = _paginate_named(request, likes_qs, 'likes_page')
+
+    duets_qs = song.sing_projects.select_related('user').order_by('-created_at')
+    duets_page = _paginate_named(request, duets_qs, 'duets_page')
 
     # Prev/next through the same order the songs list shows them in, so
     # editing a song and landing back on its view page lets you keep
@@ -933,19 +928,22 @@ def song_view(request, pk):
         if index < len(song_ids) - 1:
             next_url = reverse('dashboard_app:song-view', args=[song_ids[index + 1]])
 
-    return render(request, 'dashboard/pages/_detail_generic.html', {
-        'page_title': song.title_ar,
-        'subtitle': song.get_song_type_display(),
+    return render(request, 'dashboard/pages/song_detail.html', {
+        'song': song,
         'fields': fields,
-        'related_sections': related_sections,
         'image_url': image_url,
         'audio_url': audio_url,
         'stats': _event_counts_for(song),
-        'extra_actions': [
-            {'label': _('المشاركون في الأغنية'), 'url': reverse('dashboard_app:song-credits', args=[pk])},
-            {'label': _('إدارة توقيت الكلمات'), 'url': reverse('dashboard_app:song-segments', args=[pk])},
-            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['song', pk])},
-        ],
+        'active_tab': active_tab,
+        'credits': credits,
+        'links': links,
+        'segments_page': segments_page,
+        'listeners_page': listeners_page,
+        'likes_page': likes_page,
+        'duets_page': duets_page,
+        'credits_url': reverse('dashboard_app:song-credits', args=[pk]),
+        'segments_url': reverse('dashboard_app:song-segments', args=[pk]),
+        'platform_links_url': reverse('dashboard_app:entity-links', args=['song', pk]),
         'edit_url': reverse('dashboard_app:song-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
         'prev_url': prev_url,

@@ -1,0 +1,331 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{{ song.title_ar }}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+
+  <!-- Hero -->
+  <div class="card card-lg mb-4">
+    <div class="card-body d-flex align-items-center gap-4 flex-wrap position-relative">
+      {% if image_url %}
+        <a href="{{ image_url }}" target="_blank" rel="noopener" class="rounded-3 overflow-hidden flex-shrink-0" style="width:88px;height:88px;display:block;">
+          <img src="{{ image_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+        </a>
+      {% else %}
+        <span class="rounded-3 d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold flex-shrink-0" style="width:88px;height:88px;font-size:28px;">
+          <i class="bi bi-music-note-beamed"></i>
+        </span>
+      {% endif %}
+
+      <div class="flex-grow-1">
+        <h4 class="mb-1">{{ song.title_ar }}</h4>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ song.get_song_type_display }}</span>
+          {% if is_draft %}
+            <span class="badge rounded-pill bg-warning-subtle text-warning">{% translate "مسودة" %}</span>
+          {% else %}
+            <span class="badge rounded-pill bg-success-subtle text-success">{% translate "منشور" %}</span>
+          {% endif %}
+          {% if song.is_duet %}<span class="badge rounded-pill bg-info-subtle text-info">{% translate "دويتو" %}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        {% if prev_url or next_url %}
+          <a href="{{ prev_url|default:'#' }}" class="btn btn-sm btn-outline-secondary {% if not prev_url %}disabled{% endif %}">
+            <i class="ti ti-chevron-right me-1"></i>{% translate "السابق" %}
+          </a>
+          <a href="{{ next_url|default:'#' }}" class="btn btn-sm btn-outline-secondary {% if not next_url %}disabled{% endif %}">
+            {% translate "التالي" %}<i class="ti ti-chevron-left ms-1"></i>
+          </a>
+        {% endif %}
+        <a href="{{ edit_url }}" class="btn btn-sm btn-primary"><i class="ti ti-pencil me-1"></i>{% translate "تعديل" %}</a>
+        <form action="{{ toggle_url }}" method="post" class="d-inline">
+          {% csrf_token %}
+          {% if is_draft %}
+            <button type="submit" class="btn btn-sm btn-outline-success">{% translate "إظهار" %}</button>
+          {% else %}
+            <button type="submit" class="btn btn-sm btn-outline-warning">{% translate "إخفاء" %}</button>
+          {% endif %}
+        </form>
+        <form action="{{ delete_url }}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من الحذف؟" %}');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
+        </form>
+        <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary">{% translate "رجوع" %}</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Analytics sidebar -->
+    <div class="col-xl-4">
+      <div class="card card-lg mb-4" style="position: sticky; top: 20px;">
+        <div class="card-header"><h6 class="mb-0"><i class="ti ti-chart-bar text-muted me-1"></i>{% translate "إحصائيات الأداء" %}</h6></div>
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-primary-subtle text-primary"><i class="ti ti-eye"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاهدات" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.VIEW }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-success-subtle text-success"><i class="ti ti-player-play"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "التشغيل" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.PLAY }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-info-subtle text-info"><i class="ti ti-share-3"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "المشاركات" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.SHARE }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-sm rounded-3 bg-warning-subtle text-warning"><i class="ti ti-external-link"></i></div>
+            <span class="text-muted flex-grow-1">{% translate "ضغطات المنصات الخارجية" %}</span>
+            <span class="fs-5 fw-bold">{{ stats.EXTERNAL_CLICK }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if audio_url %}
+      <div class="card card-lg">
+        <div class="card-header"><h6 class="mb-0">{% translate "ملف الصوت" %}</h6></div>
+        <div class="card-body">
+          <audio controls class="w-100" style="max-height: 60px;">
+            <source src="{{ audio_url }}" type="audio/mpeg">
+            <source src="{{ audio_url }}" type="audio/wav">
+            {% translate "متصفحك لا يدعم تشغيل الصوت" %}
+          </audio>
+          <div class="mt-2">
+            <a href="{{ audio_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+              {% translate "تحميل الملف" %}
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Tabbed data -->
+    <div class="col-xl-8">
+      <div class="card card-lg">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'overview' %}active{% endif %}" href="?tab=overview">{% translate "نظرة عامة" %}</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'credits' %}active{% endif %}" href="?tab=credits">
+                {% translate "المشاركون" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ credits|length }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'links' %}active{% endif %}" href="?tab=links">
+                {% translate "روابط المنصات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ links|length }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'segments' %}active{% endif %}" href="?tab=segments">
+                {% translate "توقيت الكلمات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ segments_page.paginator.count }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'listeners' %}active{% endif %}" href="?tab=listeners">
+                {% translate "المستمعون" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ listeners_page.paginator.count }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'likes' %}active{% endif %}" href="?tab=likes">
+                {% translate "الإعجابات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ likes_page.paginator.count }}</span>
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'duets' %}active{% endif %}" href="?tab=duets">
+                {% translate "الدويتوهات" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ duets_page.paginator.count }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-body p-0">
+
+          {% if active_tab == 'overview' %}
+          <table class="table detail-fields-table mb-0">
+            <tbody>
+              {% for label, value in fields %}
+              <tr>
+                <th class="text-muted" style="width: 220px;">{{ label }}</th>
+                <td>{{ value|default:"-"|linebreaksbr }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          {% elif active_tab == 'credits' %}
+          <div class="d-flex justify-content-end p-3 pb-0">
+            <a href="{{ credits_url }}" class="btn btn-sm btn-outline-primary">{% translate "إدارة المشاركين" %}</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "الاسم" %}</th>
+                <th>{% translate "الأدوار" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for entry in credits %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:person-view' entry.person.pk %}">{{ entry.person.full_name_ar }}</a></td>
+                  <td>{{ entry.roles }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% elif active_tab == 'links' %}
+          <div class="d-flex justify-content-end p-3 pb-0">
+            <a href="{{ platform_links_url }}" class="btn btn-sm btn-outline-primary">{% translate "إدارة روابط المنصات" %}</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "المنصة" %}</th>
+                <th>{% translate "نوع الوصول" %}</th>
+                <th>{% translate "الرابط" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for link in links %}
+                <tr>
+                  <td>{{ link.platform.get_platform_name_display }}</td>
+                  <td>{{ link.get_access_type_display }}</td>
+                  <td><a href="{{ link.direct_url }}" target="_blank" rel="noopener">{{ link.direct_url|truncatechars:50 }}</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% elif active_tab == 'segments' %}
+          <div class="d-flex justify-content-end p-3 pb-0">
+            <a href="{{ segments_url }}" class="btn btn-sm btn-outline-primary">{% translate "إدارة توقيت الكلمات" %}</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "من" %}</th>
+                <th>{% translate "إلى" %}</th>
+                <th>{% translate "النوع" %}</th>
+                <th>{% translate "النص" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for segment in segments_page %}
+                <tr>
+                  <td class="text-nowrap">{{ segment.start_seconds }}s</td>
+                  <td class="text-nowrap">{{ segment.end_seconds }}s</td>
+                  <td><span class="badge bg-secondary-subtle text-secondary">{{ segment.get_segment_type_display }}</span></td>
+                  <td>
+                    <a href="{% url 'dashboard_app:song-segment-edit' song.pk segment.pk %}">
+                      {{ segment.text|default:"-"|truncatechars:60 }}
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=segments_page param="segments_page" prefix="tab=segments&" %}
+
+          {% elif active_tab == 'listeners' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "المستخدم" %}</th>
+                <th>{% translate "عدد مرات التشغيل" %}</th>
+                <th>{% translate "استماع كامل" %}</th>
+                <th>{% translate "نقاط التفاعل" %}</th>
+                <th>{% translate "آخر تشغيل" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for play in listeners_page %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:user-view' play.user_id %}">{{ play.user.username }}</a></td>
+                  <td>{{ play.play_count }}</td>
+                  <td>{{ play.full_listen_count }}</td>
+                  <td>{{ play.decayed_score|floatformat:1 }}</td>
+                  <td class="text-nowrap">{{ play.last_played_at }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=listeners_page param="listeners_page" prefix="tab=listeners&" %}
+
+          {% elif active_tab == 'likes' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "المستخدم" %}</th>
+                <th>{% translate "تاريخ الإعجاب" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for like in likes_page %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:user-view' like.user_id %}">{{ like.user.username }}</a></td>
+                  <td class="text-nowrap">{{ like.created_at }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=likes_page param="likes_page" prefix="tab=likes&" %}
+
+          {% elif active_tab == 'duets' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "المستخدم" %}</th>
+                <th>{% translate "حالة المعالجة" %}</th>
+                <th>{% translate "الظهور" %}</th>
+                <th>{% translate "تاريخ الإنشاء" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for duet in duets_page %}
+                <tr>
+                  <td><a href="{% url 'dashboard_app:user-view' duet.user_id %}">{{ duet.user.username }}</a></td>
+                  <td>
+                    {% if duet.processing_status == 'COMPLETED' %}<span class="badge bg-success-subtle text-success">{{ duet.get_processing_status_display }}</span>
+                    {% elif duet.processing_status == 'FAILED' %}<span class="badge bg-danger-subtle text-danger">{{ duet.get_processing_status_display }}</span>
+                    {% elif duet.processing_status == 'PROCESSING' %}<span class="badge bg-warning-subtle text-warning">{{ duet.get_processing_status_display }}</span>
+                    {% else %}<span class="badge bg-secondary-subtle text-secondary">{{ duet.get_processing_status_display }}</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if duet.is_public %}<span class="badge bg-success-subtle text-success">{% translate "عام" %}</span>
+                    {% else %}<span class="badge bg-secondary-subtle text-secondary">{% translate "خاص" %}</span>{% endif %}
+                  </td>
+                  <td class="text-nowrap">{{ duet.created_at }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا يوجد" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=duets_page param="duets_page" prefix="tab=duets&" %}
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
