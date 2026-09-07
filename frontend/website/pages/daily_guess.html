@@ -17,6 +17,7 @@
   }
   .guess-header h1{font-size:22px;font-weight:900;margin:0 0 6px;}
   .guess-header p{color:var(--muted); font-size:13.5px; margin:0;}
+  .guess-hype-line{color:var(--accent) !important; font-weight:700; margin-top:8px !important;}
 
   /* Mystery cover: the actual art stays hidden until the round ends,
      but a plain empty box read as unfinished/broken rather than "the
@@ -151,6 +152,7 @@
       <div class="mark"><i class="bi bi-music-note-beamed"></i></div>
       <h1>{% translate "خمّن الأغنية" %}</h1>
       <p>{% translate "اسمع جزء من الأغنية واختار الاسم الصح من بين 3 اختيارات - فرصة واحدة بس!" %}</p>
+      {% if hype_line %}<p class="guess-hype-line">{{ hype_line }}</p>{% endif %}
     </div>
 
     {% if no_songs %}
@@ -217,8 +219,6 @@
         <h2>{% translate "المرة الجاية! 😅" %}</h2>
         <p>{% blocktranslate with title=answer.title %}الأغنية كانت: {{ title }}{% endblocktranslate %}</p>
       {% endif %}
-
-      <div class="guess-emoji-grid" id="guessEmojiGrid"></div>
 
       <div class="guess-result-actions">
         <button type="button" class="guess-btn primary" id="guessShareBtn">
@@ -316,6 +316,12 @@
       .then(function (data) {
         if (data.error) {
           buttons.forEach(function (b) { b.disabled = false; });
+          // Session expired / logged out in another tab mid-game - the
+          // client-side gate below normally catches this before the
+          // request even goes out, so this is only a fallback.
+          if (data.error === 'login_required' && typeof requireAuth === 'function') {
+            requireAuth(function () { submitGuess(songId, btn); }, '{% translate "سجل دخولك عشان تقدر تكمل اللعبة" %}');
+          }
           return;
         }
         btn.classList.add(data.correct ? 'correct' : 'wrong');
@@ -329,19 +335,20 @@
 
   document.querySelectorAll('.guess-choice-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      submitGuess(btn.dataset.songId, btn);
+      var songId = btn.dataset.songId;
+      if (typeof requireAuth === 'function' && requireAuth(function () { submitGuess(songId, btn); }, '{% translate "سجل دخولك عشان تقدر تكمل اللعبة وتتحفظلك النتيجة" %}')) return;
+      submitGuess(songId, btn);
     });
   });
 
-  // Share result (Wordle-style emoji grid)
+  // Share result (Wordle-style emoji in the shared text)
   var shareBtn = document.getElementById('guessShareBtn');
-  var emojiGrid = document.getElementById('guessEmojiGrid');
-  if (shareBtn && emojiGrid) {
+  if (shareBtn) {
     var guessResults = [];
     document.querySelectorAll('#guessHistory .guess-history-item').forEach(function (el) {
       guessResults.push(el.classList.contains('correct') ? '🟩' : '⬛');
     });
-    emojiGrid.textContent = guessResults.join(' ') || '⬛';
+    if (!guessResults.length) guessResults.push('⬛');
 
     shareBtn.addEventListener('click', function () {
       var text = '{% translate "خمّن الأغنية" %} - ' + guessResults.join(' ') + '\n' + window.location.origin + '{% url "website_app:daily-guess" %}';

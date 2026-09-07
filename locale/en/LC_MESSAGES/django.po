@@ -4026,6 +4026,18 @@ msgstr "Platforms"
 msgid "مفقود منه..."
 msgstr "Missing..."
 
+#: frontend/website/pages/daily_guess.html
+msgid "اسمع جزء من الأغنية واختار الاسم الصح من بين 3 اختيارات - فرصة واحدة بس!"
+msgstr "Listen to a clip and pick the right name from 3 choices - one shot only!"
+
+#: frontend/website/pages/daily_guess.html
+msgid "سجل دخولك عشان تقدر تكمل اللعبة"
+msgstr "Log in to keep playing"
+
+#: frontend/website/pages/daily_guess.html
+msgid "سجل دخولك عشان تقدر تكمل اللعبة وتتحفظلك النتيجة"
+msgstr "Log in to keep playing and save your result"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 

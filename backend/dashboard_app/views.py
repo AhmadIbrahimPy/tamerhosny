@@ -844,7 +844,10 @@ def song_view(request, pk):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), pk=pk,
     )
-    
+
+    from backend.links_app.core.links import delete_fake_song_platform_links
+    delete_fake_song_platform_links(song)
+
     # Auto-fetch lyrics if segments don't exist
     if not song.lyric_segments.exists():
         from backend.music_app.shared_utils.lyrics_fetcher import fetch_and_save_lyrics_for_song

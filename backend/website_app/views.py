@@ -22,7 +22,7 @@ from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.templatetags.bilingual import localized_field
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
-from backend.music_app.models import Album, DailyGuessChallenge, Song, SongCredit, SingWithTamerProject
+from backend.music_app.models import Album, DailyGuessAttempt, DailyGuessChallenge, Song, SongCredit, SingWithTamerProject
 from backend.people_app.models import Person
 
 PAGE_SIZE = 35
@@ -315,6 +315,9 @@ def song_detail(request, slug, duet_id=None):
     song = get_object_or_404(
         Song.objects.select_related('album', 'related_media', 'recording_studio'), slug=slug,
     )
+
+    from backend.links_app.core.links import delete_fake_song_platform_links
+    delete_fake_song_platform_links(song)
 
     # "غنيت إيه مع تامر" duets open on this exact same page: the same
     # layout, sections and player, just with the duet's own audio and
@@ -921,6 +924,18 @@ DAILY_GUESS_REVEAL_SCHEDULE = [6]
 DAILY_GUESS_MAX_ATTEMPTS = len(DAILY_GUESS_REVEAL_SCHEDULE)
 DAILY_GUESS_NO_REPEAT_DAYS = 30
 
+# A different playful line under the page title on every visit, just to
+# keep the page feeling alive rather than a static instructions blurb.
+DAILY_GUESS_HYPE_LINES = [
+    _('شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤'),
+    _('متأكد إنك من جمهور تامر الأصليين؟ يلا نشوف'),
+    _('فرصة واحدة بس... خليك مركّز!'),
+    _('لو عرفتها من أول ثانية، يبقى انت جمهور VIP'),
+    _('اسمع كويس، مفيش فرصة تانية النهاردة'),
+    _('3 اختيارات، ثانية واحدة، وخلاص - يلا بينا'),
+    _('كل يوم أغنية جديدة... انهاردة هتعرفها ولا لأ؟'),
+]
+
 
 def _get_or_create_daily_challenge(today):
     challenge = DailyGuessChallenge.objects.filter(date=today).select_related('song').first()
@@ -987,6 +1002,24 @@ def daily_guess_game(request):
         request.session[session_key] = state
         request.session.modified = True
 
+    # A guess is only ever recorded once someone is logged in (see
+    # daily_guess_attempt), so a prior attempt only shows up here for a
+    # signed-in visitor - restoring it into the session state is what
+    # stops them replaying the same challenge from a new session/device
+    # (a private tab, clearing cookies) once they're logged in again.
+    if request.user.is_authenticated and not (state['won'] or state['lost']):
+        existing_attempt = DailyGuessAttempt.objects.filter(user=request.user, challenge=challenge).first()
+        if existing_attempt is not None:
+            state['guesses'] = [{
+                'song_id': existing_attempt.guessed_song_id,
+                'title': str(existing_attempt.guessed_song),
+                'correct': existing_attempt.correct,
+            }]
+            state['won'] = existing_attempt.correct
+            state['lost'] = not existing_attempt.correct
+            request.session[session_key] = state
+            request.session.modified = True
+
     attempts_used = len(state['guesses'])
     finished = state['won'] or state['lost']
 
@@ -1015,16 +1048,23 @@ def daily_guess_game(request):
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
         'remaining_attempts': DAILY_GUESS_MAX_ATTEMPTS - attempts_used,
         'choices': state['choices'],
+        'hype_line': random.choice(DAILY_GUESS_HYPE_LINES),
     })
 
 
 @require_POST
 def daily_guess_attempt(request):
-    """معالجة محاولة تخمين واحدة - session-based، مفيش تسجيل دخول لازم."""
+    """معالجة محاولة تخمين واحدة - لازم تسجيل دخول عشان المحاولة تتنسب لليوزر."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'login_required'}, status=401)
+
     today = timezone.localdate()
     challenge = _get_or_create_daily_challenge(today)
     if challenge is None:
         return JsonResponse({'error': 'no songs available'}, status=400)
+
+    if DailyGuessAttempt.objects.filter(user=request.user, challenge=challenge).exists():
+        return JsonResponse({'error': 'already finished'}, status=400)
 
     session_key = _daily_guess_session_key(today)
     state = request.session.get(session_key)
@@ -1050,6 +1090,10 @@ def daily_guess_attempt(request):
 
     is_correct = guessed_song_id == challenge.song_id
     state['guesses'].append({'song_id': guessed_song_id, 'title': guessed_choice['title'], 'correct': is_correct})
+
+    DailyGuessAttempt.objects.create(
+        user=request.user, challenge=challenge, guessed_song_id=guessed_song_id, correct=is_correct,
+    )
 
     if is_correct:
         state['won'] = True

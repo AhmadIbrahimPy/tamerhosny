@@ -241,6 +241,30 @@ class DailyGuessChallenge(models.Model):
         return f'{self.date}: {self.song}'
 
 
+class DailyGuessAttempt(models.Model):
+    """A signed-in visitor's one guess at a given day's challenge -
+    requiring login (rather than the plain session used to hold
+    in-progress game state) is what lets a guess be attributed to a
+    real account and stops the same person from just reopening the
+    page in a private tab to get another try.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_guess_attempts')
+    challenge = models.ForeignKey(DailyGuessChallenge, on_delete=models.CASCADE, related_name='attempts')
+    guessed_song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='+')
+    correct = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'challenge'], name='unique_daily_guess_attempt_per_user'),
+        ]
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f'{self.user} -> {self.challenge}: {"correct" if self.correct else "wrong"}'
+
+
 class SingWithTamerProject(models.Model):
     """Represents a user's project for singing along with a song."""
 
