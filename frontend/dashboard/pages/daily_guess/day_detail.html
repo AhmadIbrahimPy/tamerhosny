@@ -47,7 +47,7 @@
             </td>
             <td>{{ attempt.challenge.song.title_ar }}</td>
             <td class="text-end">
-              <form action="{% url 'dashboard_app:daily-guess-attempt-delete' date|date:'Y-m-d' attempt.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة." %}');">
+              <form action="{% url 'dashboard_app:daily-guess-attempt-delete' date|date:'Y-m-d' attempt.pk %}" method="post" class="d-inline" onsubmit="return confirm('{% translate "متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة بأغنية عشوائية جديدة." %}');">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "حذف" %}</button>
               </form>

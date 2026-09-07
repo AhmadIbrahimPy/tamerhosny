@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n bilingual %}
 {% block title %}{% translate "خمّن الأغنية" %}{% endblock %}
 
 {% block extra_css %}
@@ -44,7 +44,7 @@
         </div>
         <div class="guess-history-info">
           <div class="guess-history-date">{{ attempt.challenge.date }}</div>
-          <div class="guess-history-song">{{ attempt.challenge.song.title_ar }}</div>
+          <div class="guess-history-song">{{ attempt.challenge.song|localized_field:'title' }}</div>
         </div>
         {% if attempt.correct %}
           <span class="guess-history-badge won">{% translate "كسب" %}</span>

@@ -1160,13 +1160,15 @@ def daily_guess_day_detail(request, date):
 
 @dashboard_required
 def daily_guess_attempt_delete(request, date, attempt_pk):
-    attempt = get_object_or_404(DailyGuessAttempt, pk=attempt_pk)
+    attempt = get_object_or_404(DailyGuessAttempt.objects.select_related('challenge'), pk=attempt_pk)
     if request.method == 'POST':
-        # Only the attempt itself, not the day's DailyGuessChallenge row -
-        # that keeps the user's song assignment for the day unchanged, it
-        # just frees them (via the now-missing attempt) to submit a fresh
-        # guess for it.
-        attempt.delete()
+        # Delete the whole day's DailyGuessChallenge row, not just the
+        # attempt - the challenge is what pins the user to a specific
+        # song for the day, so leaving it in place would just hand them
+        # the exact same song again on their next try. Deleting it
+        # cascades and removes the attempt too, and a fresh random song
+        # gets assigned the next time they open the game.
+        attempt.challenge.delete()
     return redirect('dashboard_app:daily-guess-day-detail', date=date)
 
 

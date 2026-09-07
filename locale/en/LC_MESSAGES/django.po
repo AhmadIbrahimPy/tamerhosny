@@ -4002,8 +4002,8 @@ msgid "اتنسخت النتيجة!"
 msgstr "Result copied!"
 
 #: frontend/website/pages/home.html
-msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واعرفها في 6 محاولات"
-msgstr "A new song every day - listen to a short clip and guess it in 6 tries"
+msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات"
+msgstr "A new song every day - listen to a short clip and pick the right name from 3 choices"
 
 #: frontend/website/pages/home.html
 msgid "العب دلوقتي"
@@ -4147,8 +4147,8 @@ msgid "خسر"
 msgstr "Lost"
 
 #: frontend/dashboard/pages/daily_guess/day_detail.html
-msgid "متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة."
-msgstr "Delete this play? The user will be able to play again today."
+msgid "متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة بأغنية عشوائية جديدة."
+msgstr "Delete this play? The user will be able to play again today with a new random song."
 
 #: frontend/website/pages/daily_guess_history.html
 msgid "لسه ما لعبتش خمّن الأغنية"

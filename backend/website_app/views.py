@@ -11,7 +11,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -959,6 +959,14 @@ def _daily_guess_pick_song(exclude_ids=()):
     return eligible.exclude(pk__in=exclude_ids).order_by('?').first() or eligible.order_by('?').first()
 
 
+def _daily_guess_song_title(song):
+    """song's own __str__ always returns title_ar - the guess game shows
+    names in whichever language the visitor is browsing in instead."""
+    if get_language() == 'en':
+        return song.title_en or song.title_ar
+    return song.title_ar or song.title_en
+
+
 def _get_or_create_daily_challenge(today, user):
     """Each signed-in user gets their own random song for the day -
     stored per (date, user) so it stays the same across refreshes and
@@ -1008,8 +1016,8 @@ def _daily_guess_build_choices(song):
         Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
         .exclude(pk=song.pk).order_by('?')[:2]
     )
-    choices = [{'id': song.pk, 'title': str(song)}]
-    choices += [{'id': other.pk, 'title': str(other)} for other in distractors]
+    choices = [{'id': song.pk, 'title': _daily_guess_song_title(song)}]
+    choices += [{'id': other.pk, 'title': _daily_guess_song_title(other)} for other in distractors]
     random.shuffle(choices)
     return choices
 
@@ -1042,10 +1050,14 @@ def daily_guess_game(request):
             return render(request, 'website/pages/daily_guess.html', {'no_songs': True})
 
     # Reset the in-progress state if it's missing, stale (pointed at a
-    # song that's since been deleted), or no longer matches the song
-    # just resolved above (e.g. logging in revealed a different song
-    # already assigned to this account on another device).
-    if state is None or state.get('song_id') != song.pk:
+    # song that's since been deleted), no longer matches the song just
+    # resolved above (e.g. logging in revealed a different song already
+    # assigned to this account on another device), or - belt and braces
+    # against any future bug shaped like this one - its own choices
+    # don't actually contain that song, which would make the round
+    # unguessable no matter what the player picks.
+    choices_include_song = any(c['id'] == song.pk for c in state['choices']) if state else False
+    if state is None or state.get('song_id') != song.pk or not choices_include_song:
         state = {'song_id': song.pk, 'guesses': [], 'won': False, 'lost': False}
         state['choices'] = _daily_guess_build_choices(song)
         request.session[session_key] = state
@@ -1065,7 +1077,7 @@ def daily_guess_game(request):
         if existing_attempt is not None and not (state['won'] or state['lost']):
             state['guesses'] = [{
                 'song_id': existing_attempt.guessed_song_id,
-                'title': str(existing_attempt.guessed_song),
+                'title': _daily_guess_song_title(existing_attempt.guessed_song),
                 'correct': existing_attempt.correct,
             }]
             state['won'] = existing_attempt.correct
@@ -1086,7 +1098,7 @@ def daily_guess_game(request):
     if finished:
         revealed_seconds = float(song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
         answer = {
-            'title': str(song),
+            'title': _daily_guess_song_title(song),
             'slug': song.slug,
             'cover_url': song.display_cover_url,
         }
@@ -1175,7 +1187,7 @@ def daily_guess_attempt(request):
     if finished:
         revealed_seconds = float(challenge.song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1])
         answer = {
-            'title': str(challenge.song),
+            'title': _daily_guess_song_title(challenge.song),
             'slug': challenge.song.slug,
             'cover_url': challenge.song.display_cover_url,
         }
@@ -1231,14 +1243,14 @@ def daily_guess_history_day(request, date):
         'max_attempts': DAILY_GUESS_MAX_ATTEMPTS,
         'guesses': [{
             'song_id': attempt.guessed_song_id,
-            'title': str(attempt.guessed_song),
+            'title': _daily_guess_song_title(attempt.guessed_song),
             'correct': attempt.correct,
         }],
         'won': attempt.correct,
         'lost': not attempt.correct,
         'finished': True,
         'answer': {
-            'title': str(song),
+            'title': _daily_guess_song_title(song),
             'slug': song.slug,
             'cover_url': song.display_cover_url,
         },
