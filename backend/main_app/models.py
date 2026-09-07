@@ -344,6 +344,13 @@ class UserGameProfile(models.Model):
     current_streak = models.PositiveIntegerField(default=0)
     longest_streak = models.PositiveIntegerField(default=0)
     last_active_date = models.DateField(null=True, blank=True)
+    # A once-a-day snapshot of the leaderboard rank, purely so a
+    # profile can show "your rank went up/down" - comparing against
+    # points directly wouldn't work since points only ever go up, so a
+    # rank comparison (against everyone else) is what can actually move
+    # in either direction.
+    previous_rank = models.PositiveIntegerField(null=True, blank=True)
+    rank_snapshot_date = models.DateField(null=True, blank=True)
 
     class Meta:
         ordering = ('-points',)

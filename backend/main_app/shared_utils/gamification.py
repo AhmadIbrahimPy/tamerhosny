@@ -73,3 +73,27 @@ def unlocked_badges(profile):
         if value >= badge['threshold']:
             unlocked.append(badge)
     return unlocked
+
+
+def get_rank(profile):
+    return UserGameProfile.objects.filter(points__gt=profile.points).count() + 1
+
+
+def get_rank_and_trend(profile):
+    """Current leaderboard rank, plus whether it's better/worse than
+    the last snapshot taken (at most once a day) - points only ever go
+    up in this system, so a trend arrow based on points alone could
+    never point down; a rank comparison (against everyone else) can.
+    """
+    current_rank = get_rank(profile)
+    trend = None
+    if profile.previous_rank is not None and profile.previous_rank != current_rank:
+        trend = 'up' if current_rank < profile.previous_rank else 'down'
+
+    today = timezone.localdate()
+    if profile.rank_snapshot_date != today:
+        profile.previous_rank = current_rank
+        profile.rank_snapshot_date = today
+        profile.save(update_fields=['previous_rank', 'rank_snapshot_date'])
+
+    return current_rank, trend

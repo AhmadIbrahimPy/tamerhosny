@@ -4163,6 +4163,14 @@ msgstr "points"
 msgid "يوم متتالي"
 msgstr "day streak"
 
+#: frontend/website/pages/user/public_profile.html
+msgid "ترتيبك بيتحسن"
+msgstr "Your rank is improving"
+
+#: frontend/website/pages/user/public_profile.html
+msgid "ترتيبك نزل شوية"
+msgstr "Your rank dropped a bit"
+
 #: frontend/website/pages/leaderboard.html
 msgid "ترتيبك"
 msgstr "Your rank"

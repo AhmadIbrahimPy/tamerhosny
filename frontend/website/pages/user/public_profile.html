@@ -54,22 +54,83 @@
   .profile-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
   .profile-section { margin-bottom: 40px; }
 
-  .profile-game-stats {
-    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;
+  /* Rank trend arrow, stamped on the corner of the avatar - points only
+     ever go up in this system, so this reflects a RANK comparison
+     against everyone else (see get_rank_and_trend) instead, which can
+     genuinely move either way. */
+  .profile-rank-arrow {
+    position: absolute; bottom: -2px; inset-inline-end: -2px; width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #fff; border: 2px solid var(--bg); z-index: 2;
+    animation: gpArrowPop .4s cubic-bezier(.34,1.56,.64,1) both;
   }
+  .profile-rank-arrow.up { background: #2ecc71; }
+  .profile-rank-arrow.down { background: #dc3545; }
+  @keyframes gpArrowPop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+
+  @keyframes gpCardGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes gpFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes gpFlicker {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18) rotate(-4deg); }
+  }
+  @keyframes gpShine {
+    0% { transform: translateX(-120%) rotate(20deg); }
+    100% { transform: translateX(220%) rotate(20deg); }
+  }
+
+  .profile-game-card {
+    position: relative; overflow: hidden; border-radius: 20px; padding: 22px 20px 20px;
+    margin-bottom: 24px;
+    background: linear-gradient(120deg, #1b0e3d, #3a1c6e, #17143f, #3a1c6e);
+    background-size: 300% 300%;
+    animation: gpCardGradient 10s ease infinite;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 22px 44px -22px rgba(138,92,255,.5);
+  }
+  .profile-game-card::after {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+    animation: gpShine 5s ease-in-out infinite; pointer-events: none;
+  }
+
+  .profile-game-stats { display: flex; gap: 10px; position: relative; z-index: 1; }
   .profile-game-stat {
-    flex: 1; min-width: 110px; text-align: center; padding: 16px 10px; border-radius: 14px;
-    background: var(--card); border: 1px solid var(--border);
+    flex: 1; min-width: 0; text-align: center; padding: 14px 8px; border-radius: 14px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
+    animation: gpFadeUp .5s ease both;
   }
-  .profile-game-stat .value { font-size: 22px; font-weight: 900; color: var(--accent); }
-  .profile-game-stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .profile-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .profile-game-stat:nth-child(1) { animation-delay: .05s; }
+  .profile-game-stat:nth-child(2) { animation-delay: .15s; }
+  .profile-game-stat:nth-child(3) { animation-delay: .25s; }
+  .profile-game-stat .value {
+    font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 14px rgba(212,175,55,.35);
+  }
+  .profile-game-stat .value .bi-fire { color: #ff7a3d; display: inline-block; animation: gpFlicker 1.3s ease-in-out infinite; }
+  .profile-game-stat .label { font-size: 11.5px; color: rgba(255,255,255,.6); margin-top: 3px; }
+
+  .profile-badges { display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; margin-top: 16px; }
   .profile-badge {
     display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
-    background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(138,92,255,.1));
-    border: 1px solid var(--border); font-size: 12.5px; font-weight: 700;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+    font-size: 12px; font-weight: 700; color: #fff;
+    animation: gpFadeUp .4s ease both; transition: transform .15s ease, background .15s ease;
   }
-  .profile-badge i { color: var(--accent); }
+  .profile-badge:hover { transform: translateY(-3px); background: rgba(255,255,255,.14); }
+  .profile-badge i { color: #ffd35c; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .profile-game-card, .profile-game-card::after, .profile-game-stat, .profile-badge,
+    .profile-rank-arrow, .profile-game-stat .value .bi-fire {
+      animation: none !important; opacity: 1 !important; transform: none !important;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -79,6 +140,11 @@
     <div class="profile-avatar-wrap" id="avatarWrap">
       <img src="{% if profile_user.profile_image %}{{ profile_user.profile_image.url }}{% endif %}" alt="{{ profile_user.username }}" class="profile-avatar" id="profileAvatarImg" {% if not profile_user.profile_image %}style="display:none;"{% endif %}>
       <span class="profile-avatar-fallback" id="profileAvatarFallback" {% if profile_user.profile_image %}style="display:none;"{% endif %}>{{ profile_user.username|slice:":1"|upper }}</span>
+      {% if game_rank_trend %}
+      <span class="profile-rank-arrow {{ game_rank_trend }}" title="{% if game_rank_trend == 'up' %}{% translate 'ترتيبك بيتحسن' %}{% else %}{% translate 'ترتيبك نزل شوية' %}{% endif %}">
+        <i class="bi {% if game_rank_trend == 'up' %}bi-arrow-up{% else %}bi-arrow-down{% endif %}"></i>
+      </span>
+      {% endif %}
       {% if is_own_profile %}
       <div class="profile-avatar-overlay" onclick="event.stopPropagation(); document.getElementById('avatarMenu').classList.toggle('open');">
         <i class="bi bi-camera-fill"></i>
@@ -118,27 +184,29 @@
   </div>
 
   {% if game_profile %}
-  <div class="profile-game-stats">
-    <div class="profile-game-stat">
-      <div class="value">{{ game_profile.points }}</div>
-      <div class="label">{% translate "نقطة" %}</div>
+  <div class="profile-game-card">
+    <div class="profile-game-stats">
+      <div class="profile-game-stat">
+        <div class="value">{{ game_profile.points }}</div>
+        <div class="label">{% translate "نقطة" %}</div>
+      </div>
+      <div class="profile-game-stat">
+        <div class="value">#{{ game_rank }}</div>
+        <div class="label">{% translate "الترتيب" %}</div>
+      </div>
+      <div class="profile-game-stat">
+        <div class="value"><i class="bi bi-fire"></i> {{ game_profile.current_streak }}</div>
+        <div class="label">{% translate "يوم متتالي" %}</div>
+      </div>
     </div>
-    <div class="profile-game-stat">
-      <div class="value">#{{ game_rank }}</div>
-      <div class="label">{% translate "الترتيب" %}</div>
+    {% if game_badges %}
+    <div class="profile-badges">
+      {% for badge in game_badges %}
+      <span class="profile-badge"><i class="bi {{ badge.icon }}"></i> {{ badge.label }}</span>
+      {% endfor %}
     </div>
-    <div class="profile-game-stat">
-      <div class="value"><i class="bi bi-fire"></i> {{ game_profile.current_streak }}</div>
-      <div class="label">{% translate "يوم متتالي" %}</div>
-    </div>
+    {% endif %}
   </div>
-  {% if game_badges %}
-  <div class="profile-badges" style="margin-bottom:28px;">
-    {% for badge in game_badges %}
-    <span class="profile-badge"><i class="bi {{ badge.icon }}"></i> {{ badge.label }}</span>
-    {% endfor %}
-  </div>
-  {% endif %}
   {% endif %}
 
   {% if full_listens %}

@@ -20,7 +20,7 @@ from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
 from backend.main_app.models import Like, Playlist, PlaylistItem, UserGameProfile, UserSongPlay, CurrentSongListener
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.gamification import (
-    POINTS_GUESS_LOSS, POINTS_LIKE, award_points, unlocked_badges,
+    POINTS_GUESS_LOSS, POINTS_LIKE, award_points, get_rank_and_trend, unlocked_badges,
 )
 from backend.main_app.templatetags.bilingual import localized_field
 from backend.concerts_app.models import Concert
@@ -1526,10 +1526,7 @@ def public_profile(request, username):
 
     game_profile = UserGameProfile.objects.filter(user=profile_user).first()
     game_badges = unlocked_badges(game_profile) if game_profile else []
-    game_rank = (
-        UserGameProfile.objects.filter(points__gt=game_profile.points).count() + 1
-        if game_profile else None
-    )
+    game_rank, game_rank_trend = get_rank_and_trend(game_profile) if game_profile else (None, None)
 
     return render(request, 'website/pages/user/public_profile.html', {
         'profile_user': profile_user,
@@ -1542,6 +1539,7 @@ def public_profile(request, username):
         'game_profile': game_profile,
         'game_badges': game_badges,
         'game_rank': game_rank,
+        'game_rank_trend': game_rank_trend,
     })
 
 
