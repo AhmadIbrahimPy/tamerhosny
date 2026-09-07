@@ -136,6 +136,7 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'backend.website_app.context_processors.vapid_public_key',
             ],
         },
     },
@@ -229,6 +230,9 @@ LOCALE_PATHS = [BASE_DIR / 'locale']
 TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True
+# Without this the daily-guess-reminder beat schedule (config/celery.py)
+# would fire at 18:00 UTC, not 18:00 local time.
+CELERY_TIMEZONE = TIME_ZONE
 
 
 # Static / media files
@@ -279,6 +283,18 @@ GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET', '')
 GOOGLE_OAUTH_REDIRECT_URI = env(
     'GOOGLE_OAUTH_REDIRECT_URI', 'http://127.0.0.1:8600/auth/google/callback/',
 )
+
+
+# Web Push notifications ("خمّن الأغنية" daily reminder, new song/album
+# drops, and songs gaining audio/lyrics/platform links - see
+# backend.main_app.shared_utils.push_notifications). VAPID identifies
+# this site to push services (Chrome/Firefox/etc.) without any per-vendor
+# API key; empty means the feature is silently a no-op, same pattern as
+# GOOGLE_OAUTH_CLIENT_ID above - generate a real pair with
+# `python manage.py generate_vapid_keys` and put them in the env.
+VAPID_PUBLIC_KEY = env('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIM_EMAIL = env('VAPID_CLAIM_EMAIL', DEFAULT_FROM_EMAIL)
 
 
 # CORS

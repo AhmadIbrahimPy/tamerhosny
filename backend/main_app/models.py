@@ -357,3 +357,27 @@ class UserGameProfile(models.Model):
 
     def __str__(self):
         return f'{self.user} - {self.points} pts'
+
+
+class PushSubscription(models.Model):
+    """One browser's Web Push registration (from PushManager.subscribe())
+    - the endpoint URL plus the two keys needed to encrypt a payload for
+    it. `user` is nullable because permission can be granted, and a
+    subscription created, before someone ever logs in; a later login on
+    the same browser attaches it (see website_app views) so per-user
+    sends (like the daily guess reminder) can reach it too. `endpoint` is
+    unique because the browser can call subscribe() again for a device
+    that's already registered (e.g. after a service worker update) and
+    that must update the existing row, not create a duplicate.
+    """
+
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.CASCADE, related_name='push_subscriptions', null=True, blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user or "anonymous"} - {self.endpoint[:40]}...'

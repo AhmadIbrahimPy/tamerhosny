@@ -32,7 +32,11 @@ def fetch_and_save_lyrics_for_song(song):
         if not segments:
             return False
         
-        # Save segments to database
+        # Save segments to database - bulk_create, unlike segment.save()
+        # in the dashboard's manual "add one segment" form, never fires
+        # SongLyricSegment's post_save signal (see music_app.signals), so
+        # the "lyrics just got added" push notification has to be sent
+        # from here instead for this path.
         with transaction.atomic():
             SongLyricSegment.objects.bulk_create([
                 SongLyricSegment(
@@ -44,7 +48,15 @@ def fetch_and_save_lyrics_for_song(song):
                 )
                 for seg in segments
             ])
-        
+
+        if song.visibility == song.Visibility.PUBLISHED:
+            from backend.main_app.shared_utils.push_notifications import send_push_to_all
+            send_push_to_all(
+                'الكلمات اتضافت 📝',
+                f'دلوقتي تقدر تتابع كلمات أغنية "{song.title_ar}"',
+                url=f'/songs/{song.slug}/',
+            )
+
         return True
         
     except Exception as e:

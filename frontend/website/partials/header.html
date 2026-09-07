@@ -25,6 +25,12 @@
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
 
+      {% if VAPID_PUBLIC_KEY %}
+      <button type="button" class="th-push-btn" onclick="thTogglePushNotifications()" title="{% translate 'فعّل الإشعارات' %}">
+        <i class="bi bi-bell"></i>
+      </button>
+      {% endif %}
+
       {% if user.is_authenticated %}
       <div class="th-user-menu">
         <button type="button" class="th-user-btn" onclick="toggleUserMenu()">
@@ -152,6 +158,11 @@
           <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
             <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
           </a>
+          {% if VAPID_PUBLIC_KEY %}
+          <button type="button" class="th-dropdown-item th-push-btn" onclick="thTogglePushNotifications()">
+            <i class="bi bi-bell"></i> {% translate "فعّل الإشعارات" %}
+          </button>
+          {% endif %}
           <div class="th-user-dropdown-divider"></div>
           <button type="button" class="th-dropdown-item" onclick="document.getElementById('langSwitchForm').submit();">
             <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
@@ -170,6 +181,11 @@
         <button type="button" class="lang-btn" style="align-self:flex-start;" onclick="document.getElementById('langSwitchForm').submit();">
           <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
         </button>
+        {% if VAPID_PUBLIC_KEY %}
+        <button type="button" class="lang-btn th-push-btn" style="align-self:flex-start;" onclick="thTogglePushNotifications()">
+          <i class="bi bi-bell"></i> {% translate "فعّل الإشعارات" %}
+        </button>
+        {% endif %}
       </div>
       {% endif %}
     </div>

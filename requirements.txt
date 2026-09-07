@@ -21,3 +21,4 @@ sqlparse==0.6.0
 celery==5.4.0
 geoip2fast==1.2.2
 user-agents==2.2.0
+pywebpush==2.5.0

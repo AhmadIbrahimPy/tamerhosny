@@ -1,12 +1,15 @@
 from django.urls import path
 
-from backend.website_app import auth_views, views
+from backend.website_app import auth_views, push_views, views
 
 app_name = 'website_app'
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('robots.txt', views.robots_txt, name='robots-txt'),
+    path('sw.js', push_views.service_worker, name='service-worker'),
+    path('push/subscribe/', push_views.push_subscribe, name='push-subscribe'),
+    path('push/unsubscribe/', push_views.push_unsubscribe, name='push-unsubscribe'),
 
     # Public site auth (separate from the internal dashboard login) -
     # JSON endpoints backing the login/register modal.

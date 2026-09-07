@@ -1,4 +1,6 @@
-"""Celery tasks - currently just the "Sing With Tamer" duet mix.
+"""Celery tasks: the "Sing With Tamer" duet mix, and the daily
+"خمّن الأغنية" push-notification reminder (see config/celery.py's
+beat_schedule for when the latter fires).
 
 Vocal removal (AI) + audio mixing is slow enough that running it inside
 the request/response cycle would block a whole Daphne process (see
@@ -27,6 +29,34 @@ def _broadcast_duet_status(project_id, status, error='', redirect_url=None):
         'error': error,
         'redirect_url': redirect_url,
     })
+
+
+@shared_task(ignore_result=True)
+def send_daily_guess_reminders():
+    """Daily nudge (see config/celery.py's beat schedule) to every
+    subscribed user who hasn't played today's "خمّن الأغنية" round yet -
+    skips anyone who already has (whether they won or lost), and anyone
+    with no push subscription at all is never queried for in the first
+    place.
+    """
+    from django.utils import timezone
+
+    from backend.main_app.models import PushSubscription, UserAccount
+    from backend.main_app.shared_utils.push_notifications import send_push_to_user
+    from backend.music_app.models import DailyGuessAttempt
+
+    today = timezone.localdate()
+    already_played = DailyGuessAttempt.objects.filter(challenge__date=today).values_list('user_id', flat=True)
+    pending_user_ids = (
+        PushSubscription.objects.exclude(user=None)
+        .exclude(user_id__in=already_played)
+        .values_list('user_id', flat=True)
+        .distinct()
+    )
+    for user in UserAccount.objects.filter(pk__in=pending_user_ids):
+        send_push_to_user(
+            user, 'خمّن الأغنية 🎧', 'أغنية النهاردة لسه مستنياك - جرب تخمنها!', url='/guess/',
+        )
 
 
 @shared_task(bind=True, ignore_result=True)

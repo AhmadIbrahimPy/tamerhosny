@@ -148,6 +148,14 @@
       border:1px solid var(--border); background:transparent; color:var(--text); font-size:13px; font-weight:700; cursor:pointer;
     }
     .lang-btn:hover{background:rgba(255,255,255,.06);}
+    .th-nav-links > .th-push-btn{
+      display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0;
+      border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:15px; cursor:pointer; transition:all .2s ease;
+    }
+    .th-nav-links > .th-push-btn:hover{background:rgba(255,255,255,.06); color:var(--text);}
+    .th-nav-links > .th-push-btn.is-on{border-color:var(--accent); color:var(--accent);}
+    .th-nav-links > .th-push-btn:disabled{opacity:.4; cursor:not-allowed;}
     .th-login-btn{
       display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:999px; flex-shrink:0;
       border:1px solid var(--accent); background:rgba(212,175,55,.1); color:var(--accent); font-size:13px; font-weight:700; cursor:pointer;
@@ -1398,10 +1406,19 @@
             currentSongId = state.currentSongId || null;
             syncToggleButtonStyles();
 
-            // Restore play state
+            // Restore play state - browsers block autoplay-with-sound on
+            // a fresh page load with no user gesture yet, so play() can
+            // silently reject here. The icon has to follow whichever way
+            // that promise actually settles instead of being set to
+            // "playing" unconditionally, or the bar shows a pause icon
+            // while the audio is really still paused until the user
+            // clicks it themselves.
             if (state.isPlaying) {
-              globalAudio.play().catch(function() {});
-              setPlayButtonsIcon('bi-pause-fill');
+              globalAudio.play().then(function() {
+                setPlayButtonsIcon('bi-pause-fill');
+              }).catch(function() {
+                setPlayButtonsIcon('bi-play-fill');
+              });
             } else {
               setPlayButtonsIcon('bi-play-fill');
             }
@@ -2214,6 +2231,7 @@
       window.isAuthenticated = true;
       closeAuthModal();
       patchHeaderForLogin(userData);
+      if (window.thResyncPushSubscription) window.thResyncPushSubscription();
 
       if (window.pendingAuthAction) {
         const action = window.pendingAuthAction;
@@ -2462,6 +2480,121 @@
       window.location.href = evt.detail.requestConfig.path;
     });
   </script>
+
+  {% if VAPID_PUBLIC_KEY %}
+  <script>
+    // Web Push - keeps working even with the browser fully closed (the
+    // OS/browser push service wakes the service worker), which is the
+    // whole point over anything that only runs while a tab is open.
+    (function () {
+      var VAPID_PUBLIC_KEY = '{{ VAPID_PUBLIC_KEY }}';
+
+      function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var rawData = atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+        return outputArray;
+      }
+
+      function postSubscription(url, subscription) {
+        var json = subscription.toJSON();
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+        });
+      }
+
+      function updateButtonUI(state) {
+        var btns = document.querySelectorAll('.th-push-btn');
+        btns.forEach(function (btn) {
+          var icon = btn.querySelector('i');
+          btn.classList.toggle('is-on', state === 'on');
+          btn.disabled = state === 'unsupported' || state === 'denied';
+          btn.title = state === 'on'
+            ? '{% translate "الإشعارات مفعّلة" %}'
+            : state === 'denied'
+              ? '{% translate "الإشعارات متمنوعة من إعدادات المتصفح" %}'
+              : '{% translate "فعّل الإشعارات" %}';
+          if (icon) icon.className = state === 'on' ? 'bi bi-bell-fill' : 'bi bi-bell';
+        });
+      }
+
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        updateButtonUI('unsupported');
+        return;
+      }
+
+      var swReady = navigator.serviceWorker.register('{% url "website_app:service-worker" %}');
+
+      // Silently keeps the server-side subscription row in sync with
+      // reality on every page load - covers permission already granted
+      // on an earlier visit (nothing to prompt, just resubscribe if
+      // needed), and re-attaches an existing subscription to whichever
+      // account is now logged in (e.g. right after a login/register that
+      // reloads the page, or the full-page redirect Google login does -
+      // neither of those is a moment this script can hook into directly,
+      // so it just re-checks on every load instead).
+      window.thResyncPushSubscription = function () {
+        if (Notification.permission !== 'granted') {
+          updateButtonUI(Notification.permission === 'denied' ? 'denied' : 'off');
+          return;
+        }
+        swReady.then(function (registration) {
+          return registration.pushManager.getSubscription().then(function (existing) {
+            if (existing) return existing;
+            return registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            });
+          });
+        }).then(function (subscription) {
+          updateButtonUI('on');
+          return postSubscription('{% url "website_app:push-subscribe" %}', subscription);
+        }).catch(function () {
+          updateButtonUI('off');
+        });
+      };
+
+      window.thTogglePushNotifications = function () {
+        if (Notification.permission === 'denied') return;
+
+        swReady.then(function (registration) {
+          return registration.pushManager.getSubscription().then(function (existing) {
+            if (existing) {
+              // Already on - toggling again turns it off.
+              var endpoint = existing.endpoint;
+              return existing.unsubscribe().then(function () {
+                return fetch('{% url "website_app:push-unsubscribe" %}', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ endpoint: endpoint }),
+                });
+              }).then(function () { updateButtonUI('off'); });
+            }
+            return Notification.requestPermission().then(function (permission) {
+              if (permission !== 'granted') {
+                updateButtonUI(permission === 'denied' ? 'denied' : 'off');
+                return;
+              }
+              return registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+              }).then(function (subscription) {
+                updateButtonUI('on');
+                return postSubscription('{% url "website_app:push-subscribe" %}', subscription);
+              });
+            });
+          });
+        });
+      };
+
+      window.thResyncPushSubscription();
+    })();
+  </script>
+  {% endif %}
 
   <!-- Each page's extra_js has to run after thTrack/playAudio/etc above
        are defined (some of it calls them at the top level, not just
