@@ -701,6 +701,12 @@ def album_edit(request, pk):
 
 @dashboard_required
 def album_view(request, pk):
+    """One album's dashboard page: an overview tab plus a tracklist tab
+    and a platform-links tab - split out (rather than one flat page)
+    for the same reason as the song/user pages, and also fixes the old
+    page's missing show/hide + delete buttons (the views for both
+    already existed, they just were never wired into the template).
+    """
     album = get_object_or_404(Album, pk=pk)
     fields = [
         (_('العنوان بالعربية'), album.title_ar),
@@ -711,44 +717,27 @@ def album_view(request, pk):
         (_('موعد النشر'), album.publish_at),
     ]
 
-    related_sections = [
-        {
-            'title': _('الأغاني'),
-            'items': [
-                {
-                    'label': song.title_ar,
-                    'url': reverse('dashboard_app:song-view', args=[song.pk]),
-                    'meta': song.get_song_type_display(),
-                }
-                for song in album.songs.all()
-            ],
-        },
-        {
-            'title': _('روابط المنصات'),
-            'items': [
-                {
-                    'label': link.platform.get_platform_name_display(),
-                    'url': link.direct_url,
-                    'meta': link.get_access_type_display(),
-                    'external': True,
-                }
-                for link in album.links.select_related('platform').all()
-            ],
-        },
-    ]
+    active_tab = request.GET.get('tab') or 'overview'
 
-    return render(request, 'dashboard/pages/_detail_generic.html', {
-        'page_title': album.title_ar,
-        'subtitle': album.release_date,
+    songs_qs = album.songs.all()
+    songs_page = _paginate_named(request, songs_qs, 'songs_page')
+
+    links = album.links.select_related('platform').all()
+
+    return render(request, 'dashboard/pages/album_detail.html', {
+        'album': album,
         'fields': fields,
-        'related_sections': related_sections,
         'image_url': (album.cover_image.url if album.cover_image else None) or album.cover_art_url or None,
         'stats': _event_counts_for(album),
-        'extra_actions': [
-            {'label': _('روابط المنصات'), 'url': reverse('dashboard_app:entity-links', args=['album', pk])},
-        ],
+        'active_tab': active_tab,
+        'songs_page': songs_page,
+        'links': links,
+        'platform_links_url': reverse('dashboard_app:entity-links', args=['album', pk]),
         'edit_url': reverse('dashboard_app:album-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:albums')),
+        'toggle_url': reverse('dashboard_app:album-toggle', args=[pk]),
+        'delete_url': reverse('dashboard_app:album-delete', args=[pk]),
+        'is_draft': album.visibility == 'DRAFT',
     })
 
 
