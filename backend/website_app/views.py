@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -994,14 +994,22 @@ def _daily_guess_session_key(today):
 
 
 def _daily_guess_clip_start_seconds(song):
-    """Skip past a silent/instrumental intro so the very first reveal
-    (1 second) has an actual chance of being useful instead of dead air
-    - starts the clip at the first LYRICS-type segment if the song has
-    timed lyrics, otherwise just plays from the beginning.
+    """Skip past a silent/instrumental intro so the reveal clip has an
+    actual chance of being useful instead of dead air - starts at the
+    first LYRICS-type segment long enough (> 5s) to hold the whole
+    reveal window without running into whatever comes right after it.
+    A short lyrics segment (or none at all) isn't worth aligning to, so
+    it just falls back to playing straight from the beginning instead.
     """
-    first_lyrics = song.lyric_segments.filter(segment_type='LYRICS').order_by('start_seconds').first()
-    if first_lyrics:
-        return float(first_lyrics.start_seconds)
+    qualifying_lyrics = (
+        song.lyric_segments.filter(segment_type='LYRICS')
+        .annotate(segment_duration=F('end_seconds') - F('start_seconds'))
+        .filter(segment_duration__gt=5)
+        .order_by('start_seconds')
+        .first()
+    )
+    if qualifying_lyrics:
+        return float(qualifying_lyrics.start_seconds)
     return 0.0
 
 
@@ -1083,7 +1091,7 @@ def daily_guess_game(request):
             state['won'] = existing_attempt.correct
             state['lost'] = not existing_attempt.correct
             if state['won']:
-                state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
+                state['win_line_index'] = existing_attempt.hype_line_index
             request.session[session_key] = state
             request.session.modified = True
         elif existing_attempt is None and (state['won'] or state['lost']):
@@ -1165,16 +1173,20 @@ def daily_guess_attempt(request):
     is_correct = guessed_song_id == challenge.song_id
     state['guesses'].append({'song_id': guessed_song_id, 'title': guessed_choice['title'], 'correct': is_correct})
 
+    # Picked once here (not re-rolled on every render) and stored on both
+    # the session and the attempt row itself, so a page refresh - or
+    # looking back at this day's history later - always shows the exact
+    # same compliment instead of a new random one each time.
+    hype_line_index = random.randrange(len(DAILY_GUESS_WIN_LINES)) if is_correct else None
+
     DailyGuessAttempt.objects.create(
         user=request.user, challenge=challenge, guessed_song_id=guessed_song_id, correct=is_correct,
+        hype_line_index=hype_line_index,
     )
 
     if is_correct:
         state['won'] = True
-        # Picked once and stashed in the session (not re-rolled on every
-        # render) so a page refresh keeps showing the same compliment
-        # instead of a new random one each time.
-        state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
+        state['win_line_index'] = hype_line_index
     elif len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
         state['lost'] = True
 
@@ -1234,6 +1246,12 @@ def daily_guess_history_day(request, date):
         user=request.user, challenge__date=day,
     )
     song = attempt.challenge.song
+    hype_line = None
+    if attempt.correct:
+        line_index = attempt.hype_line_index
+        if line_index is None:
+            line_index = attempt.pk % len(DAILY_GUESS_WIN_LINES)
+        hype_line = DAILY_GUESS_WIN_LINES[line_index]
 
     return render(request, 'website/pages/daily_guess.html', {
         'audio_url': song.audio_file.url if song.audio_file else '',
@@ -1256,9 +1274,7 @@ def daily_guess_history_day(request, date):
         },
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
         'choices': [],
-        'hype_line': (
-            random.choice(DAILY_GUESS_WIN_LINES) if attempt.correct else None
-        ),
+        'hype_line': hype_line,
     })
 
 

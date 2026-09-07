@@ -262,6 +262,11 @@ class DailyGuessAttempt(models.Model):
     challenge = models.ForeignKey(DailyGuessChallenge, on_delete=models.CASCADE, related_name='attempts')
     guessed_song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='+')
     correct = models.BooleanField()
+    # Index into website_app.views.DAILY_GUESS_WIN_LINES - picked once
+    # when the guess was made and stored here (not just in the session)
+    # so looking back at this day later shows the exact same compliment
+    # instead of a freshly re-rolled one every time the page is opened.
+    hype_line_index = models.PositiveSmallIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -312,9 +312,6 @@
     </div>
 
     <div class="guess-result-actions">
-      <button type="button" class="guess-btn primary" id="guessShareBtn">
-        <i class="bi bi-share-fill"></i> {% translate "شارك نتيجتك" %}
-      </button>
       {% if answer.slug %}
       <a href="{% url 'website_app:song-detail' answer.slug %}" class="guess-btn">
         <i class="bi bi-play-circle"></i> {% translate "اسمع الأغنية كاملة" %}
