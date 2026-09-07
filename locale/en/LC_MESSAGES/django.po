@@ -4001,6 +4001,14 @@ msgstr "Listen to the full song"
 msgid "اتنسخت النتيجة!"
 msgstr "Result copied!"
 
+#: frontend/website/pages/home.html
+msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واعرفها في 6 محاولات"
+msgstr "A new song every day - listen to a short clip and guess it in 6 tries"
+
+#: frontend/website/pages/home.html
+msgid "العب دلوقتي"
+msgstr "Play now"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 

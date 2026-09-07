@@ -18,6 +18,53 @@
   .guess-header h1{font-size:22px;font-weight:900;margin:0 0 6px;}
   .guess-header p{color:var(--muted); font-size:13.5px; margin:0;}
 
+  /* Mystery cover: the actual art stays hidden until the round ends,
+     but a plain empty box read as unfinished/broken rather than "the
+     answer is hidden on purpose" - an animated gradient block with a
+     pulsing "?" reads as a deliberate reveal-as-you-play mechanic. */
+  @keyframes guessGradientShift{
+    0%, 100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+  @keyframes guessMarkPulse{
+    0%, 100%{transform:scale(1); opacity:.9;}
+    50%{transform:scale(1.12); opacity:1;}
+  }
+  .guess-mystery-cover{
+    width:120px; height:120px; border-radius:22px; margin:0 auto 20px;
+    background:linear-gradient(120deg, #8a5cff, #d4af37, #ff5c8a, #4fd4ff, #8a5cff);
+    background-size:300% 300%;
+    animation:guessGradientShift 6s ease infinite;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 16px 36px -12px rgba(138,92,255,.5);
+  }
+  .guess-mystery-cover span{
+    font-size:44px; font-weight:900; color:rgba(255,255,255,.92);
+    animation:guessMarkPulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes guessFadeUp{
+    from{opacity:0; transform:translateY(18px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .guess-header, .guess-player, .guess-attempts, .guess-choices, .guess-history-item, .guess-result{
+    animation:guessFadeUp .5s ease both;
+  }
+  .guess-player{animation-delay:.08s;}
+  .guess-attempts{animation-delay:.14s;}
+  .guess-choices{animation-delay:.2s;}
+  .guess-choice-btn{animation:guessFadeUp .4s ease both;}
+  .guess-choices .guess-choice-btn:nth-child(1){animation-delay:.26s;}
+  .guess-choices .guess-choice-btn:nth-child(2){animation-delay:.32s;}
+  .guess-choices .guess-choice-btn:nth-child(3){animation-delay:.38s;}
+  @media (prefers-reduced-motion: reduce){
+    .guess-mystery-cover, .guess-mystery-cover span,
+    .guess-header, .guess-player, .guess-attempts, .guess-choices,
+    .guess-choice-btn, .guess-history-item, .guess-result{
+      animation:none !important; opacity:1 !important; transform:none !important;
+    }
+  }
+
   .guess-player{
     background:var(--card); border:1px solid var(--border); border-radius:20px;
     padding:26px 22px; margin-bottom:20px; text-align:center;
@@ -69,8 +116,18 @@
     background:linear-gradient(135deg, rgba(212,175,55,.12), rgba(138,92,255,.1));
     border:1px solid var(--border);
   }
-  .guess-result .cover{width:96px;height:96px;border-radius:16px;overflow:hidden;margin:0 auto 14px; box-shadow:0 10px 30px rgba(0,0,0,.35);}
-  .guess-result .cover img{width:100%;height:100%;object-fit:cover;}
+  @keyframes guessCoverPop{
+    from{opacity:0; transform:scale(.6) rotate(-10deg);}
+    to{opacity:1; transform:scale(1) rotate(0);}
+  }
+  .guess-result .cover{
+    width:96px;height:96px;border-radius:16px;overflow:hidden;margin:0 auto 14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    padding:3px;
+    background:linear-gradient(135deg, #8a5cff, #d4af37, #ff5c8a);
+    animation:guessCoverPop .5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .guess-result .cover img{width:100%;height:100%;object-fit:cover; border-radius:13px; display:block;}
   .guess-result h2{font-size:20px; font-weight:900; margin:0 0 6px;}
   .guess-result p{color:var(--muted); font-size:13.5px; margin:0 0 18px;}
   .guess-result-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
@@ -105,6 +162,8 @@
     <audio id="guessAudio" src="{{ audio_url }}" preload="metadata"></audio>
 
     {% if not finished %}
+    <div class="guess-mystery-cover"><span>?</span></div>
+
     <div class="guess-player">
       <button type="button" class="guess-play-btn" id="guessPlayBtn">
         <i class="bi bi-play-fill" id="guessPlayIcon"></i>
