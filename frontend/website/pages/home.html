@@ -81,6 +81,7 @@
 
 <div class="container-xl">
 
+  {% if not guess_played_today %}
   <a href="{% url 'website_app:daily-guess' %}" class="th-guess-promo">
     <div class="th-guess-promo-icon"><i class="bi bi-controller"></i></div>
     <div class="th-guess-promo-text">
@@ -89,6 +90,7 @@
     </div>
     <div class="th-guess-promo-cta">{% translate "العب دلوقتي" %} <i class="bi bi-arrow-left"></i></div>
   </a>
+  {% endif %}
 
   <div class="th-section">
     <div class="th-section-head">

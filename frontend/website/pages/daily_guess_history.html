@@ -1,0 +1,64 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "خمّن الأغنية" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .guess-history-page { max-width: 560px; margin: 0 auto; }
+  .guess-history-row {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border); margin-bottom: 10px;
+    text-decoration: none; color: var(--text); transition: border-color .15s ease;
+  }
+  .guess-history-row:hover { border-color: var(--accent); }
+  .guess-history-cover {
+    width: 46px; height: 46px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+  }
+  .guess-history-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .guess-history-info { flex: 1; min-width: 0; }
+  .guess-history-date { font-weight: 800; font-size: 14px; }
+  .guess-history-song { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .guess-history-badge {
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; flex-shrink: 0;
+  }
+  .guess-history-badge.won { background: rgba(46,204,113,.15); color: #2ecc71; }
+  .guess-history-badge.lost { background: rgba(220,53,69,.15); color: #ff9aa5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "خمّن الأغنية" %}</h1>
+
+  <div class="guess-history-page">
+    {% if attempts %}
+      {% for attempt in attempts %}
+      <a href="{% url 'website_app:daily-guess-history-day' attempt.challenge.date|date:'Y-m-d' %}" class="guess-history-row">
+        <div class="guess-history-cover">
+          {% if attempt.challenge.song.display_cover_url %}
+            <img src="{{ attempt.challenge.song.display_cover_url }}" alt="">
+          {% else %}
+            <i class="bi bi-music-note-beamed"></i>
+          {% endif %}
+        </div>
+        <div class="guess-history-info">
+          <div class="guess-history-date">{{ attempt.challenge.date }}</div>
+          <div class="guess-history-song">{{ attempt.challenge.song.title_ar }}</div>
+        </div>
+        {% if attempt.correct %}
+          <span class="guess-history-badge won">{% translate "كسب" %}</span>
+        {% else %}
+          <span class="guess-history-badge lost">{% translate "خسر" %}</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    {% else %}
+      <p class="th-empty">{% translate "لسه ما لعبتش خمّن الأغنية" %}</p>
+      <a href="{% url 'website_app:daily-guess' %}" class="guess-btn primary" style="display:inline-flex; margin-top:12px; padding:11px 22px; border-radius:12px; text-decoration:none; font-weight:700; background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14;">
+        {% translate "العب دلوقتي" %}
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

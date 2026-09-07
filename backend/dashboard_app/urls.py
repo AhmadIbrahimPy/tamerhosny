@@ -56,6 +56,7 @@ urlpatterns = [
     # drilling into a day lists every user's own result for it.
     path('daily-guess/', views.daily_guess_days_list, name='daily-guess-stats'),
     path('daily-guess/<str:date>/', views.daily_guess_day_detail, name='daily-guess-day-detail'),
+    path('daily-guess/<str:date>/<int:attempt_pk>/delete/', views.daily_guess_attempt_delete, name='daily-guess-attempt-delete'),
 
     # Media — movies, series, commercials and programs are fully separate
     # browse/create flows (though they share the underlying Media table).

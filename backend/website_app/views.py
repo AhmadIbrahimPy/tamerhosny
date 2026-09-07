@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -87,7 +87,11 @@ def home(request):
     concerts = Concert.visible_queryset(Concert.objects.all())[:4]
     people = Person.objects.all()[:8]
     home_ads = list(_ads_for(Advertisement.Placement.HOME)[:8])
+    guess_played_today = request.user.is_authenticated and DailyGuessAttempt.objects.filter(
+        user=request.user, challenge__date=timezone.localdate(),
+    ).exists()
     return render(request, 'website/pages/home.html', {
+        'guess_played_today': guess_played_today,
         'songs': songs,
         'sing_with_tamer_songs': sing_with_tamer_songs,
         'movies': movies,
@@ -1048,13 +1052,17 @@ def daily_guess_game(request):
         request.session.modified = True
 
     # A guess is only ever recorded once someone is logged in (see
-    # daily_guess_attempt), so a prior attempt only shows up here for a
-    # signed-in visitor - restoring it into the session state is what
-    # stops them replaying the same challenge from a new session/device
-    # (a private tab, clearing cookies) once they're logged in again.
-    if request.user.is_authenticated and not (state['won'] or state['lost']):
+    # daily_guess_attempt), and the DB row is the source of truth for a
+    # signed-in visitor - not the session:
+    # - restores a finished result into the session for a new
+    #   session/device (a private tab, clearing cookies) so it can't be
+    #   replayed just by losing the old session.
+    # - resets an in-progress-looking session back to "not played yet"
+    #   if the DB attempt is gone (a dashboard admin cleared it), so a
+    #   cleared player isn't stuck seeing their old cached result.
+    if request.user.is_authenticated:
         existing_attempt = DailyGuessAttempt.objects.filter(user=request.user, challenge=challenge).first()
-        if existing_attempt is not None:
+        if existing_attempt is not None and not (state['won'] or state['lost']):
             state['guesses'] = [{
                 'song_id': existing_attempt.guessed_song_id,
                 'title': str(existing_attempt.guessed_song),
@@ -1064,6 +1072,11 @@ def daily_guess_game(request):
             state['lost'] = not existing_attempt.correct
             if state['won']:
                 state['win_line_index'] = random.randrange(len(DAILY_GUESS_WIN_LINES))
+            request.session[session_key] = state
+            request.session.modified = True
+        elif existing_attempt is None and (state['won'] or state['lost']):
+            state = {'song_id': song.pk, 'guesses': [], 'won': False, 'lost': False}
+            state['choices'] = _daily_guess_build_choices(song)
             request.session[session_key] = state
             request.session.modified = True
 
@@ -1177,6 +1190,63 @@ def daily_guess_attempt(request):
         'attempts_used': attempts_used,
         'revealed_seconds': revealed_seconds,
         'answer': answer,
+    })
+
+
+def daily_guess_history(request):
+    """أيام 'خمّن الأغنية' اللي اليوزر لعبها - وكسب فيها ولا خسر."""
+    if not request.user.is_authenticated:
+        return redirect('website_app:home')
+
+    attempts = DailyGuessAttempt.objects.filter(user=request.user).select_related(
+        'challenge__song',
+    ).order_by('-challenge__date')
+    return render(request, 'website/pages/daily_guess_history.html', {
+        'attempts': attempts,
+    })
+
+
+def daily_guess_history_day(request, date):
+    """نتيجة يوم معين من أيام اللعب - بتستخدم نفس صفحة اللعبة نفسها في
+    وضع 'خلصت اللعبة' بدل ما تكون صفحة منفصلة."""
+    if not request.user.is_authenticated:
+        return redirect('website_app:home')
+
+    try:
+        day = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        raise Http404
+
+    attempt = get_object_or_404(
+        DailyGuessAttempt.objects.select_related('challenge__song', 'guessed_song'),
+        user=request.user, challenge__date=day,
+    )
+    song = attempt.challenge.song
+
+    return render(request, 'website/pages/daily_guess.html', {
+        'audio_url': song.audio_file.url if song.audio_file else '',
+        'clip_start_seconds': _daily_guess_clip_start_seconds(song),
+        'revealed_seconds': float(song.duration_seconds or DAILY_GUESS_REVEAL_SCHEDULE[-1]),
+        'attempts_used': 1,
+        'max_attempts': DAILY_GUESS_MAX_ATTEMPTS,
+        'guesses': [{
+            'song_id': attempt.guessed_song_id,
+            'title': str(attempt.guessed_song),
+            'correct': attempt.correct,
+        }],
+        'won': attempt.correct,
+        'lost': not attempt.correct,
+        'finished': True,
+        'answer': {
+            'title': str(song),
+            'slug': song.slug,
+            'cover_url': song.display_cover_url,
+        },
+        'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
+        'choices': [],
+        'hype_line': (
+            random.choice(DAILY_GUESS_WIN_LINES) if attempt.correct else None
+        ),
     })
 
 

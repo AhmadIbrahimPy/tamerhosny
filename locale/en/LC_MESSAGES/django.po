@@ -4118,6 +4118,42 @@ msgstr "Confident and correct - amazing"
 msgid "ده مستوى تاني خالص، تحفة"
 msgstr "That's a whole different level, superb"
 
+#: frontend/dashboard/pages/daily_guess/days.html
+msgid "خمّن الأغنية - إحصائيات يومية"
+msgstr "Guess the Song - Daily Stats"
+
+#: frontend/dashboard/pages/daily_guess/days.html
+msgid "عدد اللاعبين"
+msgstr "Players"
+
+#: frontend/dashboard/pages/daily_guess/days.html
+msgid "كسبوا"
+msgstr "Won"
+
+#: frontend/dashboard/pages/daily_guess/days.html
+msgid "خسروا"
+msgstr "Lost"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "نتائج يوم %(date)s"
+msgstr "Results for %(date)s"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "كسب"
+msgstr "Won"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "خسر"
+msgstr "Lost"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة."
+msgstr "Delete this play? The user will be able to play again today."
+
+#: frontend/website/pages/daily_guess_history.html
+msgid "لسه ما لعبتش خمّن الأغنية"
+msgstr "You haven't played Guess the Song yet"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 

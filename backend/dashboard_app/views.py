@@ -1158,6 +1158,18 @@ def daily_guess_day_detail(request, date):
     })
 
 
+@dashboard_required
+def daily_guess_attempt_delete(request, date, attempt_pk):
+    attempt = get_object_or_404(DailyGuessAttempt, pk=attempt_pk)
+    if request.method == 'POST':
+        # Only the attempt itself, not the day's DailyGuessChallenge row -
+        # that keeps the user's song assignment for the day unchanged, it
+        # just frees them (via the now-missing attempt) to submit a fresh
+        # guess for it.
+        attempt.delete()
+    return redirect('dashboard_app:daily-guess-day-detail', date=date)
+
+
 # ---------------------------------------------------------------------------
 # Media (movies / series / commercials / programs)
 # ---------------------------------------------------------------------------

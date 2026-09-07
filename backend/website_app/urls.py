@@ -36,6 +36,8 @@ urlpatterns = [
 
     path('guess/', views.daily_guess_game, name='daily-guess'),
     path('guess/attempt/', views.daily_guess_attempt, name='daily-guess-attempt'),
+    path('guess/history/', views.daily_guess_history, name='daily-guess-history'),
+    path('guess/history/<str:date>/', views.daily_guess_history_day, name='daily-guess-history-day'),
 
     path('albums/', views.albums_list, name='albums'),
     path('albums/<str:slug>/', views.album_detail, name='album-detail'),

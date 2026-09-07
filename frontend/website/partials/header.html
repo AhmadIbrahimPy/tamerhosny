@@ -67,6 +67,9 @@
           <a href="{% url 'website_app:my-duets' %}" class="th-dropdown-item">
             <i class="bi bi-mic-fill"></i> {% translate "غنيت إيه مع تامر" %}
           </a>
+          <a href="{% url 'website_app:daily-guess-history' %}" class="th-dropdown-item">
+            <i class="bi bi-controller"></i> {% translate "خمّن الأغنية" %}
+          </a>
           <div class="th-user-dropdown-divider"></div>
           <button type="button" class="th-dropdown-item" onclick="logoutFromSite()">
             <i class="bi bi-box-arrow-right"></i> {% translate "تسجيل خروج" %}
