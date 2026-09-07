@@ -112,11 +112,16 @@
   .guess-history-item.correct i{color:#2ecc71;}
   .guess-history-item.wrong i{color:#ff9aa5;}
 
+  /* Base result card (the "try again" / loss state) - calm, not a
+     celebration. .won below overrides this into the flashy shareable
+     card, since only a correct guess is something worth showing off. */
   .guess-result{
-    text-align:center; padding:28px 22px; border-radius:20px; margin-bottom:20px;
+    position:relative; overflow:hidden; text-align:center; padding:28px 22px 22px;
+    border-radius:22px; margin-bottom:20px;
     background:linear-gradient(135deg, rgba(212,175,55,.12), rgba(138,92,255,.1));
     border:1px solid var(--border);
   }
+
   @keyframes guessCoverPop{
     from{opacity:0; transform:scale(.6) rotate(-10deg);}
     to{opacity:1; transform:scale(1) rotate(0);}
@@ -127,11 +132,12 @@
     padding:3px;
     background:linear-gradient(135deg, #8a5cff, #d4af37, #ff5c8a);
     animation:guessCoverPop .5s cubic-bezier(.34,1.56,.64,1) both;
+    position:relative; z-index:1;
   }
   .guess-result .cover img{width:100%;height:100%;object-fit:cover; border-radius:13px; display:block;}
-  .guess-result h2{font-size:20px; font-weight:900; margin:0 0 6px;}
-  .guess-result p{color:var(--muted); font-size:13.5px; margin:0 0 18px;}
-  .guess-result-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+  .guess-result h2{font-size:20px; font-weight:900; margin:0 0 6px; position:relative; z-index:1;}
+  .guess-result p{color:var(--muted); font-size:13.5px; margin:0 0 18px; position:relative; z-index:1;}
+  .guess-result-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1;}
   .guess-btn{
     display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:12px;
     border:1px solid var(--border); background:var(--card); color:var(--text);
@@ -141,6 +147,86 @@
   .guess-btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14; border:none;}
 
   .guess-emoji-grid{font-size:20px; letter-spacing:4px; margin-bottom:14px;}
+
+  /* Win card: this is the one people screenshot and post, so it gets
+     the full "Wrapped"-style treatment - vivid animated gradient,
+     the player's own avatar+name stamped on it (proof it's theirs,
+     not a generic template), sparkle icons, and a small site
+     watermark bottom-start so a shared screenshot still reads as
+     coming from this game. */
+  @keyframes guessWonGradient{
+    0%, 100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+  @keyframes guessSparkleFloat{
+    0%, 100%{transform:translateY(0) scale(1); opacity:.55;}
+    50%{transform:translateY(-8px) scale(1.15); opacity:1;}
+  }
+  @keyframes guessBadgeSpring{
+    from{opacity:0; transform:scale(.4) translateY(10px);}
+    to{opacity:1; transform:scale(1) translateY(0);}
+  }
+  .guess-result.won{
+    padding:26px 22px 22px;
+    background:linear-gradient(120deg, #6a3cff, #d4af37, #ff5c8a, #4fd4ff, #6a3cff);
+    background-size:300% 300%;
+    animation:guessFadeUp .5s ease both, guessWonGradient 10s ease infinite;
+    border:1px solid rgba(255,255,255,.25);
+    box-shadow:0 24px 50px -18px rgba(138,92,255,.55);
+  }
+  .guess-result.won .guess-sparkle{
+    position:absolute; z-index:0; color:rgba(255,255,255,.75); pointer-events:none;
+    animation:guessSparkleFloat 3.4s ease-in-out infinite;
+  }
+  .guess-result.won .guess-sparkle.s1{top:14px; inset-inline-start:18px; font-size:16px; animation-delay:0s;}
+  .guess-result.won .guess-sparkle.s2{top:22px; inset-inline-end:24px; font-size:12px; animation-delay:.6s;}
+  .guess-result.won .guess-sparkle.s3{bottom:64px; inset-inline-start:12px; font-size:13px; animation-delay:1.2s;}
+  .guess-result.won .guess-sparkle.s4{bottom:80px; inset-inline-end:16px; font-size:18px; animation-delay:1.8s;}
+  .guess-result.won .guess-sparkle.s5{top:50%; inset-inline-start:6px; font-size:10px; animation-delay:2.4s;}
+
+  .guess-result-user{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-bottom:16px; position:relative; z-index:1;
+  }
+  .guess-result-avatar, .guess-result-avatar-fallback{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,255,255,.8); box-shadow:0 4px 12px rgba(0,0,0,.25);
+  }
+  .guess-result-avatar{object-fit:cover;}
+  .guess-result-avatar-fallback{
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.22); color:#fff; font-weight:900; font-size:13px;
+  }
+  .guess-result-username{color:#fff; font-weight:800; font-size:13.5px;}
+
+  .guess-result.won .guess-badge{
+    width:44px; height:44px; border-radius:50%; margin:0 auto 10px;
+    background:rgba(255,255,255,.2); border:2px solid rgba(255,255,255,.7);
+    display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+    position:relative; z-index:1; animation:guessBadgeSpring .5s cubic-bezier(.34,1.56,.64,1) .1s both;
+  }
+  .guess-result.won .cover{
+    background:rgba(255,255,255,.35); box-shadow:0 14px 34px rgba(0,0,0,.3);
+  }
+  .guess-result.won h2{color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.2);}
+  .guess-result.won p{color:rgba(255,255,255,.92);}
+  .guess-result.won .guess-hype-line{color:#fff !important; text-shadow:0 1px 6px rgba(0,0,0,.2);}
+  .guess-result.won .guess-btn{background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.4); color:#fff;}
+  .guess-result.won .guess-btn:hover{background:rgba(255,255,255,.28); color:#fff; border-color:#fff;}
+  .guess-result.won .guess-btn.primary{background:#fff; color:#3d2a7a;}
+
+  .guess-result-brand{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,.25);
+    color:rgba(255,255,255,.85); font-size:11.5px; font-weight:700; letter-spacing:.3px;
+    position:relative; z-index:1;
+  }
+  .guess-result-brand i{font-size:13px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .guess-result.won{animation:none !important; background-position:0% 50%;}
+    .guess-result.won .guess-sparkle, .guess-result.won .guess-badge{animation:none !important; opacity:1 !important; transform:none !important;}
+  }
 </style>
 {% endblock %}
 
@@ -204,8 +290,25 @@
     {% endif %}
 
     {% if finished %}
-    <div class="guess-result">
+    <div class="guess-result {% if won %}won{% endif %}" id="guessResultCard">
       {% if won %}
+        <i class="bi bi-star-fill guess-sparkle s1"></i>
+        <i class="bi bi-star-fill guess-sparkle s2"></i>
+        <i class="bi bi-star-fill guess-sparkle s3"></i>
+        <i class="bi bi-music-note-beamed guess-sparkle s4"></i>
+        <i class="bi bi-star-fill guess-sparkle s5"></i>
+
+        <div class="guess-result-user">
+          {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="" class="guess-result-avatar">
+          {% else %}
+            <span class="guess-result-avatar-fallback">{{ user.username|slice:":1"|upper }}</span>
+          {% endif %}
+          <span class="guess-result-username">{{ user.first_name|default:user.username }}</span>
+        </div>
+
+        <div class="guess-badge"><i class="bi bi-trophy-fill"></i></div>
+
         <div class="cover">
           {% if answer.cover_url %}<img src="{{ answer.cover_url }}" alt="">{% else %}<i class="bi bi-music-note-beamed" style="font-size:40px;"></i>{% endif %}
         </div>
@@ -230,6 +333,12 @@
         </a>
         {% endif %}
       </div>
+
+      {% if won %}
+      <div class="guess-result-brand">
+        <i class="bi bi-music-note-beamed"></i> {% translate "خمّن الأغنية" %} · th.lexora.vip
+      </div>
+      {% endif %}
     </div>
     {% endif %}
 
