@@ -17,8 +17,11 @@ from django.views.decorators.http import require_POST
 
 from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
-from backend.main_app.models import Like, Playlist, PlaylistItem, UserSongPlay, CurrentSongListener
+from backend.main_app.models import Like, Playlist, PlaylistItem, UserGameProfile, UserSongPlay, CurrentSongListener
 from backend.main_app.shared_utils.credits import dedupe_credits
+from backend.main_app.shared_utils.gamification import (
+    POINTS_GUESS_LOSS, POINTS_LIKE, award_points, unlocked_badges,
+)
 from backend.main_app.templatetags.bilingual import localized_field
 from backend.concerts_app.models import Concert
 from backend.media_app.models import Media
@@ -1155,6 +1158,36 @@ def daily_guess_game(request):
 
 
 @require_POST
+def daily_guess_track(request):
+    """بيسجل كل مرة اللاعب دوس Play وكل ثانية سمعها فعليًا، عشان نقط
+    الفوز تتحسب بعدين على أساس قد إيه احتاج يسمع - مش لازم تسجيل دخول
+    هنا لسه (الزائر ممكن يجرب قبل ما يسجل)، بس من غير تسجيل دخول القيم
+    دي مش هتتحول لنقط فعلية أبدًا."""
+    today = timezone.localdate()
+    session_key = _daily_guess_session_key(today)
+    state = request.session.get(session_key)
+    if state is None:
+        return JsonResponse({'error': 'no active round'}, status=400)
+
+    if not (state['won'] or state['lost']):
+        event = request.POST.get('event')
+        if event == 'play':
+            state['play_count'] = state.get('play_count', 0) + 1
+            request.session[session_key] = state
+            request.session.modified = True
+        elif event == 'listened':
+            try:
+                seconds = max(0.0, float(request.POST.get('seconds', 0)))
+            except (TypeError, ValueError):
+                seconds = 0.0
+            state['seconds_listened'] = state.get('seconds_listened', 0) + seconds
+            request.session[session_key] = state
+            request.session.modified = True
+
+    return JsonResponse({'status': 'ok'})
+
+
+@require_POST
 def daily_guess_attempt(request):
     """معالجة محاولة تخمين واحدة - لازم تسجيل دخول عشان المحاولة تتنسب لليوزر."""
     if not request.user.is_authenticated:
@@ -1198,16 +1231,27 @@ def daily_guess_attempt(request):
     # same compliment instead of a new random one each time.
     hype_line_index = random.randrange(len(DAILY_GUESS_WIN_LINES)) if is_correct else None
 
+    play_count = int(state.get('play_count', 0))
+    seconds_listened = int(state.get('seconds_listened', 0))
+    # Confident, efficient guesses are worth more: a base 100 points,
+    # docked for every extra play beyond the first and every second
+    # spent actually listening - floored so a win is never worth
+    # (almost) nothing no matter how much was listened to.
+    points_awarded = max(20, 100 - max(0, play_count - 1) * 15 - seconds_listened * 2) if is_correct else 0
+
     DailyGuessAttempt.objects.create(
         user=request.user, challenge=challenge, guessed_song_id=guessed_song_id, correct=is_correct,
-        hype_line_index=hype_line_index,
+        hype_line_index=hype_line_index, play_count=play_count, seconds_listened=seconds_listened,
+        points_awarded=points_awarded,
     )
 
     if is_correct:
         state['won'] = True
         state['win_line_index'] = hype_line_index
+        award_points(request.user, points_awarded)
     elif len(state['guesses']) >= DAILY_GUESS_MAX_ATTEMPTS:
         state['lost'] = True
+        award_points(request.user, POINTS_GUESS_LOSS)
 
     request.session[session_key] = state
     request.session.modified = True
@@ -1387,6 +1431,9 @@ def toggle_favorite(request):
             from backend.main_app.shared_utils.song_leaderboard import refresh_song_leaderboard
             refresh_song_leaderboard(object_id)
 
+        if liked:
+            award_points(request.user, POINTS_LIKE)
+
         return JsonResponse({'status': 'success', 'liked': liked})
 
     except ContentType.DoesNotExist:
@@ -1477,6 +1524,13 @@ def public_profile(request, username):
     full_listens_total = full_listens_qs.count()
     full_listens = full_listens_qs[:PROFILE_PREVIEW_SIZE]
 
+    game_profile = UserGameProfile.objects.filter(user=profile_user).first()
+    game_badges = unlocked_badges(game_profile) if game_profile else []
+    game_rank = (
+        UserGameProfile.objects.filter(points__gt=game_profile.points).count() + 1
+        if game_profile else None
+    )
+
     return render(request, 'website/pages/user/public_profile.html', {
         'profile_user': profile_user,
         'liked_songs': liked_songs,
@@ -1485,6 +1539,28 @@ def public_profile(request, username):
         'full_listens': full_listens,
         'full_listens_total': full_listens_total,
         'is_own_profile': request.user.is_authenticated and request.user.pk == profile_user.pk,
+        'game_profile': game_profile,
+        'game_badges': game_badges,
+        'game_rank': game_rank,
+    })
+
+
+def leaderboard(request):
+    """ترتيب أكتر المستخدمين نقط - بتتجمع من كل نشاط في الموقع (خمّن
+    الأغنية، الإعجابات، الدويتوهات...) في نفس البروفايل."""
+    top_profiles = UserGameProfile.objects.select_related('user').filter(points__gt=0)[:50]
+
+    my_profile = None
+    my_rank = None
+    if request.user.is_authenticated:
+        my_profile = UserGameProfile.objects.filter(user=request.user).first()
+        if my_profile:
+            my_rank = UserGameProfile.objects.filter(points__gt=my_profile.points).count() + 1
+
+    return render(request, 'website/pages/leaderboard.html', {
+        'top_profiles': top_profiles,
+        'my_profile': my_profile,
+        'my_rank': my_rank,
     })
 
 

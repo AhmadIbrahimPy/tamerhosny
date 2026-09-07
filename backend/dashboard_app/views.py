@@ -28,7 +28,7 @@ from backend.dashboard_app.forms import (
     StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
-from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserSongPlay
+from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserGameProfile, UserSongPlay
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import Album, DailyGuessAttempt, DailyGuessChallenge, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
@@ -1852,12 +1852,16 @@ def user_view(request, pk):
         user=account, last_heartbeat__gte=timezone.now() - LISTENING_NOW_CUTOFF,
     ).select_related('song').first()
 
+    game_profile = UserGameProfile.objects.filter(user=account).first()
+
     fields = [
         (_('اسم المستخدم'), account.username),
         (_('البريد الإلكتروني'), account.email),
         (_('الدور'), account.get_role_display()),
         (_('الحالة'), _('مفعّل') if account.is_active else _('موقوف')),
         (_('يستمع الآن'), f'🟢 {now_listening.song.title_ar}' if now_listening else _('غير متصل')),
+        (_('النقاط'), game_profile.points if game_profile else 0),
+        (_('الأيام المتتالية'), game_profile.current_streak if game_profile else 0),
         (_('تاريخ الانضمام'), account.date_joined),
         (_('آخر تسجيل دخول'), account.last_login),
     ]

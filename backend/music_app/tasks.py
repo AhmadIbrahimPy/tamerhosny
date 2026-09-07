@@ -79,6 +79,9 @@ def create_duet_song(self, project_id):
         project.processing_error = ''
         project.save()
 
+        from backend.main_app.shared_utils.gamification import POINTS_DUET_COMPLETED, award_points
+        award_points(project.user, POINTS_DUET_COMPLETED)
+
         # The per-line takes are already baked into final_audio_file
         # above and are never read again - delete them to stop the
         # server disk from filling up with duplicate audio.

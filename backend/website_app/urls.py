@@ -36,6 +36,7 @@ urlpatterns = [
 
     path('guess/', views.daily_guess_game, name='daily-guess'),
     path('guess/attempt/', views.daily_guess_attempt, name='daily-guess-attempt'),
+    path('guess/track/', views.daily_guess_track, name='daily-guess-track'),
     path('guess/history/', views.daily_guess_history, name='daily-guess-history'),
     path('guess/history/<str:date>/', views.daily_guess_history_day, name='daily-guess-history-day'),
 
@@ -53,6 +54,7 @@ urlpatterns = [
     path('remix-result/<int:remix_id>/', views.remix_result, name='remix-result'),
 
     # User Features
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('u/<str:username>/', views.public_profile, name='public-profile'),
     path('u/<str:username>/recap/', views.recap, name='recap'),
     path('u/<str:username>/most-listened/', views.profile_most_listened, name='profile-most-listened'),

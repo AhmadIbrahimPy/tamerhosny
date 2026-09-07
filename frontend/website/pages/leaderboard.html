@@ -1,0 +1,90 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "الترتيب" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .lb-page { max-width: 640px; margin: 0 auto; }
+  .lb-header { text-align: center; margin-bottom: 24px; }
+  .lb-header h1 { font-size: 22px; font-weight: 900; margin: 0 0 6px; }
+  .lb-header p { color: var(--muted); font-size: 13.5px; margin: 0; }
+
+  .lb-my-rank {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(138,92,255,.1));
+    border: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .lb-my-rank .rank-num { font-size: 20px; font-weight: 900; color: var(--accent); min-width: 34px; text-align: center; }
+  .lb-my-rank .lb-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .lb-my-rank .lb-avatar-fallback {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; background: var(--bg); font-weight: 800;
+  }
+  .lb-my-rank .lb-info { flex: 1; min-width: 0; }
+  .lb-my-rank .lb-points { font-weight: 900; color: var(--accent); }
+
+  .lb-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
+    background: var(--card); border: 1px solid var(--border); margin-bottom: 8px; text-decoration: none; color: var(--text);
+  }
+  .lb-row:hover { border-color: var(--accent); }
+  .lb-row .rank-num { font-size: 15px; font-weight: 900; min-width: 28px; text-align: center; color: var(--muted); }
+  .lb-row.top1 .rank-num { color: #d4af37; }
+  .lb-row.top2 .rank-num { color: #c0c0c0; }
+  .lb-row.top3 .rank-num { color: #cd7f32; }
+  .lb-row .lb-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .lb-row .lb-avatar-fallback {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; background: var(--bg); font-weight: 800; font-size: 13px;
+  }
+  .lb-row .lb-name { flex: 1; min-width: 0; font-weight: 700; font-size: 13.5px; }
+  .lb-row .lb-streak { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 3px; }
+  .lb-row .lb-points { font-weight: 900; color: var(--accent); font-size: 13.5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <div class="lb-page">
+    <div class="lb-header">
+      <h1>{% translate "الترتيب" %}</h1>
+      <p>{% translate "نقط من كل نشاط في الموقع - خمّن الأغنية، الإعجابات، الدويتوهات وأكتر" %}</p>
+    </div>
+
+    {% if my_profile %}
+    <a href="{% url 'website_app:public-profile' request.user.username %}" class="lb-my-rank">
+      <span class="rank-num">#{{ my_rank }}</span>
+      {% if request.user.profile_image %}
+        <img src="{{ request.user.profile_image.url }}" alt="" class="lb-avatar">
+      {% else %}
+        <span class="lb-avatar-fallback">{{ request.user.username|slice:":1"|upper }}</span>
+      {% endif %}
+      <div class="lb-info">
+        <div>{% translate "ترتيبك" %}</div>
+      </div>
+      <span class="lb-points">{{ my_profile.points }} {% translate "نقطة" %}</span>
+    </a>
+    {% endif %}
+
+    {% if top_profiles %}
+      {% for profile in top_profiles %}
+      <a href="{% url 'website_app:public-profile' profile.user.username %}" class="lb-row {% if forloop.counter == 1 %}top1{% elif forloop.counter == 2 %}top2{% elif forloop.counter == 3 %}top3{% endif %}">
+        <span class="rank-num">{{ forloop.counter }}</span>
+        {% if profile.user.profile_image %}
+          <img src="{{ profile.user.profile_image.url }}" alt="" class="lb-avatar">
+        {% else %}
+          <span class="lb-avatar-fallback">{{ profile.user.username|slice:":1"|upper }}</span>
+        {% endif %}
+        <span class="lb-name">{{ profile.user.username }}</span>
+        {% if profile.current_streak > 0 %}
+          <span class="lb-streak"><i class="bi bi-fire"></i> {{ profile.current_streak }}</span>
+        {% endif %}
+        <span class="lb-points">{{ profile.points }}</span>
+      </a>
+      {% endfor %}
+    {% else %}
+      <p class="th-empty">{% translate "لسه مفيش نقط اتسجلت" %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

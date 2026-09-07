@@ -267,6 +267,14 @@ class DailyGuessAttempt(models.Model):
     # so looking back at this day later shows the exact same compliment
     # instead of a freshly re-rolled one every time the page is opened.
     hype_line_index = models.PositiveSmallIntegerField(null=True, blank=True)
+    # How much the player actually listened before guessing (tracked
+    # client-side across the whole round - refreshing or coming back
+    # later the same day keeps adding to the same total, it doesn't
+    # reset) - the fewer plays and the less time spent listening, the
+    # more points the win is worth.
+    play_count = models.PositiveSmallIntegerField(default=0)
+    seconds_listened = models.PositiveIntegerField(default=0)
+    points_awarded = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

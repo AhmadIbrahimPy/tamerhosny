@@ -53,6 +53,23 @@
   }
   .profile-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
   .profile-section { margin-bottom: 40px; }
+
+  .profile-game-stats {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .profile-game-stat {
+    flex: 1; min-width: 110px; text-align: center; padding: 16px 10px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .profile-game-stat .value { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .profile-game-stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .profile-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .profile-badge {
+    display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(138,92,255,.1));
+    border: 1px solid var(--border); font-size: 12.5px; font-weight: 700;
+  }
+  .profile-badge i { color: var(--accent); }
 </style>
 {% endblock %}
 
@@ -99,6 +116,30 @@
       <i class="bi bi-stars"></i> {% translate "الملخص" %}
     </a>
   </div>
+
+  {% if game_profile %}
+  <div class="profile-game-stats">
+    <div class="profile-game-stat">
+      <div class="value">{{ game_profile.points }}</div>
+      <div class="label">{% translate "نقطة" %}</div>
+    </div>
+    <div class="profile-game-stat">
+      <div class="value">#{{ game_rank }}</div>
+      <div class="label">{% translate "الترتيب" %}</div>
+    </div>
+    <div class="profile-game-stat">
+      <div class="value"><i class="bi bi-fire"></i> {{ game_profile.current_streak }}</div>
+      <div class="label">{% translate "يوم متتالي" %}</div>
+    </div>
+  </div>
+  {% if game_badges %}
+  <div class="profile-badges" style="margin-bottom:28px;">
+    {% for badge in game_badges %}
+    <span class="profile-badge"><i class="bi {{ badge.icon }}"></i> {{ badge.label }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
 
   {% if full_listens %}
   <div class="profile-section">

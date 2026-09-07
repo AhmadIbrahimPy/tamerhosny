@@ -330,3 +330,23 @@ class LoginSession(models.Model):
 
     def __str__(self):
         return f'{self.user} - {self.created_at:%Y-%m-%d %H:%M}'
+
+
+class UserGameProfile(models.Model):
+    """Site-wide gamification state for one user - points earned from
+    activities across the whole site (not just one feature), plus a
+    daily login-streak so coming back regularly is its own reward.
+    Created lazily the first time a user does anything point-worthy.
+    """
+
+    user = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='game_profile')
+    points = models.PositiveIntegerField(default=0)
+    current_streak = models.PositiveIntegerField(default=0)
+    longest_streak = models.PositiveIntegerField(default=0)
+    last_active_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-points',)
+
+    def __str__(self):
+        return f'{self.user} - {self.points} pts'

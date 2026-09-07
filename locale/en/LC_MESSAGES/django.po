@@ -4154,6 +4154,76 @@ msgstr "Delete this play? The user will be able to play again today with a new r
 msgid "لسه ما لعبتش خمّن الأغنية"
 msgstr "You haven't played Guess the Song yet"
 
+#: frontend/website/pages/leaderboard.html
+#: frontend/website/pages/user/public_profile.html
+msgid "نقطة"
+msgstr "points"
+
+#: frontend/website/pages/user/public_profile.html
+msgid "يوم متتالي"
+msgstr "day streak"
+
+#: frontend/website/pages/leaderboard.html
+msgid "ترتيبك"
+msgstr "Your rank"
+
+#: frontend/website/pages/leaderboard.html
+msgid "نقط من كل نشاط في الموقع - خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
+msgstr "Points from every activity on the site - Guess the Song, likes, duets and more"
+
+#: frontend/website/pages/leaderboard.html
+msgid "لسه مفيش نقط اتسجلت"
+msgstr "No points recorded yet"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "مرات الاستماع"
+msgstr "Plays"
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "ثواني الاستماع"
+msgstr "Seconds listened"
+
+#: backend/dashboard_app/views.py
+#: frontend/dashboard/pages/daily_guess/day_detail.html
+msgid "النقاط"
+msgstr "Points"
+
+#: backend/dashboard_app/views.py
+msgid "الأيام المتتالية"
+msgstr "Day streak"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "أول خطوة"
+msgstr "First Steps"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "عضو نشيط"
+msgstr "Active Member"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "عضو متميز"
+msgstr "Distinguished Member"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "نجم الموقع"
+msgstr "Site Star"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "أسطورة تامر"
+msgstr "Tamer Legend"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "3 أيام متتالية"
+msgstr "3-day streak"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "أسبوع كامل"
+msgstr "A full week"
+
+#: backend/main_app/shared_utils/gamification.py
+msgid "شهر كامل بدون انقطاع"
+msgstr "A whole month without a break"
+
 #~ msgid "شارك"
 #~ msgstr "Share"
 
