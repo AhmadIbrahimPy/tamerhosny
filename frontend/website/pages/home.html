@@ -481,6 +481,21 @@
 
   track.addEventListener('pointerup', endDrag);
   track.addEventListener('pointercancel', endDrag);
+  // Safety net: pointer capture should guarantee pointerup/pointercancel
+  // reach the track no matter where the pointer ends up, but releasing
+  // outside the browser window, switching tabs/apps mid-drag, or losing
+  // capture for any other reason can still skip both - `dragging` then
+  // stays stuck true forever with the transform frozen wherever the last
+  // pointermove left it (transition:none). Every card after that sits at
+  // a scrambled, half-visible position instead of its real slide spot,
+  // which is what made them need several clicks to actually hit - a
+  // window-level catch-all guarantees the drag always gets cleaned up
+  // and the track snapped back into place.
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) endDrag();
+  });
 
   // A drag that moved things shouldn't also fire the card's own link.
   Array.prototype.forEach.call(track.querySelectorAll('a'), function (a) {

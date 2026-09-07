@@ -9,7 +9,17 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-EPR337HYXV');
+    // send_page_view: false - htmx boost makes this a de-facto SPA (only
+    // #th-page-root swaps, the document/history never really reloads),
+    // and a virtual page_view is already fired by hand on every boosted
+    // navigation (see htmx:afterSettle below). Leaving GA's own default
+    // "history change" auto-tracking on double-fires that pageview AND
+    // makes gtag.js recompute Core Web Vitals against a real navigation
+    // that never happened - Performance/Paint timing entries only exist
+    // for the true first load, so its internal reporter (reportAllChanges)
+    // reads an empty entries list and throws "Cannot read properties of
+    // undefined (reading 'startTime')" on every htmx navigation.
+    gtag('config', 'G-EPR337HYXV', { send_page_view: false });
   </script>
 
   <!-- Microsoft Clarity -->
@@ -626,7 +636,18 @@
 
   {% include "website/partials/header.html" %}
 
-  <div id="th-page-root">
+  <!-- hx-history-elt - boosted clicks already only fetch/swap this
+       fragment (hx-target/hx-select on <body> above), but htmx's
+       back/forward history snapshot defaults to the WHOLE <body>
+       unless told otherwise. Without this, hitting back/forward
+       re-inserts (and re-executes) everything else in <body> too -
+       including the audio-player <script> below, whose top-level
+       `let`/`const` globals (isRepeat, etc.) were already declared on
+       the real first load, so redeclaring them throws
+       "Identifier '...' has already been declared" and aborts that
+       whole script, which is also why the audio element's own event
+       handlers then found it null. -->
+  <div id="th-page-root" hx-history-elt>
     {% block extra_css %}{% endblock %}
     {% block content %}{% endblock %}
   </div>
@@ -2408,8 +2429,8 @@
         mobileToggle.setAttribute('aria-expanded', 'false');
         mobileToggle.querySelector('i').className = 'bi bi-list';
       }
-      // GA only auto-tracks the initial hard load; boosted navigations
-      // never reload gtag.js, so fire a virtual pageview ourselves.
+      // Auto page_view is turned off (send_page_view: false above) since
+      // this is a de-facto SPA - fire the virtual pageview ourselves.
       if (typeof gtag === 'function') {
         gtag('event', 'page_view', {
           page_path: window.location.pathname + window.location.search,

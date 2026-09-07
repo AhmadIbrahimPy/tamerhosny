@@ -17,6 +17,7 @@ import urllib.request
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -65,14 +66,44 @@ def _user_payload(user):
     }
 
 
-def _unique_username(base):
-    base = re.sub(r'[^a-zA-Z0-9_.]', '', base.split('@')[0]).lower() or 'user'
+def _unique_username(*candidates):
+    """Build a username from the first usable candidate - the person's
+    actual name (typed on the register form, or Google's profile name)
+    comes before their email, since basing it on the email's local part
+    is what produced ugly usernames like "fatimahnagy505" for someone
+    whose Gmail address just happened to have digits in it, when their
+    real name sanitizes to a clean "fatimahnagy". A name in Arabic (or
+    anything else non-Latin) sanitizes away to nothing here, so the loop
+    just falls through to the next candidate - the email - instead.
+    """
+    base = ''
+    for candidate in candidates:
+        base = re.sub(r'[^a-zA-Z0-9_.]', '', (candidate or '').split('@')[0]).lower()
+        if base:
+            break
+    base = base or 'user'
+
     username = base
     suffix = 0
     while UserAccount.objects.filter(username=username).exists():
         suffix += 1
         username = f'{base}{suffix}'
     return username
+
+
+def _save_profile_image_from_url(user, image_url):
+    """Best-effort fetch of a remote avatar (Google's "picture" field)
+    into the account's own profile_image - failures here are silent
+    since a missing avatar is cosmetic and must never block login.
+    """
+    if not image_url:
+        return
+    try:
+        with urllib.request.urlopen(image_url, timeout=10) as response:
+            content = response.read()
+        user.profile_image.save(f'google_{user.pk}.jpg', ContentFile(content), save=True)
+    except Exception:
+        pass
 
 
 @csrf_exempt
@@ -96,7 +127,7 @@ def register(request):
         return _error(_('البريد الإلكتروني ده مسجل بالفعل.'))
 
     user = UserAccount(
-        username=_unique_username(email),
+        username=_unique_username(name, email),
         email=email,
         first_name=name,
         role=UserAccount.Role.VIEWER,
@@ -316,7 +347,7 @@ def google_login_callback(request):
     user = UserAccount.objects.filter(email__iexact=email).first()
     if not user:
         user = UserAccount(
-            username=_unique_username(email),
+            username=_unique_username(profile.get('name'), email),
             email=email,
             first_name=profile.get('name') or email.split('@')[0],
             role=UserAccount.Role.VIEWER,
@@ -326,6 +357,7 @@ def google_login_callback(request):
         # elsewhere (blocking password login/reset for it).
         user.set_unusable_password()
         user.save()
+        _save_profile_image_from_url(user, profile.get('picture'))
 
     auth_login(request, user)
     record_login_session(request, user, LoginSession.Source.APP)
