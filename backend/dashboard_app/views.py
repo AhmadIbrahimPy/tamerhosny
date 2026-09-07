@@ -30,7 +30,7 @@ from backend.dashboard_app.forms import (
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserSongPlay
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
-from backend.music_app.models import Album, Song, SongCredit, SongLyricSegment
+from backend.music_app.models import Album, DailyGuessAttempt, DailyGuessChallenge, Song, SongCredit, SongLyricSegment
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
 
@@ -1117,6 +1117,45 @@ def song_segment_delete(request, pk, segment_pk):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         return redirect('dashboard_app:song-segments', pk=pk)
+
+
+# ---------------------------------------------------------------------------
+# "خمّن الأغنية" daily game stats
+# ---------------------------------------------------------------------------
+
+@dashboard_required
+def daily_guess_days_list(request):
+    days = (
+        DailyGuessAttempt.objects.values('challenge__date')
+        .annotate(
+            played=Count('id'),
+            won=Count('id', filter=Q(correct=True)),
+            lost=Count('id', filter=Q(correct=False)),
+        )
+        .order_by('-challenge__date')
+    )
+    days = _paginate(request, days)
+    return render(request, 'dashboard/pages/daily_guess/days.html', {
+        'days': days,
+    })
+
+
+@dashboard_required
+def daily_guess_day_detail(request, date):
+    try:
+        day = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        raise Http404
+
+    attempts = DailyGuessAttempt.objects.filter(challenge__date=day).select_related(
+        'user', 'challenge__song',
+    ).order_by('-created_at')
+    attempts = _paginate(request, attempts)
+    return render(request, 'dashboard/pages/daily_guess/day_detail.html', {
+        'date': day,
+        'attempts': attempts,
+        'back_url': reverse('dashboard_app:daily-guess-stats'),
+    })
 
 
 # ---------------------------------------------------------------------------

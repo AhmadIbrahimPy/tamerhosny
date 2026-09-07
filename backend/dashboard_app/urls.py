@@ -52,6 +52,11 @@ urlpatterns = [
     path('songs/<int:pk>/segments/<int:segment_pk>/edit/', views.song_segment_edit, name='song-segment-edit'),
     path('songs/<int:pk>/segments/<int:segment_pk>/delete/', views.song_segment_delete, name='song-segment-delete'),
 
+    # "خمّن الأغنية" daily game stats — one row per day (played/won/lost),
+    # drilling into a day lists every user's own result for it.
+    path('daily-guess/', views.daily_guess_days_list, name='daily-guess-stats'),
+    path('daily-guess/<str:date>/', views.daily_guess_day_detail, name='daily-guess-day-detail'),
+
     # Media — movies, series, commercials and programs are fully separate
     # browse/create flows (though they share the underlying Media table).
     path('movies/', views.movies_list, name='movies'),

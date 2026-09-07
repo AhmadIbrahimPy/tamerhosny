@@ -1,0 +1,41 @@
+{% extends "dashboard/index.html" %}
+{% load static i18n %}
+{% block title %}{% translate "خمّن الأغنية" %}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="card card-lg">
+    {% trans "خمّن الأغنية - إحصائيات يومية" as list_title %}
+    {% include "dashboard/partials/_list_header.html" with header_title=list_title header_icon="ti-puzzle" header_accent="info" header_count=days.paginator.count %}
+    <div class="table-responsive">
+      <table class="table text-nowrap mb-0 table-centered table-hover">
+        <thead>
+          <tr>
+            <th>{% translate "اليوم" %}</th>
+            <th class="text-center">{% translate "عدد اللاعبين" %}</th>
+            <th class="text-center">{% translate "كسبوا" %}</th>
+            <th class="text-center">{% translate "خسروا" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in days %}
+          <tr>
+            <td>
+              <a href="{% url 'dashboard_app:daily-guess-day-detail' day.challenge__date|date:'Y-m-d' %}" class="text-inherit text-decoration-none fw-bold">
+                {{ day.challenge__date }}
+              </a>
+            </td>
+            <td class="text-center">{{ day.played }}</td>
+            <td class="text-center"><span class="badge bg-success-subtle text-success">{{ day.won }}</span></td>
+            <td class="text-center"><span class="badge bg-danger-subtle text-danger">{{ day.lost }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/partials/pagination.html" with page_obj=days %}
+  </div>
+</div>
+{% endblock %}

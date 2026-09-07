@@ -32,6 +32,18 @@
     </li>
 
     <li class="nav-item">
+      <a class="nav-link {% if 'daily-guess' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'dashboard_app:daily-guess-stats' %}">
+        <span class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-puzzle">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 7h3a1 1 0 0 0 1 -1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h3a1 1 0 0 1 1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 1 0 4h-1a1 1 0 0 0 -1 1v3a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-1a2 2 0 0 0 -4 0v1a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h1a2 2 0 0 0 0 -4h-1a1 1 0 0 1 -1 -1z" />
+          </svg>
+        </span>
+        <span class="text">{% translate "خمّن الأغنية" %}</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
       <div class="nav-heading">{% translate "الأرشيف الفني" %}</div>
       <hr class="mx-5 nav-line mb-1" />
     </li>
@@ -212,6 +224,7 @@
     <ul class="navbar-nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:home' %}"><span class="text">{% translate "الرئيسية" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:analytics' %}"><span class="text">{% translate "التحليلات" %}</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:daily-guess-stats' %}"><span class="text">{% translate "خمّن الأغنية" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:people' %}"><span class="text">{% translate "الفنانون" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:studios' %}"><span class="text">{% translate "الاستوديوهات والشركات" %}</span></a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_app:albums' %}"><span class="text">{% translate "الألبومات" %}</span></a></li>
