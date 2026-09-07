@@ -29,8 +29,11 @@ from backend.dashboard_app.forms import (
 )
 from backend.links_app.models import ExternalLink, Platform
 from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserGameProfile, UserSongPlay
+from backend.main_app.shared_utils.gamification import get_rank_and_trend, unlocked_badges
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
-from backend.music_app.models import Album, DailyGuessAttempt, DailyGuessChallenge, Song, SongCredit, SongLyricSegment
+from backend.music_app.models import (
+    Album, DailyGuessAttempt, DailyGuessChallenge, SingWithTamerProject, Song, SongCredit, SongLyricSegment,
+)
 from backend.people_app.models import Person
 from backend.studios_app.models import Studio
 
@@ -130,6 +133,14 @@ def _visibility_choices_display(obj):
 def _paginate(request, queryset, page_size=PAGE_SIZE):
     paginator = Paginator(queryset, page_size)
     return paginator.get_page(request.GET.get('page'))
+
+
+# For a page with several independent tables at once (see user_view) - each
+# table needs its own page number in the URL (?plays_page=2) so paginating
+# one tab's table doesn't also move every other tab's table to that page.
+def _paginate_named(request, queryset, param, page_size=20):
+    paginator = Paginator(queryset, page_size)
+    return paginator.get_page(request.GET.get(param))
 
 
 def _querystring(request):
@@ -1844,8 +1855,24 @@ def user_edit(request, pk):
     )
 
 
+# Like.content_type is limited to these three models (see Like.limit_choices_to)
+# - this is what turns a bare (content_type, object_id) pair on a like row
+# into something the dashboard can link to and label.
+_LIKE_TYPE_META = {
+    'song': ('dashboard_app:song-view', _('أغنية')),
+    'media': ('dashboard_app:media-view', _('فيلم / مسلسل')),
+    'concert': ('dashboard_app:concert-view', _('حفلة')),
+}
+
+
 @dashboard_required
 def user_view(request, pk):
+    """One user's full profile in the dashboard: an overview card plus a
+    tab per data-heavy relation (listening history, likes, playlists,
+    duets, daily-guess attempts, login sessions), each independently
+    paginated so a very active user's history doesn't get silently
+    truncated to a top-10 like the old generic detail page did.
+    """
     account = get_object_or_404(UserAccount, pk=pk)
 
     now_listening = CurrentSongListener.objects.filter(
@@ -1853,85 +1880,62 @@ def user_view(request, pk):
     ).select_related('song').first()
 
     game_profile = UserGameProfile.objects.filter(user=account).first()
+    game_rank, game_rank_trend = get_rank_and_trend(game_profile) if game_profile else (None, None)
+    game_badges = unlocked_badges(game_profile) if game_profile else []
 
-    fields = [
-        (_('اسم المستخدم'), account.username),
-        (_('البريد الإلكتروني'), account.email),
-        (_('الدور'), account.get_role_display()),
-        (_('الحالة'), _('مفعّل') if account.is_active else _('موقوف')),
-        (_('يستمع الآن'), f'🟢 {now_listening.song.title_ar}' if now_listening else _('غير متصل')),
-        (_('النقاط'), game_profile.points if game_profile else 0),
-        (_('الأيام المتتالية'), game_profile.current_streak if game_profile else 0),
-        (_('تاريخ الانضمام'), account.date_joined),
-        (_('آخر تسجيل دخول'), account.last_login),
-    ]
+    active_tab = request.GET.get('tab') or 'overview'
 
-    recent_plays = UserSongPlay.objects.filter(user=account).select_related('song').order_by('-last_played_at')[:10]
-    liked_song_ids = list(
-        Like.objects.filter(
-            user=account, content_type=ContentType.objects.get_for_model(Song),
-        ).values_list('object_id', flat=True)[:10]
-    )
-    liked_songs = Song.objects.filter(pk__in=liked_song_ids)
-    playlists = Playlist.objects.filter(user=account).order_by('-created_at')[:10]
+    plays_qs = UserSongPlay.objects.filter(user=account).select_related('song').order_by('-last_played_at')
+    plays_page = _paginate_named(request, plays_qs, 'plays_page')
 
-    related_sections = [
-        {
-            'title': _('آخر الأغاني التي استمع لها'),
-            'items': [
-                {
-                    'label': play.song.title_ar,
-                    'url': reverse('dashboard_app:song-view', args=[play.song_id]),
-                    'meta': f'{play.play_count} {_("مرة")}',
-                }
-                for play in recent_plays
-            ],
-        },
-        {
-            'title': _('الأغاني المفضلة'),
-            'items': [
-                {'label': song.title_ar, 'url': reverse('dashboard_app:song-view', args=[song.pk])}
-                for song in liked_songs
-            ],
-        },
-        {
-            'title': _('قوائم التشغيل'),
-            'items': [
-                {'label': playlist.name, 'meta': _('عامة') if playlist.is_public else _('خاصة')}
-                for playlist in playlists
-            ],
-        },
-    ]
+    likes_qs = Like.objects.filter(user=account).select_related('content_type').order_by('-created_at')
+    likes_page = _paginate_named(request, likes_qs, 'likes_page')
+    liked_items = []
+    for like in likes_page:
+        meta = _LIKE_TYPE_META.get(like.content_type.model)
+        if meta is None or like.content_object is None:
+            continue
+        url_name, type_label = meta
+        liked_items.append({
+            'title': like.content_object.title_ar,
+            'type_label': type_label,
+            'url': reverse(url_name, args=[like.content_object.pk]),
+            'created_at': like.created_at,
+        })
 
-    extra_actions = [
-        {
-            'label': _('البروفايل العام'),
-            'url': reverse('website_app:public-profile', args=[account.username]),
-            'external': True,
-        },
-    ]
+    playlists_qs = Playlist.objects.filter(user=account).annotate(items_count=Count('items')).order_by('-created_at')
+    playlists_page = _paginate_named(request, playlists_qs, 'playlists_page')
 
-    login_sessions = [
-        {
-            'time': session.created_at,
-            'device': session.device or _('غير معروف'),
-            'ip_address': session.ip_address or '-',
-            'location': session.country_name or _('غير معروف'),
-            'source': session.get_source_display(),
-            'is_admin': session.is_admin,
-        }
-        for session in LoginSession.objects.filter(user=account).order_by('-created_at')[:50]
-    ]
+    duets_qs = SingWithTamerProject.objects.filter(user=account).select_related('song').order_by('-created_at')
+    duets_page = _paginate_named(request, duets_qs, 'duets_page')
 
-    return render(request, 'dashboard/pages/_detail_generic.html', {
-        'page_title': account.username,
-        'subtitle': now_listening.song.title_ar if now_listening else account.get_role_display(),
-        'image_url': account.profile_image.url if account.profile_image else None,
-        'fields': fields,
-        'related_sections': related_sections,
-        'login_sessions': login_sessions,
-        'extra_actions': extra_actions,
+    guesses_qs = DailyGuessAttempt.objects.filter(user=account).select_related(
+        'challenge', 'challenge__song', 'guessed_song',
+    ).order_by('-created_at')
+    guesses_page = _paginate_named(request, guesses_qs, 'guesses_page')
+
+    sessions_qs = LoginSession.objects.filter(user=account).order_by('-created_at')
+    sessions_page = _paginate_named(request, sessions_qs, 'sessions_page')
+
+    return render(request, 'dashboard/pages/user_detail.html', {
+        'account': account,
+        'now_listening': now_listening,
+        'game_profile': game_profile,
+        'game_rank': game_rank,
+        'game_rank_trend': game_rank_trend,
+        'game_badges': game_badges,
+        'active_tab': active_tab,
+        'plays_page': plays_page,
+        'likes_page': likes_page,
+        'liked_items': liked_items,
+        'playlists_page': playlists_page,
+        'duets_page': duets_page,
+        'guesses_page': guesses_page,
+        'sessions_page': sessions_page,
+        'public_profile_url': reverse('website_app:public-profile', args=[account.username]),
         'edit_url': reverse('dashboard_app:user-edit', args=[pk]),
+        'toggle_url': reverse('dashboard_app:user-toggle', args=[pk]),
+        'delete_url': reverse('dashboard_app:user-delete', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:users')),
     })
 
