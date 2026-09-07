@@ -26,7 +26,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from backend.main_app.models import PasswordResetCode, UserAccount
+from backend.main_app.models import LoginSession, PasswordResetCode, UserAccount
+from backend.main_app.shared_utils.login_sessions import record_login_session
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -107,6 +108,7 @@ def register(request):
     user.save()
 
     auth_login(request, user)
+    record_login_session(request, user, LoginSession.Source.APP)
     return JsonResponse({'status': 'success', 'user': _user_payload(user)})
 
 
@@ -131,6 +133,7 @@ def login_view(request):
         return _error(_('البريد الإلكتروني أو كلمة السر غير صحيحة.'))
 
     auth_login(request, authenticated)
+    record_login_session(request, authenticated, LoginSession.Source.APP)
     return JsonResponse({'status': 'success', 'user': _user_payload(authenticated)})
 
 
@@ -238,6 +241,7 @@ def forgot_password_reset(request):
     reset_code.save(update_fields=['used_at'])
 
     auth_login(request, user)
+    record_login_session(request, user, LoginSession.Source.APP)
     return JsonResponse({'status': 'success', 'user': _user_payload(user)})
 
 
@@ -324,4 +328,5 @@ def google_login_callback(request):
         user.save()
 
     auth_login(request, user)
+    record_login_session(request, user, LoginSession.Source.APP)
     return redirect(next_path)
