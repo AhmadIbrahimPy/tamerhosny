@@ -889,6 +889,19 @@ def song_view(request, pk):
     elif song.album and song.album.cover_art_url:
         image_url = song.album.cover_art_url
 
+    # Prev/next through the same order the songs list shows them in, so
+    # editing a song and landing back on its view page lets you keep
+    # walking through the whole catalog instead of going back out to
+    # the list every time.
+    song_ids = list(Song.objects.order_by('-release_year', 'title_ar').values_list('pk', flat=True))
+    prev_url = next_url = None
+    if song.pk in song_ids:
+        index = song_ids.index(song.pk)
+        if index > 0:
+            prev_url = reverse('dashboard_app:song-view', args=[song_ids[index - 1]])
+        if index < len(song_ids) - 1:
+            next_url = reverse('dashboard_app:song-view', args=[song_ids[index + 1]])
+
     return render(request, 'dashboard/pages/_detail_generic.html', {
         'page_title': song.title_ar,
         'subtitle': song.get_song_type_display(),
@@ -904,6 +917,8 @@ def song_view(request, pk):
         ],
         'edit_url': reverse('dashboard_app:song-edit', args=[pk]),
         'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
+        'prev_url': prev_url,
+        'next_url': next_url,
     })
 
 

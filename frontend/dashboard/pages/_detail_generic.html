@@ -25,6 +25,14 @@
             {% if subtitle %}<span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ subtitle }}</span>{% endif %}
           </div>
           <div class="d-flex gap-2 flex-wrap">
+            {% if prev_url or next_url %}
+              <a href="{{ prev_url|default:'#' }}" class="btn btn-sm btn-outline-secondary {% if not prev_url %}disabled{% endif %}" title="{% translate 'السابق' %}">
+                <i class="ti ti-chevron-right"></i>
+              </a>
+              <a href="{{ next_url|default:'#' }}" class="btn btn-sm btn-outline-secondary {% if not next_url %}disabled{% endif %}" title="{% translate 'التالي' %}">
+                <i class="ti ti-chevron-left"></i>
+              </a>
+            {% endif %}
             {% for action in extra_actions %}
               <a href="{{ action.url }}" {% if action.external %}target="_blank" rel="noopener"{% endif %} class="btn btn-sm btn-outline-primary">{{ action.label }}</a>
             {% endfor %}
