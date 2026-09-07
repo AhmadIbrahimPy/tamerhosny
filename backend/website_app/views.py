@@ -994,40 +994,60 @@ def _daily_guess_session_key(today):
 
 
 def _daily_guess_clip_start_seconds(song):
-    """Skip past a silent/instrumental intro so the reveal clip has an
-    actual chance of being useful instead of dead air - starts at the
-    first LYRICS-type segment long enough (> 5s) to hold the whole
+    """The reveal clip should be a melody/instrumental hook, not a
+    spoken-out clue - starting it inside a LYRICS segment plays the
+    actual sung words, which straight up gives the song away. Starts at
+    the first MUSIC-type segment long enough (> 5s) to hold the whole
     reveal window without running into whatever comes right after it.
-    A short lyrics segment (or none at all) isn't worth aligning to, so
-    it just falls back to playing straight from the beginning instead.
     """
-    qualifying_lyrics = (
-        song.lyric_segments.filter(segment_type='LYRICS')
+    qualifying_music = (
+        song.lyric_segments.filter(segment_type='MUSIC')
         .annotate(segment_duration=F('end_seconds') - F('start_seconds'))
         .filter(segment_duration__gt=5)
         .order_by('start_seconds')
         .first()
     )
-    if qualifying_lyrics:
-        return float(qualifying_lyrics.start_seconds)
-    return 0.0
+    if qualifying_music:
+        return float(qualifying_music.start_seconds)
+
+    # No usable lyrics timing for this song - starting at 0:00 blind
+    # often lands right on a silent instrumental intro instead of any
+    # actual audible content, so jump a bit into the track instead
+    # (a guess at "past the intro", capped so it can't be later than
+    # the tail end of a short song).
+    if song.duration_seconds:
+        return min(float(song.duration_seconds) * 0.2, 30.0)
+    return 15.0
 
 
 def _daily_guess_build_choices(song):
-    """Correct answer + 2 random wrong songs, shuffled once and then
-    kept fixed for this session (stored alongside the rest of the game
-    state) - regenerating them on every request would let someone just
-    refresh until the correct one is obviously the odd one out, and
-    would also reshuffle the options mid-game.
+    """Correct answer + 2 random wrong songs (just their ids), shuffled
+    once and then kept fixed for this session (stored alongside the
+    rest of the game state) - regenerating them on every request would
+    let someone just refresh until the correct one is obviously the odd
+    one out, and would also reshuffle the options mid-game.
+
+    Only ids are stored, not display titles: the visitor can switch the
+    site's language mid-round, and a title baked in at build time would
+    stay frozen in whichever language was active then - _daily_guess_
+    resolve_choices looks titles up fresh, in the current language,
+    every time the choices are actually displayed.
     """
-    distractors = list(
+    distractor_ids = list(
         Song.objects.filter(audio_file__isnull=False).exclude(audio_file='')
-        .exclude(pk=song.pk).order_by('?')[:2]
+        .exclude(pk=song.pk).order_by('?')[:2].values_list('pk', flat=True)
     )
-    choices = [{'id': song.pk, 'title': _daily_guess_song_title(song)}]
-    choices += [{'id': other.pk, 'title': _daily_guess_song_title(other)} for other in distractors]
-    random.shuffle(choices)
-    return choices
+    choice_ids = [song.pk] + distractor_ids
+    random.shuffle(choice_ids)
+    return choice_ids
+
+
+def _daily_guess_resolve_choices(song_ids):
+    songs_by_id = Song.objects.in_bulk(song_ids)
+    return [
+        {'id': song_id, 'title': _daily_guess_song_title(songs_by_id[song_id])}
+        for song_id in song_ids if song_id in songs_by_id
+    ]
 
 
 def daily_guess_game(request):
@@ -1064,7 +1084,7 @@ def daily_guess_game(request):
     # against any future bug shaped like this one - its own choices
     # don't actually contain that song, which would make the round
     # unguessable no matter what the player picks.
-    choices_include_song = any(c['id'] == song.pk for c in state['choices']) if state else False
+    choices_include_song = song.pk in state['choices'] if state else False
     if state is None or state.get('song_id') != song.pk or not choices_include_song:
         state = {'song_id': song.pk, 'guesses': [], 'won': False, 'lost': False}
         state['choices'] = _daily_guess_build_choices(song)
@@ -1126,7 +1146,7 @@ def daily_guess_game(request):
         'finished': finished,
         'answer': answer,
         'reveal_schedule': DAILY_GUESS_REVEAL_SCHEDULE,
-        'choices': state['choices'],
+        'choices': _daily_guess_resolve_choices(state['choices']),
         'hype_line': (
             DAILY_GUESS_WIN_LINES[state['win_line_index'] % len(DAILY_GUESS_WIN_LINES)]
             if state['won'] and state.get('win_line_index') is not None else None
@@ -1164,14 +1184,13 @@ def daily_guess_attempt(request):
         return JsonResponse({'error': 'invalid song_id'}, status=400)
 
     # Only one of the 3 choices actually shown to this session is a
-    # valid guess - looking the title up from there too (not the DB)
-    # means a guess always matches what the player actually saw.
-    guessed_choice = next((c for c in state['choices'] if c['id'] == guessed_song_id), None)
-    if guessed_choice is None:
+    # valid guess.
+    if guessed_song_id not in state['choices']:
         return JsonResponse({'error': 'not one of the shown choices'}, status=400)
+    guessed_song = get_object_or_404(Song, pk=guessed_song_id)
 
     is_correct = guessed_song_id == challenge.song_id
-    state['guesses'].append({'song_id': guessed_song_id, 'title': guessed_choice['title'], 'correct': is_correct})
+    state['guesses'].append({'song_id': guessed_song_id, 'title': _daily_guess_song_title(guessed_song), 'correct': is_correct})
 
     # Picked once here (not re-rolled on every render) and stored on both
     # the session and the attempt row itself, so a page refresh - or
