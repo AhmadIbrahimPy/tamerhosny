@@ -1,9 +1,9 @@
 {% extends "website/base.html" %}
-{% load static i18n %}
+{% load static i18n l10n %}
 {% block title %}{% translate "خمّن الأغنية" %}{% endblock %}
 
 {% block meta_description %}
-<meta name="description" content="{% translate 'كل يوم أغنية جديدة لتامر حسني - اسمع جزء صغير وحاول تخمّن اسمها في 6 محاولات.' %}">
+<meta name="description" content="{% translate 'كل يوم أغنية جديدة لتامر حسني - اسمع جزء صغير واختار الاسم الصح من بين 3 اختيارات.' %}">
 {% endblock %}
 
 {% block extra_css %}
@@ -150,7 +150,7 @@
     <div class="guess-header">
       <div class="mark"><i class="bi bi-music-note-beamed"></i></div>
       <h1>{% translate "خمّن الأغنية" %}</h1>
-      <p>{% translate "اسمع جزء من الأغنية وحاول تعرفها في 6 محاولات - كل محاولة غلط بتزوّد وقت المقطع" %}</p>
+      <p>{% translate "اسمع جزء من الأغنية واختار الاسم الصح من بين 3 اختيارات - فرصة واحدة بس!" %}</p>
     </div>
 
     {% if no_songs %}
@@ -247,14 +247,26 @@
   var playBtn = document.getElementById('guessPlayBtn');
   var playIcon = document.getElementById('guessPlayIcon');
   var progressFill = document.getElementById('guessProgressFill');
-  var revealedSeconds = {{ revealed_seconds }};
+  // unlocalize: Django renders a float using the active locale's decimal
+  // separator (e.g. Arabic locale settings use ',' not '.') - fine for
+  // human-readable text, but "139,0" isn't valid JS and threw a hard
+  // SyntaxError the moment this reached the "finished" state, where
+  // revealed_seconds is a float (the song's own duration) instead of a
+  // plain int from the reveal schedule.
+  var revealedSeconds = {{ revealed_seconds|unlocalize }};
   var maxAttempts = {{ max_attempts }};
   var finished = {{ finished|yesno:"true,false" }};
+  // Where the clip itself starts - the first sung line, not necessarily
+  // 0:00. Plenty of songs open with several seconds of pure
+  // instrumental/silence, which made the shortest (and only) reveal
+  // window a coin flip against dead air instead of an actual clue.
+  var clipStart = {{ clip_start_seconds|default:0|unlocalize }};
+  var clipEnd = clipStart + revealedSeconds;
 
   if (playBtn) {
     playBtn.addEventListener('click', function () {
       if (audio.paused) {
-        audio.currentTime = 0;
+        audio.currentTime = clipStart;
         audio.play();
         playIcon.className = 'bi bi-pause-fill';
       } else {
@@ -264,11 +276,12 @@
     });
 
     audio.addEventListener('timeupdate', function () {
-      var percent = Math.min((audio.currentTime / revealedSeconds) * 100, 100);
-      if (progressFill) progressFill.style.width = percent + '%';
-      if (audio.currentTime >= revealedSeconds) {
+      var elapsed = audio.currentTime - clipStart;
+      var percent = Math.min((elapsed / revealedSeconds) * 100, 100);
+      if (progressFill) progressFill.style.width = Math.max(percent, 0) + '%';
+      if (audio.currentTime >= clipEnd) {
         audio.pause();
-        audio.currentTime = 0;
+        audio.currentTime = clipStart;
         playIcon.className = 'bi bi-play-fill';
       }
     });

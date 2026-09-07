@@ -917,7 +917,7 @@ SING_WITH_TAMER_COOLDOWN = timedelta(hours=24)
 # playback at `revealed_seconds`, so the full audio file stays the one
 # already served for the normal song page; nothing extra to compute or
 # store per attempt.
-DAILY_GUESS_REVEAL_SCHEDULE = [1, 2, 4, 7, 11, 16]
+DAILY_GUESS_REVEAL_SCHEDULE = [6]
 DAILY_GUESS_MAX_ATTEMPTS = len(DAILY_GUESS_REVEAL_SCHEDULE)
 DAILY_GUESS_NO_REPEAT_DAYS = 30
 
@@ -941,6 +941,18 @@ def _get_or_create_daily_challenge(today):
 
 def _daily_guess_session_key(today):
     return f'daily_guess_{today.isoformat()}'
+
+
+def _daily_guess_clip_start_seconds(song):
+    """Skip past a silent/instrumental intro so the very first reveal
+    (1 second) has an actual chance of being useful instead of dead air
+    - starts the clip at the first LYRICS-type segment if the song has
+    timed lyrics, otherwise just plays from the beginning.
+    """
+    first_lyrics = song.lyric_segments.filter(segment_type='LYRICS').order_by('start_seconds').first()
+    if first_lyrics:
+        return float(first_lyrics.start_seconds)
+    return 0.0
 
 
 def _daily_guess_build_choices(challenge):
@@ -983,10 +995,7 @@ def daily_guess_game(request):
         answer = {
             'title': str(challenge.song),
             'slug': challenge.song.slug,
-            'cover_url': (
-                challenge.song.cover_image.url if challenge.song.cover_image
-                else (challenge.song.album.cover_image.url if challenge.song.album_id and challenge.song.album.cover_image else None)
-            ),
+            'cover_url': challenge.song.display_cover_url,
         }
     else:
         revealed_seconds = DAILY_GUESS_REVEAL_SCHEDULE[min(attempts_used, DAILY_GUESS_MAX_ATTEMPTS - 1)]
@@ -994,6 +1003,7 @@ def daily_guess_game(request):
 
     return render(request, 'website/pages/daily_guess.html', {
         'audio_url': challenge.song.audio_file.url,
+        'clip_start_seconds': _daily_guess_clip_start_seconds(challenge.song),
         'revealed_seconds': revealed_seconds,
         'attempts_used': attempts_used,
         'max_attempts': DAILY_GUESS_MAX_ATTEMPTS,
@@ -1057,10 +1067,7 @@ def daily_guess_attempt(request):
         answer = {
             'title': str(challenge.song),
             'slug': challenge.song.slug,
-            'cover_url': (
-                challenge.song.cover_image.url if challenge.song.cover_image
-                else (challenge.song.album.cover_image.url if challenge.song.album_id and challenge.song.album.cover_image else None)
-            ),
+            'cover_url': challenge.song.display_cover_url,
         }
     else:
         revealed_seconds = DAILY_GUESS_REVEAL_SCHEDULE[min(attempts_used, DAILY_GUESS_MAX_ATTEMPTS - 1)]
