@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-09 01:20+0300\n"
+"POT-Creation-Date: 2026-09-09 01:25+0300\n"
 "PO-Revision-Date: 2026-08-25 13:08+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -3599,24 +3599,28 @@ msgstr ""
 "Microphone access is blocked in your browser settings - open the site "
 "settings 🔒 next to the address bar, allow it manually, then try again"
 
-#: frontend/website/base.html:3593
+#: frontend/website/base.html:3600
+msgid "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶"
+msgstr "Can't respond right now - your connection is too weak 📶"
+
+#: frontend/website/base.html:3633
 msgid "حصلت مشكلة في المايكروفون - جرب تفصله وتشغله تاني"
 msgstr "There's a microphone issue - try turning it off and back on"
 
-#: frontend/website/base.html:3779
+#: frontend/website/base.html:3819
 msgid "الإشعارات مفعّلة"
 msgstr "Notifications enabled"
 
-#: frontend/website/base.html:3781
+#: frontend/website/base.html:3821
 msgid "الإشعارات متمنوعة من إعدادات المتصفح"
 msgstr "Notifications are blocked in your browser settings"
 
-#: frontend/website/base.html:3782 frontend/website/partials/header.html:29
+#: frontend/website/base.html:3822 frontend/website/partials/header.html:29
 #: frontend/website/partials/header.html:99
 msgid "فعّل الإشعارات"
 msgstr "Enable Notifications"
 
-#: frontend/website/base.html:3805
+#: frontend/website/base.html:3845
 msgid "تم تفعيل الإشعارات"
 msgstr "Notifications enabled"
 

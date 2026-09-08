@@ -3563,12 +3563,52 @@
       return r;
     }
 
+    // The recognizer is a network service (Google's server-side ASR),
+    // so a weak connection doesn't just make it slow - it fails
+    // outright, which on mobile means the mic engages just long enough
+    // to grab audio focus (pausing whatever song is playing) before
+    // erroring and releasing it again (resuming the song) - repeatedly,
+    // in lockstep with however fast the retry loop is cycling. Real
+    // device logs showed this happening in sub-second bursts during
+    // exactly this kind of instability, reported as the song playing
+    // for "a quarter second" at a time. Checking connection quality
+    // first and skipping the mic entirely when it's known bad avoids
+    // ever entering that cycle in the first place.
+    function isNetworkGoodEnough() {
+      if (navigator.onLine === false) return false;
+      var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (!conn) return true; // Network Information API unsupported (iOS Safari, etc.) - can't tell, don't block
+      if (conn.saveData) return false; // user asked their browser to minimize data use - respect that instead of hammering a live speech API
+      if (conn.effectiveType && /2g/.test(conn.effectiveType)) return false; // 'slow-2g' or '2g'
+      if (typeof conn.downlink === 'number' && conn.downlink > 0 && conn.downlink < 0.5) return false; // Mbps
+      return true;
+    }
+
+    var networkWarningShown = false;
+
     function startRecognition() {
       // Never listen from a hidden/background tab - see the
       // visibilitychange handler below for why this matters (multiple
       // tabs on the site would otherwise each run their own mic
       // listener at once).
       if (!enabled || starting || document.hidden) return;
+
+      if (!isNetworkGoodEnough()) {
+        if (!networkWarningShown) {
+          networkWarningShown = true;
+          logVoiceEvent('NETWORK_TOO_WEAK');
+          showAvatar('{% translate "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶" %}');
+          setTimeout(hideAvatar, 4000);
+        }
+        // Keep checking quietly (no repeated toast) instead of hammering
+        // the mic - and instead of giving up entirely, since a weak
+        // connection can easily recover on its own a few seconds later.
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(startRecognition, 8000);
+        return;
+      }
+      networkWarningShown = false;
+
       starting = true;
       try {
         recognition = recognition || createRecognition();

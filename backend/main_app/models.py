@@ -518,6 +518,7 @@ class VoiceAssistantLog(models.Model):
         COMMAND_IGNORED_GRACE = 'COMMAND_IGNORED_GRACE', 'Ignored as post-arm restart noise'
         COMMAND_AI_FALLBACK = 'COMMAND_AI_FALLBACK', 'Sent to the AI intent fallback'
         COMMAND_FAILED = 'COMMAND_FAILED', 'No match found anywhere'
+        NETWORK_TOO_WEAK = 'NETWORK_TOO_WEAK', 'Skipped engaging the mic - network too weak'
 
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
