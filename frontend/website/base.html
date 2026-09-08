@@ -910,6 +910,17 @@
       }
     }
 
+    // A song's own detail page already has full playback controls on the
+    // cover - the bottom bar there would just be a redundant duplicate of
+    // the same song, so hide it whenever the song playing is the one this
+    // page is for. window.songId is set by that page's template.
+    function syncGlobalPlayerVisibility() {
+      const playerBar = document.getElementById('globalAudioPlayer');
+      if (!playerBar || currentSongId === null) return;
+      const onOwnSongPage = typeof window.songId !== 'undefined' && window.songId !== null && currentSongId == window.songId;
+      playerBar.style.display = onOwnSongPage ? 'none' : 'block';
+    }
+
     function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
       // Check if this is the same song - don't reset position
       let isSameSong = false;
@@ -945,6 +956,7 @@
 
       // Show player bar and set title
       document.getElementById('globalAudioPlayer').style.display = 'block';
+      syncGlobalPlayerVisibility();
       if (title) {
         document.getElementById('playerTitle').textContent = title;
       }
@@ -1528,11 +1540,6 @@
           if (!state.currentSongUrl || !state.currentSongId) {
             return;
           }
-          const playerBar = document.getElementById('globalAudioPlayer');
-          if (playerBar) {
-            playerBar.style.display = 'block';
-          }
-
           // Restore audio state if globalAudio exists
           if (globalAudio && state.currentSongUrl) {
             globalAudio.src = state.currentSongUrl;
@@ -1542,6 +1549,7 @@
             isRepeat = state.isRepeat || false;
             isShuffle = state.isShuffle || false;
             currentSongId = state.currentSongId || null;
+            syncGlobalPlayerVisibility();
             syncToggleButtonStyles();
             // Restoring bypasses playAudio() (and the songChanged event
             // it fires), which is normally what triggers this.

@@ -326,6 +326,7 @@
     display: flex;
     width: 36px;
     height: 36px;
+    min-height: 0;
     padding: 0;
     border-radius: 50%;
     background: rgba(0, 0, 0, .5);
@@ -875,6 +876,55 @@
   @keyframes songStatPulse {
     0% { transform: scale(1); opacity: .7; }
     100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  #listeningStatIcon {
+    transform: scaleX(-1);
+  }
+
+  /* Higher specificity than .song-hero-media .song-stat's display:flex,
+     which would otherwise beat the UA [hidden] rule and keep it visible. */
+  .song-hero-media .song-stat[hidden] {
+    display: none;
+  }
+
+  /* Bump animation played on a stat's number whenever it changes value -
+     direction (up/down) set by JS via the modifier class. */
+  .song-stat-value {
+    display: inline-block;
+  }
+  .song-stat-value.stat-bump-up {
+    animation: statBumpUp .4s ease;
+  }
+  .song-stat-value.stat-bump-down {
+    animation: statBumpDown .4s ease;
+  }
+  @keyframes statBumpUp {
+    0% { transform: translateY(10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes statBumpDown {
+    0% { transform: translateY(-10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Burst of hearts spawned on liking a song - see spawnFloatingHearts(). */
+  .floating-heart {
+    position: fixed;
+    bottom: -24px;
+    color: #ff6474;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    animation-name: floatingHeartRise;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+  }
+  @keyframes floatingHeartRise {
+    0% { transform: translateY(0) translateX(0) scale(.5); opacity: 0; }
+    15% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-90vh) translateX(var(--heart-drift, 0px)) scale(1); opacity: 0; }
   }
 
   /* --- Original Song card (shown on a duet page) --- */
@@ -1938,13 +1988,6 @@
 
                 <!-- تم نقل الإحصائيات هنا لتكون تحت الصورة مباشرة -->
                 <div class="song-stats">
-                    <div class="song-stat">
-                        <div class="song-stat-icon"><i class="bi bi-play-circle"></i></div>
-                        <div>
-                            <div class="song-stat-value" data-play-count="{{ song.play_count }}">{{ song.play_count }}</div>
-                            <div class="song-stat-label">{% translate "تشغيل" %}</div>
-                        </div>
-                    </div>
                     {% if not duet %}
                     <button type="button" class="song-stat song-stat-clickable song-stat-like{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
                         <div class="song-stat-icon"><i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i></div>
@@ -1962,7 +2005,14 @@
                         </div>
                     </div>
                     {% endif %}
-                    <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}">
+                    <div class="song-stat">
+                        <div class="song-stat-icon"><i class="bi bi-play-circle"></i></div>
+                        <div>
+                            <div class="song-stat-value" data-play-count="{{ song.play_count }}">{{ song.play_count }}</div>
+                            <div class="song-stat-label">{% translate "تشغيل" %}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="song-stat song-stat-clickable" id="listeningStatBtn" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}"{% if not listener_count %} hidden{% endif %}>
                         <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
                         <div>
                             <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
@@ -3382,10 +3432,23 @@
     };
   });
 
-  // Navigate to song page when playing from list
+  // Same album/artist for every track in this list, so it's safe to
+  // compute once and reuse for whichever one gets played next/prev.
+  const albumSongsArtist = '{% for singer in singers %}{{ singer.person.name }}{% if not forloop.last %}، {% endif %}{% endfor %}'.trim();
+  const albumSongsAlbum = '{% if song.album %}{{ song.album|localized_field:"title" }}{% endif %}';
+  const albumSongsAlbumLink = '{% if song.album %}{% url "website_app:album-detail" song.album.slug %}{% endif %}';
+
+  // Navigate to song page when playing from list. Update the global
+  // player to the target song first - otherwise the 'beforeunload' save
+  // (base.html) persists the song still playing at click time, and the
+  // new page's restorePlayerState() resurrects that stale song instead
+  // of switching to the one just picked.
   window.playSongFromList = function(index) {
     const song = window.albumSongsList[index];
     if (song && song.link) {
+      if (song.url && typeof playAudio === 'function') {
+        playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, albumSongsArtist, albumSongsAlbum, false, song.songId, albumSongsAlbumLink);
+      }
       window.location.href = song.link;
     }
   };
@@ -3488,7 +3551,7 @@
         .then(function (data) {
           if (data.status === 'success' && data.incremented) {
             document.querySelectorAll('[data-play-count]').forEach(function (element) {
-              element.textContent = data.play_count;
+              bumpStatValue(element, data.play_count);
             });
           }
         })
@@ -3584,10 +3647,46 @@
     }
   }
 
+  // Bumps a stat's displayed number with a short slide animation whenever
+  // it actually changes - direction follows whether it went up or down.
+  // No-op (and no animation) when the value hasn't changed.
+  function bumpStatValue(element, newValue) {
+    const oldValue = Number(element.textContent);
+    newValue = Number(newValue);
+    if (oldValue === newValue) return;
+    element.textContent = newValue;
+    element.classList.remove('stat-bump-up', 'stat-bump-down');
+    // Force reflow so re-adding the same class restarts the animation.
+    void element.offsetWidth;
+    element.classList.add(newValue > oldValue ? 'stat-bump-up' : 'stat-bump-down');
+  }
+
+  // Fires a scattered burst of hearts rising up the screen when a song
+  // gets liked - each one randomized (position/size/speed/drift) so the
+  // burst doesn't look like one heart repeated.
+  function spawnFloatingHearts(count) {
+    count = count || 10;
+    for (let i = 0; i < count; i++) {
+      const heart = document.createElement('i');
+      heart.className = 'bi bi-heart-fill floating-heart';
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.fontSize = (14 + Math.random() * 18) + 'px';
+      heart.style.setProperty('--heart-drift', (Math.random() * 80 - 40) + 'px');
+      heart.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
+      heart.style.animationDelay = (Math.random() * 0.3) + 's';
+      heart.addEventListener('animationend', function () { heart.remove(); });
+      document.body.appendChild(heart);
+    }
+  }
+
   function updateListenerCount(count) {
     const validCount = (count !== null && count !== undefined && !isNaN(count)) ? count : 0;
+    const listeningBtn = document.getElementById('listeningStatBtn');
+    if (listeningBtn) {
+      listeningBtn.hidden = validCount === 0;
+    }
     document.querySelectorAll('[data-listener-count]').forEach(function (element) {
-      element.textContent = validCount;
+      bumpStatValue(element, validCount);
     });
   }
 
@@ -3716,9 +3815,10 @@
     }
 
     applyState(!oldLiked);
+    if (!oldLiked) spawnFloatingHearts();
     likeCountElements.forEach(function (element) {
       const current = parseInt(element.textContent, 10) || 0;
-      element.textContent = Math.max(0, current + (oldLiked ? -1 : 1));
+      bumpStatValue(element, Math.max(0, current + (oldLiked ? -1 : 1)));
     });
 
     fetch('/likes/toggle/', {
@@ -3739,7 +3839,7 @@
         applyState(oldLiked);
         likeCountElements.forEach(function (element) {
           const current = parseInt(element.textContent, 10) || 0;
-          element.textContent = Math.max(0, current + (oldLiked ? 1 : -1));
+          bumpStatValue(element, Math.max(0, current + (oldLiked ? 1 : -1)));
         });
       });
   };
