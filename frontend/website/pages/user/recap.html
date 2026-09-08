@@ -14,14 +14,39 @@
       linear-gradient(160deg, var(--card), var(--bg-2, var(--bg)));
     border:1px solid var(--border);
   }
-  .recap-hero .mark{
-    width:60px;height:60px;border-radius:16px;margin:0 auto 18px;
+  .recap-brand{
+    display:inline-flex; align-items:center; gap:8px; margin:0 auto 22px; padding:6px 14px 6px 6px;
+    border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--border);
+    font-size:12.5px; font-weight:700; color:var(--muted);
+  }
+  .recap-brand .mark{
+    width:24px;height:24px;border-radius:50%;
     background:linear-gradient(135deg, var(--accent), var(--accent-2));
     display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:22px;color:#0b0c14;
+    font-weight:900;font-size:11px;color:#0b0c14;
+  }
+  .recap-avatar, .recap-avatar-fallback{
+    width:104px; height:104px; border-radius:50%; margin:0 auto 18px; display:block;
+    object-fit:cover; border:3px solid rgba(255,255,255,.18);
+    box-shadow:0 12px 32px -8px rgba(212,175,55,.45);
+  }
+  .recap-avatar-fallback{
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    font-size:40px; font-weight:900; color:#0b0c14;
   }
   .recap-hero h1{font-size:26px;font-weight:900;margin:0 0 8px;}
   .recap-hero p{color:var(--muted);font-size:14px;margin:0;}
+  .recap-rank-badge{
+    display:inline-flex; align-items:center; gap:8px; margin-top:18px; padding:10px 20px;
+    border-radius:999px; background:linear-gradient(135deg, rgba(212,175,55,.22), rgba(138,92,255,.18));
+    border:1px solid rgba(212,175,55,.4); font-size:14px; font-weight:800; color:#fff;
+  }
+  .recap-rank-badge i.bi-trophy-fill{color:#ffd35c; font-size:16px;}
+  .recap-rank-badge .trend{font-size:14px;}
+  .recap-rank-badge .trend.up{color:#2ecc71;}
+  .recap-rank-badge .trend.down{color:#ff6b7a;}
+  .recap-rank-badge .pts{color:var(--muted); font-weight:700;}
 
   .recap-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:18px;margin-bottom:24px;}
   .recap-stat{
@@ -95,9 +120,11 @@
     100%{background-position:200% 0;}
   }
 
-  .recap-hero .mark{animation:recapPopIn .6s cubic-bezier(.34,1.56,.64,1) both, recapGlowPulse 2.8s ease-in-out 1.2s infinite;}
+  .recap-brand{animation:recapFadeUp .5s ease both;}
+  .recap-avatar{animation:recapPopIn .6s cubic-bezier(.34,1.56,.64,1) both .08s, recapGlowPulse 2.8s ease-in-out 1.2s infinite;}
   .recap-hero h1, .recap-hero p{animation:recapFadeUp .6s ease both;}
   .recap-hero p{animation-delay:.1s;}
+  .recap-rank-badge{animation:recapPopIn .5s cubic-bezier(.34,1.56,.64,1) both .3s;}
 
   .recap-top-song{animation:recapFadeUp .55s ease both; animation-delay:.15s;}
   .recap-top-song .info .eyebrow{
@@ -127,7 +154,7 @@
   .recap-share-btn:hover{transform:translateY(-2px);}
 
   @media (prefers-reduced-motion: reduce){
-    .recap-hero .mark, .recap-hero h1, .recap-hero p, .recap-top-song,
+    .recap-brand, .recap-avatar, .recap-hero h1, .recap-hero p, .recap-rank-badge, .recap-top-song,
     .recap-top-song .info .eyebrow, .recap-grid .recap-stat, .recap-top-list,
     .recap-top-list-row, .recap-share-bar{animation:none !important; opacity:1 !important; transform:none !important;}
   }
@@ -138,9 +165,23 @@
 <div class="container-xl recap-page">
 
   <div class="recap-hero" id="recapCard">
-    <div class="mark">TH</div>
-    <h1>{% blocktranslate with name=recap_user.username %}ملخص {{ name }} على أرشيف تامر حسني{% endblocktranslate %}</h1>
+    <div class="recap-brand"><span class="mark">TH</span> {% translate "أرشيف تامر حسني" %}</div>
+    {% if recap_user.profile_image %}
+      <img src="{{ recap_user.profile_image.url }}" alt="" class="recap-avatar">
+    {% else %}
+      <div class="recap-avatar recap-avatar-fallback">{{ recap_user.username|slice:":1"|upper }}</div>
+    {% endif %}
+    <h1>{{ recap_user.username }}</h1>
     <p>{% blocktranslate with date=member_since|date:"Y" %}عضو من سنة {{ date }}{% endblocktranslate %}</p>
+    {% if game_rank %}
+    <div class="recap-rank-badge">
+      <i class="bi bi-trophy-fill"></i>
+      <span>{% blocktranslate with rank=game_rank %}الترتيب #{{ rank }}{% endblocktranslate %}</span>
+      {% if game_rank_trend == 'up' %}<i class="bi bi-arrow-up-circle-fill trend up"></i>
+      {% elif game_rank_trend == 'down' %}<i class="bi bi-arrow-down-circle-fill trend down"></i>{% endif %}
+      {% if game_profile.points %}<span class="pts">· {{ game_profile.points }} {% translate "نقطة" %}</span>{% endif %}
+    </div>
+    {% endif %}
   </div>
 
   {% if request.user.is_authenticated and request.user != recap_user %}
@@ -281,6 +322,10 @@ if (imageBtn && window.ThShareCard) {
       likes: '{% translate "إعجاب" %}',
       duets: '{% translate "دويتو مع تامر" %}',
     },
+    rank: {% if game_rank %}{{ game_rank }}{% else %}null{% endif %},
+    rankLabel: '{% translate "الترتيب" %}',
+    points: {{ game_profile.points|default:0 }},
+    pointsLabel: '{% translate "نقطة" %}',
   };
 
   imageBtn.addEventListener('click', function () {
@@ -307,28 +352,63 @@ async function buildRecapCard(data) {
   canvas.width = W; canvas.height = H;
   var ctx = canvas.getContext('2d');
   var FONT = 'system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif';
+  ctx.direction = document.documentElement.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
 
+  // ---- Background: layered glows + a fine vignette, not a flat fill ----
   var bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#150b28'); bg.addColorStop(.55, '#1c1030'); bg.addColorStop(1, '#0b0c12');
+  bg.addColorStop(0, '#150b28'); bg.addColorStop(.5, '#1c1030'); bg.addColorStop(1, '#0a0b12');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  var glow1 = ctx.createRadialGradient(W * .18, H * .06, 0, W * .18, H * .06, 520);
-  glow1.addColorStop(0, 'rgba(138,92,255,.38)'); glow1.addColorStop(1, 'rgba(138,92,255,0)');
+  var glow1 = ctx.createRadialGradient(W * .15, H * .05, 0, W * .15, H * .05, 560);
+  glow1.addColorStop(0, 'rgba(138,92,255,.4)'); glow1.addColorStop(1, 'rgba(138,92,255,0)');
   ctx.fillStyle = glow1; ctx.fillRect(0, 0, W, H);
 
-  var glow2 = ctx.createRadialGradient(W * .85, H * .96, 0, W * .85, H * .96, 600);
-  glow2.addColorStop(0, 'rgba(212,175,55,.3)'); glow2.addColorStop(1, 'rgba(212,175,55,0)');
+  var glow2 = ctx.createRadialGradient(W * .88, H * .32, 0, W * .88, H * .32, 420);
+  glow2.addColorStop(0, 'rgba(212,175,55,.28)'); glow2.addColorStop(1, 'rgba(212,175,55,0)');
   ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
 
-  ThShareCard.scatterSparkles(ctx, W, H, 46, 'rgba(255,255,255,.55)');
+  var glow3 = ctx.createRadialGradient(W * .2, H * .92, 0, W * .2, H * .92, 500);
+  glow3.addColorStop(0, 'rgba(255,92,138,.18)'); glow3.addColorStop(1, 'rgba(255,92,138,0)');
+  ctx.fillStyle = glow3; ctx.fillRect(0, 0, W, H);
 
-  ctx.direction = document.documentElement.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
+  var vignette = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * .75);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)'); vignette.addColorStop(1, 'rgba(0,0,0,.35)');
+  ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+
+  ThShareCard.scatterSparkles(ctx, W, H, 55, 'rgba(255,255,255,.5)');
+
+  function glassCard(x, y, w, h, r) {
+    ctx.save();
+    ThShareCard.roundRectPath(ctx, x, y, w, h, r);
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    ctx.fill();
+    ctx.restore();
+    ThShareCard.roundRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  // ---- Brand pill ----
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#d4af37';
-  ctx.font = '800 32px ' + FONT;
-  ctx.fillText(data.brandLabel, W / 2, 100);
+  ThShareCard.roundRectPath(ctx, W / 2 - 190, 56, 380, 52, 26);
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2 - 145, 82, 15, 0, Math.PI * 2);
+  var brandGrad = ctx.createLinearGradient(W / 2 - 160, 67, W / 2 - 130, 97);
+  brandGrad.addColorStop(0, '#d4af37'); brandGrad.addColorStop(1, '#8a5cff');
+  ctx.fillStyle = brandGrad; ctx.fill();
+  ctx.fillStyle = '#0b0c14'; ctx.font = '900 14px ' + FONT; ctx.fillText('TH', W / 2 - 145, 87);
+  ctx.fillStyle = '#e8e8f0'; ctx.font = '700 22px ' + FONT; ctx.fillText(data.brandLabel, W / 2 + 15, 89);
 
-  var avatarCy = 270, avatarR = 100;
+  // ---- Avatar with a glowing gradient ring ----
+  var avatarCy = 300, avatarR = 108;
+  var ringGrad = ctx.createLinearGradient(W / 2 - avatarR - 10, avatarCy - avatarR - 10, W / 2 + avatarR + 10, avatarCy + avatarR + 10);
+  ringGrad.addColorStop(0, '#ffd35c'); ringGrad.addColorStop(.5, '#d4af37'); ringGrad.addColorStop(1, '#8a5cff');
+  ctx.save();
+  ctx.shadowColor = 'rgba(212,175,55,.55)'; ctx.shadowBlur = 40;
+  ctx.beginPath(); ctx.arc(W / 2, avatarCy, avatarR + 10, 0, Math.PI * 2);
+  ctx.fillStyle = ringGrad; ctx.fill();
+  ctx.restore();
 
   function drawAvatarFallback() {
     var grad = ctx.createLinearGradient(W / 2 - avatarR, avatarCy - avatarR, W / 2 + avatarR, avatarCy + avatarR);
@@ -338,7 +418,7 @@ async function buildRecapCard(data) {
     ctx.fillStyle = grad;
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '900 90px ' + FONT;
+    ctx.font = '900 94px ' + FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText((data.username || '?').slice(0, 1).toUpperCase(), W / 2, avatarCy + 6);
@@ -358,67 +438,106 @@ async function buildRecapCard(data) {
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fff';
-  ctx.font = '900 54px ' + FONT;
-  ctx.fillText(data.username, W / 2, avatarCy + avatarR + 78);
+  ctx.font = '900 56px ' + FONT;
+  ctx.fillText(data.username, W / 2, avatarCy + avatarR + 76);
 
-  ctx.fillStyle = '#b9bad0';
-  ctx.font = '600 28px ' + FONT;
-  ctx.fillText(data.memberSinceLabel + ' ' + data.memberSinceYear, W / 2, avatarCy + avatarR + 122);
+  ctx.fillStyle = '#a9aac2';
+  ctx.font = '600 27px ' + FONT;
+  ctx.fillText(data.memberSinceLabel + ' ' + data.memberSinceYear, W / 2, avatarCy + avatarR + 116);
 
+  // ---- Rank badge - the headline metric, not buried in the stat grid ----
+  var afterHeaderY = avatarCy + avatarR + 116;
+  if (data.rank) {
+    var badgeY = afterHeaderY + 40;
+    var badgeH = 84;
+    var badgeText = '🏆  ' + data.rankLabel + ' #' + data.rank + (data.points ? '   ·   ' + data.points + ' ' + data.pointsLabel : '');
+    ctx.font = '900 34px ' + FONT;
+    var badgeW = Math.min(880, ctx.measureText(badgeText).width + 90);
+    var badgeX = W / 2 - badgeW / 2;
+    ctx.save();
+    ThShareCard.roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+    ctx.shadowColor = 'rgba(212,175,55,.5)'; ctx.shadowBlur = 26;
+    var badgeGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY);
+    badgeGrad.addColorStop(0, 'rgba(212,175,55,.9)'); badgeGrad.addColorStop(1, 'rgba(138,92,255,.9)');
+    ctx.fillStyle = badgeGrad; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 34px ' + FONT;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badgeText, W / 2, badgeY + badgeH / 2 + 2);
+    ctx.textBaseline = 'alphabetic';
+    afterHeaderY = badgeY + badgeH;
+  }
+
+  // ---- Stats grid: colored icon badges, glass cards ----
   var stats = [
-    { emoji: '▶️', value: data.totalPlays, label: data.statLabels.plays },
-    { emoji: '🎧', value: data.totalFullListens, label: data.statLabels.fullListens },
-    { emoji: '❤️', value: data.totalLikes, label: data.statLabels.likes },
-    { emoji: '🎤', value: data.totalDuets, label: data.statLabels.duets },
+    { emoji: '▶️', value: data.totalPlays, label: data.statLabels.plays, color: '#8a5cff' },
+    { emoji: '🎧', value: data.totalFullListens, label: data.statLabels.fullListens, color: '#4fd4ff' },
+    { emoji: '❤️', value: data.totalLikes, label: data.statLabels.likes, color: '#ff5c8a' },
+    { emoji: '🎤', value: data.totalDuets, label: data.statLabels.duets, color: '#d4af37' },
   ];
-  var cellW = 460, cellH = 210, gapX = 40, gapY = 32;
-  var gridTop = avatarCy + avatarR + 190;
+  var cellW = 460, cellH = 224, gapX = 40, gapY = 32;
+  var gridTop = afterHeaderY + 56;
   var startX = W / 2 - cellW - gapX / 2;
   stats.forEach(function (s, i) {
     var col = i % 2, row = Math.floor(i / 2);
     var x = startX + col * (cellW + gapX);
     var y = gridTop + row * (cellH + gapY);
-    ThShareCard.roundRectPath(ctx, x, y, cellW, cellH, 28);
-    ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 2; ctx.stroke();
+    glassCard(x, y, cellW, cellH, 30);
 
-    ctx.textAlign = 'center';
-    ctx.font = '44px ' + FONT;
+    var iconCy = y + 64;
+    ctx.beginPath(); ctx.arc(x + cellW / 2, iconCy, 34, 0, Math.PI * 2);
+    ctx.fillStyle = s.color + '33'; ctx.fill();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '32px ' + FONT;
+    ctx.fillText(s.emoji, x + cellW / 2, iconCy + 2);
+    ctx.textBaseline = 'alphabetic';
+
+    ctx.font = '900 58px ' + FONT;
     ctx.fillStyle = '#fff';
-    ctx.fillText(s.emoji, x + cellW / 2, y + 66);
-
-    ctx.font = '900 56px ' + FONT;
-    ctx.fillText(String(s.value), x + cellW / 2, y + 132);
+    ctx.fillText(String(s.value), x + cellW / 2, y + 158);
 
     ctx.font = '600 25px ' + FONT;
     ctx.fillStyle = '#c9c9d6';
-    ctx.fillText(s.label, x + cellW / 2, y + 172);
+    ctx.fillText(s.label, x + cellW / 2, y + 196);
   });
 
-  var afterGridY = gridTop + 2 * cellH + gapY + 70;
+  var afterGridY = gridTop + 2 * cellH + gapY + 66;
 
+  // ---- Top song, framed like a little album card ----
   if (data.topSongTitle) {
     ctx.textAlign = 'center';
     ctx.font = '800 28px ' + FONT;
     ctx.fillStyle = '#d4af37';
     ctx.fillText(data.topSongLabel, W / 2, afterGridY);
 
-    var coverSize = 260, coverX = W / 2 - coverSize / 2, coverY = afterGridY + 30;
+    var coverSize = 270, coverX = W / 2 - coverSize / 2, coverY = afterGridY + 34;
+    ctx.save();
+    ThShareCard.roundRectPath(ctx, coverX - 10, coverY - 10, coverSize + 20, coverSize + 20, 32);
+    ctx.shadowColor = 'rgba(138,92,255,.45)'; ctx.shadowBlur = 34;
+    var frameGrad = ctx.createLinearGradient(coverX, coverY, coverX + coverSize, coverY + coverSize);
+    frameGrad.addColorStop(0, '#ffd35c'); frameGrad.addColorStop(1, '#8a5cff');
+    ctx.fillStyle = frameGrad; ctx.fill();
+    ctx.restore();
+
     if (data.topSongCoverUrl) {
       try {
         var coverImg = await ThShareCard.loadImage(data.topSongCoverUrl);
         ThShareCard.drawCoverImage(ctx, coverImg, coverX, coverY, coverSize, coverSize, 26);
-      } catch (e) { /* no cover art - just skip drawing it */ }
+      } catch (e) { /* no cover art - the gradient frame stands alone */ }
     }
-    ctx.font = '900 40px ' + FONT;
+    ctx.font = '900 42px ' + FONT;
     ctx.fillStyle = '#fff';
-    ThShareCard.drawWrappedText(ctx, data.topSongTitle, W / 2, coverY + coverSize + 60, 820, 48, 2);
+    ThShareCard.drawWrappedText(ctx, data.topSongTitle, W / 2, coverY + coverSize + 66, 820, 50, 2);
   }
 
+  // ---- Footer ----
+  ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W / 2 - 120, H - 108); ctx.lineTo(W / 2 + 120, H - 108); ctx.stroke();
   ctx.textAlign = 'center';
   ctx.font = '700 30px ' + FONT;
   ctx.fillStyle = 'rgba(255,255,255,.65)';
-  ctx.fillText('🎵 th.lexora.vip', W / 2, H - 70);
+  ctx.fillText('🎵 th.lexora.vip', W / 2, H - 62);
 
   return canvas;
 }
