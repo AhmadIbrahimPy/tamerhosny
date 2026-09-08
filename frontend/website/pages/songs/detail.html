@@ -1924,7 +1924,7 @@
       align-items: center;
     }
     .song-cover {
-      width: 220px;
+      width: 300px;
       margin: 0 auto;
     }
     .song-topline,
@@ -3700,7 +3700,15 @@
         // doesn't linger into this page's own next/prev.
         playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, albumSongsArtist, albumSongsAlbum, false, song.songId, albumSongsAlbumLink, false);
       }
-      window.location.href = song.link;
+      // Boosted (AJAX swap of #th-page-root), not a real navigation - a
+      // full reload here flashed a blank page and re-fetched everything
+      // (styles, base.html's own scripts) on every next/prev click,
+      // which also made car mode visibly flash before it could reapply.
+      if (typeof thBoostedNavigate === 'function') {
+        thBoostedNavigate(song.link);
+      } else {
+        window.location.href = song.link;
+      }
     }
   };
   window.toggleGlobalSongAudio = function (button) {

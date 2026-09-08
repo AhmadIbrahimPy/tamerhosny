@@ -1852,14 +1852,22 @@
       if (last && prev && last.songId == currentSongId && prev.link) {
         history.pop();
         setPlayHistory(history);
-        // Sync the player to it before navigating away - otherwise
-        // 'beforeunload' (savePlayerState) persists the song still
-        // playing right now, and the new page's restorePlayerState()
-        // resurrects that stale song instead of this one.
+        // Actually switch playback to it before navigating there -
+        // otherwise the audio itself lags a click behind whatever page
+        // it lands on.
         if (prev.url) {
           playAudio(prev.url, currentPlayBtn, prev.title, '', prev.image ? [prev.image] : null, prev.link, prev.artist, prev.album, false, prev.songId, prev.albumLink);
         }
-        window.location.href = prev.link;
+        // Boosted (AJAX swap), not a real navigation - see
+        // thBoostedNavigate's own comment above for why this matters:
+        // a real reload would tear down and re-fetch the whole page
+        // (and everything else living outside #th-page-root) for what's
+        // really just a next/prev click.
+        if (typeof thBoostedNavigate === 'function') {
+          thBoostedNavigate(prev.link);
+        } else {
+          window.location.href = prev.link;
+        }
         return;
       }
       playAdjacentSong(-1);
