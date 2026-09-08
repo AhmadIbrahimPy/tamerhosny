@@ -2928,6 +2928,18 @@
 
     var STORAGE_KEY = 'thVoiceAssistantEnabled';
     var COMMAND_WINDOW_MS = 5000;
+    // Android/iOS Chrome and Safari don't really support continuous
+    // listening - they tear the whole recognition session down right
+    // after each utterance and restart it, so the wake word almost
+    // always ends its own session on mobile. Whatever gets captured
+    // during that restart's reconnect gap is often a garbled fragment
+    // of what the user actually said, not their real command. A local
+    // pattern (or the AI fallback) failing to match something heard
+    // this soon after the wake word armed is far more likely to be
+    // that restart noise than a genuine failed attempt - see
+    // handleResult below.
+    var POST_ARM_GRACE_MS = 900;
+    var lastArmedAt = 0;
 
     var recognition = null;
     var enabled = localStorage.getItem(STORAGE_KEY) === '1';
@@ -3024,6 +3036,7 @@
     function armCommandWindow(index) {
       listeningForCommand = true;
       wakeResultIndex = index;
+      lastArmedAt = Date.now();
       showAvatar('{% translate "أنا هنا... قول أمرك" %}');
       clearTimeout(commandTimer);
       commandTimer = setTimeout(function () {
@@ -3345,16 +3358,29 @@
         if (!result.isFinal) continue;
 
         var matched = resolveCommand(candidate);
+
+        if (matched) {
+          clearTimeout(commandTimer);
+          listeningForCommand = false;
+          wakeResultIndex = -1;
+          setTimeout(hideAvatar, 900);
+          continue;
+        }
+
+        if (Date.now() - lastArmedAt < POST_ARM_GRACE_MS) {
+          // Too soon after the wake word armed to trust this as the
+          // user's real command (see POST_ARM_GRACE_MS's comment) -
+          // stay armed and silently ignore it instead of failing or
+          // spending an AI-fallback call on likely restart noise.
+          continue;
+        }
+
+        // None of the fixed local patterns recognized it - hand it to
+        // the AI fallback instead of failing immediately.
         clearTimeout(commandTimer);
         listeningForCommand = false;
         wakeResultIndex = -1;
-        if (matched) {
-          setTimeout(hideAvatar, 900);
-        } else {
-          // None of the fixed local patterns recognized it - hand it to
-          // the AI fallback instead of failing immediately.
-          resolveWithAI(candidate);
-        }
+        resolveWithAI(candidate);
       }
     }
 
@@ -3392,12 +3418,15 @@
       r.onend = function () {
         starting = false;
         if (!enabled) return;
-        // continuous:true still ends the session on its own after a
-        // stretch of silence in some browsers - restart it right away
-        // so background listening for the wake word never really stops
-        // while the feature is on.
+        // continuous:true is barely honored on mobile (Android/iOS
+        // Chrome and Safari end the session after basically every
+        // utterance regardless) and still ends on its own after a
+        // stretch of silence even on desktop - restart as close to
+        // immediately as possible so the reconnect gap doesn't eat the
+        // start of whatever the user's already saying (mobile is
+        // exactly where that gap matters most).
         clearTimeout(restartTimer);
-        restartTimer = setTimeout(startRecognition, 300);
+        restartTimer = setTimeout(startRecognition, 80);
       };
       return r;
     }
