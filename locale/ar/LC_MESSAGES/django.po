@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 09:45+0300\n"
+"POT-Creation-Date: 2026-09-09 01:15+0300\n"
 "PO-Revision-Date: 2026-08-25 13:33+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -38,6 +38,254 @@ msgstr "صفحات الأفلام والمسلسلات"
 msgid "Concerts Pages"
 msgstr "صفحات الحفلات"
 
+#: backend/ai_remix_app/models.py:10
+#, fuzzy
+#| msgid "Album Track"
+msgid "Vocal Track"
+msgstr "أغنية من ألبوم"
+
+#: backend/ai_remix_app/models.py:11
+#, fuzzy
+#| msgid "Music (instrumental)"
+msgid "Instrumental"
+msgstr "موسيقى (بدون كلام)"
+
+#: backend/ai_remix_app/models.py:12
+msgid "Drums"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:13
+msgid "Bass"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:14 backend/analytics_app/models.py:26
+#: backend/links_app/models.py:103 backend/media_app/models.py:81
+#: backend/people_app/models.py:26
+msgid "Other"
+msgstr "أخرى"
+
+#: backend/ai_remix_app/models.py:16
+msgid "Source Name"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:20
+#: frontend/dashboard/pages/ai_remix/index.html:254
+msgid "Audio File"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:26
+#: frontend/dashboard/pages/ai_remix/index.html:258
+msgid "Source Type"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:28
+#: frontend/dashboard/pages/ai_remix/index.html:79
+msgid "BPM"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:29
+msgid "Musical Key"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:30 backend/ai_remix_app/models.py:142
+msgid "Duration (seconds)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:31
+msgid "Uploaded At"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:35 backend/ai_remix_app/models.py:105
+#: frontend/dashboard/pages/ai_remix/index.html:341
+msgid "Audio Source"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:36
+#: frontend/dashboard/pages/ai_remix/index.html:26
+#: frontend/dashboard/pages/ai_remix/index.html:68
+msgid "Audio Sources"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:46
+msgid "Draft"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:47 backend/music_app/models.py:299
+#: backend/music_app/models.py:363
+msgid "Processing"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:48 backend/concerts_app/models.py:16
+#: backend/music_app/models.py:300 backend/music_app/models.py:364
+msgid "Completed"
+msgstr "منتهية"
+
+#: backend/ai_remix_app/models.py:49 backend/music_app/models.py:301
+#: backend/music_app/models.py:365
+msgid "Failed"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:51
+#: frontend/dashboard/pages/ai_remix/index.html:288
+msgid "Project Name"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:52 backend/ai_remix_app/models.py:161
+#: frontend/dashboard/pages/ai_remix/index.html:292
+#, fuzzy
+#| msgid "Subscription"
+msgid "Description"
+msgstr "اشتراك"
+
+#: backend/ai_remix_app/models.py:57
+#: frontend/dashboard/pages/ai_remix/index.html:51
+msgid "Status"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:59
+#: frontend/dashboard/pages/ai_remix/index.html:52
+#: frontend/dashboard/pages/ai_remix/index.html:111
+#: frontend/dashboard/pages/ai_remix/index.html:296
+msgid "Target BPM"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:60
+#: frontend/dashboard/pages/ai_remix/index.html:53
+#: frontend/dashboard/pages/ai_remix/index.html:116
+#: frontend/dashboard/pages/ai_remix/index.html:300
+msgid "Target Key"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:76
+msgid "Error Message"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:77 backend/ai_remix_app/models.py:144
+#: backend/ai_remix_app/models.py:164
+#, fuzzy
+#| msgid "Featured Artist"
+msgid "Created At"
+msgstr "فنان مشارك"
+
+#: backend/ai_remix_app/models.py:78
+msgid "Updated At"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:82
+msgid "Remix Project"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:83
+#: frontend/dashboard/pages/ai_remix/index.html:41
+msgid "Remix Projects"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:99 backend/ai_remix_app/models.py:132
+msgid "Project"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:107
+#: frontend/dashboard/pages/ai_remix/index.html:347
+msgid "Volume"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:108
+#: frontend/dashboard/pages/ai_remix/index.html:352
+msgid "Start Time (seconds)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:109
+#: frontend/dashboard/pages/ai_remix/index.html:356
+msgid "End Time (seconds)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:110
+#: frontend/dashboard/pages/ai_remix/index.html:371
+msgid "Loop"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:111
+#: frontend/dashboard/pages/ai_remix/index.html:360
+msgid "Fade In (seconds)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:112
+#: frontend/dashboard/pages/ai_remix/index.html:364
+msgid "Fade Out (seconds)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:113
+#: frontend/dashboard/pages/ai_remix/index.html:376
+msgid "Order"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:117
+msgid "Remix Source"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:118
+msgid "Remix Sources"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:137
+msgid "Output File"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:139
+#: frontend/dashboard/pages/ai_remix/index.html:762
+msgid "Format"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:140
+msgid "Bitrate"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:141
+#, fuzzy
+#| msgid "Completed"
+msgid "Sample Rate"
+msgstr "منتهية"
+
+#: backend/ai_remix_app/models.py:143
+msgid "File Size (bytes)"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:148
+msgid "Remix Output"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:149
+msgid "Remix Outputs"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:158
+msgid "Model Name"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:159
+msgid "Version"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:160
+msgid "Model Type"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:162
+msgid "Is Active"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:163
+msgid "Model Path"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:168
+msgid "AI Model"
+msgstr ""
+
+#: backend/ai_remix_app/models.py:169
+msgid "AI Models"
+msgstr ""
+
 #: backend/analytics_app/models.py:15
 msgid "Page View"
 msgstr "مشاهدة صفحة"
@@ -58,7 +306,7 @@ msgstr "ضغطة منصة خارجية"
 msgid "WhatsApp"
 msgstr "واتساب"
 
-#: backend/analytics_app/models.py:22
+#: backend/analytics_app/models.py:22 backend/links_app/models.py:100
 msgid "Facebook"
 msgstr "فيسبوك"
 
@@ -74,24 +322,15 @@ msgstr "تليجرام"
 msgid "Copy Link"
 msgstr "نسخ الرابط"
 
-#: backend/analytics_app/models.py:26 backend/links_app/models.py:93
-#: backend/media_app/models.py:79 backend/people_app/models.py:26
-msgid "Other"
-msgstr "أخرى"
-
-#: backend/concerts_app/models.py:14
+#: backend/concerts_app/models.py:15
 msgid "Upcoming"
 msgstr "قادمة"
 
-#: backend/concerts_app/models.py:15
-msgid "Completed"
-msgstr "منتهية"
-
-#: backend/concerts_app/models.py:16
+#: backend/concerts_app/models.py:17
 msgid "Cancelled"
 msgstr "ملغاة"
 
-#: backend/concerts_app/models.py:17
+#: backend/concerts_app/models.py:18
 msgid "Postponed"
 msgstr "مؤجلة"
 
@@ -99,21 +338,21 @@ msgstr "مؤجلة"
 msgid "-- بدون --"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:34 backend/dashboard_app/views.py:422
+#: backend/dashboard_app/forms.py:34 backend/dashboard_app/views.py:506
 msgid "الاسم بالعربية"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:35 backend/dashboard_app/views.py:423
-#: frontend/dashboard/pages/people/all.html:21
+#: backend/dashboard_app/forms.py:35 backend/dashboard_app/views.py:507
+#: frontend/dashboard/pages/people/all.html:17
 msgid "الاسم بالإنجليزية"
 msgstr ""
 
 #: backend/dashboard_app/forms.py:36
-#: frontend/dashboard/pages/people/all.html:22
+#: frontend/dashboard/pages/people/all.html:18
 msgid "الدور الأساسي"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:37 backend/dashboard_app/views.py:424
+#: backend/dashboard_app/forms.py:37 backend/dashboard_app/views.py:508
 msgid "نبذة"
 msgstr ""
 
@@ -121,18 +360,25 @@ msgstr ""
 msgid "الصورة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:54 backend/dashboard_app/views.py:546
-#: frontend/dashboard/pages/people/all.html:20
-#: frontend/dashboard/pages/studios/all.html:20
+#: backend/dashboard_app/forms.py:54 backend/dashboard_app/views.py:594
+#: frontend/dashboard/pages/people/all.html:16
+#: frontend/dashboard/pages/song_detail.html:171
+#: frontend/dashboard/pages/studios/all.html:16
+#: frontend/dashboard/pages/user_detail.html:220
+#: frontend/website/base.html:2377
 msgid "الاسم"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:55 backend/dashboard_app/forms.py:113
-#: backend/dashboard_app/views.py:769
-#: frontend/dashboard/pages/analytics.html:72
-#: frontend/dashboard/pages/songs/all.html:21
-#: frontend/dashboard/pages/songs/segments.html:20
-#: frontend/dashboard/pages/studios/all.html:21
+#: backend/dashboard_app/forms.py:55 backend/dashboard_app/forms.py:114
+#: backend/dashboard_app/views.py:842
+#: frontend/dashboard/pages/_detail_generic.html:140
+#: frontend/dashboard/pages/album_detail.html:123
+#: frontend/dashboard/pages/analytics.html:203
+#: frontend/dashboard/pages/song_detail.html:221
+#: frontend/dashboard/pages/songs/segments.html:193
+#: frontend/dashboard/pages/studios/all.html:17
+#: frontend/dashboard/pages/user_detail.html:198
+#: frontend/dashboard/pages/user_detail.html:317
 msgid "النوع"
 msgstr ""
 
@@ -141,30 +387,30 @@ msgid "الشعار"
 msgstr ""
 
 #: backend/dashboard_app/forms.py:73 backend/dashboard_app/forms.py:109
-#: backend/dashboard_app/forms.py:179 backend/dashboard_app/forms.py:233
-#: backend/dashboard_app/forms.py:330 backend/dashboard_app/views.py:635
-#: backend/dashboard_app/views.py:767 backend/dashboard_app/views.py:1058
-#: backend/dashboard_app/views.py:1298
+#: backend/dashboard_app/forms.py:185 backend/dashboard_app/forms.py:239
+#: backend/dashboard_app/forms.py:336 backend/dashboard_app/views.py:689
+#: backend/dashboard_app/views.py:840 backend/dashboard_app/views.py:1256
+#: backend/dashboard_app/views.py:1496
 msgid "العنوان بالعربية"
 msgstr ""
 
 #: backend/dashboard_app/forms.py:74 backend/dashboard_app/forms.py:110
-#: backend/dashboard_app/forms.py:180 backend/dashboard_app/forms.py:234
-#: backend/dashboard_app/forms.py:331 backend/dashboard_app/views.py:636
-#: backend/dashboard_app/views.py:768 backend/dashboard_app/views.py:1059
-#: backend/dashboard_app/views.py:1299
+#: backend/dashboard_app/forms.py:186 backend/dashboard_app/forms.py:240
+#: backend/dashboard_app/forms.py:337 backend/dashboard_app/views.py:690
+#: backend/dashboard_app/views.py:841 backend/dashboard_app/views.py:1257
+#: backend/dashboard_app/views.py:1497
 msgid "العنوان بالإنجليزية"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:75 backend/dashboard_app/forms.py:184
-#: backend/dashboard_app/forms.py:238 backend/dashboard_app/views.py:637
-#: backend/dashboard_app/views.py:1060
-#: frontend/dashboard/pages/albums/all.html:21
-#: frontend/dashboard/pages/media/all.html:21
+#: backend/dashboard_app/forms.py:75 backend/dashboard_app/forms.py:190
+#: backend/dashboard_app/forms.py:244 backend/dashboard_app/views.py:691
+#: backend/dashboard_app/views.py:1258
+#: frontend/dashboard/pages/albums/all.html:17
+#: frontend/dashboard/pages/media/all.html:15
 msgid "تاريخ الإصدار"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:76
+#: backend/dashboard_app/forms.py:76 backend/main_app/models.py:184
 msgid "صورة الغلاف"
 msgstr ""
 
@@ -172,652 +418,718 @@ msgstr ""
 msgid "رابط صورة الغلاف (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:78 backend/dashboard_app/forms.py:112
-#: backend/dashboard_app/forms.py:183 backend/dashboard_app/forms.py:237
-#: backend/dashboard_app/forms.py:340
+#: backend/dashboard_app/forms.py:78 backend/dashboard_app/forms.py:113
+#: backend/dashboard_app/forms.py:189 backend/dashboard_app/forms.py:243
+#: backend/dashboard_app/forms.py:346
 msgid "فيديو خلفية الصفحة (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:79 backend/dashboard_app/views.py:638
-#: frontend/dashboard/pages/albums/all.html:22
+#: backend/dashboard_app/forms.py:79 backend/dashboard_app/views.py:692
+#: frontend/dashboard/pages/albums/all.html:18
 msgid "شركة الإنتاج"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:80 backend/dashboard_app/forms.py:120
-#: backend/dashboard_app/forms.py:187 backend/dashboard_app/forms.py:242
-#: backend/dashboard_app/forms.py:344 backend/dashboard_app/views.py:639
-#: backend/dashboard_app/views.py:776 backend/dashboard_app/views.py:1061
-#: backend/dashboard_app/views.py:1305
+#: backend/dashboard_app/forms.py:80 backend/dashboard_app/forms.py:123
+#: backend/dashboard_app/forms.py:193 backend/dashboard_app/forms.py:248
+#: backend/dashboard_app/forms.py:350 backend/dashboard_app/views.py:693
+#: backend/dashboard_app/views.py:851 backend/dashboard_app/views.py:1259
+#: backend/dashboard_app/views.py:1503
 msgid "حالة الظهور"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:81 backend/dashboard_app/forms.py:121
-#: backend/dashboard_app/forms.py:188 backend/dashboard_app/forms.py:243
-#: backend/dashboard_app/forms.py:345 backend/dashboard_app/views.py:640
-#: backend/dashboard_app/views.py:777 backend/dashboard_app/views.py:1062
-#: backend/dashboard_app/views.py:1306
+#: backend/dashboard_app/forms.py:81 backend/dashboard_app/forms.py:124
+#: backend/dashboard_app/forms.py:194 backend/dashboard_app/forms.py:249
+#: backend/dashboard_app/forms.py:351 backend/dashboard_app/views.py:694
+#: backend/dashboard_app/views.py:852 backend/dashboard_app/views.py:1260
+#: backend/dashboard_app/views.py:1504
 msgid "موعد النشر"
 msgstr ""
 
 #: backend/dashboard_app/forms.py:111
-msgid "صورة الأغنية"
+msgid "رابط صورة الأغنية (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:114
+#: backend/dashboard_app/forms.py:112
+#: frontend/dashboard/pages/_detail_generic.html:81
+#: frontend/dashboard/pages/song_detail.html:92
+msgid "ملف الصوت"
+msgstr ""
+
+#: backend/dashboard_app/forms.py:115 backend/dashboard_app/views.py:843
+msgid "النوع الموسيقي"
+msgstr ""
+
+#: backend/dashboard_app/forms.py:116 backend/dashboard_app/views.py:844
+msgid "الحالة المزاجية"
+msgstr ""
+
+#: backend/dashboard_app/forms.py:117
 msgid "المدة (بالثواني)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:115 backend/dashboard_app/views.py:773
-#: frontend/dashboard/pages/songs/all.html:23
+#: backend/dashboard_app/forms.py:118 backend/dashboard_app/views.py:848
+#: frontend/dashboard/pages/songs/all.html:21
 msgid "سنة الإصدار"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:116 backend/dashboard_app/views.py:775
-#: frontend/dashboard/pages/songs/all.html:24
-#: frontend/website/pages/songs/detail.html:36
-#: frontend/website/pages/songs/detail.html:83
+#: backend/dashboard_app/forms.py:119 backend/dashboard_app/views.py:850
+#: frontend/dashboard/pages/song_detail.html:30
+#: frontend/dashboard/pages/songs/all.html:22
+#: frontend/website/pages/albums/detail.html:148
 msgid "دويتو"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:117 backend/dashboard_app/views.py:772
+#: backend/dashboard_app/forms.py:120 backend/dashboard_app/views.py:847
 msgid "استوديو التسجيل"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:118 backend/dashboard_app/views.py:770
-#: frontend/dashboard/pages/songs/all.html:22
+#: backend/dashboard_app/forms.py:121 backend/dashboard_app/views.py:845
+#: frontend/dashboard/pages/songs/all.html:20
 msgid "الألبوم"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:119
+#: backend/dashboard_app/forms.py:122
 msgid "العمل الفني المرتبط"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:144
+#: backend/dashboard_app/forms.py:150
 msgid "بيتحدد تلقائيًا من سنة إصدار الألبوم لو اخترت ألبوم، وتقدر تعدّله يدويًا."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:147
+#: backend/dashboard_app/forms.py:153
 msgid ""
 "بعد حفظ الأغنية، زوّد المشارك التاني من قسم \"طقم العمل والمشاركين\" في صفحة "
 "الأغنية."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:156 backend/dashboard_app/forms.py:280
-#: frontend/dashboard/pages/media/crew.html:18
-#: frontend/dashboard/pages/songs/credits.html:18
+#: backend/dashboard_app/forms.py:162 backend/dashboard_app/forms.py:286
+#: frontend/dashboard/pages/media/crew.html:21
+#: frontend/dashboard/pages/songs/credits.html:21
 msgid "الشخص"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:157 backend/dashboard_app/forms.py:281
-#: backend/dashboard_app/forms.py:454
-#: frontend/dashboard/pages/media/crew.html:19
-#: frontend/dashboard/pages/songs/credits.html:19
-#: frontend/dashboard/pages/users/all.html:21
+#: backend/dashboard_app/forms.py:163 backend/dashboard_app/forms.py:287
+#: backend/dashboard_app/forms.py:464
+#: frontend/dashboard/pages/media/crew.html:22
+#: frontend/dashboard/pages/songs/credits.html:22
+#: frontend/dashboard/pages/user_detail.html:158
+#: frontend/dashboard/pages/users/all.html:17
 msgid "الدور"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:181
+#: backend/dashboard_app/forms.py:187
 msgid "صورة العمل"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:182 backend/dashboard_app/forms.py:339
+#: backend/dashboard_app/forms.py:188 backend/dashboard_app/forms.py:345
 msgid "رابط بوستر بديل (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:185 backend/dashboard_app/views.py:1073
+#: backend/dashboard_app/forms.py:191 backend/dashboard_app/views.py:1271
 msgid "القصة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:186 backend/dashboard_app/views.py:1072
+#: backend/dashboard_app/forms.py:192 backend/dashboard_app/views.py:1270
 msgid "التقييم"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:235 backend/dashboard_app/forms.py:487
+#: backend/dashboard_app/forms.py:241 backend/dashboard_app/forms.py:497
 msgid "صورة الإعلان"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:236
+#: backend/dashboard_app/forms.py:242
 msgid "رابط صورة بديل (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:239 backend/dashboard_app/views.py:1066
+#: backend/dashboard_app/forms.py:245 backend/dashboard_app/views.py:1264
 msgid "جهة الإعلان"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:240 backend/dashboard_app/views.py:1067
+#: backend/dashboard_app/forms.py:246 backend/dashboard_app/views.py:1265
 msgid "اسم العلامة التجارية"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:241 backend/dashboard_app/views.py:1068
+#: backend/dashboard_app/forms.py:247 backend/dashboard_app/views.py:1266
 msgid "فكرة الحملة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:282
+#: backend/dashboard_app/forms.py:288
 msgid "اسم الشخصية (للممثلين، اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:296
-#: frontend/dashboard/pages/cinema_venues/all.html:20
+#: backend/dashboard_app/forms.py:302
+#: frontend/dashboard/pages/cinema_venues/all.html:16
 msgid "اسم دار العرض"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:297 backend/dashboard_app/forms.py:335
-#: backend/dashboard_app/views.py:1302
-#: frontend/dashboard/pages/cinema_venues/all.html:21
-#: frontend/dashboard/pages/media/screenings.html:22
+#: backend/dashboard_app/forms.py:303 backend/dashboard_app/forms.py:341
+#: backend/dashboard_app/views.py:1500
+#: frontend/dashboard/pages/cinema_venues/all.html:17
+#: frontend/dashboard/pages/media/screenings.html:25
 msgid "المدينة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:310
-#: frontend/dashboard/pages/media/screenings.html:21
+#: backend/dashboard_app/forms.py:316
+#: frontend/dashboard/pages/media/screenings.html:24
 msgid "دار العرض"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:311
-#: frontend/dashboard/pages/media/screenings.html:23
+#: backend/dashboard_app/forms.py:317
+#: frontend/dashboard/pages/media/screenings.html:26
 msgid "سعر التذكرة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:312
+#: backend/dashboard_app/forms.py:318
 msgid "رابط الحجز (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:332
+#: backend/dashboard_app/forms.py:338
 msgid "حالة الحفلة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:333 backend/dashboard_app/views.py:1300
-#: frontend/dashboard/pages/concerts/all.html:22
+#: backend/dashboard_app/forms.py:339 backend/dashboard_app/views.py:1498
+#: frontend/dashboard/pages/concerts/all.html:18
+#: frontend/dashboard/pages/user_detail.html:283
 msgid "التاريخ"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:334 backend/dashboard_app/views.py:1301
-#: frontend/dashboard/pages/concerts/all.html:23
+#: backend/dashboard_app/forms.py:340 backend/dashboard_app/views.py:1499
+#: frontend/dashboard/pages/concerts/all.html:19
 msgid "المكان"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:336 backend/dashboard_app/views.py:1303
+#: backend/dashboard_app/forms.py:342 backend/dashboard_app/views.py:1501
 msgid "الدولة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:337 backend/dashboard_app/views.py:1307
+#: backend/dashboard_app/forms.py:343 backend/dashboard_app/views.py:1505
+#: backend/main_app/models.py:178
+#: frontend/website/pages/user/playlist_detail.html:80
+#: frontend/website/pages/user/playlists.html:70
 msgid "الوصف"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:338
+#: backend/dashboard_app/forms.py:344
 msgid "صورة الحفلة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:341
+#: backend/dashboard_app/forms.py:347
 msgid "خط العرض"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:342
+#: backend/dashboard_app/forms.py:348
 msgid "خط الطول"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:343 backend/dashboard_app/views.py:1304
+#: backend/dashboard_app/forms.py:349 backend/dashboard_app/views.py:1502
 msgid "الجهة المنظمة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:380
-#: frontend/dashboard/pages/songs/segments.html:18
+#: backend/dashboard_app/forms.py:386
+#: frontend/dashboard/pages/songs/segments.html:190
 msgid "من (ثانية)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:381
-#: frontend/dashboard/pages/songs/segments.html:19
+#: backend/dashboard_app/forms.py:387
+#: frontend/dashboard/pages/songs/segments.html:191
 msgid "إلى (ثانية)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:382
+#: backend/dashboard_app/forms.py:388
 msgid "نوع المقطع"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:383
-#: frontend/dashboard/pages/songs/segments.html:21
+#: backend/dashboard_app/forms.py:389
+#: frontend/dashboard/pages/song_detail.html:222
+#: frontend/dashboard/pages/songs/segments.html:194
 msgid "النص"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:397
+#: backend/dashboard_app/forms.py:390
+msgid "تكرار الصوت"
+msgstr ""
+
+#: backend/dashboard_app/forms.py:391
+msgid "تتبع مزدوج"
+msgstr ""
+
+#: backend/dashboard_app/forms.py:407
 msgid "وقت النهاية لازم يكون بعد وقت البداية."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:399
+#: backend/dashboard_app/forms.py:409
 msgid "لازم تكتب الكلمات لأن نوع المقطع \"كلمات\"."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:408 backend/dashboard_app/forms.py:426
-#: backend/dashboard_app/views.py:1490
-#: frontend/dashboard/pages/analytics.html:89
-#: frontend/dashboard/pages/links_manage.html:18
-#: frontend/dashboard/pages/platforms/all.html:20
+#: backend/dashboard_app/forms.py:418 backend/dashboard_app/forms.py:436
+#: backend/dashboard_app/views.py:1688
+#: frontend/dashboard/pages/album_detail.html:153
+#: frontend/dashboard/pages/analytics.html:220
+#: frontend/dashboard/pages/links_manage.html:21
+#: frontend/dashboard/pages/person_detail.html:172
+#: frontend/dashboard/pages/platforms/all.html:16
+#: frontend/dashboard/pages/song_detail.html:194
 msgid "المنصة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:409
-#: frontend/dashboard/pages/links_manage.html:19
+#: backend/dashboard_app/forms.py:419
+#: frontend/dashboard/pages/album_detail.html:155
+#: frontend/dashboard/pages/links_manage.html:22
+#: frontend/dashboard/pages/person_detail.html:174
+#: frontend/dashboard/pages/song_detail.html:196
 msgid "الرابط"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:410
-#: frontend/dashboard/pages/links_manage.html:20
+#: backend/dashboard_app/forms.py:420
+#: frontend/dashboard/pages/album_detail.html:154
+#: frontend/dashboard/pages/links_manage.html:23
+#: frontend/dashboard/pages/person_detail.html:173
+#: frontend/dashboard/pages/song_detail.html:195
 msgid "نوع الوصول"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:411
+#: backend/dashboard_app/forms.py:421
 msgid "كود التضمين (اختياري)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:427
+#: backend/dashboard_app/forms.py:437
 msgid "رابط صورة الأيقونة"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:431
+#: backend/dashboard_app/forms.py:441
 msgid ""
 "رابط مباشر لصورة الأيقونة (لازم ينتهي بامتداد صورة زي .png أو .jpg أو .svg)، "
 "مش رابط صفحة عادية زي رابط تطبيق أو موقع."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:443
+#: backend/dashboard_app/forms.py:453
 msgid "كلمة المرور"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:445
+#: backend/dashboard_app/forms.py:455
 msgid "اتركه فارغاً للإبقاء على كلمة المرور الحالية عند التعديل."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:452 backend/dashboard_app/views.py:1613
-#: frontend/dashboard/pages/users/all.html:20
+#: backend/dashboard_app/forms.py:462
+#: frontend/dashboard/pages/user_detail.html:156
+#: frontend/dashboard/pages/users/all.html:16
 msgid "اسم المستخدم"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:453 backend/dashboard_app/views.py:1614
+#: backend/dashboard_app/forms.py:463
+#: frontend/dashboard/pages/user_detail.html:157
+#: frontend/website/base.html:2344 frontend/website/base.html:2381
+#: frontend/website/base.html:2403
 msgid "البريد الإلكتروني"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:455 backend/dashboard_app/forms.py:488
-#: backend/dashboard_app/views.py:1417 backend/dashboard_app/views.py:1615
-#: frontend/dashboard/pages/ads/all.html:62
-#: frontend/dashboard/pages/users/all.html:38
+#: backend/dashboard_app/forms.py:465 backend/dashboard_app/forms.py:498
+#: backend/dashboard_app/views.py:1615 frontend/dashboard/pages/ads/all.html:59
+#: frontend/dashboard/pages/user_detail.html:26
+#: frontend/dashboard/pages/user_detail.html:159
+#: frontend/dashboard/pages/users/all.html:49
 msgid "مفعّل"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:479
+#: backend/dashboard_app/forms.py:489
 msgid "الصفحات المحددة (لو مش هيظهر في كل الصفحات)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:486
+#: backend/dashboard_app/forms.py:496
 msgid "اسم الإعلان (للإدارة فقط)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:489
+#: backend/dashboard_app/forms.py:499
 msgid "رابط موقع خارجي (اختياري، لو مش مرتبط بعنصر داخلي)"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:490
+#: backend/dashboard_app/forms.py:500
 msgid "يظهر في كل صفحات الموقع"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:508 backend/dashboard_app/views.py:1418
-#: frontend/dashboard/pages/ads/all.html:22
+#: backend/dashboard_app/forms.py:518 backend/dashboard_app/views.py:1616
+#: frontend/dashboard/pages/ads/all.html:19
 msgid "مرتبط بـ"
 msgstr ""
 
-#: backend/dashboard_app/forms.py:520
+#: backend/dashboard_app/forms.py:530
 msgid "اختر عنصر واحد بس تربط بيه الإعلان."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:522
+#: backend/dashboard_app/forms.py:532
 msgid "الإعلان يتربط إما بعنصر داخلي أو برابط خارجي، مش الاتنين."
 msgstr ""
 
-#: backend/dashboard_app/forms.py:524
+#: backend/dashboard_app/forms.py:534
 msgid "اختر صفحة واحدة على الأقل، أو فعّل \"يظهر في كل الصفحات\"."
 msgstr ""
 
-#: backend/dashboard_app/views.py:49 backend/website_app/views.py:181
-#: frontend/dashboard/pages/cinema_venues/all.html:22
-#: frontend/dashboard/partials/sidebar-collapse.html:95
-#: frontend/dashboard/partials/sidebar-collapse.html:219
-#: frontend/website/partials/footer.html:10
-#: frontend/website/partials/header.html:17
-#: frontend/website/partials/header.html:35
+#: backend/dashboard_app/views.py:53 backend/website_app/views.py:777
+#: frontend/dashboard/pages/cinema_venues/all.html:18
+#: frontend/dashboard/partials/sidebar-collapse.html:107
+#: frontend/dashboard/partials/sidebar-collapse.html:232
+#: frontend/website/pages/bio.html:238 frontend/website/partials/footer.html:17
+#: frontend/website/partials/header.html:18
+#: frontend/website/partials/header.html:123
 msgid "الأفلام"
 msgstr ""
 
-#: backend/dashboard_app/views.py:50 backend/website_app/views.py:185
-#: frontend/dashboard/partials/sidebar-collapse.html:107
-#: frontend/dashboard/partials/sidebar-collapse.html:220
-#: frontend/website/partials/footer.html:11
-#: frontend/website/partials/header.html:18
-#: frontend/website/partials/header.html:36
+#: backend/dashboard_app/views.py:54 backend/website_app/views.py:781
+#: frontend/dashboard/partials/sidebar-collapse.html:119
+#: frontend/dashboard/partials/sidebar-collapse.html:233
+#: frontend/website/partials/footer.html:18
+#: frontend/website/partials/header.html:19
+#: frontend/website/partials/header.html:124
 msgid "المسلسلات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:51 backend/website_app/views.py:189
-#: frontend/dashboard/partials/sidebar-collapse.html:119
-#: frontend/dashboard/partials/sidebar-collapse.html:221
-#: frontend/website/pages/home.html:116
+#: backend/dashboard_app/views.py:55 backend/website_app/views.py:785
+#: frontend/dashboard/partials/sidebar-collapse.html:131
+#: frontend/dashboard/partials/sidebar-collapse.html:234
+#: frontend/website/pages/home.html:269
 msgid "الإعلانات والحملات الترويجية"
 msgstr ""
 
-#: backend/dashboard_app/views.py:52
+#: backend/dashboard_app/views.py:56
 msgid "البرامج"
 msgstr ""
 
-#: backend/dashboard_app/views.py:223 backend/dashboard_app/views.py:1131
-#: frontend/dashboard/main.html:21 frontend/dashboard/pages/media/all.html:23
+#: backend/dashboard_app/views.py:244 backend/dashboard_app/views.py:1329
+#: frontend/dashboard/pages/analytics.html:37
+#: frontend/dashboard/pages/media/all.html:17
 #: frontend/dashboard/pages/media/crew.html:3
-#: frontend/dashboard/pages/media/crew.html:11
+#: frontend/dashboard/pages/media/crew.html:13
 #: frontend/dashboard/pages/people/all.html:3
-#: frontend/dashboard/pages/people/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:47
-#: frontend/dashboard/partials/sidebar-collapse.html:215
-#: frontend/website/pages/home.html:211
-#: frontend/website/pages/media/detail.html:133
+#: frontend/dashboard/pages/people/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:59
+#: frontend/dashboard/partials/sidebar-collapse.html:228
+#: frontend/website/pages/home.html:371
+#: frontend/website/pages/media/detail.html:244
 #: frontend/website/pages/people/list.html:3
-#: frontend/website/pages/people/list.html:7
-#: frontend/website/partials/header.html:21
-#: frontend/website/partials/header.html:39
+#: frontend/website/pages/people/list.html:8
+#: frontend/website/pages/people/list.html:13
+#: frontend/website/partials/footer.html:25
+#: frontend/website/partials/header.html:22
+#: frontend/website/partials/header.html:127
 msgid "الفنانون"
 msgstr ""
 
-#: backend/dashboard_app/views.py:224 backend/dashboard_app/views.py:439
-#: backend/dashboard_app/views.py:550 frontend/dashboard/main.html:37
+#: backend/dashboard_app/views.py:245 backend/dashboard_app/views.py:598
 #: frontend/dashboard/pages/albums/all.html:3
-#: frontend/dashboard/pages/albums/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:71
-#: frontend/dashboard/partials/sidebar-collapse.html:217
+#: frontend/dashboard/pages/albums/all.html:8
+#: frontend/dashboard/pages/analytics.html:51
+#: frontend/dashboard/pages/person_detail.html:79
+#: frontend/dashboard/partials/sidebar-collapse.html:83
+#: frontend/dashboard/partials/sidebar-collapse.html:230
 #: frontend/website/pages/albums/list.html:3
-#: frontend/website/pages/albums/list.html:7
-#: frontend/website/pages/home.html:146
-#: frontend/website/partials/header.html:16
-#: frontend/website/partials/header.html:34
+#: frontend/website/pages/albums/list.html:8
+#: frontend/website/pages/albums/list.html:13
+#: frontend/website/pages/bio.html:237 frontend/website/pages/home.html:205
+#: frontend/website/partials/footer.html:16
+#: frontend/website/partials/header.html:17
+#: frontend/website/partials/header.html:122
 msgid "الألبومات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:225 backend/dashboard_app/views.py:446
-#: backend/dashboard_app/views.py:645 frontend/dashboard/main.html:45
+#: backend/dashboard_app/views.py:246
+#: frontend/dashboard/pages/album_detail.html:93
+#: frontend/dashboard/pages/analytics.html:58
+#: frontend/dashboard/pages/person_detail.html:84
 #: frontend/dashboard/pages/songs/all.html:3
-#: frontend/dashboard/pages/songs/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:83
-#: frontend/dashboard/partials/sidebar-collapse.html:218
-#: frontend/website/pages/albums/detail.html:86
-#: frontend/website/pages/people/detail.html:48
+#: frontend/dashboard/pages/songs/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:95
+#: frontend/dashboard/partials/sidebar-collapse.html:231
+#: frontend/website/pages/albums/detail.html:135
+#: frontend/website/pages/people/detail.html:60
 #: frontend/website/pages/songs/list.html:3
-#: frontend/website/pages/songs/list.html:7
-#: frontend/website/partials/footer.html:9
-#: frontend/website/partials/header.html:15
-#: frontend/website/partials/header.html:33
+#: frontend/website/pages/songs/list.html:8
+#: frontend/website/pages/songs/list.html:13
+#: frontend/website/pages/user/favorites.html:11
+#: frontend/website/partials/footer.html:15
+#: frontend/website/partials/header.html:16
+#: frontend/website/partials/header.html:121
 msgid "الأغاني"
 msgstr ""
 
-#: backend/dashboard_app/views.py:226 backend/dashboard_app/views.py:457
-#: frontend/dashboard/main.html:53 frontend/website/pages/people/detail.html:77
+#: backend/dashboard_app/views.py:247
+#: frontend/website/pages/people/detail.html:92
 msgid "الأفلام والمسلسلات والإعلانات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:227 frontend/dashboard/main.html:61
+#: backend/dashboard_app/views.py:248
+#: frontend/dashboard/pages/analytics.html:72
 #: frontend/dashboard/pages/concerts/all.html:3
-#: frontend/dashboard/pages/concerts/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:131
-#: frontend/dashboard/partials/sidebar-collapse.html:222
+#: frontend/dashboard/pages/concerts/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:143
+#: frontend/dashboard/partials/sidebar-collapse.html:235
 #: frontend/website/pages/concerts/list.html:3
-#: frontend/website/pages/concerts/list.html:7
-#: frontend/website/pages/home.html:178
-#: frontend/website/partials/footer.html:12
-#: frontend/website/partials/header.html:20
-#: frontend/website/partials/header.html:38
+#: frontend/website/pages/concerts/list.html:8
+#: frontend/website/pages/concerts/list.html:13
+#: frontend/website/pages/home.html:332
+#: frontend/website/pages/user/favorites.html:64
+#: frontend/website/partials/footer.html:23
+#: frontend/website/partials/header.html:21
+#: frontend/website/partials/header.html:126
 msgid "الحفلات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:228
+#: backend/dashboard_app/views.py:249
 msgid "البانرات الإعلانية"
 msgstr ""
 
-#: backend/dashboard_app/views.py:229 frontend/dashboard/main.html:29
+#: backend/dashboard_app/views.py:250
 #: frontend/dashboard/pages/studios/all.html:3
-#: frontend/dashboard/partials/sidebar-collapse.html:59
-#: frontend/dashboard/partials/sidebar-collapse.html:216
+#: frontend/dashboard/partials/sidebar-collapse.html:71
+#: frontend/dashboard/partials/sidebar-collapse.html:229
 msgid "الاستوديوهات والشركات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:360
+#: backend/dashboard_app/views.py:431
 msgid "تعديل رابط"
 msgstr ""
 
-#: backend/dashboard_app/views.py:396 backend/dashboard_app/views.py:1587
+#: backend/dashboard_app/views.py:475 backend/dashboard_app/views.py:1800
 msgid "كل الأدوار"
 msgstr ""
 
-#: backend/dashboard_app/views.py:404
+#: backend/dashboard_app/views.py:483
 msgid "إضافة فنان / عضو طاقم"
 msgstr ""
 
-#: backend/dashboard_app/views.py:413 backend/dashboard_app/views.py:538
-#: backend/dashboard_app/views.py:626 backend/dashboard_app/views.py:755
-#: backend/dashboard_app/views.py:1046 backend/dashboard_app/views.py:1289
-#: backend/dashboard_app/views.py:1481 backend/dashboard_app/views.py:1557
-#: backend/dashboard_app/views.py:1604
-#: frontend/dashboard/pages/_detail_generic.html:27
-#: frontend/dashboard/pages/ads/all.html:69
-#: frontend/dashboard/pages/albums/all.html:55
-#: frontend/dashboard/pages/cinema_venues/all.html:33
-#: frontend/dashboard/pages/concerts/all.html:73
-#: frontend/dashboard/pages/links_manage.html:33
-#: frontend/dashboard/pages/media/all.html:55
-#: frontend/dashboard/pages/media/crew.html:31
-#: frontend/dashboard/pages/media/screenings.html:34
-#: frontend/dashboard/pages/people/all.html:43
-#: frontend/dashboard/pages/platforms/all.html:41
-#: frontend/dashboard/pages/songs/all.html:61
-#: frontend/dashboard/pages/songs/credits.html:29
-#: frontend/dashboard/pages/songs/segments.html:41
-#: frontend/dashboard/pages/studios/all.html:41
-#: frontend/dashboard/pages/users/all.html:45
+#: backend/dashboard_app/views.py:492 backend/dashboard_app/views.py:586
+#: backend/dashboard_app/views.py:674 backend/dashboard_app/views.py:813
+#: backend/dashboard_app/views.py:1244 backend/dashboard_app/views.py:1487
+#: backend/dashboard_app/views.py:1679 backend/dashboard_app/views.py:1755
+#: backend/dashboard_app/views.py:1817
+#: frontend/dashboard/pages/_detail_generic.html:39
+#: frontend/dashboard/pages/ads/all.html:66
+#: frontend/dashboard/pages/album_detail.html:35
+#: frontend/dashboard/pages/albums/all.html:51
+#: frontend/dashboard/pages/cinema_venues/all.html:29
+#: frontend/dashboard/pages/concerts/all.html:69
+#: frontend/dashboard/pages/links_manage.html:36
+#: frontend/dashboard/pages/media/all.html:49
+#: frontend/dashboard/pages/media/crew.html:34
+#: frontend/dashboard/pages/media/screenings.html:37
+#: frontend/dashboard/pages/people/all.html:39
+#: frontend/dashboard/pages/person_detail.html:29
+#: frontend/dashboard/pages/platforms/all.html:37
+#: frontend/dashboard/pages/song_detail.html:43
+#: frontend/dashboard/pages/songs/credits.html:32
+#: frontend/dashboard/pages/studios/all.html:37
+#: frontend/dashboard/pages/user_detail.html:43
+#: frontend/dashboard/pages/users/all.html:56
+#: frontend/website/pages/user/playlist_detail.html:18
 msgid "تعديل"
 msgstr ""
 
-#: backend/dashboard_app/views.py:468 backend/dashboard_app/views.py:489
-#: backend/dashboard_app/views.py:656 backend/dashboard_app/views.py:677
-#: backend/dashboard_app/views.py:833 backend/dashboard_app/views.py:1133
-#: backend/dashboard_app/views.py:1333
-#: frontend/dashboard/pages/links_manage.html:3
-#: frontend/dashboard/pages/links_manage.html:11
-#: frontend/website/pages/albums/detail.html:73
-#: frontend/website/pages/people/detail.html:34
-msgid "روابط المنصات"
-msgstr ""
-
-#: backend/dashboard_app/views.py:521 backend/dashboard_app/views.py:720
+#: backend/dashboard_app/views.py:569 backend/dashboard_app/views.py:776
+#: backend/dashboard_app/views.py:1045
 msgid "كل الأنواع"
 msgstr ""
 
-#: backend/dashboard_app/views.py:529
+#: backend/dashboard_app/views.py:577
 msgid "إضافة استوديو / شركة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:557
+#: backend/dashboard_app/views.py:605
 msgid "الأغاني المسجلة في هذا الاستوديو"
 msgstr ""
 
-#: backend/dashboard_app/views.py:564
+#: backend/dashboard_app/views.py:612
 msgid "الحفلات المنظمة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:609 backend/dashboard_app/views.py:1272
+#: backend/dashboard_app/views.py:657 backend/dashboard_app/views.py:1470
 msgid "كل الحالات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:617
+#: backend/dashboard_app/views.py:665
 msgid "إضافة ألبوم"
 msgstr ""
 
-#: backend/dashboard_app/views.py:740
+#: backend/dashboard_app/views.py:745
+#: frontend/dashboard/pages/songs/all.html:17
+msgid "ملف صوتي"
+msgstr ""
+
+#: backend/dashboard_app/views.py:746
+msgid "كلمات (توقيت)"
+msgstr ""
+
+#: backend/dashboard_app/views.py:747
+#: frontend/dashboard/pages/songs/all.html:19
+msgid "منصات"
+msgstr ""
+
+#: backend/dashboard_app/views.py:778
+#: frontend/dashboard/partials/_search_filter_bar.html:18
+msgid "مفقود منه..."
+msgstr ""
+
+#: backend/dashboard_app/views.py:798
 msgid "إضافة أغنية"
 msgstr ""
 
-#: backend/dashboard_app/views.py:771
+#: backend/dashboard_app/views.py:846
 msgid "العمل المرتبط"
 msgstr ""
 
-#: backend/dashboard_app/views.py:774
+#: backend/dashboard_app/views.py:849
+#: frontend/dashboard/pages/songs/segments.html:192
 msgid "المدة (ثانية)"
 msgstr ""
 
-#: backend/dashboard_app/views.py:775 backend/dashboard_app/views.py:1417
-#: frontend/dashboard/pages/songs/all.html:49
+#: backend/dashboard_app/views.py:850 backend/dashboard_app/views.py:1615
+#: frontend/dashboard/pages/songs/all.html:50
 msgid "نعم"
 msgstr ""
 
-#: backend/dashboard_app/views.py:775 backend/dashboard_app/views.py:1417
+#: backend/dashboard_app/views.py:850 backend/dashboard_app/views.py:1615
 msgid "لا"
 msgstr ""
 
-#: backend/dashboard_app/views.py:782 backend/dashboard_app/views.py:831
-#: frontend/dashboard/pages/songs/credits.html:3
-#: frontend/dashboard/pages/songs/credits.html:11
-msgid "المشاركون في الأغنية"
-msgstr ""
-
-#: backend/dashboard_app/views.py:793
-msgid "روابط الاستماع والمشاهدة"
-msgstr ""
-
-#: backend/dashboard_app/views.py:805
-msgid "توقيت الكلمات (المقاطع)"
-msgstr ""
-
-#: backend/dashboard_app/views.py:832
-msgid "إدارة توقيت الكلمات"
-msgstr ""
-
-#: backend/dashboard_app/views.py:892
+#: backend/dashboard_app/views.py:975
 msgid "تعديل مشارك"
 msgstr ""
 
-#: backend/dashboard_app/views.py:939
+#: backend/dashboard_app/views.py:1081
 msgid "تعديل مقطع"
 msgstr ""
 
-#: backend/dashboard_app/views.py:991
-#: frontend/dashboard/pages/media/crew.html:62
-#: frontend/dashboard/pages/media/screenings.html:65
-#: frontend/dashboard/pages/songs/credits.html:60
+#: backend/dashboard_app/views.py:1189
+#: frontend/dashboard/pages/media/crew.html:65
+#: frontend/dashboard/pages/media/screenings.html:68
+#: frontend/dashboard/pages/songs/credits.html:63
 msgid "إضافة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1078
+#: backend/dashboard_app/views.py:1276
 msgid "الفنانون والتمثيل"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1092
-#: frontend/website/pages/media/detail.html:146
+#: backend/dashboard_app/views.py:1290
+#: frontend/website/pages/media/detail.html:263
 msgid "الأغاني المرتبطة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1099
+#: backend/dashboard_app/views.py:1297
 msgid "روابط المشاهدة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1111 backend/dashboard_app/views.py:1132
+#: backend/dashboard_app/views.py:1309 backend/dashboard_app/views.py:1330
 #: frontend/dashboard/pages/cinema_venues/all.html:3
-#: frontend/dashboard/pages/cinema_venues/all.html:9
+#: frontend/dashboard/pages/cinema_venues/all.html:8
 #: frontend/dashboard/pages/media/screenings.html:3
-#: frontend/dashboard/pages/media/screenings.html:11
-#: frontend/dashboard/partials/sidebar-collapse.html:167
-#: frontend/dashboard/partials/sidebar-collapse.html:225
-#: frontend/website/pages/media/detail.html:107
+#: frontend/dashboard/pages/media/screenings.html:13
+#: frontend/dashboard/partials/sidebar-collapse.html:179
+#: frontend/dashboard/partials/sidebar-collapse.html:238
+#: frontend/website/pages/media/detail.html:181
+#: frontend/website/pages/media/detail.html:212
 msgid "دور العرض"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1194
+#: backend/dashboard_app/views.py:1331 backend/dashboard_app/views.py:1531
+#: frontend/dashboard/pages/album_detail.html:98
+#: frontend/dashboard/pages/links_manage.html:3
+#: frontend/dashboard/pages/links_manage.html:13
+#: frontend/dashboard/pages/person_detail.html:94
+#: frontend/dashboard/pages/song_detail.html:124
+#: frontend/website/pages/albums/detail.html:166
+#: frontend/website/pages/people/detail.html:45
+msgid "روابط المنصات"
+msgstr ""
+
+#: backend/dashboard_app/views.py:1392
 msgid "تعديل فنان"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1240
+#: backend/dashboard_app/views.py:1438
 msgid "تعديل دار عرض"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1280
+#: backend/dashboard_app/views.py:1478
 msgid "إضافة حفلة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1312
-#: frontend/website/pages/concerts/detail.html:93
+#: backend/dashboard_app/views.py:1510
+#: frontend/website/pages/concerts/detail.html:147
 msgid "مواقع الحجز"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1384
+#: backend/dashboard_app/views.py:1582
 msgid "إضافة إعلان"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1393
+#: backend/dashboard_app/views.py:1591
 msgid "تعديل إعلان"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1403
+#: backend/dashboard_app/views.py:1601
 msgid "كل صفحات الموقع"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1413
+#: backend/dashboard_app/views.py:1611
 msgid "غير مرتبط"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1416
+#: backend/dashboard_app/views.py:1614
 msgid "اسم الإعلان"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1419 frontend/dashboard/pages/ads/all.html:21
+#: backend/dashboard_app/views.py:1617 frontend/dashboard/pages/ads/all.html:18
 msgid "يظهر في"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1424
+#: backend/dashboard_app/views.py:1622
 msgid "نشط"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1424 frontend/dashboard/pages/ads/all.html:64
+#: backend/dashboard_app/views.py:1622 frontend/dashboard/pages/ads/all.html:61
 msgid "متوقف"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1464
+#: backend/dashboard_app/views.py:1662
 msgid "كل المنصات"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1472
+#: backend/dashboard_app/views.py:1670
 msgid "إضافة منصة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1491
+#: backend/dashboard_app/views.py:1689
 msgid "رابط الأيقونة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1496
+#: backend/dashboard_app/views.py:1694
 msgid "الأعمال المرتبطة بهذه المنصة"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1548
-#: frontend/dashboard/pages/media/screenings.html:50
+#: backend/dashboard_app/views.py:1746
+#: frontend/dashboard/pages/media/screenings.html:53
 msgid "إضافة دار عرض"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1595
+#: backend/dashboard_app/views.py:1808
 msgid "إضافة مستخدم"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1615 frontend/dashboard/pages/ads/all.html:25
-#: frontend/dashboard/pages/albums/all.html:23
-#: frontend/dashboard/pages/concerts/all.html:21
-#: frontend/dashboard/pages/media/all.html:22
-#: frontend/dashboard/pages/songs/all.html:25
-#: frontend/dashboard/pages/users/all.html:22
-msgid "الحالة"
+#: backend/dashboard_app/views.py:1826
+#: frontend/website/pages/albums/detail.html:70
+#: frontend/website/pages/albums/detail.html:113
+#: frontend/website/pages/songs/detail.html:2118
+#: frontend/website/pages/songs/detail.html:2254
+#: frontend/website/pages/songs/detail.html:4234
+#: frontend/website/pages/user/playlists.html:33
+msgid "أغنية"
 msgstr ""
 
-#: backend/dashboard_app/views.py:1615
-#: frontend/dashboard/pages/users/all.html:40
-msgid "موقوف"
+#: backend/dashboard_app/views.py:1827
+msgid "فيلم / مسلسل"
+msgstr ""
+
+#: backend/dashboard_app/views.py:1828
+msgid "حفلة"
 msgstr ""
 
 #: backend/links_app/models.py:35
@@ -858,177 +1170,605 @@ msgid "Apple Music"
 msgstr "أبل ميوزك"
 
 #: backend/links_app/models.py:88
+msgid "Deezer"
+msgstr ""
+
+#: backend/links_app/models.py:89
+#, fuzzy
+#| msgid "Apple Music"
+msgid "Amazon Music"
+msgstr "أبل ميوزك"
+
+#: backend/links_app/models.py:90
+msgid "SoundCloud"
+msgstr ""
+
+#: backend/links_app/models.py:91
 msgid "Netflix"
 msgstr "نتفليكس"
 
-#: backend/links_app/models.py:89
+#: backend/links_app/models.py:92
 msgid "Shahid"
 msgstr "شاهد"
 
-#: backend/links_app/models.py:90
+#: backend/links_app/models.py:93
 msgid "WATCH IT"
 msgstr "واتش إت"
 
-#: backend/links_app/models.py:91
+#: backend/links_app/models.py:94
+msgid "Yango Play"
+msgstr ""
+
+#: backend/links_app/models.py:95
+msgid "OSN+"
+msgstr ""
+
+#: backend/links_app/models.py:96
+msgid "Amazon Prime Video"
+msgstr ""
+
+#: backend/links_app/models.py:97
+msgid "Disney+"
+msgstr ""
+
+#: backend/links_app/models.py:98
 msgid "Tazkarti"
 msgstr ""
 
-#: backend/links_app/models.py:92
+#: backend/links_app/models.py:99
 msgid "Ticketmaster"
 msgstr ""
 
-#: backend/links_app/models.py:113
+#: backend/links_app/models.py:101
+msgid "Instagram"
+msgstr ""
+
+#: backend/links_app/models.py:102
+msgid "TikTok"
+msgstr ""
+
+#: backend/links_app/models.py:123
 msgid "Free"
 msgstr "مجاني"
 
-#: backend/links_app/models.py:114
+#: backend/links_app/models.py:124
 msgid "Subscription"
 msgstr "اشتراك"
 
-#: backend/links_app/models.py:115
+#: backend/links_app/models.py:125
 msgid "Rental"
 msgstr "إيجار"
 
-#: backend/links_app/models.py:116
+#: backend/links_app/models.py:126
 msgid "Purchase"
 msgstr "شراء"
 
-#: backend/main_app/models.py:8
+#: backend/main_app/models.py:14
 msgid "Admin"
 msgstr "مدير"
 
-#: backend/main_app/models.py:9
+#: backend/main_app/models.py:15
 msgid "Editor"
 msgstr "محرر"
 
-#: backend/main_app/models.py:10
+#: backend/main_app/models.py:16
 msgid "Viewer"
 msgstr "مشاهد"
 
-#: backend/media_app/models.py:19
+#: backend/main_app/models.py:19
+msgid "صورة الملف الشخصي"
+msgstr ""
+
+#: backend/main_app/models.py:35 backend/main_app/models.py:73
+#: backend/main_app/models.py:118 backend/main_app/models.py:175
+#: backend/main_app/models.py:237
+#: frontend/dashboard/pages/daily_guess/day_detail.html:22
+#: frontend/dashboard/pages/song_detail.html:248
+#: frontend/dashboard/pages/song_detail.html:275
+#: frontend/dashboard/pages/song_detail.html:296
+msgid "المستخدم"
+msgstr ""
+
+#: backend/main_app/models.py:45
+msgid "نوع المحتوى"
+msgstr ""
+
+#: backend/main_app/models.py:47
+msgid "معرف المحتوى"
+msgstr ""
+
+#: backend/main_app/models.py:50 backend/main_app/models.py:214
+msgid "تاريخ الإضافة"
+msgstr ""
+
+#: backend/main_app/models.py:53 frontend/website/pages/player/index.html:711
+#: frontend/website/pages/songs/detail.html:2139
+#: frontend/website/pages/songs/detail.html:2204
+#: frontend/website/pages/user/recap.html:322
+msgid "إعجاب"
+msgstr ""
+
+#: backend/main_app/models.py:54 frontend/website/pages/user/favorites.html:3
+#: frontend/website/pages/user/favorites.html:7
+#: frontend/website/partials/header.html:65
+#: frontend/website/partials/header.html:161
+msgid "الإعجاب"
+msgstr ""
+
+#: backend/main_app/models.py:80 backend/main_app/models.py:134
+#: backend/main_app/models.py:211
+#: frontend/dashboard/pages/album_detail.html:122
+#: frontend/dashboard/pages/daily_guess/day_detail.html:24
+#: frontend/dashboard/pages/person_detail.html:127
+#: frontend/dashboard/pages/user_detail.html:170
+#: frontend/dashboard/pages/user_detail.html:248
+msgid "الأغنية"
+msgstr ""
+
+#: backend/main_app/models.py:83 frontend/dashboard/pages/song_detail.html:252
+#: frontend/dashboard/pages/user_detail.html:174
+msgid "آخر تشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:84
+msgid "عدد مرات التشغيل للمستخدم"
+msgstr ""
+
+#: backend/main_app/models.py:93
+msgid "عدد مرات الاستماع الكامل"
+msgstr ""
+
+#: backend/main_app/models.py:94
+msgid "نقاط التفاعل (متناقصة زمنياً)"
+msgstr ""
+
+#: backend/main_app/models.py:95
+msgid "آخر تحديث للنقاط"
+msgstr ""
+
+#: backend/main_app/models.py:98
+msgid "تشغيل مستخدم"
+msgstr ""
+
+#: backend/main_app/models.py:99
+msgid "تشغيلات المستخدمين"
+msgstr ""
+
+#: backend/main_app/models.py:127
+msgid "مفتاح الجلسة"
+msgstr ""
+
+#: backend/main_app/models.py:137
+msgid "وقت البدء"
+msgstr ""
+
+#: backend/main_app/models.py:138
+msgid "آخر نبض"
+msgstr ""
+
+#: backend/main_app/models.py:141
+msgid "مستخدم حالي"
+msgstr ""
+
+#: backend/main_app/models.py:142
+msgid "المستخدمون الحاليون"
+msgstr ""
+
+#: backend/main_app/models.py:177 frontend/website/pages/songs/detail.html:2770
+#: frontend/website/pages/user/playlist_detail.html:76
+#: frontend/website/pages/user/playlists.html:66
+msgid "اسم القائمة"
+msgstr ""
+
+#: backend/main_app/models.py:179 frontend/dashboard/pages/user_detail.html:231
+#: frontend/website/pages/songs/detail.html:2349
+msgid "عامة"
+msgstr ""
+
+#: backend/main_app/models.py:186 backend/main_app/models.py:240
+#: frontend/dashboard/pages/song_detail.html:299
+#: frontend/dashboard/pages/user_detail.html:223
+#: frontend/dashboard/pages/user_detail.html:252
+msgid "تاريخ الإنشاء"
+msgstr ""
+
+#: backend/main_app/models.py:187
+msgid "تاريخ التحديث"
+msgstr ""
+
+#: backend/main_app/models.py:190
+msgid "قائمة تشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:191 frontend/dashboard/pages/user_detail.html:130
+#: frontend/website/pages/user/playlists.html:3
+#: frontend/website/pages/user/playlists.html:8
+#: frontend/website/partials/header.html:71
+#: frontend/website/partials/header.html:167
+msgid "قوائم التشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:205 frontend/website/pages/songs/detail.html:2160
+msgid "قائمة التشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:213 frontend/dashboard/pages/user_detail.html:76
+#: frontend/website/pages/home.html:130
+#: frontend/website/pages/leaderboard.html:3
+#: frontend/website/pages/leaderboard.html:50
+#: frontend/website/pages/user/public_profile.html:195
+#: frontend/website/pages/user/recap.html:326
+#: frontend/website/partials/header.html:83
+msgid "الترتيب"
+msgstr ""
+
+#: backend/main_app/models.py:217
+msgid "عنصر قائمة التشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:218
+msgid "عناصر قوائم التشغيل"
+msgstr ""
+
+#: backend/main_app/models.py:239 frontend/website/base.html:2415
+msgid "الكود"
+msgstr ""
+
+#: backend/main_app/models.py:241
+msgid "تاريخ الاستخدام"
+msgstr ""
+
+#: backend/main_app/models.py:244 backend/website_app/auth_views.py:223
+msgid "كود استعادة كلمة السر"
+msgstr ""
+
+#: backend/main_app/models.py:245
+msgid "أكواد استعادة كلمة السر"
+msgstr ""
+
+#: backend/main_app/models.py:274
+msgid "صاعد"
+msgstr ""
+
+#: backend/main_app/models.py:275
+msgid "هابط"
+msgstr ""
+
+#: backend/main_app/models.py:276
+msgid "ثابت"
+msgstr ""
+
+#: backend/main_app/models.py:277 frontend/website/pages/player/index.html:957
+#: frontend/website/pages/songs/detail.html:4063
+msgid "جديد"
+msgstr ""
+
+#: backend/main_app/models.py:314
+msgid "تعاوني (حسب المستمعين)"
+msgstr ""
+
+#: backend/main_app/models.py:315
+msgid "حسب المحتوى"
+msgstr ""
+
+#: backend/main_app/models.py:388 backend/music_app/models.py:70
+msgid "Romantic / رومانسي"
+msgstr ""
+
+#: backend/main_app/models.py:389 backend/music_app/models.py:71
+msgid "Sad & Heartbreak / حزين / دراما / جرح"
+msgstr ""
+
+#: backend/main_app/models.py:390 backend/music_app/models.py:72
+msgid "Energetic & Upbeat / حماسي / طاقة عالية / أفراح"
+msgstr ""
+
+#: backend/main_app/models.py:391 backend/music_app/models.py:73
+msgid "Motivational & Hopeful / تحفيزي / أمل وتفاؤل"
+msgstr ""
+
+#: backend/main_app/models.py:392 backend/music_app/models.py:74
+msgid "Chill & Relaxing / رايق / هادئ للاسترخاء"
+msgstr ""
+
+#: backend/main_app/models.py:393 backend/music_app/models.py:75
+msgid "Nostalgic / ذكريات وحنين"
+msgstr ""
+
+#: backend/main_app/models.py:394 backend/music_app/models.py:76
+msgid "Confident & Playful / واثق / فريش"
+msgstr ""
+
+#: backend/main_app/models.py:420 frontend/dashboard/index.html:7
+msgid "لوحة التحكم"
+msgstr ""
+
+#: backend/main_app/models.py:421
+msgid "التطبيق / الموقع"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:58
+msgid "أول خطوة"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:59
+msgid "عضو نشيط"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:60
+msgid "عضو متميز"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:61
+msgid "نجم الموقع"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:62
+msgid "أسطورة تامر"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:63
+msgid "3 أيام متتالية"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:64
+msgid "أسبوع كامل"
+msgstr ""
+
+#: backend/main_app/shared_utils/gamification.py:65
+msgid "شهر كامل بدون انقطاع"
+msgstr ""
+
+#: backend/media_app/models.py:20
 msgid "Movie"
 msgstr "فيلم"
 
-#: backend/media_app/models.py:20
+#: backend/media_app/models.py:21
 msgid "TV Series"
 msgstr "مسلسل"
 
-#: backend/media_app/models.py:21
+#: backend/media_app/models.py:22
 msgid "Commercial"
 msgstr "إعلان"
 
-#: backend/media_app/models.py:22
+#: backend/media_app/models.py:23
 msgid "Program / Show"
 msgstr "برنامج"
 
-#: backend/media_app/models.py:73 backend/people_app/models.py:20
+#: backend/media_app/models.py:75 backend/people_app/models.py:20
 msgid "Director"
 msgstr "مخرج"
 
-#: backend/media_app/models.py:74 backend/people_app/models.py:21
+#: backend/media_app/models.py:76 backend/people_app/models.py:21
 msgid "Producer"
 msgstr "منتج"
 
-#: backend/media_app/models.py:75 backend/people_app/models.py:22
+#: backend/media_app/models.py:77 backend/people_app/models.py:22
 msgid "Screenwriter"
 msgstr "كاتب سيناريو"
 
-#: backend/media_app/models.py:76 backend/people_app/models.py:23
+#: backend/media_app/models.py:78 backend/people_app/models.py:23
 msgid "Cinematographer"
 msgstr "مدير تصوير"
 
-#: backend/media_app/models.py:77 backend/music_app/models.py:102
+#: backend/media_app/models.py:79 backend/music_app/models.py:165
 #: backend/people_app/models.py:13
 msgid "Composer"
 msgstr "ملحن"
 
-#: backend/media_app/models.py:78 backend/people_app/models.py:24
+#: backend/media_app/models.py:80 backend/people_app/models.py:24
 msgid "Actor"
 msgstr "ممثل"
 
-#: backend/music_app/models.py:46
+#: backend/music_app/models.py:49
 msgid "Single"
 msgstr "أغنية منفردة"
 
-#: backend/music_app/models.py:47
+#: backend/music_app/models.py:50
 msgid "Album Track"
 msgstr "أغنية من ألبوم"
 
-#: backend/music_app/models.py:48
+#: backend/music_app/models.py:51
 msgid "Movie Theme"
 msgstr "تتر فيلم"
 
-#: backend/music_app/models.py:49
+#: backend/music_app/models.py:52
 msgid "Series Theme"
 msgstr "تتر مسلسل"
 
-#: backend/music_app/models.py:50
+#: backend/music_app/models.py:53
 msgid "Commercial Jingle"
 msgstr "جينغل إعلان"
 
-#: backend/music_app/models.py:51
+#: backend/music_app/models.py:54
 msgid "Religious / Duaa"
 msgstr "دينية / دعاء"
 
-#: backend/music_app/models.py:100 backend/people_app/models.py:11
+#: backend/music_app/models.py:57 backend/music_app/models.py:69
+msgid "غير محدد / Auto"
+msgstr ""
+
+#: backend/music_app/models.py:58
+msgid "Pop / بوب"
+msgstr ""
+
+#: backend/music_app/models.py:59
+msgid "Egyptian Pop / بوب مصري"
+msgstr ""
+
+#: backend/music_app/models.py:60
+msgid "Arabic Pop / بوب عربي"
+msgstr ""
+
+#: backend/music_app/models.py:61
+msgid "Oriental & Tarab / شرقي وطربي"
+msgstr ""
+
+#: backend/music_app/models.py:62
+msgid "R&B / آر أند بي"
+msgstr ""
+
+#: backend/music_app/models.py:63
+msgid "Ballad / بالاد"
+msgstr ""
+
+#: backend/music_app/models.py:64
+msgid "Dance / Electronic / دانس وإلكترونيك"
+msgstr ""
+
+#: backend/music_app/models.py:65
+msgid "Acoustic / أكوستيك"
+msgstr ""
+
+#: backend/music_app/models.py:66
+msgid "Soft Rock / روك خفيف"
+msgstr ""
+
+#: backend/music_app/models.py:94
+msgid "Musical genre"
+msgstr ""
+
+#: backend/music_app/models.py:95
+msgid "Song mood/vibe"
+msgstr ""
+
+#: backend/music_app/models.py:110
+#: frontend/dashboard/pages/song_detail.html:249
+#: frontend/dashboard/pages/user_detail.html:171
+msgid "عدد مرات التشغيل"
+msgstr ""
+
+#: backend/music_app/models.py:113
+msgid "Beats per minute"
+msgstr ""
+
+#: backend/music_app/models.py:114
+msgid "Musical key (e.g., C, Am, F#m)"
+msgstr ""
+
+#: backend/music_app/models.py:115
+msgid "Mood of the song (e.g., happy, sad, energetic)"
+msgstr ""
+
+#: backend/music_app/models.py:116
+msgid "Energy level (0.0 to 1.0)"
+msgstr ""
+
+#: backend/music_app/models.py:117
+msgid "Danceability (0.0 to 1.0)"
+msgstr ""
+
+#: backend/music_app/models.py:118
+msgid "Detailed audio analysis data"
+msgstr ""
+
+#: backend/music_app/models.py:163 backend/people_app/models.py:11
 msgid "Singer"
 msgstr "مطرب"
 
-#: backend/music_app/models.py:101
+#: backend/music_app/models.py:164
 msgid "Lyricist / Poet"
 msgstr "شاعر كلمات"
 
-#: backend/music_app/models.py:103 backend/people_app/models.py:14
+#: backend/music_app/models.py:166 backend/people_app/models.py:14
 msgid "Arranger"
 msgstr "موزع موسيقي"
 
-#: backend/music_app/models.py:104 backend/people_app/models.py:15
+#: backend/music_app/models.py:167 backend/people_app/models.py:15
 msgid "Music Producer"
 msgstr "منتج موسيقي"
 
-#: backend/music_app/models.py:105 backend/people_app/models.py:16
+#: backend/music_app/models.py:168 backend/people_app/models.py:16
 msgid "Recording Engineer"
 msgstr "مهندس تسجيل"
 
-#: backend/music_app/models.py:106 backend/people_app/models.py:17
+#: backend/music_app/models.py:169 backend/people_app/models.py:17
 msgid "Mixing Engineer"
 msgstr "مهندس مكساج"
 
-#: backend/music_app/models.py:107 backend/people_app/models.py:18
+#: backend/music_app/models.py:170 backend/people_app/models.py:18
 msgid "Mastering Engineer"
 msgstr "مهندس ماستر"
 
-#: backend/music_app/models.py:108 backend/people_app/models.py:19
+#: backend/music_app/models.py:171 backend/people_app/models.py:19
 msgid "Mix & Master Engineer"
 msgstr "مهندس مكس وماستر"
 
-#: backend/music_app/models.py:109
+#: backend/music_app/models.py:172
 msgid "Featured Artist"
 msgstr "فنان مشارك"
 
-#: backend/music_app/models.py:130
+#: backend/music_app/models.py:193
 msgid "Lyrics"
 msgstr "كلمات"
 
-#: backend/music_app/models.py:131
+#: backend/music_app/models.py:194
 msgid "Music (instrumental)"
 msgstr "موسيقى (بدون كلام)"
 
-#: backend/music_app/models.py:132
+#: backend/music_app/models.py:195
 msgid "Silence"
 msgstr "صمت"
 
-#: backend/music_app/models.py:138
+#: backend/music_app/models.py:201
 msgid "Required only when the segment type is Lyrics."
 msgstr "مطلوب فقط عندما يكون نوع المقطع كلمات."
 
-#: backend/music_app/models.py:147
+#: backend/music_app/models.py:202
+msgid "Enable vocal doubling effect for this segment"
+msgstr ""
+
+#: backend/music_app/models.py:203
+msgid "Enable double tracking effect for this segment"
+msgstr ""
+
+#: backend/music_app/models.py:212
 msgid "End time must be after start time."
 msgstr "وقت النهاية لازم يكون بعد وقت البداية."
 
-#: backend/music_app/models.py:149
+#: backend/music_app/models.py:214
 msgid "Text is required for a lyrics segment."
 msgstr "لازم تكتب النص لأن نوع المقطع كلمات."
+
+#: backend/music_app/models.py:294
+msgid "Tamer Starts"
+msgstr ""
+
+#: backend/music_app/models.py:295
+msgid "You Start"
+msgstr ""
+
+#: backend/music_app/models.py:298
+msgid "Not Started"
+msgstr ""
+
+#: backend/music_app/models.py:311
+msgid ""
+"The mixed duet (Tamer + user vocal). Private to the user, never a catalog "
+"Song."
+msgstr ""
+
+#: backend/music_app/models.py:315
+msgid ""
+"When on, the duet can be opened via its link by anyone, and a share option "
+"is shown."
+msgstr ""
+
+#: backend/music_app/models.py:344
+msgid "Recording duration in seconds"
+msgstr ""
+
+#: backend/music_app/models.py:362
+msgid "Pending"
+msgstr ""
+
+#: backend/music_app/models.py:370
+msgid "Error message if processing failed"
+msgstr ""
+
+#: backend/music_app/models.py:371
+msgid "Quality score of vocal removal (0.0 to 1.0)"
+msgstr ""
 
 #: backend/people_app/models.py:12
 msgid "Poet / Lyricist"
@@ -1054,473 +1794,1268 @@ msgstr "شركة إنتاج"
 msgid "Distribution"
 msgstr "شركة توزيع"
 
+#: backend/website_app/auth_views.py:113 backend/website_app/auth_views.py:150
+msgid "أنت مسجل الدخول بالفعل."
+msgstr ""
+
+#: backend/website_app/auth_views.py:121
+msgid "من فضلك أدخل الاسم."
+msgstr ""
+
+#: backend/website_app/auth_views.py:123
+msgid "بريد إلكتروني غير صالح."
+msgstr ""
+
+#: backend/website_app/auth_views.py:125 backend/website_app/auth_views.py:259
+msgid "كلمة السر لازم تكون 8 حروف على الأقل."
+msgstr ""
+
+#: backend/website_app/auth_views.py:127
+msgid "البريد الإلكتروني ده مسجل بالفعل."
+msgstr ""
+
+#: backend/website_app/auth_views.py:158 backend/website_app/auth_views.py:164
+msgid "البريد الإلكتروني أو كلمة السر غير صحيحة."
+msgstr ""
+
+#: backend/website_app/auth_views.py:160
+msgid "الحساب ده اتعمل بجوجل - سجل دخولك بجوجل بدل كده."
+msgstr ""
+
+#: backend/website_app/auth_views.py:224
+#, python-format
+msgid ""
+"كود استعادة كلمة السر بتاعك هو: %(code)s\n"
+"صالح لمدة 15 دقيقة."
+msgstr ""
+
+#: backend/website_app/auth_views.py:241 backend/website_app/auth_views.py:245
+#: backend/website_app/auth_views.py:263 backend/website_app/auth_views.py:267
+msgid "الكود غير صحيح أو منتهي."
+msgstr ""
+
+#: backend/website_app/views.py:1215
+msgid "شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤"
+msgstr ""
+
+#: backend/website_app/views.py:1216
+msgid "ده انت من جمهور تامر الأصليين فعلاً 👏"
+msgstr ""
+
+#: backend/website_app/views.py:1217
+msgid "عارفها من أول ثانية؟ يبقى انت جمهور VIP"
+msgstr ""
+
+#: backend/website_app/views.py:1218
+msgid "احترافية! مفيش حد يفوتك في أغاني تامر"
+msgstr ""
+
+#: backend/website_app/views.py:1219
+msgid "تمام كده، ذوقك في الأغاني موزون"
+msgstr ""
+
+#: backend/website_app/views.py:1220
+msgid "ماشاء الله عليك، ودنك موسيقية فعلاً 🎧"
+msgstr ""
+
+#: backend/website_app/views.py:1221
+msgid "برافو، ده مستوى المحترفين"
+msgstr ""
+
+#: backend/website_app/views.py:1222
+msgid "واضح إنك سامع تامر من زمان"
+msgstr ""
+
+#: backend/website_app/views.py:1223
+msgid "يا سلام، خمّنتها بسهولة!"
+msgstr ""
+
+#: backend/website_app/views.py:1224
+msgid "أنت فعلاً من عيلة تامر حسني الكبيرة"
+msgstr ""
+
+#: backend/website_app/views.py:1225
+msgid "حاسس إنك حافظ الألبومات كلها؟ 😄"
+msgstr ""
+
+#: backend/website_app/views.py:1226
+msgid "جميل جدًا، جايبها من أول محاولة"
+msgstr ""
+
+#: backend/website_app/views.py:1227
+msgid "ذوقك الموسيقي عالي جدًا"
+msgstr ""
+
+#: backend/website_app/views.py:1228
+msgid "كده تستاهل تاج جمهور تامر 👑"
+msgstr ""
+
+#: backend/website_app/views.py:1229
+msgid "مستحيل حد يغلبك في اللعبة دي"
+msgstr ""
+
+#: backend/website_app/views.py:1230
+msgid "شكلك بتسمع تامر كل يوم صح؟"
+msgstr ""
+
+#: backend/website_app/views.py:1231
+msgid "عارف كل نغمة قبل ما تخلص 🎶"
+msgstr ""
+
+#: backend/website_app/views.py:1232
+msgid "برافو عليك، ده تحدي مش سهل وعديته"
+msgstr ""
+
+#: backend/website_app/views.py:1233
+msgid "واثق من نفسك واخترت صح - عاش"
+msgstr ""
+
+#: backend/website_app/views.py:1234
+msgid "ده مستوى تاني خالص، تحفة"
+msgstr ""
+
+#: backend/website_app/views.py:1923
+msgid "اسم المستخدم ده مأخوذ بالفعل."
+msgstr ""
+
 #: frontend/dashboard/index.html:7
 #: frontend/dashboard/partials/sidebar-collapse.html:5
 #: frontend/dashboard/partials/sidebar-collapse.html:6
-#: frontend/dashboard/partials/sidebar-collapse.html:205
-#: frontend/dashboard/partials/sidebar-collapse.html:206
-#: frontend/website/base.html:6
+#: frontend/dashboard/partials/sidebar-collapse.html:217
+#: frontend/dashboard/partials/sidebar-collapse.html:218
+#: frontend/website/base.html:35 frontend/website/base.html:45
+#: frontend/website/base.html:48 frontend/website/pages/user/recap.html:168
+#: frontend/website/pages/user/recap.html:316
+#: frontend/website/partials/footer.html:8
+#: frontend/website/partials/footer.html:32
 msgid "أرشيف تامر حسني"
 msgstr ""
 
-#: frontend/dashboard/index.html:7
-msgid "لوحة التحكم"
+#: frontend/dashboard/pages/_detail_generic.html:30
+#: frontend/dashboard/pages/song_detail.html:37
+#: frontend/dashboard/partials/pagination.html:10
+#: frontend/dashboard/partials/pagination.html:13
+#: frontend/dashboard/partials/pagination_named.html:17
+#: frontend/dashboard/partials/pagination_named.html:20
+#: frontend/website/pages/albums/detail.html:187
+#: frontend/website/pages/concerts/detail.html:182
+#: frontend/website/pages/home.html:145 frontend/website/pages/home.html:177
+#: frontend/website/pages/home.html:209 frontend/website/pages/home.html:241
+#: frontend/website/pages/home.html:273 frontend/website/pages/home.html:306
+#: frontend/website/pages/home.html:336 frontend/website/pages/home.html:375
+#: frontend/website/pages/media/detail.html:265
+#: frontend/website/pages/media/detail.html:291
+#: frontend/website/pages/people/detail.html:66
+#: frontend/website/pages/people/detail.html:98
+#: frontend/website/pages/people/detail.html:130
+#: frontend/website/pages/songs/detail.html:2095
+#: frontend/website/pages/songs/detail.html:2467
+#: frontend/website/pages/songs/detail.html:2494
+#: frontend/website/pages/songs/detail.html:2530
+#: frontend/website/pages/songs/detail.html:2562
+#: frontend/website/pages/songs/detail.html:2595
+#: frontend/website/pages/songs/detail.html:2624
+#: frontend/website/pages/songs/detail.html:2660
+#: frontend/website/pages/user/public_profile.html:223
+#: frontend/website/pages/user/public_profile.html:284
+msgid "السابق"
 msgstr ""
 
-#: frontend/dashboard/main.html:3
-#: frontend/dashboard/partials/sidebar-collapse.html:18
-#: frontend/dashboard/partials/sidebar-collapse.html:213
-#: frontend/website/base.html:6 frontend/website/pages/home.html:3
-#: frontend/website/partials/header.html:14
-#: frontend/website/partials/header.html:32
-msgid "الرئيسية"
+#: frontend/dashboard/pages/_detail_generic.html:33
+#: frontend/dashboard/pages/song_detail.html:40
+#: frontend/dashboard/partials/pagination.html:26
+#: frontend/dashboard/partials/pagination.html:29
+#: frontend/dashboard/partials/pagination_named.html:33
+#: frontend/dashboard/partials/pagination_named.html:36
+#: frontend/website/pages/albums/detail.html:207
+#: frontend/website/pages/concerts/detail.html:209
+#: frontend/website/pages/home.html:167 frontend/website/pages/home.html:199
+#: frontend/website/pages/home.html:231 frontend/website/pages/home.html:263
+#: frontend/website/pages/home.html:294 frontend/website/pages/home.html:325
+#: frontend/website/pages/home.html:365 frontend/website/pages/home.html:391
+#: frontend/website/pages/media/detail.html:282
+#: frontend/website/pages/media/detail.html:310
+#: frontend/website/pages/people/detail.html:84
+#: frontend/website/pages/people/detail.html:116
+#: frontend/website/pages/people/detail.html:144
+#: frontend/website/pages/songs/detail.html:2101
+#: frontend/website/pages/songs/detail.html:2481
+#: frontend/website/pages/songs/detail.html:2511
+#: frontend/website/pages/songs/detail.html:2550
+#: frontend/website/pages/songs/detail.html:2582
+#: frontend/website/pages/songs/detail.html:2612
+#: frontend/website/pages/songs/detail.html:2644
+#: frontend/website/pages/songs/detail.html:2680
+#: frontend/website/pages/user/public_profile.html:243
+#: frontend/website/pages/user/public_profile.html:301
+msgid "التالي"
 msgstr ""
 
-#: frontend/dashboard/main.html:11
-msgid "مرحباً بك"
-msgstr ""
-
-#: frontend/dashboard/main.html:12
-msgid ""
-"أرشيف تامر حسني الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، "
-"الإعلانات والحفلات."
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:28
-#: frontend/dashboard/pages/_form_generic.html:10
-#: frontend/dashboard/pages/links_manage.html:12
-#: frontend/dashboard/pages/media/crew.html:12
-#: frontend/dashboard/pages/media/screenings.html:14
-#: frontend/dashboard/pages/songs/credits.html:12
-#: frontend/dashboard/pages/songs/segments.html:12
-msgid "رجوع"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:35
-msgid "التفاصيل"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:72
-msgid "لا يوجد"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:83
-msgid "إحصائيات الأداء"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:86
-#: frontend/dashboard/pages/ads/all.html:23
-#: frontend/dashboard/pages/analytics.html:72
-#: frontend/dashboard/pages/analytics.html:230
-msgid "المشاهدات"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:90
-msgid "التشغيل"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:94
-msgid "المشاركات"
-msgstr ""
-
-#: frontend/dashboard/pages/_detail_generic.html:98
-msgid "ضغطات المنصات الخارجية"
-msgstr ""
-
-#: frontend/dashboard/pages/_form_generic.html:43
-msgid "حدد مكان الحفلة على الخريطة"
-msgstr ""
-
-#: frontend/dashboard/pages/_form_generic.html:45
-msgid "دوس على أي مكان بالخريطة عشان تحدد الموقع."
-msgstr ""
-
-#: frontend/dashboard/pages/_form_generic.html:49
-msgid "حفظ"
-msgstr ""
-
-#: frontend/dashboard/pages/_form_generic.html:50
-msgid "إلغاء"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:3
-#: frontend/dashboard/pages/ads/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:143
-#: frontend/dashboard/partials/sidebar-collapse.html:223
-msgid "بانرات إعلانية"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:12
-msgid "+ إضافة إعلان"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:20
-msgid "الإعلان"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:24
-msgid "الضغطات"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:26
-#: frontend/dashboard/pages/albums/all.html:24
-#: frontend/dashboard/pages/cinema_venues/all.html:23
-#: frontend/dashboard/pages/concerts/all.html:26
-#: frontend/dashboard/pages/links_manage.html:21
-#: frontend/dashboard/pages/media/all.html:25
-#: frontend/dashboard/pages/media/crew.html:21
-#: frontend/dashboard/pages/media/screenings.html:24
-#: frontend/dashboard/pages/people/all.html:23
-#: frontend/dashboard/pages/platforms/all.html:22
-#: frontend/dashboard/pages/songs/all.html:26
-#: frontend/dashboard/pages/songs/credits.html:20
-#: frontend/dashboard/pages/songs/segments.html:22
-#: frontend/dashboard/pages/studios/all.html:22
-#: frontend/dashboard/pages/users/all.html:23
-msgid "إجراءات"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:44
-msgid "كل الصفحات"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:46
-msgid "صفحة محددة"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:55
-msgid "بدون رابط"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:68
-#: frontend/dashboard/pages/albums/all.html:54
-#: frontend/dashboard/pages/concerts/all.html:72
-#: frontend/dashboard/pages/media/all.html:54
-#: frontend/dashboard/pages/people/all.html:42
-#: frontend/dashboard/pages/platforms/all.html:40
-#: frontend/dashboard/pages/songs/all.html:60
-#: frontend/dashboard/pages/studios/all.html:40
-#: frontend/dashboard/pages/users/all.html:44
-msgid "عرض"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:73
-#: frontend/dashboard/pages/users/all.html:50
-msgid "إيقاف"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:75
-#: frontend/dashboard/pages/users/all.html:52
-msgid "تفعيل"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:78
-#: frontend/dashboard/pages/albums/all.html:64
-#: frontend/dashboard/pages/cinema_venues/all.html:34
-#: frontend/dashboard/pages/concerts/all.html:82
-#: frontend/dashboard/pages/links_manage.html:34
-#: frontend/dashboard/pages/media/all.html:64
-#: frontend/dashboard/pages/media/crew.html:32
-#: frontend/dashboard/pages/media/screenings.html:35
-#: frontend/dashboard/pages/people/all.html:44
-#: frontend/dashboard/pages/platforms/all.html:42
-#: frontend/dashboard/pages/songs/all.html:70
-#: frontend/dashboard/pages/songs/credits.html:30
-#: frontend/dashboard/pages/songs/segments.html:42
-#: frontend/dashboard/pages/studios/all.html:42
-#: frontend/dashboard/pages/users/all.html:55
-msgid "متأكد من الحذف؟"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:80
-#: frontend/dashboard/pages/albums/all.html:66
-#: frontend/dashboard/pages/cinema_venues/all.html:36
-#: frontend/dashboard/pages/concerts/all.html:84
-#: frontend/dashboard/pages/links_manage.html:36
-#: frontend/dashboard/pages/media/all.html:66
-#: frontend/dashboard/pages/media/crew.html:34
-#: frontend/dashboard/pages/media/screenings.html:37
-#: frontend/dashboard/pages/people/all.html:46
-#: frontend/dashboard/pages/platforms/all.html:44
-#: frontend/dashboard/pages/songs/all.html:72
-#: frontend/dashboard/pages/songs/credits.html:32
-#: frontend/dashboard/pages/songs/segments.html:44
-#: frontend/dashboard/pages/studios/all.html:44
-#: frontend/dashboard/pages/users/all.html:57
-msgid "حذف"
-msgstr ""
-
-#: frontend/dashboard/pages/ads/all.html:85
-msgid "لا توجد إعلانات بعد"
-msgstr ""
-
-#: frontend/dashboard/pages/albums/all.html:12
-#: frontend/dashboard/pages/cinema_venues/all.html:12
-#: frontend/dashboard/pages/concerts/all.html:12
-#: frontend/dashboard/pages/media/all.html:12
-#: frontend/dashboard/pages/people/all.html:12
-#: frontend/dashboard/pages/platforms/all.html:12
-#: frontend/dashboard/pages/songs/all.html:12
-#: frontend/dashboard/pages/studios/all.html:12
-#: frontend/dashboard/pages/users/all.html:12
-msgid "+ إضافة جديد"
-msgstr ""
-
-#: frontend/dashboard/pages/albums/all.html:20
-#: frontend/dashboard/pages/media/all.html:20
-#: frontend/dashboard/pages/songs/all.html:20
-msgid "العنوان"
-msgstr ""
-
-#: frontend/dashboard/pages/albums/all.html:59
-#: frontend/dashboard/pages/concerts/all.html:77
-#: frontend/dashboard/pages/media/all.html:59
-#: frontend/dashboard/pages/songs/all.html:65
+#: frontend/dashboard/pages/_detail_generic.html:44
+#: frontend/dashboard/pages/album_detail.html:39
+#: frontend/dashboard/pages/albums/all.html:55
+#: frontend/dashboard/pages/concerts/all.html:73
+#: frontend/dashboard/pages/media/all.html:53
+#: frontend/dashboard/pages/song_detail.html:47
 msgid "إظهار"
 msgstr ""
 
-#: frontend/dashboard/pages/albums/all.html:61
-#: frontend/dashboard/pages/concerts/all.html:79
-#: frontend/dashboard/pages/media/all.html:61
-#: frontend/dashboard/pages/songs/all.html:67
+#: frontend/dashboard/pages/_detail_generic.html:46
+#: frontend/dashboard/pages/album_detail.html:41
+#: frontend/dashboard/pages/albums/all.html:57
+#: frontend/dashboard/pages/concerts/all.html:75
+#: frontend/dashboard/pages/media/all.html:55
+#: frontend/dashboard/pages/song_detail.html:49
 msgid "إخفاء"
 msgstr ""
 
-#: frontend/dashboard/pages/albums/all.html:71
-#: frontend/dashboard/pages/cinema_venues/all.html:41
-#: frontend/dashboard/pages/concerts/all.html:89
-#: frontend/dashboard/pages/media/all.html:71
-#: frontend/dashboard/pages/people/all.html:51
-#: frontend/dashboard/pages/platforms/all.html:49
-#: frontend/dashboard/pages/songs/all.html:77
-#: frontend/dashboard/pages/studios/all.html:49
+#: frontend/dashboard/pages/_detail_generic.html:51
+#: frontend/dashboard/pages/ads/all.html:75
+#: frontend/dashboard/pages/album_detail.html:44
+#: frontend/dashboard/pages/albums/all.html:60
+#: frontend/dashboard/pages/cinema_venues/all.html:30
+#: frontend/dashboard/pages/concerts/all.html:78
+#: frontend/dashboard/pages/links_manage.html:37
+#: frontend/dashboard/pages/media/all.html:58
+#: frontend/dashboard/pages/media/crew.html:35
+#: frontend/dashboard/pages/media/screenings.html:38
+#: frontend/dashboard/pages/people/all.html:40
+#: frontend/dashboard/pages/person_detail.html:30
+#: frontend/dashboard/pages/platforms/all.html:38
+#: frontend/dashboard/pages/song_detail.html:52
+#: frontend/dashboard/pages/songs/credits.html:33
+#: frontend/dashboard/pages/studios/all.html:38
+#: frontend/dashboard/pages/user_detail.html:53
+#: frontend/dashboard/pages/users/all.html:66
+msgid "متأكد من الحذف؟"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:53
+#: frontend/dashboard/pages/ads/all.html:77
+#: frontend/dashboard/pages/album_detail.html:46
+#: frontend/dashboard/pages/albums/all.html:62
+#: frontend/dashboard/pages/cinema_venues/all.html:32
+#: frontend/dashboard/pages/concerts/all.html:80
+#: frontend/dashboard/pages/daily_guess/day_detail.html:60
+#: frontend/dashboard/pages/links_manage.html:39
+#: frontend/dashboard/pages/media/all.html:60
+#: frontend/dashboard/pages/media/crew.html:37
+#: frontend/dashboard/pages/media/screenings.html:40
+#: frontend/dashboard/pages/people/all.html:42
+#: frontend/dashboard/pages/person_detail.html:32
+#: frontend/dashboard/pages/platforms/all.html:40
+#: frontend/dashboard/pages/song_detail.html:54
+#: frontend/dashboard/pages/songs/credits.html:35
+#: frontend/dashboard/pages/studios/all.html:40
+#: frontend/dashboard/pages/user_detail.html:55
+#: frontend/dashboard/pages/users/all.html:68
+msgid "حذف"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:56
+#: frontend/dashboard/pages/_form_generic.html:33
+#: frontend/dashboard/pages/album_detail.html:48
+#: frontend/dashboard/pages/daily_guess/day_detail.html:15
+#: frontend/dashboard/pages/links_manage.html:15
+#: frontend/dashboard/pages/media/crew.html:15
+#: frontend/dashboard/pages/media/screenings.html:17
+#: frontend/dashboard/pages/person_detail.html:34
+#: frontend/dashboard/pages/song_detail.html:56
+#: frontend/dashboard/pages/songs/credits.html:15
+#: frontend/dashboard/pages/songs/segments.html:183
+#: frontend/dashboard/pages/user_detail.html:58
+msgid "رجوع"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:63
+msgid "التفاصيل"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:86
+#: frontend/dashboard/pages/song_detail.html:97
+msgid "متصفحك لا يدعم تشغيل الصوت"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:90
+#: frontend/dashboard/pages/song_detail.html:101
+msgid "تحميل الملف"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:119
+#: frontend/dashboard/pages/_detail_generic.html:160
+#: frontend/dashboard/pages/album_detail.html:139
+#: frontend/dashboard/pages/album_detail.html:165
+#: frontend/dashboard/pages/person_detail.html:119
+#: frontend/dashboard/pages/person_detail.html:137
+#: frontend/dashboard/pages/person_detail.html:158
+#: frontend/dashboard/pages/person_detail.html:184
+#: frontend/dashboard/pages/song_detail.html:181
+#: frontend/dashboard/pages/song_detail.html:206
+#: frontend/dashboard/pages/song_detail.html:237
+#: frontend/dashboard/pages/song_detail.html:264
+#: frontend/dashboard/pages/song_detail.html:285
+#: frontend/dashboard/pages/song_detail.html:318
+msgid "لا يوجد"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:129
+msgid "سجل تسجيلات الدخول"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:136
+#: frontend/dashboard/pages/user_detail.html:313
+msgid "الوقت"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:137
+#: frontend/dashboard/pages/user_detail.html:314
+msgid "الجهاز"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:138
+#: frontend/dashboard/pages/user_detail.html:315
+msgid "عنوان IP"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:139
+#: frontend/dashboard/pages/user_detail.html:316
+msgid "الموقع التقريبي"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:152
+#: frontend/dashboard/pages/user_detail.html:327
+msgid "مسؤول"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:154
+#: frontend/dashboard/pages/user_detail.html:328
+msgid "مستخدم عادي"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:173
+#: frontend/dashboard/pages/album_detail.html:57
+#: frontend/dashboard/pages/person_detail.html:43
+#: frontend/dashboard/pages/song_detail.html:65
+msgid "إحصائيات الأداء"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:177
+#: frontend/dashboard/pages/ads/all.html:20
+#: frontend/dashboard/pages/album_detail.html:61
+#: frontend/dashboard/pages/analytics.html:203
+#: frontend/dashboard/pages/analytics.html:374
+#: frontend/dashboard/pages/person_detail.html:47
+#: frontend/dashboard/pages/song_detail.html:69
+msgid "المشاهدات"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:182
+#: frontend/dashboard/pages/album_detail.html:66
+#: frontend/dashboard/pages/person_detail.html:52
+#: frontend/dashboard/pages/song_detail.html:74
+msgid "التشغيل"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:187
+#: frontend/dashboard/pages/album_detail.html:71
+#: frontend/dashboard/pages/person_detail.html:57
+#: frontend/dashboard/pages/song_detail.html:79
+msgid "المشاركات"
+msgstr ""
+
+#: frontend/dashboard/pages/_detail_generic.html:192
+#: frontend/dashboard/pages/album_detail.html:76
+#: frontend/dashboard/pages/person_detail.html:62
+#: frontend/dashboard/pages/song_detail.html:84
+msgid "ضغطات المنصات الخارجية"
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:68
+msgid "حدد مكان الحفلة على الخريطة"
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:70
+msgid "دوس على أي مكان بالخريطة عشان تحدد الموقع."
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:75
+#: frontend/website/pages/user/public_profile.html:171
+msgid "حفظ"
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:76
+#: frontend/dashboard/pages/songs/segments.html:441
+#: frontend/website/pages/songs/detail.html:2740
+#: frontend/website/pages/user/public_profile.html:174
+msgid "إلغاء"
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:80
+#: frontend/dashboard/pages/songs/segments.html:689
+msgid "جاري التعديل..."
+msgstr ""
+
+#: frontend/dashboard/pages/_form_generic.html:80
+msgid "جاري الحفظ..."
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:3
+#: frontend/dashboard/pages/ads/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:155
+#: frontend/dashboard/partials/sidebar-collapse.html:236
+msgid "بانرات إعلانية"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:9
+msgid "+ إضافة إعلان"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:17
+msgid "الإعلان"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:21
+msgid "الضغطات"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:22
+#: frontend/dashboard/pages/album_detail.html:125
+#: frontend/dashboard/pages/albums/all.html:19
+#: frontend/dashboard/pages/concerts/all.html:17
+#: frontend/dashboard/pages/daily_guess/day_detail.html:23
+#: frontend/dashboard/pages/media/all.html:16
+#: frontend/dashboard/pages/songs/all.html:23
+#: frontend/dashboard/pages/user_detail.html:159
+#: frontend/dashboard/pages/user_detail.html:222
+#: frontend/dashboard/pages/users/all.html:19
+msgid "الحالة"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:23
+#: frontend/dashboard/pages/albums/all.html:20
+#: frontend/dashboard/pages/cinema_venues/all.html:19
+#: frontend/dashboard/pages/concerts/all.html:22
+#: frontend/dashboard/pages/daily_guess/day_detail.html:28
+#: frontend/dashboard/pages/links_manage.html:24
+#: frontend/dashboard/pages/media/all.html:19
+#: frontend/dashboard/pages/media/crew.html:24
+#: frontend/dashboard/pages/media/screenings.html:27
+#: frontend/dashboard/pages/people/all.html:19
+#: frontend/dashboard/pages/platforms/all.html:18
+#: frontend/dashboard/pages/songs/credits.html:23
+#: frontend/dashboard/pages/songs/segments.html:196
+#: frontend/dashboard/pages/studios/all.html:18
+#: frontend/dashboard/pages/users/all.html:20
+msgid "إجراءات"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:41
+msgid "كل الصفحات"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:43
+msgid "صفحة محددة"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:52
+msgid "بدون رابط"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:65
+#: frontend/dashboard/pages/albums/all.html:50
+#: frontend/dashboard/pages/concerts/all.html:68
+#: frontend/dashboard/pages/media/all.html:48
+#: frontend/dashboard/pages/people/all.html:38
+#: frontend/dashboard/pages/platforms/all.html:36
+#: frontend/dashboard/pages/studios/all.html:36
+#: frontend/dashboard/pages/users/all.html:55
+#: frontend/website/pages/user/remixes.html:97
+msgid "عرض"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:70
+#: frontend/dashboard/pages/user_detail.html:48
+#: frontend/dashboard/pages/users/all.html:61
+msgid "إيقاف"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:72
+#: frontend/dashboard/pages/user_detail.html:50
 #: frontend/dashboard/pages/users/all.html:63
-#: frontend/website/pages/albums/detail.html:107
-#: frontend/website/pages/albums/list.html:28
-#: frontend/website/pages/concerts/list.html:30
-#: frontend/website/pages/home.html:47 frontend/website/pages/home.html:77
-#: frontend/website/pages/home.html:107 frontend/website/pages/home.html:137
-#: frontend/website/pages/home.html:169 frontend/website/pages/home.html:202
-#: frontend/website/pages/home.html:228
-#: frontend/website/pages/media/commercials_list.html:27
-#: frontend/website/pages/media/list.html:27
-#: frontend/website/pages/people/list.html:22
-#: frontend/website/pages/songs/list.html:28
+msgid "تفعيل"
+msgstr ""
+
+#: frontend/dashboard/pages/ads/all.html:82
+msgid "لا توجد إعلانات بعد"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:4
+#: frontend/dashboard/pages/ai_remix/index.html:13
+msgid "AI Remix Generator"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:21
+msgid "Projects"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:31
+msgid "Create Remix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:43
+msgid "New Project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:50
+#: frontend/dashboard/pages/ai_remix/index.html:77
+#: frontend/dashboard/pages/ai_remix/index.html:250
+msgid "Name"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:54
+msgid "Created"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:55
+#: frontend/dashboard/pages/ai_remix/index.html:83
+msgid "Actions"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:70
+msgid "Upload Audio"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:78
+msgid "Type"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:80
+msgid "Key"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:81
+#: frontend/dashboard/pages/ai_remix/index.html:761
+#, fuzzy
+#| msgid "Subscription"
+msgid "Duration"
+msgstr "اشتراك"
+
+#: frontend/dashboard/pages/ai_remix/index.html:82
+msgid "Uploaded"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:99
+msgid "Project Settings"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:104
+msgid "Select Project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:106
+#: frontend/dashboard/pages/ai_remix/index.html:488
+msgid "Choose a project..."
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:118
+msgid "Keep original"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:140
+msgid "Auto Arrange Sources"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:149
+msgid "Intelligent Mix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:156
+msgid "Audio Effects"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:162
+#, fuzzy
+#| msgid "Composer"
+msgid "Compressor"
+msgstr "ملحن"
+
+#: frontend/dashboard/pages/ai_remix/index.html:171
+msgid "Reverb"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:180
+msgid "Delay"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:189
+msgid "Limiter"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:196
+msgid "Generate Remix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:199
+msgid "Neural AI Remix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:210
+msgid "Project Sources"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:214
+msgid "Select a project to view its sources"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:221
+msgid "Output"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:225
+msgid "Generated remix will appear here"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:244
+msgid "Upload Audio Source"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:270
+#: frontend/dashboard/pages/ai_remix/index.html:322
+#: frontend/dashboard/pages/ai_remix/index.html:382
+#, fuzzy
+#| msgid "Cancelled"
+msgid "Cancel"
+msgstr "ملغاة"
+
+#: frontend/dashboard/pages/ai_remix/index.html:271
+msgid "Upload"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:282
+msgid "Create New Project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:302
+msgid "Not specified"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:323
+msgid "Create"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:334
+msgid "Add Source to Project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:343
+#: frontend/dashboard/pages/ai_remix/index.html:569
+msgid "Choose a source..."
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:383
+msgid "Add"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:506
+msgid "No sources in this project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:532
+msgid "Add Source"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:594
+msgid "Audio uploaded successfully!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:596
+#: frontend/dashboard/pages/ai_remix/index.html:600
+msgid "Error uploading audio"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:623
+msgid "Project created successfully!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:625
+#: frontend/dashboard/pages/ai_remix/index.html:629
+msgid "Error creating project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:656
+msgid "Source added successfully!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:658
+#: frontend/dashboard/pages/ai_remix/index.html:662
+msgid "Error adding source"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:667
+msgid "Are you sure you want to remove this source?"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:679
+msgid "Error removing source"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:689
+#: frontend/dashboard/pages/ai_remix/index.html:732
+msgid "Please select a project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:718
+msgid "Remix generated successfully!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:721
+msgid "Error generating remix: "
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:725
+msgid "Error generating remix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:745
+msgid "Neural remix generated successfully!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:748
+msgid "Error generating neural remix: "
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:752
+msgid "Error generating neural remix"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:760
+msgid "Remix Generated!"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:767
+msgid "Download"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:788
+msgid "Error analyzing source"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:796
+msgid "Are you sure you want to delete this project?"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:807
+msgid "Error deleting project"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:815
+msgid "Are you sure you want to delete this source?"
+msgstr ""
+
+#: frontend/dashboard/pages/ai_remix/index.html:825
+msgid "Error deleting source"
+msgstr ""
+
+#: frontend/dashboard/pages/album_detail.html:26
+#: frontend/dashboard/pages/album_detail.html:134
+#: frontend/dashboard/pages/song_detail.html:26
+msgid "مسودة"
+msgstr ""
+
+#: frontend/dashboard/pages/album_detail.html:28
+#: frontend/dashboard/pages/album_detail.html:135
+#: frontend/dashboard/pages/song_detail.html:28
+msgid "منشور"
+msgstr ""
+
+#: frontend/dashboard/pages/album_detail.html:89
+#: frontend/dashboard/pages/person_detail.html:75
+#: frontend/dashboard/pages/song_detail.html:115
+#: frontend/dashboard/pages/user_detail.html:116
+msgid "نظرة عامة"
+msgstr ""
+
+#: frontend/dashboard/pages/album_detail.html:124
+#: frontend/website/pages/remix_result.html:168
+msgid "المدة"
+msgstr ""
+
+#: frontend/dashboard/pages/album_detail.html:148
+#: frontend/dashboard/pages/person_detail.html:167
+#: frontend/dashboard/pages/song_detail.html:189
+msgid "إدارة روابط المنصات"
+msgstr ""
+
+#: frontend/dashboard/pages/albums/all.html:16
+#: frontend/dashboard/pages/media/all.html:14
+#: frontend/dashboard/pages/songs/all.html:16
+msgid "العنوان"
+msgstr ""
+
+#: frontend/dashboard/pages/albums/all.html:67
+#: frontend/dashboard/pages/cinema_venues/all.html:37
+#: frontend/dashboard/pages/concerts/all.html:85
+#: frontend/dashboard/pages/daily_guess/day_detail.html:65
+#: frontend/dashboard/pages/daily_guess/days.html:33
+#: frontend/dashboard/pages/media/all.html:65
+#: frontend/dashboard/pages/people/all.html:47
+#: frontend/dashboard/pages/platforms/all.html:45
+#: frontend/dashboard/pages/songs/all.html:62
+#: frontend/dashboard/pages/studios/all.html:45
+#: frontend/dashboard/pages/user_detail.html:186
+#: frontend/dashboard/pages/user_detail.html:209
+#: frontend/dashboard/pages/user_detail.html:237
+#: frontend/dashboard/pages/user_detail.html:272
+#: frontend/dashboard/pages/user_detail.html:302
+#: frontend/dashboard/pages/user_detail.html:333
+#: frontend/dashboard/pages/users/all.html:74
+#: frontend/website/pages/albums/detail.html:159
+#: frontend/website/pages/albums/list.html:34
+#: frontend/website/pages/concerts/list.html:42
+#: frontend/website/pages/home.html:164 frontend/website/pages/home.html:196
+#: frontend/website/pages/home.html:228 frontend/website/pages/home.html:260
+#: frontend/website/pages/home.html:291 frontend/website/pages/home.html:362
+#: frontend/website/pages/home.html:388
+#: frontend/website/pages/media/commercials_list.html:28
+#: frontend/website/pages/media/list.html:35
+#: frontend/website/pages/people/list.html:30
+#: frontend/website/pages/songs/list.html:34
 msgid "لا توجد بيانات متاحة حالياً"
 msgstr ""
 
 #: frontend/dashboard/pages/analytics.html:3
 #: frontend/dashboard/partials/sidebar-collapse.html:30
-#: frontend/dashboard/partials/sidebar-collapse.html:214
+#: frontend/dashboard/partials/sidebar-collapse.html:226
 msgid "التحليلات"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:11
-msgid "اليوم"
-msgstr ""
-
-#: frontend/dashboard/pages/analytics.html:12
-msgid "أمس"
-msgstr ""
-
 #: frontend/dashboard/pages/analytics.html:13
-msgid "آخر أسبوع"
+msgid "مرحباً بك"
 msgstr ""
 
 #: frontend/dashboard/pages/analytics.html:14
-msgid "آخر شهر"
-msgstr ""
-
-#: frontend/dashboard/pages/analytics.html:15
-msgid "كل الوقت"
+msgid ""
+"أرشيف تامر حسني الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، "
+"الإعلانات والحفلات."
 msgstr ""
 
 #: frontend/dashboard/pages/analytics.html:19
+#: frontend/dashboard/pages/analytics.html:91
+#: frontend/dashboard/pages/user_detail.html:160
+#: frontend/dashboard/pages/users/all.html:18
+#: frontend/website/pages/player/index.html:714
+#: frontend/website/pages/player/index.html:718
+#: frontend/website/pages/player/index.html:769
+#: frontend/website/pages/songs/detail.html:2197
+#: frontend/website/pages/songs/detail.html:2790
+msgid "يستمع الآن"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:30
+msgid "المحتوى في الأرشيف"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:44
+msgid "الاستوديوهات"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:65
+#: frontend/dashboard/pages/person_detail.html:89
+#: frontend/website/pages/user/favorites.html:38
+msgid "الأفلام والمسلسلات"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:81
+msgid "البث المباشر"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:98
+msgid "الأكثر استماعاً الآن"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:109
+#: frontend/dashboard/pages/analytics.html:418
+msgid "محدش بيسمع دلوقتي"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:120
+msgid "الأداء والتحليلات"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:127
+#: frontend/dashboard/pages/daily_guess/days.html:14
+msgid "اليوم"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:128
+msgid "أمس"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:129
+msgid "آخر أسبوع"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:130
+msgid "آخر شهر"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:131
+msgid "كل الوقت"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:135
+#: frontend/dashboard/pages/song_detail.html:219
 msgid "من"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:21
+#: frontend/dashboard/pages/analytics.html:137
+#: frontend/dashboard/pages/song_detail.html:220
 msgid "إلى"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:23
+#: frontend/dashboard/pages/analytics.html:139
 msgid "تحديد تاريخ"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:31
+#: frontend/dashboard/pages/analytics.html:149
 msgid "المشاهدات (الفترة المحددة)"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:33
-#: frontend/dashboard/pages/analytics.html:40
-#: frontend/dashboard/pages/analytics.html:47
-#: frontend/dashboard/pages/analytics.html:54
+#: frontend/dashboard/pages/analytics.html:152
+#: frontend/dashboard/pages/analytics.html:162
+#: frontend/dashboard/pages/analytics.html:172
+#: frontend/dashboard/pages/analytics.html:182
 msgid "الإجمالي"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:38
+#: frontend/dashboard/pages/analytics.html:159
 msgid "التشغيل (الفترة المحددة)"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:45
+#: frontend/dashboard/pages/analytics.html:169
 msgid "المشاركات (الفترة المحددة)"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:52
+#: frontend/dashboard/pages/analytics.html:179
 msgid "ضغطات المنصات الخارجية (الفترة المحددة)"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:60
+#: frontend/dashboard/pages/analytics.html:189
 msgid "المشاهدات عبر الوقت"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:69
+#: frontend/dashboard/pages/analytics.html:200
 msgid "المشاهدات حسب نوع المحتوى"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:77
-#: frontend/dashboard/pages/analytics.html:94
-#: frontend/dashboard/pages/analytics.html:114
-#: frontend/dashboard/pages/analytics.html:129
-#: frontend/dashboard/pages/analytics.html:147
-#: frontend/dashboard/pages/analytics.html:162
-#: frontend/dashboard/pages/analytics.html:177
-#: frontend/dashboard/pages/analytics.html:195
-#: frontend/dashboard/pages/analytics.html:210
+#: frontend/dashboard/pages/analytics.html:208
+#: frontend/dashboard/pages/analytics.html:225
+#: frontend/dashboard/pages/analytics.html:252
+#: frontend/dashboard/pages/analytics.html:268
+#: frontend/dashboard/pages/analytics.html:287
+#: frontend/dashboard/pages/analytics.html:303
+#: frontend/dashboard/pages/analytics.html:319
+#: frontend/dashboard/pages/analytics.html:338
+#: frontend/dashboard/pages/analytics.html:353
 msgid "لا توجد بيانات بعد"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:86
+#: frontend/dashboard/pages/analytics.html:217
 msgid "ضغطات المنصات الخارجية حسب المنصة"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:89
+#: frontend/dashboard/pages/analytics.html:220
 msgid "عدد الضغطات"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:106
+#: frontend/dashboard/pages/analytics.html:237
+msgid "الأكثر مشاهدة"
+msgstr ""
+
+#: frontend/dashboard/pages/analytics.html:243
 msgid "الأكثر مشاهدة: الفنانون"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:121
+#: frontend/dashboard/pages/analytics.html:259
 msgid "الأكثر مشاهدة: الأغاني"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:139
+#: frontend/dashboard/pages/analytics.html:278
 msgid "الأكثر مشاهدة: الأعمال الفنية"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:154
+#: frontend/dashboard/pages/analytics.html:294
 msgid "الأكثر مشاهدة: الألبومات"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:169
+#: frontend/dashboard/pages/analytics.html:310
 msgid "الأكثر مشاهدة: الحفلات"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:187
+#: frontend/dashboard/pages/analytics.html:329
 msgid "الأكثر مشاهدة: الإعلانات"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:202
+#: frontend/dashboard/pages/analytics.html:345
 msgid "المشاركات حسب القناة"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:205
+#: frontend/dashboard/pages/analytics.html:348
 msgid "القناة"
 msgstr ""
 
-#: frontend/dashboard/pages/analytics.html:205
+#: frontend/dashboard/pages/analytics.html:348
 msgid "عدد المشاركات"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:20
+#: frontend/dashboard/pages/concerts/all.html:16
 msgid "الحفلة"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:24
+#: frontend/dashboard/pages/concerts/all.html:20
 msgid "الفيديوهات"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:25
+#: frontend/dashboard/pages/concerts/all.html:21
+#: frontend/dashboard/pages/song_detail.html:298
+#: frontend/dashboard/pages/user_detail.html:251
 msgid "الظهور"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:44
+#: frontend/dashboard/pages/concerts/all.html:40
 msgid "منتهية"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:46
+#: frontend/dashboard/pages/concerts/all.html:42
 msgid "قادمة"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:48
+#: frontend/dashboard/pages/concerts/all.html:44
 msgid "ملغاة"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:50
+#: frontend/dashboard/pages/concerts/all.html:46
 msgid "مؤجلة"
 msgstr ""
 
-#: frontend/dashboard/pages/concerts/all.html:53
-#: frontend/website/pages/concerts/detail.html:24
-#: frontend/website/pages/concerts/detail.html:63
-#: frontend/website/pages/concerts/list.html:26
+#: frontend/dashboard/pages/concerts/all.html:49
+#: frontend/website/pages/concerts/detail.html:72
+#: frontend/website/pages/concerts/list.html:38
 msgid "سيتم الإعلان لاحقاً"
 msgstr ""
 
-#: frontend/dashboard/pages/links_manage.html:41
+#: frontend/dashboard/pages/daily_guess/day_detail.html:11
+#, python-format
+msgid "نتائج يوم %(date)s"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:25
+msgid "مرات الاستماع"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:26
+msgid "ثواني الاستماع"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:27
+#: frontend/dashboard/pages/user_detail.html:71
+msgid "النقاط"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:46
+#: frontend/website/pages/daily_guess_history.html:50
+msgid "كسب"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:48
+#: frontend/website/pages/daily_guess_history.html:52
+msgid "خسر"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/day_detail.html:58
+msgid ""
+"متأكد من حذف اللعبة دي؟ اليوزر هيقدر يلعب تاني النهاردة بأغنية عشوائية جديدة."
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/days.html:3
+#: frontend/dashboard/pages/user_detail.html:140
+#: frontend/dashboard/partials/sidebar-collapse.html:42
+#: frontend/dashboard/partials/sidebar-collapse.html:227
+#: frontend/website/pages/daily_guess.html:3
+#: frontend/website/pages/daily_guess.html:281
+#: frontend/website/pages/daily_guess.html:367
+#: frontend/website/pages/daily_guess.html:567
+#: frontend/website/pages/daily_guess_history.html:3
+#: frontend/website/pages/daily_guess_history.html:32
+#: frontend/website/pages/home.html:121
+#: frontend/website/partials/header.html:80
+#: frontend/website/partials/header.html:128
+msgid "خمّن الأغنية"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/days.html:8
+msgid "خمّن الأغنية - إحصائيات يومية"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/days.html:15
+msgid "عدد اللاعبين"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/days.html:16
+msgid "كسبوا"
+msgstr ""
+
+#: frontend/dashboard/pages/daily_guess/days.html:17
+msgid "خسروا"
+msgstr ""
+
+#: frontend/dashboard/pages/links_manage.html:44
 msgid "لا توجد روابط بعد"
 msgstr ""
 
-#: frontend/dashboard/pages/links_manage.html:49
+#: frontend/dashboard/pages/links_manage.html:52
 msgid "إضافة رابط جديد"
 msgstr ""
 
-#: frontend/dashboard/pages/links_manage.html:64
+#: frontend/dashboard/pages/links_manage.html:67
 msgid "إضافة الرابط"
 msgstr ""
 
-#: frontend/dashboard/pages/media/all.html:24
+#: frontend/dashboard/pages/media/all.html:18
+#: frontend/website/pages/player/index.html:735
 msgid "المنصات"
 msgstr ""
 
-#: frontend/dashboard/pages/media/crew.html:20
+#: frontend/dashboard/pages/media/crew.html:23
 msgid "اسم الشخصية"
 msgstr ""
 
-#: frontend/dashboard/pages/media/crew.html:39
+#: frontend/dashboard/pages/media/crew.html:42
 msgid "لا يوجد طاقم عمل بعد"
 msgstr ""
 
-#: frontend/dashboard/pages/media/crew.html:47
+#: frontend/dashboard/pages/media/crew.html:50
 msgid "إضافة فنان"
 msgstr ""
 
-#: frontend/dashboard/pages/media/screenings.html:13
+#: frontend/dashboard/pages/media/screenings.html:16
 msgid "إدارة دور العرض"
 msgstr ""
 
-#: frontend/dashboard/pages/media/screenings.html:42
+#: frontend/dashboard/pages/media/screenings.html:45
 msgid "لا توجد دور عرض مضافة بعد"
 msgstr ""
 
+#: frontend/dashboard/pages/person_detail.html:128
+#: frontend/dashboard/pages/person_detail.html:149
+#: frontend/dashboard/pages/song_detail.html:172
+msgid "الأدوار"
+msgstr ""
+
+#: frontend/dashboard/pages/person_detail.html:148
+msgid "العمل"
+msgstr ""
+
 #: frontend/dashboard/pages/platforms/all.html:3
-#: frontend/dashboard/pages/platforms/all.html:9
-#: frontend/dashboard/partials/sidebar-collapse.html:155
-#: frontend/dashboard/partials/sidebar-collapse.html:224
+#: frontend/dashboard/pages/platforms/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:167
+#: frontend/dashboard/partials/sidebar-collapse.html:237
 msgid "منصات البث"
 msgstr ""
 
-#: frontend/dashboard/pages/platforms/all.html:21
+#: frontend/dashboard/pages/platforms/all.html:17
 msgid "عدد الروابط"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/credits.html:37
+#: frontend/dashboard/pages/song_detail.html:119
+#: frontend/website/pages/songs/detail.html:2464
+msgid "المشاركون"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:129
+#: frontend/dashboard/pages/songs/segments.html:182
+msgid "توقيت الكلمات"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:134
+msgid "المستمعون"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:139
+#: frontend/dashboard/pages/user_detail.html:125
+msgid "الإعجابات"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:144
+msgid "الدويتوهات"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:166
+msgid "إدارة المشاركين"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:214
+msgid "إدارة توقيت الكلمات"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:250
+#: frontend/dashboard/pages/user_detail.html:172
+#: frontend/website/pages/player/index.html:982
+#: frontend/website/pages/songs/detail.html:4088
+#: frontend/website/pages/user/public_profile.html:238
+#: frontend/website/partials/_profile_most_listened_items.html:15
+msgid "استماع كامل"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:251
+#: frontend/dashboard/pages/user_detail.html:173
+msgid "نقاط التفاعل"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:276
+#: frontend/dashboard/pages/user_detail.html:199
+msgid "تاريخ الإعجاب"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:297
+#: frontend/dashboard/pages/user_detail.html:249
+msgid "حالة المعالجة"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:312
+#: frontend/dashboard/pages/user_detail.html:266
+#: frontend/website/pages/songs/detail.html:2775
+#: frontend/website/pages/user/playlist_detail.html:11
+#: frontend/website/pages/user/playlist_detail.html:87
+#: frontend/website/pages/user/playlists.html:37
+#: frontend/website/pages/user/playlists.html:76
+msgid "عام"
+msgstr ""
+
+#: frontend/dashboard/pages/song_detail.html:313
+#: frontend/dashboard/pages/user_detail.html:267
+#: frontend/website/pages/songs/detail.html:2774
+#: frontend/website/pages/user/playlist_detail.html:13
+#: frontend/website/pages/user/playlist_detail.html:86
+#: frontend/website/pages/user/playlists.html:39
+#: frontend/website/pages/user/playlists.html:77
+msgid "خاص"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/all.html:18
+msgid "كلمات"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/credits.html:3
+#: frontend/dashboard/pages/songs/credits.html:13
+msgid "المشاركون في الأغنية"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/credits.html:40
 msgid "لا يوجد مشاركون بعد"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/credits.html:45
+#: frontend/dashboard/pages/songs/credits.html:48
 msgid "إضافة مشارك"
 msgstr ""
 
@@ -1528,107 +3063,233 @@ msgstr ""
 msgid "توقيت كلمات الأغنية"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/segments.html:11
-msgid "توقيت الكلمات"
+#: frontend/dashboard/pages/songs/segments.html:195
+msgid "تأثيرات الصوت"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/segments.html:49
+#: frontend/dashboard/pages/songs/segments.html:242
 msgid "لا توجد مقاطع بعد"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/segments.html:57
+#: frontend/dashboard/pages/songs/segments.html:325
+msgid "مشغل الصوت"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:327
+msgid "عرض الكلمات"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:351
+msgid "الانتقال"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:353
+msgid "المقطع السابق"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:357
+msgid "المقطع التالي"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:362
+#: frontend/website/pages/remix_result.html:168
+msgid "ثانية"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:362
+msgid "بيتحدث تلقائي مع التشغيل - عدّله وادوس انتقل عشان تنط لثانية تانية"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:363
+msgid "انتقل"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:376
+#: frontend/website/pages/songs/detail.html:2819
+msgid "كلمات الأغنية"
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:389
 msgid "إضافة مقطع جديد"
 msgstr ""
 
-#: frontend/dashboard/pages/songs/segments.html:59
+#: frontend/dashboard/pages/songs/segments.html:391
 msgid "وقت البداية بيتحدد تلقائياً من نهاية آخر مقطع، وممكن تعدّله."
 msgstr ""
 
-#: frontend/dashboard/pages/songs/segments.html:73
+#: frontend/dashboard/pages/songs/segments.html:440
+#: frontend/dashboard/pages/songs/segments.html:726
+#: frontend/dashboard/pages/songs/segments.html:831
 msgid "إضافة المقطع"
 msgstr ""
 
-#: frontend/dashboard/pages/studios/all.html:9
+#: frontend/dashboard/pages/songs/segments.html:689
+msgid "جاري الإضافة..."
+msgstr ""
+
+#: frontend/dashboard/pages/songs/segments.html:726
+#: frontend/dashboard/pages/songs/segments.html:810
+msgid "حفظ التعديلات"
+msgstr ""
+
+#: frontend/dashboard/pages/studios/all.html:8
 msgid "الاستوديوهات وشركات الإنتاج"
 msgstr ""
 
+#: frontend/dashboard/pages/user_detail.html:28
+#: frontend/dashboard/pages/user_detail.html:159
+#: frontend/dashboard/pages/users/all.html:51
+msgid "موقوف"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:33
+msgid "يستمع الآن:"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:41
+msgid "البروفايل العام"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:67
+msgid "نظام النقاط"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:85
+msgid "الأيام المتتالية"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:90
+msgid "أطول سلسلة"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:96
+msgid "الشارات"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:120
+msgid "الاستماع"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:135
+#: frontend/website/pages/sing-with-tamer/index.html:1487
+#: frontend/website/pages/user/duets.html:3
+#: frontend/website/pages/user/duets.html:27
+#: frontend/website/partials/header.html:77
+#: frontend/website/partials/header.html:173
+msgid "غنيت إيه مع تامر"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:145
+msgid "جلسات الدخول"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:160
+#: frontend/dashboard/pages/users/all.html:44
+msgid "غير متصل"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:161
+msgid "تاريخ الانضمام"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:162
+msgid "آخر تسجيل دخول"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:197
+msgid "العنصر"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:221
+msgid "عدد الأغاني"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:232
+#: frontend/website/pages/songs/detail.html:2349
+msgid "خاصة"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:250
+msgid "مكتمل"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:284
+msgid "الأغنية الصحيحة"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:285
+msgid "تخمين المستخدم"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:286
+msgid "النتيجة"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:287
+msgid "نقاط"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:296
+msgid "صح"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:297
+msgid "غلط"
+msgstr ""
+
+#: frontend/dashboard/pages/user_detail.html:323
+#: frontend/dashboard/pages/user_detail.html:325
+msgid "غير معروف"
+msgstr ""
+
 #: frontend/dashboard/pages/users/all.html:3
-#: frontend/dashboard/partials/sidebar-collapse.html:184
-#: frontend/dashboard/partials/sidebar-collapse.html:226
+#: frontend/dashboard/pages/users/all.html:8
+#: frontend/dashboard/partials/sidebar-collapse.html:196
+#: frontend/dashboard/partials/sidebar-collapse.html:239
 msgid "المستخدمون"
 msgstr ""
 
-#: frontend/dashboard/pages/users/all.html:9
-msgid "مستخدمو لوحة التحكم"
+#: frontend/dashboard/partials/_list_header.html:17
+msgid "إضافة جديد"
 msgstr ""
 
-#: frontend/dashboard/partials/_search_filter_bar.html:4
+#: frontend/dashboard/partials/_search_filter_bar.html:6
 msgid "بحث..."
 msgstr ""
 
-#: frontend/dashboard/partials/_search_filter_bar.html:13
+#: frontend/dashboard/partials/_search_filter_bar.html:24
 msgid "بحث"
 msgstr ""
 
-#: frontend/dashboard/partials/_search_filter_bar.html:15
+#: frontend/dashboard/partials/_search_filter_bar.html:26
 msgid "مسح"
 msgstr ""
 
 #: frontend/dashboard/partials/pagination.html:5
+#: frontend/dashboard/partials/pagination_named.html:12
 #, python-format
 msgid "عرض %(start)s–%(end)s من %(total)s"
 msgstr ""
 
-#: frontend/dashboard/partials/pagination.html:10
-#: frontend/dashboard/partials/pagination.html:13
-#: frontend/website/pages/albums/detail.html:88
-#: frontend/website/pages/albums/detail.html:118
-#: frontend/website/pages/concerts/detail.html:109
-#: frontend/website/pages/home.html:28 frontend/website/pages/home.html:60
-#: frontend/website/pages/home.html:90 frontend/website/pages/home.html:120
-#: frontend/website/pages/home.html:150 frontend/website/pages/home.html:182
-#: frontend/website/pages/home.html:215
-#: frontend/website/pages/media/detail.html:148
-#: frontend/website/pages/media/detail.html:172
-#: frontend/website/pages/people/detail.html:50
-#: frontend/website/pages/people/detail.html:79
-#: frontend/website/pages/people/detail.html:106
-#: frontend/website/pages/songs/detail.html:122
-#: frontend/website/pages/songs/detail.html:150
-#: frontend/website/pages/songs/detail.html:179
-msgid "السابق"
+#: frontend/dashboard/partials/sidebar-collapse.html:18
+#: frontend/dashboard/partials/sidebar-collapse.html:225
+#: frontend/website/base.html:35 frontend/website/pages/home.html:3
+#: frontend/website/partials/header.html:14
+#: frontend/website/partials/header.html:119
+msgid "الرئيسية"
 msgstr ""
 
-#: frontend/dashboard/partials/pagination.html:26
-#: frontend/dashboard/partials/pagination.html:29
-#: frontend/website/pages/albums/detail.html:110
-#: frontend/website/pages/albums/detail.html:138
-#: frontend/website/pages/concerts/detail.html:130
-#: frontend/website/pages/home.html:50 frontend/website/pages/home.html:80
-#: frontend/website/pages/home.html:110 frontend/website/pages/home.html:140
-#: frontend/website/pages/home.html:172 frontend/website/pages/home.html:205
-#: frontend/website/pages/home.html:231
-#: frontend/website/pages/media/detail.html:163
-#: frontend/website/pages/media/detail.html:190
-#: frontend/website/pages/people/detail.html:70
-#: frontend/website/pages/people/detail.html:97
-#: frontend/website/pages/people/detail.html:120
-#: frontend/website/pages/songs/detail.html:141
-#: frontend/website/pages/songs/detail.html:170
-#: frontend/website/pages/songs/detail.html:193
-msgid "التالي"
-msgstr ""
-
-#: frontend/dashboard/partials/sidebar-collapse.html:35
+#: frontend/dashboard/partials/sidebar-collapse.html:47
 msgid "الأرشيف الفني"
 msgstr ""
 
-#: frontend/dashboard/partials/sidebar-collapse.html:172
+#: frontend/dashboard/partials/sidebar-collapse.html:184
 msgid "الإدارة"
 msgstr ""
 
-#: frontend/dashboard/partials/sidebar-collapse.html:196
-#: frontend/dashboard/partials/sidebar-collapse.html:227
+#: frontend/dashboard/partials/sidebar-collapse.html:208
+#: frontend/dashboard/partials/sidebar-collapse.html:240
+#: frontend/dashboard/partials/topbar-second.html:150
 msgid "تسجيل الخروج"
 msgstr ""
 
@@ -1638,101 +3299,1352 @@ msgstr ""
 
 #: frontend/dashboard/widgets/circular_avatar.html:12
 #: frontend/dashboard/widgets/square_cover.html:12
+#: frontend/website/pages/user/public_profile.html:157
 msgid "حذف الصورة"
 msgstr ""
 
-#: frontend/website/pages/albums/detail.html:27
-#: frontend/website/pages/albums/detail.html:61
-#: frontend/website/pages/concerts/detail.html:32
-#: frontend/website/pages/concerts/detail.html:71
-#: frontend/website/pages/media/detail.html:37
-#: frontend/website/pages/media/detail.html:81
-#: frontend/website/pages/people/detail.html:23
-#: frontend/website/pages/songs/detail.html:40
-#: frontend/website/pages/songs/detail.html:87
-msgid "نسخ الرابط"
+#: frontend/website/base.html:39 frontend/website/base.html:49
+msgid ""
+"الأرشيف الفني الكامل لتامر حسني - الأغاني، الألبومات، الأفلام، المسلسلات، "
+"الحفلات والإعلانات في مكان واحد."
 msgstr ""
 
-#: frontend/website/pages/albums/detail.html:116
-msgid "ألبومات أخرى"
+#: frontend/website/base.html:1296
+msgid "تشغيل الصوت"
 msgstr ""
 
-#: frontend/website/pages/concerts/detail.html:83
-msgid "الموقع"
+#: frontend/website/base.html:1366 frontend/website/pages/player/index.html:733
+#: frontend/website/pages/songs/detail.html:2176
+#: frontend/website/pages/songs/detail.html:2452
+msgid "الكلمات"
 msgstr ""
 
-#: frontend/website/pages/concerts/detail.html:86
-msgid "فتح في خرائط جوجل"
+#: frontend/website/base.html:1547
+msgid "أنا هنا"
 msgstr ""
 
-#: frontend/website/pages/concerts/detail.html:107
-msgid "حفلات أخرى"
+#: frontend/website/base.html:1556
+msgid "جرّب المساعد الصوتي!"
 msgstr ""
 
-#: frontend/website/pages/home.html:14 frontend/website/partials/footer.html:5
+#: frontend/website/base.html:1561
+msgid "فعّل الميكروفون وقول"
+msgstr ""
+
+#: frontend/website/base.html:1563
+msgid "وقولنا عايز تسمع إيه"
+msgstr ""
+
+#: frontend/website/base.html:1566
+msgid "فعّل الميكروفون"
+msgstr ""
+
+#: frontend/website/base.html:1568 frontend/website/base.html:2322
+#: frontend/website/pages/player/index.html:770
+#: frontend/website/pages/songs/detail.html:2754
+#: frontend/website/pages/songs/detail.html:2791
+msgid "إغلاق"
+msgstr ""
+
+#: frontend/website/base.html:2146
+#: frontend/website/pages/songs/detail.html:4113
+msgid "سجل دخولك عشان تقدر تعمل إعجاب"
+msgstr ""
+
+#: frontend/website/base.html:2168
+msgid "تمت الإضافة إلى المفضلة"
+msgstr ""
+
+#: frontend/website/base.html:2168
+msgid "تمت الإزالة من المفضلة"
+msgstr ""
+
+#: frontend/website/base.html:2175
+#: frontend/website/pages/songs/detail.html:4294
+#: frontend/website/pages/songs/detail.html:4300
+#: frontend/website/pages/songs/detail.html:4316
+#: frontend/website/pages/songs/detail.html:4322
+#: frontend/website/pages/user/playlist_detail.html:302
+#: frontend/website/pages/user/playlist_detail.html:307
+#: frontend/website/pages/user/playlist_detail.html:332
+#: frontend/website/pages/user/playlist_detail.html:337
+#: frontend/website/pages/user/public_profile.html:361
+msgid "حدث خطأ"
+msgstr ""
+
+#: frontend/website/base.html:2332 frontend/website/base.html:2392
+#: frontend/website/pages/player/index.html:999
+#: frontend/website/pages/songs/detail.html:4105
+msgid "تسجيل الدخول"
+msgstr ""
+
+#: frontend/website/base.html:2333 frontend/website/base.html:2642
+msgid "سجل دخولك عشان تقدر تسمع وتحفظ المفضلة عندك"
+msgstr ""
+
+#: frontend/website/base.html:2337 frontend/website/base.html:2366
+msgid "المتابعة بجوجل"
+msgstr ""
+
+#: frontend/website/base.html:2340 frontend/website/base.html:2369
+msgid "أو"
+msgstr ""
+
+#: frontend/website/base.html:2348 frontend/website/base.html:2385
+msgid "كلمة السر"
+msgstr ""
+
+#: frontend/website/base.html:2352
+msgid "دخول"
+msgstr ""
+
+#: frontend/website/base.html:2355
+msgid "نسيت كلمة السر؟"
+msgstr ""
+
+#: frontend/website/base.html:2356
+msgid "مش عندي حساب"
+msgstr ""
+
+#: frontend/website/base.html:2356 frontend/website/base.html:2361
+msgid "إنشاء حساب"
+msgstr ""
+
+#: frontend/website/base.html:2362
+msgid "انضم لأرشيف تامر حسني"
+msgstr ""
+
+#: frontend/website/base.html:2389
+msgid "إنشاء الحساب"
+msgstr ""
+
+#: frontend/website/base.html:2392
+msgid "عندي حساب بالفعل"
+msgstr ""
+
+#: frontend/website/base.html:2397
+msgid "استعادة كلمة السر"
+msgstr ""
+
+#: frontend/website/base.html:2400
+msgid "اكتب بريدك الإلكتروني وهنبعتلك كود"
+msgstr ""
+
+#: frontend/website/base.html:2407
+msgid "إرسال الكود"
+msgstr ""
+
+#: frontend/website/base.html:2412
+msgid "اكتب الكود اللي وصلك على بريدك"
+msgstr ""
+
+#: frontend/website/base.html:2419
+msgid "تأكيد"
+msgstr ""
+
+#: frontend/website/base.html:2424
+msgid "اكتب كلمة السر الجديدة"
+msgstr ""
+
+#: frontend/website/base.html:2427
+msgid "كلمة السر الجديدة"
+msgstr ""
+
+#: frontend/website/base.html:2431
+msgid "حفظ كلمة السر"
+msgstr ""
+
+#: frontend/website/base.html:2435
+msgid "رجوع لتسجيل الدخول"
+msgstr ""
+
+#: frontend/website/base.html:2718 frontend/website/base.html:2756
+#: frontend/website/base.html:2773 frontend/website/base.html:2791
+#: frontend/website/base.html:2806
+msgid "حدث خطأ، حاول تاني"
+msgstr ""
+
+#: frontend/website/base.html:2839
+msgid "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني"
+msgstr ""
+
+#: frontend/website/base.html:3130
+msgid "أنا هنا... قول أمرك"
+msgstr ""
+
+#: frontend/website/base.html:3147
+msgid "وقفت الأغنية"
+msgstr ""
+
+#: frontend/website/base.html:3155
+msgid "تمام، كملنا"
+msgstr ""
+
+#: frontend/website/base.html:3166
+msgid "مفيش أغنية شغالة عشان أعمللها لايك"
+msgstr ""
+
+#: frontend/website/base.html:3170
+msgid "تمام ❤️"
+msgstr ""
+
+#: frontend/website/base.html:3181 frontend/website/base.html:3200
+msgid "مفيش أغنية شغالة دلوقتي"
+msgstr ""
+
+#: frontend/website/base.html:3184
+msgid "تمام، بافتحلك صفحتها"
+msgstr ""
+
+#: frontend/website/base.html:3205
+msgid "تمام، جريت شوية ⏩"
+msgstr ""
+
+#: frontend/website/base.html:3206
+msgid "تمام، رجعت شوية ⏪"
+msgstr ""
+
+#: frontend/website/base.html:3213
+msgid "وأنا كمان بحبك ❤️"
+msgstr ""
+
+#: frontend/website/base.html:3214
+msgid "تامر حسني بيحبك برضو يا قمر ❤️"
+msgstr ""
+
+#: frontend/website/base.html:3215
+msgid "ربنا يخليك ليا يا حبيبي ❤️"
+msgstr ""
+
+#: frontend/website/base.html:3251
+msgid "بدور على الأغنية..."
+msgstr ""
+
+#: frontend/website/base.html:3257
+msgid "أووبس، مش لاقي أغنية بالاسم ده"
+msgstr ""
+
+#: frontend/website/base.html:3264 frontend/website/base.html:3284
+msgid "حصل خطأ، حاول تاني"
+msgstr ""
+
+#: frontend/website/base.html:3268
+msgid "بدور على أغاني تناسب مزاجك..."
+msgstr ""
+
+#: frontend/website/base.html:3274
+msgid "أووبس، مش لاقي أغاني للمزاج ده"
+msgstr ""
+
+#: frontend/website/base.html:3319
+msgid "تمام"
+msgstr ""
+
+#: frontend/website/base.html:3340
+msgid "بفكر..."
+msgstr ""
+
+#: frontend/website/base.html:3357 frontend/website/base.html:3364
+msgid "أووبس، مش لاقيها! جرب تاني"
+msgstr ""
+
+#: frontend/website/base.html:3531
+msgid ""
+"الميكروفون متبلوك من إعدادات المتصفح - افتح إعدادات الموقع 🔒 جنب شريط "
+"العنوان وفعّله يدوي، وبعدين جرب تاني"
+msgstr ""
+
+#: frontend/website/base.html:3748
+msgid "الإشعارات مفعّلة"
+msgstr ""
+
+#: frontend/website/base.html:3750
+msgid "الإشعارات متمنوعة من إعدادات المتصفح"
+msgstr ""
+
+#: frontend/website/base.html:3751 frontend/website/partials/header.html:29
+#: frontend/website/partials/header.html:99
+msgid "فعّل الإشعارات"
+msgstr ""
+
+#: frontend/website/base.html:3774
+msgid "تم تفعيل الإشعارات"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:6
+#: frontend/website/pages/albums/detail.html:11
+#, python-format
+msgid "ألبوم %(title)s لتامر حسني"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:6
+msgid "تراك ليست، أغاني الألبوم والمزيد على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:10
+#: frontend/website/pages/albums/list.html:8 frontend/website/pages/bio.html:4
+#: frontend/website/pages/bio.html:11 frontend/website/pages/bio.html:166
+#: frontend/website/pages/bio.html:174
+#: frontend/website/pages/concerts/detail.html:10
+#: frontend/website/pages/concerts/list.html:8
+#: frontend/website/pages/home.html:107
+#: frontend/website/pages/media/detail.html:10
+#: frontend/website/pages/media/list.html:8
+#: frontend/website/pages/people/detail.html:10
+#: frontend/website/pages/people/list.html:8
+#: frontend/website/pages/songs/detail.html:11
+#: frontend/website/pages/songs/list.html:8
+#: frontend/website/partials/footer.html:7
 #: frontend/website/partials/header.html:11
 msgid "تامر حسني"
 msgstr ""
 
-#: frontend/website/pages/home.html:15 frontend/website/partials/footer.html:6
+#: frontend/website/pages/albums/detail.html:64
+#: frontend/website/pages/albums/detail.html:107
+msgid "ألبوم"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:73
+#: frontend/website/pages/albums/detail.html:121
+#: frontend/website/pages/concerts/detail.html:80
+#: frontend/website/pages/concerts/detail.html:123
+#: frontend/website/pages/media/detail.html:106
+#: frontend/website/pages/media/detail.html:155
+#: frontend/website/pages/people/detail.html:32
+#: frontend/website/pages/songs/detail.html:2145
+#: frontend/website/pages/songs/detail.html:2265
+#: frontend/website/pages/user/recap.html:263
+msgid "نسخ الرابط"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:118
+msgid "تشغيل الألبوم"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:151
+#: frontend/website/pages/player/index.html:704
+#: frontend/website/pages/songs/detail.html:2140
+#: frontend/website/pages/user/remixes.html:90
+msgid "تشغيل"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:181
+msgid "ألبومات أخرى"
+msgstr ""
+
+#: frontend/website/pages/albums/detail.html:183
+#: frontend/website/pages/concerts/detail.html:178
+#: frontend/website/pages/home.html:142 frontend/website/pages/home.html:174
+#: frontend/website/pages/home.html:206 frontend/website/pages/home.html:238
+#: frontend/website/pages/home.html:270 frontend/website/pages/home.html:333
+#: frontend/website/pages/home.html:372
+#: frontend/website/pages/people/detail.html:62
+#: frontend/website/pages/people/detail.html:94
+#: frontend/website/pages/people/detail.html:126
+#: frontend/website/pages/songs/detail.html:2491
+#: frontend/website/pages/songs/detail.html:2527
+#: frontend/website/pages/songs/detail.html:2657
+msgid "عرض الكل"
+msgstr ""
+
+#: frontend/website/pages/albums/list.html:6
+#: frontend/website/pages/albums/list.html:9
+msgid "جميع ألبومات تامر حسني الغنائية على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/bio.html:7 frontend/website/pages/bio.html:12
+msgid ""
+"قصة تامر حسني الفنية - من أول لحن كتبه وهو طفل إلى واحد من أكثر نجوم الوطن "
+"العربي تأثيراً في الغناء والتلحين والتمثيل."
+msgstr ""
+
+#: frontend/website/pages/bio.html:173
+msgid "قصة نجم"
+msgstr ""
+
+#: frontend/website/pages/bio.html:175
+msgid ""
+"من أول لحن كتبه وهو طفل، لأصبح واحداً من أكثر نجوم الوطن العربي تأثيراً في "
+"الغناء والتلحين والتمثيل."
+msgstr ""
+
+#: frontend/website/pages/bio.html:180
+msgid "شاهد كل الأعمال"
+msgstr ""
+
+#: frontend/website/pages/bio.html:184
+msgid "استمع للأغاني"
+msgstr ""
+
+#: frontend/website/pages/bio.html:202
+msgid "المسيرة"
+msgstr ""
+
+#: frontend/website/pages/bio.html:202
+msgid "عبر الزمن"
+msgstr ""
+
+#: frontend/website/pages/bio.html:203
+msgid ""
+"رحلة فنية بدأت من المنصورة ووصلت إلى قلوب الملايين حول العالم العربي وخارجه."
+msgstr ""
+
+#: frontend/website/pages/bio.html:225
+msgid "الغناء"
+msgstr ""
+
+#: frontend/website/pages/bio.html:226
+msgid "التلحين"
+msgstr ""
+
+#: frontend/website/pages/bio.html:227
+msgid "التمثيل"
+msgstr ""
+
+#: frontend/website/pages/bio.html:228
+msgid "الإنتاج"
+msgstr ""
+
+#: frontend/website/pages/bio.html:234 frontend/website/partials/footer.html:22
+msgid "اكتشف"
+msgstr ""
+
+#: frontend/website/pages/bio.html:234
+msgid "الأرشيف الكامل"
+msgstr ""
+
+#: frontend/website/pages/bio.html:235
+msgid "كل الأغاني، الألبومات، الأفلام والحفلات في مكان واحد."
+msgstr ""
+
+#: frontend/website/pages/concerts/detail.html:6
+#, python-format
+msgid "%(title)s - تفاصيل الحفلة، الموعد ومواقع الحجز على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/concerts/detail.html:138
+msgid "قريباً"
+msgstr ""
+
+#: frontend/website/pages/concerts/detail.html:161
+msgid "الموقع"
+msgstr ""
+
+#: frontend/website/pages/concerts/detail.html:164
+msgid "فتح في خرائط جوجل"
+msgstr ""
+
+#: frontend/website/pages/concerts/detail.html:176
+msgid "حفلات أخرى"
+msgstr ""
+
+#: frontend/website/pages/concerts/list.html:6
+#: frontend/website/pages/concerts/list.html:9
+msgid ""
+"جميع حفلات تامر حسني - القادمة والسابقة، المواعيد والمواقع على أرشيف تامر "
+"حسني."
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:6
+msgid ""
+"كل يوم أغنية جديدة لتامر حسني - اسمع جزء صغير واختار الاسم الصح من بين 3 "
+"اختيارات."
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:282
+msgid ""
+"اسمع جزء من الأغنية واختار الاسم الصح من بين 3 اختيارات - فرصة واحدة بس!"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:287
+msgid "مفيش أغاني متاحة للتحدي دلوقتي"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:354
+#: frontend/website/pages/daily_guess.html:566
+msgid "برافو! 🎉"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:361
+msgid "المرة الجاية! 😅"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:362
+#, python-format
+msgid "الأغنية كانت: %(title)s"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:373
+msgid "لعبة جديدة كل يوم - ارجع بكرة تلعب تاني!"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:380
+msgid "احفظ الصورة"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:383
+msgid "شارك النتيجة"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:388
+msgid "اسمع الأغنية كاملة"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:512
+msgid "سجل دخولك عشان تقدر تكمل اللعبة"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:528
+msgid "سجل دخولك عشان تقدر تكمل اللعبة وتتحفظلك النتيجة"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:539
+#, python-format
+msgid "خمّنت أغنية \"%(title)s\" في خمّن الأغنية! 🎉"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:546
+msgid "اتنسخت النتيجة!"
+msgstr ""
+
+#: frontend/website/pages/daily_guess.html:572
+#: frontend/website/pages/user/recap.html:334
+msgid "جاري التجهيز..."
+msgstr ""
+
+#: frontend/website/pages/daily_guess_history.html:57
+msgid "لسه ما لعبتش خمّن الأغنية"
+msgstr ""
+
+#: frontend/website/pages/daily_guess_history.html:59
+#: frontend/website/pages/home.html:124
+msgid "العب دلوقتي"
+msgstr ""
+
+#: frontend/website/pages/home.html:108
+#: frontend/website/partials/footer.html:10
 msgid ""
 "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات "
 "والحفلات."
 msgstr ""
 
-#: frontend/website/pages/home.html:24
+#: frontend/website/pages/home.html:122
+msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات"
+msgstr ""
+
+#: frontend/website/pages/home.html:131
+msgid "اكسب نقط من كل نشاطك في الموقع وشوف ترتيبك بين كل الجمهور"
+msgstr ""
+
+#: frontend/website/pages/home.html:133
+msgid "شوف ترتيبك"
+msgstr ""
+
+#: frontend/website/pages/home.html:141
 msgid "أحدث الأغاني"
 msgstr ""
 
-#: frontend/website/pages/home.html:25 frontend/website/pages/home.html:57
-#: frontend/website/pages/home.html:87 frontend/website/pages/home.html:117
-#: frontend/website/pages/home.html:147 frontend/website/pages/home.html:179
-#: frontend/website/pages/home.html:212
-msgid "عرض الكل"
-msgstr ""
-
-#: frontend/website/pages/home.html:56
+#: frontend/website/pages/home.html:173
 msgid "أحدث الأفلام"
 msgstr ""
 
-#: frontend/website/pages/home.html:86
+#: frontend/website/pages/home.html:237
 msgid "أحدث المسلسلات"
 msgstr ""
 
-#: frontend/website/pages/media/detail.html:93
+#: frontend/website/pages/home.html:303 frontend/website/pages/home.html:320
+#: frontend/website/pages/sing-with-tamer/index.html:985
+#: frontend/website/pages/songs/detail.html:2187
+msgid "غني مع تامر"
+msgstr ""
+
+#: frontend/website/pages/leaderboard.html:51
+msgid "نقط من كل نشاط في الموقع - خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
+msgstr ""
+
+#: frontend/website/pages/leaderboard.html:63
+msgid "ترتيبك"
+msgstr ""
+
+#: frontend/website/pages/leaderboard.html:65
+#: frontend/website/pages/user/public_profile.html:191
+#: frontend/website/pages/user/recap.html:182
+#: frontend/website/pages/user/recap.html:328
+msgid "نقطة"
+msgstr ""
+
+#: frontend/website/pages/leaderboard.html:86
+msgid "لسه مفيش نقط اتسجلت"
+msgstr ""
+
+#: frontend/website/pages/media/detail.html:6
+#, python-format
+msgid "%(title)s - تفاصيل، فريق العمل ودور العرض على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/media/detail.html:168
 msgid "شاهد الآن"
 msgstr ""
 
-#: frontend/website/pages/media/detail.html:121
+#: frontend/website/pages/media/detail.html:195
+#: frontend/website/pages/media/detail.html:229
 msgid "ج.م"
 msgstr ""
 
-#: frontend/website/pages/media/detail.html:170
+#: frontend/website/pages/media/detail.html:200
+#: frontend/website/pages/user/public_profile.html:218
+#: frontend/website/pages/user/public_profile.html:279
+msgid "عرض المزيد"
+msgstr ""
+
+#: frontend/website/pages/media/detail.html:289
 msgid "أعمال أخرى مشابهة"
 msgstr ""
 
-#: frontend/website/pages/people/detail.html:104
+#: frontend/website/pages/media/list.html:6
+#: frontend/website/pages/media/list.html:9
+#, python-format
+msgid "%(list_title)s تامر حسني - على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/people/detail.html:6
+#, python-format
+msgid "%(name)s - أعمال، أغاني وتفاصيل على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/people/detail.html:124
 msgid "فنانون آخرون"
 msgstr ""
 
-#: frontend/website/pages/songs/detail.html:99
+#: frontend/website/pages/people/list.html:6
+#: frontend/website/pages/people/list.html:9
+msgid "كل الفنانين والعاملين في أعمال تامر حسني الفنية على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/player/index.html:4
+#: frontend/website/partials/footer.html:26
+msgid "المشغل"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:7
+msgid "استمع لأغاني تامر حسني - مشغل الموسيقى الكامل على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/player/index.html:732
+msgid "أغاني أخرى"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:734
+msgid "فريق العمل"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:741
+msgid "لا توجد أغاني أخرى"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:747
+#: frontend/website/pages/player/index.html:1409
+#: frontend/website/pages/songs/detail.html:2946
+msgid "لا توجد كلمات متاحة"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:753
+msgid "لا توجد معلومات عن فريق العمل"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:759
+msgid "لا توجد روابط منصات متاحة"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:769
+#: frontend/website/pages/songs/detail.html:2790
+msgid "مباشر"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:779
+#: frontend/website/pages/songs/detail.html:2803
+msgid "مرتبين حسب الأكثر تفاعلاً - استماع كامل متكرر مؤخراً وإعجاب"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:965
+#: frontend/website/pages/songs/detail.html:4071
+msgid "محدش بيسمعها دلوقتي"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:975
+#: frontend/website/pages/songs/detail.html:4081
+msgid "بيسمعها دلوقتي"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:998
+#: frontend/website/pages/player/index.html:999
+#: frontend/website/pages/songs/detail.html:4104
+#: frontend/website/pages/songs/detail.html:4105
+msgid "سجل دخولك عشان يظهر اسمك وصورتك وترتيبك في القايمة"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:1423
+msgid "موسيقى"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:1427
+#: frontend/website/pages/songs/detail.html:2966
+msgid "صمت"
+msgstr ""
+
+#: frontend/website/pages/player/index.html:1460
+msgid "حدث خطأ في تحميل الكلمات"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:3
+msgid "نتيجة الريمكس"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:88
+msgid "جاري إنشاء الريمكس..."
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:89
+msgid ""
+"العملية بتاخد شوية وقت (فصل الصوت والمكس) - الصفحة هتتحدث لوحدها لما يخلص"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:96
+msgid "حصل خطأ أثناء إنشاء الريمكس"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:97
+msgid "حاول تاني بعد شوية."
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:104
+msgid "تم إنشاء الريمكس بنجاح!"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:105
+msgid "يمكنك الآن الاستماع إلى الريمكس وتحميله"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:113
+msgid "الأغاني المستخدمة"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:127
+#: frontend/website/pages/songs/detail.html:2713
+msgid "الخلفية الموسيقية"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:147
+#: frontend/website/pages/songs/detail.html:2723
+msgid "الصوت"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:157
+msgid "الريمكس"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:169
+msgid "الحجم"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:174
+#: frontend/website/pages/user/remixes.html:93
+msgid "تحميل"
+msgstr ""
+
+#: frontend/website/pages/remix_result.html:202
+msgid "العودة للأغنية"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:946
+msgid "سجلت أغنية"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:946
+msgid "قبل كده"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:947
+msgid "دي التسجيلة اللي عملتها"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:953
+msgid "افتح صفحة الدويتو"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:955
+#: frontend/website/pages/sing-with-tamer/index.html:968
+msgid "رجوع لصفحة الأغنية"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:963
+msgid "استخدمت الميزة دي النهاردة"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:965
+#, python-format
+msgid "هتبقى متاحة تاني بعد %(hours)s ساعة"
+msgid_plural "هتبقى متاحة تاني بعد %(hours)s ساعة"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:989
+msgid "غني مع تامر 🎤"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:993
+msgid "اسمع الجملة بتوقيتها الصحيح، وبعدها سجل صوتك عليها."
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1090
+msgid "اختر طريقة الغناء"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1094
+msgid "مين يبدأ أولاً؟"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1110
+msgid "تامر يبدأ"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1114
+msgid "تامر أولاً — أنت بعده"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1130
+msgid "أنت تبدأ"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1134
+msgid "أنت أولاً — تامر بعدك"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1157
+msgid "ابدأ"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1278
+msgid "اسمع الجزء ده"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1296
+msgid "متصفحك لا يدعم تشغيل الصوت."
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1478
+msgid "جاري إنشاء الأغنية..."
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1482
+msgid "نعمل على دمج صوتك مع الموسيقى"
+msgstr ""
+
+#: frontend/website/pages/sing-with-tamer/index.html:1486
+msgid ""
+"تقدر تخرج من الصفحة دي عادي، العملية هتفضل شغالة في الخلفية - وأول ما "
+"الأغنية تخلص هتلاقيها في"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:7
+#: frontend/website/pages/songs/detail.html:12
+#, python-format
+msgid "استمع لأغنية %(title)s لتامر حسني"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:7
+msgid "كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2112
+msgid "المزيد"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2118
+#: frontend/website/pages/songs/detail.html:2254
+msgid "أغنية من ألبوم"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2144
+#: frontend/website/pages/songs/detail.html:2264
+msgid "مشاركة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2166
+#: frontend/website/pages/user/duets.html:68
+#: frontend/website/pages/user/duets.html:103
+msgid "خليها خاصة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2168
+#: frontend/website/pages/user/duets.html:68
+#: frontend/website/pages/user/duets.html:104
+msgid "خليها عامة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2182
+msgid "ريمكس"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2218
+msgid "وضع السيارة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2243
+msgid "الأغنية الأصلية"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2258
+#, python-format
+msgid "دويتو مع %(name)s"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2385
 msgid "استمع الآن"
 msgstr ""
 
-#: frontend/website/pages/songs/detail.html:113
-msgid "الكلمات"
+#: frontend/website/pages/songs/detail.html:2406
+msgid "تحليل الصوت"
 msgstr ""
 
-#: frontend/website/pages/songs/detail.html:120
+#: frontend/website/pages/songs/detail.html:2419
+msgid "المفتاح"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2426
+msgid "المزاج"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2433
+msgid "الطاقة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2440
+msgid "قابلية الرقص"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2490
 msgid "أغاني ألبوم"
 msgstr ""
 
-#: frontend/website/pages/songs/detail.html:148
+#: frontend/website/pages/songs/detail.html:2526
 msgid "أغاني أخرى قد تعجبك"
 msgstr ""
 
-#: frontend/website/pages/songs/detail.html:177
-msgid "المشاركون"
+#: frontend/website/pages/songs/detail.html:2559
+#, python-format
+msgid "مين غنى %(title)s مع تامر"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2592
+#, python-format
+msgid "باقي أغاني %(name)s مع تامر"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2621
+msgid "ناس تانية غنت مع تامر"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2656
+msgid "استكشف المزيد"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2698
+msgid "عمل ريمكس"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2722
+#: frontend/website/pages/songs/detail.html:3626
+#: frontend/website/pages/songs/detail.html:3645
+msgid "اختر الصوت"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2731
+msgid "ابحث عن أغنية للصوت..."
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2735
+#: frontend/website/pages/songs/detail.html:3655
+msgid "ابحث عن أغنية لاستخدام صوتها"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2742
+#: frontend/website/pages/songs/detail.html:3694
+msgid "إنشاء الريمكس"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2753
+msgid "إضافة إلى قائمة التشغيل"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2760
+msgid "ابحث عن قائمة التشغيل"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2763
+#: frontend/website/pages/user/playlists.html:10
+msgid "إنشاء قائمة جديدة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2768
+msgid "رجوع للبحث"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2771
+msgid "وصف القائمة (اختياري)"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2779
+msgid "إنشاء وإضافة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2808
+msgid "جارِ التحميل..."
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:2962
+msgid " موسيقى "
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3003
+msgid "حدث خطأ أثناء تحميل الكلمات"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3534
+msgid "ابحث عن أغنية لعمل ريمكس"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3551
+msgid "حدث خطأ أثناء البحث"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3573
+msgid "لم يتم العثور على نتائج"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3664
+#: frontend/website/pages/user/duets.html:41
+msgid "جاري الإنشاء..."
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:3688
+#: frontend/website/pages/songs/detail.html:3692
+msgid "حدث خطأ أثناء إنشاء الريمكس"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4205
+msgid "حدث خطأ أثناء تحميل القوائم"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4217
+msgid "لا توجد قوائم تشغيل"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4235
+msgid "موجودة بالفعل"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4277
+msgid "يرجى إدخال اسم القائمة"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4296
+msgid "تم إنشاء القائمة وإضافة الأغنية بنجاح"
+msgstr ""
+
+#: frontend/website/pages/songs/detail.html:4318
+msgid "تمت إضافة الأغنية للقائمة بنجاح"
+msgstr ""
+
+#: frontend/website/pages/songs/list.html:6
+#: frontend/website/pages/songs/list.html:9
+msgid "جميع أغاني تامر حسني - استمع لأحدث وأشهر الأغاني على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/user/duets.html:45
+#: frontend/website/pages/user/duets.html:74
+msgid "غناءك"
+msgstr ""
+
+#: frontend/website/pages/user/duets.html:83
+msgid "لسه معملتش أي دويتو مع تامر"
+msgstr ""
+
+#: frontend/website/pages/user/favorites.html:88
+msgid "لم تقم بالإعجاب بأي محتوى بعد"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:21
+msgid "العودة للقوائم"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:46
+msgid "حذف من القائمة"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:60
+msgid "هذه القائمة فارغة"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:69
+msgid "تعديل القائمة"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:84
+#: frontend/website/pages/user/playlists.html:74
+msgid "الوضع"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:91
+msgid "حفظ التغييرات"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:299
+msgid "تم تحديث القائمة بنجاح"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:312
+msgid "هل أنت متأكد من حذف هذه الأغنية من القائمة؟"
+msgstr ""
+
+#: frontend/website/pages/user/playlist_detail.html:329
+msgid "تم حذف الأغنية من القائمة"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:48
+msgid "لم تقم بإنشاء أي قائمة تشغيل بعد"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:57
+msgid "إنشاء قائمة تشغيل جديدة"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:67
+msgid "أدخل اسم القائمة"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:71
+msgid "أدخل وصف القائمة (اختياري)"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:81
+msgid "إنشاء"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:320
+msgid "تم إنشاء القائمة بنجاح"
+msgstr ""
+
+#: frontend/website/pages/user/playlists.html:323
+#: frontend/website/pages/user/playlists.html:328
+msgid "حدث خطأ أثناء إنشاء القائمة"
+msgstr ""
+
+#: frontend/website/pages/user/profile_favorites.html:3
+#, python-format
+msgid "الأغاني المفضلة عند %(name)s"
+msgstr ""
+
+#: frontend/website/pages/user/profile_favorites.html:37
+#: frontend/website/pages/user/profile_most_listened.html:37
+msgid "العودة للبروفايل"
+msgstr ""
+
+#: frontend/website/pages/user/profile_favorites.html:41
+#: frontend/website/pages/user/public_profile.html:276
+msgid "الأغاني المفضلة"
+msgstr ""
+
+#: frontend/website/pages/user/profile_favorites.html:50
+msgid "مفيش أغاني مفضلة لسه"
+msgstr ""
+
+#: frontend/website/pages/user/profile_favorites.html:55
+#: frontend/website/pages/user/profile_most_listened.html:55
+msgid "جاري تحميل المزيد..."
+msgstr ""
+
+#: frontend/website/pages/user/profile_most_listened.html:3
+#, python-format
+msgid "الأكثر استماعاً عند %(name)s"
+msgstr ""
+
+#: frontend/website/pages/user/profile_most_listened.html:41
+msgid "الأكثر استماعاً"
+msgstr ""
+
+#: frontend/website/pages/user/profile_most_listened.html:50
+msgid "مفيش نشاط استماع يتعرض هنا لسه"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:6
+#, python-format
+msgid "الملف الشخصي لـ %(name)s على أرشيف تامر حسني."
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:144
+msgid "ترتيبك بيتحسن"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:144
+msgid "ترتيبك نزل شوية"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:154
+msgid "تغيير الصورة"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:168
+msgid "تعديل الاسم"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:179
+#, python-format
+msgid "عضو منذ %(date)s"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:182
+msgid "الملخص"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:199
+msgid "يوم متتالي"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:215
+msgid "الأكثر استماعاً لها"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:250
+msgid "غنى مع تامر"
+msgstr ""
+
+#: frontend/website/pages/user/public_profile.html:309
+msgid "مفيش نشاط عام يتعرض هنا لسه"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:3
+#: frontend/website/partials/header.html:62
+#: frontend/website/partials/header.html:158
+msgid "ملخصي"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:175
+#, python-format
+msgid "عضو من سنة %(date)s"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:179
+#, python-format
+msgid "الترتيب #%(rank)s"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:189
+#, python-format
+msgid "ده ملخص %(name)s."
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:190
+msgid "شوف ملخصك انت"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:197
+msgid "لسه معملتش نشاط كفاية عشان نطلعلك ملخص - استمع لكام أغنية وارجع تاني!"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:211
+#: frontend/website/pages/user/recap.html:318
+msgid "الأغنية الأكتر استماعًا عندك"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:222
+msgid "إجمالي مرات التشغيل"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:227
+msgid "أغاني سمعتها لآخرها"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:232
+msgid "إعجابات"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:237
+msgid "دويتوهات مع تامر"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:252
+#, python-format
+msgid "%(counter)s تشغيلة"
+msgid_plural "%(counter)s تشغيلة"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
+
+#: frontend/website/pages/user/recap.html:260
+msgid "احفظ ملخصك كصورة"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:265
+#: frontend/website/pages/user/recap.html:339
+msgid "شوف ملخصي على أرشيف تامر حسني"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:268
+msgid "شارك على واتساب"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:290
+msgid "اتنسخ!"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:317
+msgid "عضو من سنة"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:320
+msgid "تشغيلة"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:321
+msgid "سمعها لآخرها"
+msgstr ""
+
+#: frontend/website/pages/user/recap.html:323
+msgid "دويتو مع تامر"
+msgstr ""
+
+#: frontend/website/pages/user/recently_played.html:3
+#: frontend/website/pages/user/recently_played.html:7
+#: frontend/website/partials/header.html:68
+#: frontend/website/partials/header.html:164
+msgid "استمعت مؤخراً"
+msgstr ""
+
+#: frontend/website/pages/user/recently_played.html:36
+msgid "لم تستمع إلى أي أغاني بعد"
+msgstr ""
+
+#: frontend/website/pages/user/remixes.html:3
+#: frontend/website/pages/user/remixes.html:45
+#: frontend/website/partials/header.html:74
+#: frontend/website/partials/header.html:170
+msgid "الريمكسات"
+msgstr ""
+
+#: frontend/website/pages/user/remixes.html:48
+msgid "ابحث في الريمكسات..."
+msgstr ""
+
+#: frontend/website/pages/user/remixes.html:135
+msgid "لم تقم بإنشاء أي ريمكس بعد"
 msgstr ""
 
 #: frontend/website/partials/ad_banner.html:7
@@ -1740,11 +4652,61 @@ msgstr ""
 msgid "إعلان"
 msgstr ""
 
-#: frontend/website/partials/header.html:19
-#: frontend/website/partials/header.html:37
+#: frontend/website/partials/footer.html:14
+msgid "المحتوى"
+msgstr ""
+
+#: frontend/website/partials/footer.html:24
+#: frontend/website/partials/header.html:20
+#: frontend/website/partials/header.html:125
 msgid "الإعلانات"
 msgstr ""
 
-#: frontend/website/partials/header.html:26
+#: frontend/website/partials/footer.html:32
+msgid "جميع الحقوق محفوظة."
+msgstr ""
+
+#: frontend/website/partials/footer.html:36
+msgid "تطوير"
+msgstr ""
+
+#: frontend/website/partials/footer.html:47
+msgid ""
+"هذا الموقع مجهود فردي غير رسمي من أحد المعجبين، وليس تابعاً لتامر حسني أو تحت "
+"مسؤوليته أو إشرافه."
+msgstr ""
+
+#: frontend/website/partials/footer.html:49
+msgid "ونتمنى أن يكون يوماً ما الموقع الرسمي وتحت إشرافه 😄"
+msgstr ""
+
+#: frontend/website/partials/header.html:15
+#: frontend/website/partials/header.html:120
+msgid "عن تامر"
+msgstr ""
+
+#: frontend/website/partials/header.html:34
+#: frontend/website/partials/header.html:103
+msgid "المساعد الصوتي - قول TH"
+msgstr ""
+
+#: frontend/website/partials/header.html:87
+#: frontend/website/partials/header.html:181
+msgid "تسجيل خروج"
+msgstr ""
+
+#: frontend/website/partials/header.html:93
+msgid "تسجيل دخول"
+msgstr ""
+
+#: frontend/website/partials/header.html:106
 msgid "القائمة"
+msgstr ""
+
+#: frontend/website/partials/header.html:115
+msgid "التصفح"
+msgstr ""
+
+#: frontend/website/partials/header.html:188
+msgid "تسجيل دخول / إنشاء حساب"
 msgstr ""
