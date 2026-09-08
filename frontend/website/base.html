@@ -2949,6 +2949,12 @@
     // a command spoken in English still has a real chance of matching.
     var NEXT_RE = /اللي بعدها|اللي بعديها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر\s*(?:ال)?(?:أغنية|اغنية)|غير\s*(?:ال)?(?:أغنية|اغنية)|\bnext\b|\bskip\b/i;
     var PREV_RE = /اللي قبلها|اللي قبليها|اللي قبله|الاغنية السابقة|الأغنية السابقة|\bprevious\b|\bgo back\b|\blast song\b/i;
+    // Seeking *within* the current song - distinct from NEXT_RE/PREV_RE
+    // (whole different track) and checked before them wouldn't matter
+    // since the wording doesn't overlap, but kept next to them since
+    // it's the same "move through playback" family of commands.
+    var SEEK_FORWARD_RE = /جري\s*شوي[ةه]|قدم\s*شوي[ةه]|فوت\s*شوي[ةه]|روح\s*قدام\s*شوي[ةه]|\bforward\b|\bskip\s*ahead\b/i;
+    var SEEK_BACKWARD_RE = /رجعلي\s*شوي[ةه]|ارجع\s*شوي[ةه]|رجع\s*شوي[ةه]|روح\s*ورا\s*شوي[ةه]|\brewind\b/i;
     var STOP_RE = /وقف|أوقف|ايقاف|إيقاف|استوقف|باز|اسكت|بس كده|\bstop\b|\bpause\b/i;
     // "شغل الأغنية"/"شغل الأغنية تاني"/"شغل اللي كان شغال"/"شغل اللي
     // كنت سامعه" all mean "resume what's already loaded", not "search
@@ -2965,7 +2971,7 @@
     // Easter egg, not a real playback command - "بحبك يا تيمو/تامر/
     // تيموري" or "I love you Tamer/Timo/Timouri" (or "بموت فيك"/"بعشقك"/
     // "عاشقك") said together with the nickname, either order, either
-    // language, triggers a heart-burst reply instead of "معلقيتش عليك".
+    // language, triggers a heart-burst reply instead of "مش لاقيها".
     // Checked as two independent word-presence tests rather than one
     // combined regex so word order/spacing don't matter.
     var LOVE_WORDS_RE = /بحبك|احبك|بموت فيك|بعشقك|عاشقك|\bi\s*love\s*you\b|\badore\s*you\b/i;
@@ -3065,6 +3071,22 @@
       }
     }
 
+    var SEEK_STEP_SECONDS = 10;
+
+    function seekBy(deltaSeconds) {
+      if (typeof globalAudio === 'undefined' || !globalAudio || !isFinite(globalAudio.duration)) {
+        setStatus('{% translate "مفيش أغنية شغالة دلوقتي" %}');
+        return;
+      }
+      globalAudio.currentTime = Math.min(Math.max(globalAudio.currentTime + deltaSeconds, 0), globalAudio.duration);
+      setStatus(deltaSeconds > 0
+        ? '{% translate "تمام، جريت شوية ⏩" %}'
+        : '{% translate "تمام، رجعت شوية ⏪" %}');
+    }
+
+    function seekForward() { seekBy(SEEK_STEP_SECONDS); }
+    function seekBackward() { seekBy(-SEEK_STEP_SECONDS); }
+
     var LOVE_REPLIES = [
       '{% translate "وأنا كمان بحبك ❤️" %}',
       '{% translate "تامر حسني بيحبك برضو يا قمر ❤️" %}',
@@ -3110,7 +3132,7 @@
         .then(function (data) {
           var song = data.songs && data.songs[0];
           if (!song) {
-            setStatus('{% translate "معلقيتش أغنية بالاسم ده" %}');
+            setStatus('{% translate "أووبس، مش لاقي أغنية بالاسم ده" %}');
             return;
           }
           setStatus(song.title);
@@ -3127,7 +3149,7 @@
         .then(function (data) {
           var songs = data.songs || [];
           if (!songs.length) {
-            setStatus('{% translate "معلقيتش أغاني للمزاج ده" %}');
+            setStatus('{% translate "أووبس، مش لاقي أغاني للمزاج ده" %}');
             return;
           }
           window.otherSongsList = songs;
@@ -3153,6 +3175,8 @@
         case 'previous': playPrevious(); return true;
         case 'stop': stopPlayback(); return true;
         case 'resume': resumePlayback(); return true;
+        case 'seek_forward': seekForward(); return true;
+        case 'seek_backward': seekBackward(); return true;
         case 'like':
         case 'unlike':
           if (typeof toggleLike !== 'function') return false;
@@ -3205,13 +3229,13 @@
           if (executeIntent(data)) {
             setTimeout(hideAvatar, 900);
           } else {
-            setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
+            setStatus('{% translate "أووبس، مش لاقيها! جرب تاني" %}');
             setTimeout(hideAvatar, 1400);
           }
         })
         .catch(function () {
           clearTimeout(timeoutId);
-          setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
+          setStatus('{% translate "أووبس، مش لاقيها! جرب تاني" %}');
           setTimeout(hideAvatar, 1400);
         });
     }
@@ -3234,6 +3258,14 @@
       }
       if (PREV_RE.test(text)) {
         playPrevious();
+        return true;
+      }
+      if (SEEK_FORWARD_RE.test(text)) {
+        seekForward();
+        return true;
+      }
+      if (SEEK_BACKWARD_RE.test(text)) {
+        seekBackward();
         return true;
       }
       if (STOP_RE.test(text)) {

@@ -409,14 +409,16 @@ _VOICE_INTENT_SYSTEM_PROMPT = """You are the voice-command intent classifier for
 
 Respond with STRICT JSON ONLY (no markdown fences, no commentary) matching exactly this shape:
 {
-  "intent": one of "next", "previous", "stop", "resume", "like", "unlike", "open_current_song", "play_song", "play_mood", "navigate", "unknown",
+  "intent": one of "next", "previous", "stop", "resume", "seek_forward", "seek_backward", "like", "unlike", "open_current_song", "play_song", "play_mood", "navigate", "unknown",
   "song_query": the song title/name mentioned (for play_song), or null,
   "mood": one of "ROMANTIC", "SAD_HEARTBREAK", "ENERGETIC_UPBEAT", "MOTIVATIONAL_HOPEFUL", "CHILL_RELAXING", "NOSTALGIC", "CONFIDENT_PLAYFUL" (for play_mood), or null,
   "page": one of __PAGES__ (for navigate), or null
 }
 
 Guidance:
-- next/previous/stop/resume are playback transport controls.
+- next/previous are for switching to a whole different track (skip to another song).
+- seek_forward/seek_backward are for moving a few seconds within the SAME song currently playing (e.g. "جري شوية"/"skip ahead a bit" vs "رجع شوية"/"rewind a bit") - never confuse these with next/previous.
+- stop/resume are pause/play of the current song.
 - like/unlike is about liking or unliking whatever song is currently playing.
 - open_current_song means "open the page for whatever song is playing right now" - never pick this for a request naming a specific different song/album/person.
 - play_song is for "play <specific song name>" - extract just the title into song_query.
@@ -458,8 +460,9 @@ def voice_intent(request):
     data = ask_json(text, system_prompt, required_keys=('intent',)) or {}
 
     valid_intents = {
-        'next', 'previous', 'stop', 'resume', 'like', 'unlike',
-        'open_current_song', 'play_song', 'play_mood', 'navigate', 'unknown',
+        'next', 'previous', 'stop', 'resume', 'seek_forward', 'seek_backward',
+        'like', 'unlike', 'open_current_song', 'play_song', 'play_mood',
+        'navigate', 'unknown',
     }
     intent = data.get('intent') if data.get('intent') in valid_intents else 'unknown'
 
