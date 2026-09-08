@@ -382,10 +382,41 @@
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
     font-size: 15px;
   }
   .cover-listening-badge .song-stat-icon-pulse::after {
     border-radius: 50%;
+  }
+
+  /* Like button, stacked directly under .song-actions-more-wrap in the
+     same corner (36px + 8px gap below its top:10px). */
+  .song-cover > .cover-like-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 54px;
+    inset-inline-end: 10px;
+    z-index: 6;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    border: none;
+    backdrop-filter: blur(6px);
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .song-cover > .cover-like-badge:hover {
+    background: rgba(0, 0, 0, .7);
+  }
+  .song-cover > .cover-like-badge.is-liked {
+    color: #ff6474;
   }
 
   /* --- Song Info & Meta --- */
@@ -840,17 +871,6 @@
   }
 
   /* --- Stats Bar (Under Cover) --- */
-  .song-hero-media .song-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
-    padding: 12px 10px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-  }
-
   .song-hero-media .song-stat {
     display: flex;
     flex-direction: column;
@@ -859,48 +879,10 @@
     gap: 4px;
   }
 
-  .song-hero-media .song-stat-icon {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    color: var(--accent);
-    background: rgba(255, 255, 255, 0.06);
-    font-size: 14px;
-  }
-
   .song-hero-media .song-stat-value {
     color: var(--text);
     font-size: 13px;
     font-weight: 800;
-  }
-
-  .song-hero-media .song-stat-label {
-    color: var(--muted);
-    font-size: 10px;
-    margin: 0;
-  }
-
-  .song-stat-clickable {
-    border: none;
-    background: none;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  /* Likes stat doubles as the like/unlike toggle now (the old standalone
-     "Like" button in .song-actions is gone) - same red tint the button
-     used to switch to (.song-action-danger) when liked. */
-  .song-stat.is-liked .song-stat-icon {
-    color: #ff6474;
-    background: rgba(255, 100, 116, 0.15);
-  }
-  .song-stat-like:hover .song-stat-icon {
-    color: #ff6474;
   }
 
   /* Always-on pulse so the "listening now" stat reads as live/clickable
@@ -1796,10 +1778,6 @@
       width: 220px;
       margin: 0 auto;
     }
-    .song-hero-media .song-stats {
-      max-width: 320px;
-      margin: 0 auto;
-    }
     .song-topline,
     .song-artists,
     .song-info-row,
@@ -1842,15 +1820,9 @@
     .song-container { padding-inline: 16px; }
     .song-hero { border-radius: 20px; margin-top: 16px; }
     /* Hero overall is smaller here (padding/gap/title/button sizes) -
-       .song-stats and .synced-lyrics keep their own sizing untouched,
-       they were already small. */
+       .synced-lyrics keeps its own sizing untouched, it was already
+       small. */
     .song-hero-inner { padding: 14px; gap: 14px; }
-    /* base.html's global mobile zoom:87% (everything shrinks together
-       from that one dial) hit .song-stats harder than the rest, since
-       it was already the smallest text on the page - zoom:115% here
-       cancels that out (0.87 * 1.15 ≈ 1) so it reads at its original
-       size instead of compounding smaller. */
-    .song-stats { zoom: 115%; }
     .song-cover,
     .song-hero-media {
       width: 90%;
@@ -1966,6 +1938,10 @@
                                     {% endif %}
                                 </div>
                                 {% endif %}
+                                <div class="song-actions-menu-info-row song-info-row">
+                                    <span class="song-info-item"><i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i> <span data-like-count="{{ like_count }}">{{ like_count }}</span> {% translate "إعجاب" %}</span>
+                                    <span class="song-info-item"><i class="bi bi-play-circle"></i> <span data-play-count="{{ song.play_count }}">{{ song.play_count }}</span> {% translate "تشغيل" %}</span>
+                                </div>
                                 {% if not duet or duet.is_public %}
                                 <div class="song-actions-menu-info-row song-share">
                                     <span class="song-share-label">{% translate "مشاركة" %}</span>
@@ -2025,6 +2001,17 @@
                         <div class="song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
                         <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
                     </button>
+
+                    <!-- Stacked under .song-actions-more-wrap, same corner. -->
+                    {% if not duet %}
+                    <button type="button" class="cover-like-badge{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
+                        <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
+                    </button>
+                    {% else %}
+                    <div class="cover-like-badge" aria-hidden="true">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    {% endif %}
                 </div>
 
                 {% if audio_url %}
@@ -2036,33 +2023,6 @@
                     <span class="cover-progress-time" id="coverDuration">0:00</span>
                 </div>
                 {% endif %}
-
-                <div class="song-stats">
-                    {% if not duet %}
-                    <button type="button" class="song-stat song-stat-clickable song-stat-like{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
-                        <div class="song-stat-icon"><i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i></div>
-                        <div>
-                            <div class="song-stat-value" data-like-count="{{ like_count }}">{{ like_count }}</div>
-                            <div class="song-stat-label">{% translate "إعجاب" %}</div>
-                        </div>
-                    </button>
-                    {% else %}
-                    <div class="song-stat">
-                        <div class="song-stat-icon"><i class="bi bi-heart"></i></div>
-                        <div>
-                            <div class="song-stat-value" data-like-count="{{ like_count }}">{{ like_count }}</div>
-                            <div class="song-stat-label">{% translate "إعجاب" %}</div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="song-stat">
-                        <div class="song-stat-icon"><i class="bi bi-play-circle"></i></div>
-                        <div>
-                            <div class="song-stat-value" data-play-count="{{ song.play_count }}">{{ song.play_count }}</div>
-                            <div class="song-stat-label">{% translate "تشغيل" %}</div>
-                        </div>
-                    </div>
-                </div>
 
                 {% if duet %}
                 <a href="{% url 'website_app:song-detail' song.slug %}" class="original-song-card">
