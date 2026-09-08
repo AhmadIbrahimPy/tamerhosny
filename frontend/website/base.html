@@ -1576,6 +1576,21 @@
     @media (max-width:768px){
       .th-voice-assistant{ bottom:150px; }
     }
+
+    /* "بحبك يا تامر/تيمو/تيموري" easter egg - a burst of hearts flying
+       up from roughly screen-center and fading, triggered from the
+       voice assistant's resolveCommand(). */
+    .th-love-hearts-layer{position:fixed; inset:0; z-index:1400; pointer-events:none; overflow:hidden;}
+    .th-love-heart{
+      position:absolute; bottom:8vh; opacity:0; line-height:1;
+      animation:thLoveHeartFloat 2.4s ease-out forwards;
+      filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
+    @keyframes thLoveHeartFloat{
+      0%{opacity:0; transform:translate(0,0) scale(.6) rotate(0deg);}
+      15%{opacity:1;}
+      100%{opacity:0; transform:translate(var(--drift), -75vh) scale(1.15) rotate(15deg);}
+    }
   </style>
 
   <script>
@@ -2938,6 +2953,14 @@
     var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$/i;
     var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
 
+    // Easter egg, not a real playback command - "بحبك يا تيمو/تامر/
+    // تيموري" or "I love you Tamer/Timo/Timouri" said together (either
+    // order, either language) triggers a heart-burst reply instead of
+    // "معلقيتش عليك". Checked as two independent word-presence tests
+    // rather than one combined regex so word order/spacing don't matter.
+    var LOVE_WORDS_RE = /بحبك|احبك|\bi\s*love\s*you\b/i;
+    var LOVE_NICKNAME_RE = /تيمو|تامر|\btamer\b|\btimo\w*\b/i;
+
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
     var MOOD_KEYWORDS = [
       { re: /كئيب|حزين|\bsad\b|heartbreak/i, mood: 'SAD_HEARTBREAK' },
@@ -3013,6 +3036,44 @@
       setStatus('{% translate "تمام، كملنا" %}');
     }
 
+    var LOVE_REPLIES = [
+      '{% translate "وأنا كمان بحبك ❤️" %}',
+      '{% translate "تامر حسني بيحبك برضو يا قمر ❤️" %}',
+      '{% translate "ربنا يخليك ليا يا حبيبي ❤️" %}',
+    ];
+
+    function triggerLoveEasterEgg() {
+      setStatus(LOVE_REPLIES[Math.floor(Math.random() * LOVE_REPLIES.length)]);
+      spawnLoveHearts();
+    }
+
+    // Same visual language as the like button (var(--accent) gold, the
+    // heart icon) but as a burst - the "زي الليك" celebratory effect
+    // asked for, just scaled up for this one special phrase.
+    function spawnLoveHearts() {
+      var layer = document.getElementById('thLoveHeartsLayer');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'thLoveHeartsLayer';
+        layer.className = 'th-love-hearts-layer';
+        document.body.appendChild(layer);
+      }
+      for (var i = 0; i < 12; i++) {
+        (function (delay) {
+          setTimeout(function () {
+            var heart = document.createElement('span');
+            heart.className = 'th-love-heart';
+            heart.textContent = '❤️';
+            heart.style.left = (42 + Math.random() * 16) + 'vw';
+            heart.style.setProperty('--drift', (Math.random() * 70 - 35) + 'px');
+            heart.style.fontSize = (18 + Math.random() * 22) + 'px';
+            layer.appendChild(heart);
+            heart.addEventListener('animationend', function () { heart.remove(); });
+          }, delay);
+        })(i * 90);
+      }
+    }
+
     function playSongByName(name) {
       setStatus('{% translate "بدور على الأغنية..." %}');
       fetch('/player/voice-search/?q=' + encodeURIComponent(name) + '&limit=1')
@@ -3058,6 +3119,10 @@
       var text = transcript.trim();
       if (!text) return false;
 
+      if (LOVE_WORDS_RE.test(text) && LOVE_NICKNAME_RE.test(text)) {
+        triggerLoveEasterEgg();
+        return true;
+      }
       if (NEXT_RE.test(text)) {
         playNext();
         return true;
