@@ -524,6 +524,56 @@
     font-size: 12px;
   }
 
+  /* Multiple singers - one pill with overlapping avatars instead of a
+     separate pill per person. */
+  .song-artist-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 6px;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .song-artist-avatars {
+    display: flex;
+  }
+
+  .song-artist-avatar {
+    display: block;
+    margin-inline-start: -12px;
+    border: 2px solid var(--bg-2);
+    border-radius: 50%;
+    line-height: 0;
+  }
+
+  .song-artist-avatar:first-child {
+    margin-inline-start: 0;
+  }
+
+  .song-artist-avatar img,
+  .song-artist-avatar .song-artist-fallback {
+    width: 28px;
+    height: 28px;
+  }
+
+  .song-artist-names {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .song-artist-names a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .song-artist-names a:hover {
+    color: var(--accent);
+  }
+
   .song-info-row {
     display: flex;
     flex-wrap: wrap;
@@ -2097,6 +2147,24 @@
                 </div>
                 {% if song.title_en %}<p class="song-alt-title">{{ song.title_en }}</p>{% endif %}
                 <div class="song-artists">
+                    {% if singers|length > 1 %}
+                    <div class="song-artist-group">
+                        <div class="song-artist-avatars">
+                            {% for singer in singers %}
+                            <a href="/people/{{ singer.person.slug }}/" class="song-artist-avatar">
+                                {% if singer.person.profile_image %}
+                                <img src="{{ singer.person.profile_image.url }}" alt="{{ singer.person|localized_field:'full_name' }}">
+                                {% else %}
+                                <div class="song-artist-fallback">{{ singer.person|localized_field:'full_name'|slice:":2" }}</div>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <span class="song-artist-names">
+                            {% for singer in singers %}<a href="/people/{{ singer.person.slug }}/">{{ singer.person|localized_field:'full_name' }}</a>{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+                        </span>
+                    </div>
+                    {% else %}
                     {% for singer in singers %}
                     <a href="/people/{{ singer.person.slug }}/" class="song-artist">
                         {% if singer.person.profile_image %}
@@ -2107,6 +2175,7 @@
                         <span>{{ singer.person|localized_field:'full_name' }}</span>
                     </a>
                     {% endfor %}
+                    {% endif %}
                     {% if duet %}
                     <span class="song-artist">
                         {% if duet.user.profile_image %}
