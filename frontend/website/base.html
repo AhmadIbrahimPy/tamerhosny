@@ -3495,7 +3495,11 @@
     }
 
     function startRecognition() {
-      if (!enabled || starting) return;
+      // Never listen from a hidden/background tab - see the
+      // visibilitychange handler below for why this matters (multiple
+      // tabs on the site would otherwise each run their own mic
+      // listener at once).
+      if (!enabled || starting || document.hidden) return;
       starting = true;
       try {
         recognition = recognition || createRecognition();
@@ -3534,7 +3538,7 @@
     function armWatchdog() {
       if (watchdogInterval) return;
       watchdogInterval = setInterval(function () {
-        if (!enabled) return;
+        if (!enabled || document.hidden) return;
         if (Date.now() - lastActivityAt > 20000) {
           logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt });
           // Don't discard the recognition reference or spin up a new
@@ -3562,6 +3566,35 @@
       clearInterval(watchdogInterval);
       watchdogInterval = null;
     }
+
+    // Multiple tabs on the site each ran their own independent mic
+    // listener at once - confirmed from real VoiceAssistantLog data
+    // showing overlapping session ids at the same moment, some running
+    // stale JS from before a fix while a freshly-loaded tab ran the
+    // current code, giving genuinely inconsistent answers to the same
+    // spoken command. It also compounds mobile's tendency to duck other
+    // audio while the mic is active - every open tab keeps its own
+    // session alive, so the song audio stays muted far more than a
+    // single listener would ever need. Only the visible/focused tab
+    // should actually run the recognizer.
+    document.addEventListener('visibilitychange', function () {
+      if (!enabled) return;
+      if (document.hidden) {
+        disarmWatchdog();
+        clearTimeout(restartTimer);
+        clearTimeout(commandTimer);
+        listeningForCommand = false;
+        wakeResultIndex = -1;
+        hideAvatar();
+        if (recognition) {
+          try { recognition.stop(); } catch (e) {}
+        }
+      } else {
+        lastActivityAt = Date.now();
+        startRecognition();
+        armWatchdog();
+      }
+    });
 
     window.thToggleVoiceAssistant = function () {
       enabled = !enabled;
