@@ -20,6 +20,12 @@ def localized_field(obj, field_prefix):
     return ar_value or en_value
 
 
+@register.filter(name='first_word')
+def first_word(value):
+    words = (value or '').split()
+    return words[0] if words else ''
+
+
 @register.filter(name='floordiv')
 def floordiv(value, arg):
     return int(value) // int(arg)

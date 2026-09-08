@@ -57,18 +57,13 @@
      actually playing - kept very low-opacity on purpose (see .is-playing
      below) so it reads as ambience, not a loud decoration.
 
-     Scoped to .song-content rather than the whole .song-hero: the hero
-     also contains the (opaque) cover image, and its total height varies
-     wildly by breakpoint - on >=992px it's a short 2-column row, below
-     that everything stacks into one column including the full lyrics
-     block. Anchoring a percentage/fixed band to the hero's own edges
-     kept landing either behind the cover or scrolled far past the fold
-     depending on breakpoint. .song-content is just the text/actions
-     column - it never overlaps the cover, and its height already
-     tracks its own (mostly non-opaque) contents at every width. */
-  .song-content {
-    position: relative;
-  }
+     Anchored to .song-hero-inner (the whole card, cover column
+     included) rather than just .song-content, so it spans the card's
+     full width instead of only the text/actions column. z-index:-1 and
+     inset:0 track whatever height the card actually has at each
+     breakpoint, so it's never clipped or left running past the fold -
+     it just always sits fully behind the (opaque) cover, which paints
+     over it regardless of the wave's own extent. */
   .song-wave-bg {
     position: absolute;
     inset: 0;
@@ -114,6 +109,7 @@
      wrapping it). The 2-column grid only kicks in once there's room -
      see the min-width:992px block below. */
   .song-hero-inner {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -548,6 +544,7 @@
     border: 2px solid var(--bg-2);
     border-radius: 50%;
     line-height: 0;
+    overflow: hidden;
   }
 
   .song-artist-avatar:first-child {
@@ -558,6 +555,9 @@
   .song-artist-avatar .song-artist-fallback {
     width: 28px;
     height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
   }
 
   .song-artist-names {
@@ -1940,6 +1940,12 @@
         <div class="song-hero-bg" style="background-image:url('{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}');"></div>
 
         <div class="song-hero-inner">
+            <div class="song-wave-bg" aria-hidden="true">
+                <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
+                    <path class="song-wave-path song-wave-path-1" d="M0,110 C150,180 350,40 600,110 C850,180 1050,40 1200,110 L1200,220 L0,220 Z"></path>
+                    <path class="song-wave-path song-wave-path-2" d="M0,120 C200,60 400,170 600,120 C800,70 1000,160 1200,120 L1200,220 L0,220 Z"></path>
+                </svg>
+            </div>
 
             <!-- العمود الأول: الصورة وتحت منها الإحصائيات -->
             <div class="song-hero-media">
@@ -2091,12 +2097,6 @@
 
             <!-- العمود الثاني: المحتوى والبيانات وأزرار التفاعل -->
             <div class="song-content">
-                <div class="song-wave-bg" aria-hidden="true">
-                    <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
-                        <path class="song-wave-path song-wave-path-1" d="M0,110 C150,180 350,40 600,110 C850,180 1050,40 1200,110 L1200,220 L0,220 Z"></path>
-                        <path class="song-wave-path song-wave-path-2" d="M0,120 C200,60 400,170 600,120 C800,70 1000,160 1200,120 L1200,220 L0,220 Z"></path>
-                    </svg>
-                </div>
                 <div class="song-topline">
                     <span class="song-type">{% if song.album %}{% translate "أغنية من ألبوم" %}{% else %}{% translate "أغنية" %}{% endif %}</span>
                     {% if duet %}
@@ -2161,7 +2161,7 @@
                             {% endfor %}
                         </div>
                         <span class="song-artist-names">
-                            {% for singer in singers %}<a href="/people/{{ singer.person.slug }}/">{{ singer.person|localized_field:'full_name' }}</a>{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+                            {% for singer in singers %}<a href="/people/{{ singer.person.slug }}/">{{ singer.person|localized_field:'full_name'|first_word }}</a>{% if not forloop.last %} &amp; {% endif %}{% endfor %}
                         </span>
                     </div>
                     {% else %}
