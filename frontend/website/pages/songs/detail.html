@@ -263,9 +263,26 @@
      only actually does anything once this page's song is the one loaded
      in the player (see the JS: clicks/drags on it before that just start
      the song instead of seeking nowhere). */
-  .cover-progress {
+  /* Width rules live on the row (time labels + bar together) - mirrors
+     .song-cover's own width at every breakpoint exactly like before,
+     just one level up now that the labels sit outside the bar itself. */
+  .cover-progress-row {
     width: 90%;
     max-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cover-progress-time {
+    flex-shrink: 0;
+    min-width: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    direction: ltr;
+  }
+  .cover-progress {
+    flex: 1;
+    min-width: 0;
     height: 6px;
     border-radius: 3px;
     background: rgba(255, 255, 255, .12);
@@ -283,13 +300,13 @@
     border-radius: 3px;
   }
   @media (min-width: 992px) {
-    .cover-progress { width: 280px; max-width: none; }
+    .cover-progress-row { width: 280px; max-width: none; }
   }
   @media (max-width: 992px) and (min-width: 577px) {
-    .cover-progress { width: 220px; }
+    .cover-progress-row { width: 220px; }
   }
   @media (max-width: 576px) {
-    .cover-progress { width: 90%; max-width: none; }
+    .cover-progress-row { width: 90%; max-width: none; }
   }
 
   /* The "..." menu trigger + dropdown overlaid on the cover's corner
@@ -1910,8 +1927,12 @@
                 </div>
 
                 {% if audio_url %}
-                <div class="cover-progress" id="coverProgress">
-                    <div class="cover-progress-fill" id="coverProgressFill"></div>
+                <div class="cover-progress-row">
+                    <span class="cover-progress-time" id="coverCurrentTime">0:00</span>
+                    <div class="cover-progress" id="coverProgress">
+                        <div class="cover-progress-fill" id="coverProgressFill"></div>
+                    </div>
+                    <span class="cover-progress-time" id="coverDuration">0:00</span>
                 </div>
                 {% endif %}
 
