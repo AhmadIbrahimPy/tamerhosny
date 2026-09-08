@@ -170,6 +170,19 @@
     }
     .th-push-btn-mobile.is-on{border-color:var(--accent); color:var(--accent);}
     .th-push-btn-mobile:disabled{opacity:.4; cursor:not-allowed;}
+    .th-nav-links > .th-mic-btn{
+      display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0;
+      border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:15px; cursor:pointer; transition:all .2s ease;
+    }
+    .th-nav-links > .th-mic-btn:hover{background:rgba(255,255,255,.06); color:var(--text);}
+    .th-nav-links > .th-mic-btn.is-on{border-color:var(--accent); color:var(--accent);}
+    .th-mic-btn-mobile{
+      display:none; align-items:center; justify-content:center; width:36px; height:36px; padding:0;
+      border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:16px; cursor:pointer; transition:all .2s ease; margin-inline-end:6px;
+    }
+    .th-mic-btn-mobile.is-on{border-color:var(--accent); color:var(--accent);}
     @keyframes thBellAttention{
       0%, 100%{transform:rotate(0);}
       10%, 30%{transform:rotate(-15deg);}
@@ -585,6 +598,7 @@
       .th-nav-links{display:none;}
       .th-nav-toggle{display:block;}
       .th-push-btn-mobile{display:inline-flex;}
+      .th-mic-btn-mobile{display:inline-flex;}
     }
 
     /* Single dial for "everything reads a bit big on mobile" - the site
@@ -1511,6 +1525,49 @@
     .global-lyrics-text.pulse{animation:globalLyricPulse .3s ease;}
     @keyframes globalLyricPulse{from{opacity:.35; transform:scale(.97);} to{opacity:1; transform:scale(1);}}
     #playerLyricsBtn.active{color:var(--accent) !important;}
+  </style>
+
+  <!-- Voice assistant ("TH" wake word) avatar - shown for the ~5s command
+       window after the wake word is heard, floating just above the
+       persistent audio bar. See thToggleVoiceAssistant()'s script below. -->
+  <div id="thVoiceAssistant" class="th-voice-assistant" aria-live="polite">
+    <div class="th-voice-avatar">
+      <img id="thVoiceAvatarGif" src="{% static 'website/img/voice-assistant.gif' %}" alt=""
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="th-voice-avatar-fallback"><i class="bi bi-mic-fill"></i></div>
+    </div>
+    <div class="th-voice-status" id="thVoiceStatus">{% translate "أنا هنا" %}</div>
+  </div>
+
+  <style>
+    .th-voice-assistant{
+      position:fixed; z-index:1050; bottom:90px; inset-inline-end:20px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+      pointer-events:none; opacity:0; transform:translateY(12px) scale(.9);
+      transition:opacity .25s ease, transform .25s ease;
+    }
+    .th-voice-assistant.active{opacity:1; transform:translateY(0) scale(1);}
+    .th-voice-avatar{
+      width:92px; height:92px; border-radius:50%; overflow:hidden;
+      border:3px solid var(--accent); background:var(--card);
+      display:flex; align-items:center; justify-content:center;
+      animation:thVoicePulseRing 1.6s ease-out infinite;
+    }
+    .th-voice-avatar img{width:100%; height:100%; object-fit:cover;}
+    .th-voice-avatar-fallback{display:none; font-size:32px; color:var(--accent);}
+    @keyframes thVoicePulseRing{
+      0%{box-shadow:0 0 0 0 rgba(212,175,55,.5);}
+      100%{box-shadow:0 0 0 18px rgba(212,175,55,0);}
+    }
+    .th-voice-status{
+      background:var(--card); border:1px solid var(--border); color:var(--text);
+      font-size:12.5px; font-weight:700; padding:6px 14px; border-radius:999px;
+      white-space:nowrap; max-width:70vw; overflow:hidden; text-overflow:ellipsis;
+      box-shadow:0 4px 16px rgba(0,0,0,.3);
+    }
+    @media (max-width:768px){
+      .th-voice-assistant{ bottom:150px; }
+    }
   </style>
 
   <script>
@@ -2825,6 +2882,244 @@
     document.body.addEventListener('htmx:sendError', function (evt) {
       window.location.href = evt.detail.requestConfig.path;
     });
+  </script>
+
+  <!-- Voice assistant: background wake-word ("TH") listening via the Web
+       Speech API. Lives in base.html (not a page's extra_js) since it has
+       to keep listening across boosted navigations - same reasoning as
+       the persistent audio player above. Off by default (continuous mic
+       capture needs an explicit opt-in); the toggle's choice is
+       remembered in localStorage and re-armed automatically next visit,
+       since the browser doesn't re-prompt once permission was granted. -->
+  <script>
+  (function () {
+    var RecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var micButtons = function () { return document.querySelectorAll('#thMicBtn, #thMicBtnMobile'); };
+
+    if (!RecognitionCtor) {
+      // No Web Speech API support (e.g. Firefox) - hide the toggle
+      // entirely rather than offering a control that can never work.
+      micButtons().forEach(function (btn) { btn.style.display = 'none'; });
+      return;
+    }
+
+    var STORAGE_KEY = 'thVoiceAssistantEnabled';
+    var COMMAND_WINDOW_MS = 5000;
+
+    var recognition = null;
+    var enabled = localStorage.getItem(STORAGE_KEY) === '1';
+    var starting = false;
+    var listeningForCommand = false;
+    var commandTimer = null;
+    var restartTimer = null;
+
+    // "TH" said out loud, transcribed either as the Latin letters or one
+    // of the phonetic Arabic spellings a listener would actually type.
+    var WAKE_WORD_RE = /(^|[^a-z])t\.?\s?h([^a-z]|$)|تي\s?[إا]تش|تى\s?[إا]تش/i;
+
+    var NEXT_RE = /اللي بعدها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر الاغنية|غير الاغنية|غيّر الأغنية|غير الأغنية/i;
+    var PREV_RE = /اللي قبلها|اللي قبله|الاغنية السابقة|الأغنية السابقة/i;
+    var PLAY_SONG_RE = /شغل(?:ي)?\s+(?:أغنية|اغنية)\s+(.+)/i;
+
+    // Mood keyword -> Song.Mood value (backend/music_app/models.py).
+    var MOOD_KEYWORDS = [
+      { re: /كئيب|حزين/i, mood: 'SAD_HEARTBREAK' },
+      { re: /روقان|رايق|هادئ/i, mood: 'CHILL_RELAXING' },
+      { re: /حماس/i, mood: 'ENERGETIC_UPBEAT' },
+      { re: /امل|تفاؤل|تحفيز/i, mood: 'MOTIVATIONAL_HOPEFUL' },
+      { re: /حنين|ذكريات/i, mood: 'NOSTALGIC' },
+      { re: /رومانس/i, mood: 'ROMANTIC' },
+      { re: /واثق|فريش/i, mood: 'CONFIDENT_PLAYFUL' },
+    ];
+
+    var avatarEl = null;
+    var statusEl = null;
+    function elements() {
+      if (!avatarEl) {
+        avatarEl = document.getElementById('thVoiceAssistant');
+        statusEl = document.getElementById('thVoiceStatus');
+      }
+    }
+
+    function setStatus(text) {
+      elements();
+      if (statusEl) statusEl.textContent = text;
+    }
+
+    function showAvatar(text) {
+      elements();
+      setStatus(text);
+      if (avatarEl) avatarEl.classList.add('active');
+    }
+
+    function hideAvatar() {
+      elements();
+      if (avatarEl) avatarEl.classList.remove('active');
+    }
+
+    function updateButtonsUI() {
+      micButtons().forEach(function (btn) {
+        btn.classList.toggle('is-on', enabled);
+        var icon = btn.querySelector('i');
+        if (icon) icon.className = enabled ? 'bi bi-mic-fill' : 'bi bi-mic-mute';
+      });
+    }
+
+    function armCommandWindow() {
+      listeningForCommand = true;
+      showAvatar('{% translate "أنا هنا... قول أمرك" %}');
+      clearTimeout(commandTimer);
+      commandTimer = setTimeout(function () {
+        listeningForCommand = false;
+        hideAvatar();
+      }, COMMAND_WINDOW_MS);
+    }
+
+    function playSongByName(name) {
+      setStatus('{% translate "بدور على الأغنية..." %}');
+      fetch('/player/voice-search/?q=' + encodeURIComponent(name) + '&limit=1')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var song = data.songs && data.songs[0];
+          if (!song) {
+            setStatus('{% translate "معلقيتش أغنية بالاسم ده" %}');
+            return;
+          }
+          setStatus(song.title);
+          var btn = document.getElementById('playerPlayBtn');
+          playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, false);
+        })
+        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+    }
+
+    function playSongsByMood(mood) {
+      setStatus('{% translate "بدور على أغاني تناسب مزاجك..." %}');
+      fetch('/player/voice-search/?mood=' + encodeURIComponent(mood) + '&limit=15')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var songs = data.songs || [];
+          if (!songs.length) {
+            setStatus('{% translate "معلقيتش أغاني للمزاج ده" %}');
+            return;
+          }
+          window.otherSongsList = songs;
+          window.otherSongsListIsRandom = true;
+          var song = songs[Math.floor(Math.random() * songs.length)];
+          setStatus(song.title);
+          var btn = document.getElementById('playerPlayBtn');
+          playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+        })
+        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+    }
+
+    // Order matters: navigation first, then mood (a mood word said on
+    // its own, or inside "شغل أغنية حزينة", both mean "play me something
+    // that fits this mood" - not literally a song titled "حزينة"), and
+    // only then the generic by-title search as a fallback.
+    function resolveCommand(transcript) {
+      var text = transcript.trim();
+      if (!text) return false;
+
+      if (NEXT_RE.test(text)) {
+        playNext();
+        return true;
+      }
+      if (PREV_RE.test(text)) {
+        playPrevious();
+        return true;
+      }
+      for (var i = 0; i < MOOD_KEYWORDS.length; i++) {
+        if (MOOD_KEYWORDS[i].re.test(text)) {
+          playSongsByMood(MOOD_KEYWORDS[i].mood);
+          return true;
+        }
+      }
+      var playMatch = text.match(PLAY_SONG_RE);
+      if (playMatch && playMatch[1]) {
+        playSongByName(playMatch[1].trim());
+        return true;
+      }
+      return false;
+    }
+
+    function handleResult(event) {
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        var result = event.results[i];
+        var transcript = result[0] ? result[0].transcript : '';
+        if (!transcript) continue;
+
+        if (!listeningForCommand) {
+          if (WAKE_WORD_RE.test(transcript)) armCommandWindow();
+          continue;
+        }
+
+        if (!result.isFinal) continue;
+
+        var matched = resolveCommand(transcript);
+        clearTimeout(commandTimer);
+        listeningForCommand = false;
+        if (!matched) setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
+        setTimeout(hideAvatar, matched ? 900 : 1400);
+      }
+    }
+
+    function createRecognition() {
+      var r = new RecognitionCtor();
+      r.continuous = true;
+      r.interimResults = true;
+      r.lang = 'ar-EG';
+      r.onresult = handleResult;
+      r.onerror = function (e) {
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          enabled = false;
+          localStorage.setItem(STORAGE_KEY, '0');
+          updateButtonsUI();
+        }
+      };
+      r.onend = function () {
+        starting = false;
+        if (!enabled) return;
+        // continuous:true still ends the session on its own after a
+        // stretch of silence in some browsers - restart it right away
+        // so background listening for the wake word never really stops
+        // while the feature is on.
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(startRecognition, 300);
+      };
+      return r;
+    }
+
+    function startRecognition() {
+      if (!enabled || starting) return;
+      starting = true;
+      try {
+        recognition = recognition || createRecognition();
+        recognition.start();
+      } catch (e) {
+        starting = false;
+      }
+    }
+
+    function stopRecognition() {
+      clearTimeout(restartTimer);
+      clearTimeout(commandTimer);
+      listeningForCommand = false;
+      hideAvatar();
+      if (recognition) {
+        try { recognition.stop(); } catch (e) {}
+      }
+    }
+
+    window.thToggleVoiceAssistant = function () {
+      enabled = !enabled;
+      localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
+      updateButtonsUI();
+      if (enabled) startRecognition(); else stopRecognition();
+    };
+
+    updateButtonsUI();
+    if (enabled) startRecognition();
+  })();
   </script>
 
   {% if VAPID_PUBLIC_KEY %}

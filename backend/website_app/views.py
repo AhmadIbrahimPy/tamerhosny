@@ -271,6 +271,58 @@ def song_player_data(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+def voice_search_songs(request):
+    """Backs the site-wide voice assistant ("TH" wake word).
+
+    `q` matches song titles (for "شغل أغنية X"); `mood` matches
+    Song.Mood (for "شغلي حاجة حزينة"/"روقان"/etc.). At least one is
+    required. Results come back in the same per-song shape the player
+    page's `otherSongs` queue items use, so the frontend can hand one
+    straight to `playAudio()`/queue it without a second round trip.
+    """
+    query = (request.GET.get('q') or '').strip()
+    mood = (request.GET.get('mood') or '').strip().upper()
+    try:
+        limit = min(int(request.GET.get('limit', 10)), 20)
+    except ValueError:
+        limit = 10
+
+    if not query and not mood:
+        return JsonResponse({'error': 'q or mood is required'}, status=400)
+
+    playable_songs = Song.objects.select_related('album').exclude(audio_file='')
+    queryset = Song.visible_queryset(playable_songs).filter(is_duet=False)
+
+    if query:
+        queryset = queryset.filter(Q(title_ar__icontains=query) | Q(title_en__icontains=query))
+    if mood:
+        if mood not in Song.Mood.values:
+            return JsonResponse({'error': 'Unknown mood'}, status=400)
+        queryset = queryset.filter(mood=mood)
+
+    songs = list(queryset.order_by('?')[:limit]) if mood and not query else list(queryset[:limit])
+
+    vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+    results = [
+        {
+            'title': localized_field(s, 'title'),
+            'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
+            'link': f'/songs/{s.slug}/',
+            'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
+            'songId': s.pk,
+            'url': s.audio_file.url if s.audio_file else '',
+            'artist': ', '.join([
+                localized_field(credit.person, 'full_name')
+                for credit in s.credits.select_related('person').all() if credit.role in vocal_roles
+            ]),
+            'album': localized_field(s.album, 'title') if s.album else '',
+        }
+        for s in songs
+    ]
+
+    return JsonResponse({'songs': results})
+
+
 # ---------------------------------------------------------------------------
 # People
 # ---------------------------------------------------------------------------
