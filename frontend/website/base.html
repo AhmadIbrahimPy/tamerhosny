@@ -3499,6 +3499,16 @@
     // until someone thinks to re-toggle the mic button.
     var lastActivityAt = Date.now();
     var watchdogInterval = null;
+    // Real device logs showed start() throwing "already started" in a
+    // tight, near-instant retry storm (sub-30ms gaps, far faster than
+    // the fixed 500ms retry below) lasting 15+ seconds on some Android
+    // devices - a fixed short delay was letting the browser's internal
+    // teardown of the previous session keep losing the race against
+    // every new attempt. Backs off exponentially per consecutive
+    // failure and gives up cleanly after enough of them instead of
+    // hammering forever.
+    var consecutiveStartFailures = 0;
+    var MAX_START_FAILURES = 8;
 
     function createRecognition() {
       var r = new RecognitionCtor();
@@ -3508,6 +3518,7 @@
       var sessionStartedAt = 0;
       r.onstart = function () {
         starting = false;
+        consecutiveStartFailures = 0;
         lastActivityAt = Date.now();
         sessionStartedAt = lastActivityAt;
         logVoiceEvent('RECOGNITION_START');
@@ -3571,8 +3582,21 @@
         // without a retry here the whole background-listening loop just
         // dies silently until the user manually re-toggles the mic.
         starting = false;
+        consecutiveStartFailures++;
+        if (consecutiveStartFailures >= MAX_START_FAILURES) {
+          // Backing off clearly isn't recovering it - stop hammering
+          // and let the user manually re-toggle instead of retrying
+          // forever in the background.
+          enabled = false;
+          localStorage.setItem(STORAGE_KEY, '0');
+          updateButtonsUI();
+          showAvatar('{% translate "حصلت مشكلة في المايكروفون - جرب تفصله وتشغله تاني" %}');
+          setTimeout(hideAvatar, 6000);
+          return;
+        }
         clearTimeout(restartTimer);
-        restartTimer = setTimeout(startRecognition, 500);
+        var backoff = Math.min(500 * Math.pow(2, consecutiveStartFailures - 1), 8000);
+        restartTimer = setTimeout(startRecognition, backoff);
       }
     }
 
@@ -3597,6 +3621,13 @@
       if (watchdogInterval) return;
       watchdogInterval = setInterval(function () {
         if (!enabled || document.hidden) return;
+        // A start()-exception retry loop is already actively trying to
+        // recover on its own backoff schedule (see startRecognition's
+        // catch block) - piling another abort() on top of that mid-loop
+        // is exactly what turned into the worst observed storms
+        // (WATCHDOG_RESTART logged sandwiched between START_EXCEPTIONs).
+        // Leave it alone until that loop either recovers or gives up.
+        if (consecutiveStartFailures > 0) return;
         if (Date.now() - lastActivityAt > 20000) {
           logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt });
           // Don't discard the recognition reference or spin up a new
