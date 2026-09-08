@@ -3052,6 +3052,21 @@
       setStatus('{% translate "تمام، كملنا" %}');
     }
 
+    function likeCurrentSong() {
+      // toggleLike() itself silently no-ops with zero feedback (no
+      // toast, no modal) when currentSongId isn't set yet - which read
+      // as "the assistant just closes and does nothing" with no way to
+      // tell why. Surface that case explicitly instead; the logged-out
+      // case already opens a real login modal from inside toggleLike's
+      // own requireAuth() call, so that one needs no extra message here.
+      if (typeof currentSongId === 'undefined' || currentSongId === null) {
+        setStatus('{% translate "مفيش أغنية شغالة عشان أعمللها لايك" %}');
+        return;
+      }
+      if (typeof toggleLike === 'function') toggleLike();
+      setStatus('{% translate "تمام ❤️" %}');
+    }
+
     function openCurrentSongPage() {
       // #playerLink's href is kept current by playAudio() itself
       // (base.html) on every song change - the single source of truth
@@ -3179,8 +3194,7 @@
         case 'seek_backward': seekBackward(); return true;
         case 'like':
         case 'unlike':
-          if (typeof toggleLike !== 'function') return false;
-          toggleLike();
+          likeCurrentSong();
           return true;
         case 'open_current_song':
           openCurrentSongPage();
@@ -3277,7 +3291,7 @@
         return true;
       }
       if (LIKE_RE.test(text)) {
-        if (typeof toggleLike === 'function') toggleLike();
+        likeCurrentSong();
         return true;
       }
       if (OPEN_SONG_PAGE_RE.test(text)) {
@@ -3344,18 +3358,36 @@
       }
     }
 
+    // Last time the recognizer definitely did something (started, or
+    // produced any result) - the watchdog below uses this to notice a
+    // session that's silently wedged (see startRecognition's comment)
+    // instead of the site just going quiet with no wake-word detection
+    // until someone thinks to re-toggle the mic button.
+    var lastActivityAt = Date.now();
+    var watchdogInterval = null;
+
     function createRecognition() {
       var r = new RecognitionCtor();
       r.continuous = true;
       r.interimResults = true;
       r.lang = 'ar-EG';
-      r.onresult = handleResult;
+      r.onstart = function () {
+        starting = false;
+        lastActivityAt = Date.now();
+      };
+      r.onresult = function (event) {
+        lastActivityAt = Date.now();
+        handleResult(event);
+      };
       r.onerror = function (e) {
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           enabled = false;
           localStorage.setItem(STORAGE_KEY, '0');
           updateButtonsUI();
         }
+        // Any other error (no-speech, audio-capture, network, aborted,
+        // ...) is followed by onend per spec, which already handles
+        // restarting - nothing extra to do here.
       };
       r.onend = function () {
         starting = false;
@@ -3377,13 +3409,22 @@
         recognition = recognition || createRecognition();
         recognition.start();
       } catch (e) {
+        // start() can throw synchronously (Chrome's InvalidStateError
+        // when called too soon after a stop/end, more likely the more
+        // often a session cycles through wake->command->re-arm) - onend
+        // never fires for a call that never actually started, so
+        // without a retry here the whole background-listening loop just
+        // dies silently until the user manually re-toggles the mic.
         starting = false;
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(startRecognition, 500);
       }
     }
 
     function stopRecognition() {
       clearTimeout(restartTimer);
       clearTimeout(commandTimer);
+      disarmWatchdog();
       listeningForCommand = false;
       wakeResultIndex = -1;
       hideAvatar();
@@ -3392,15 +3433,48 @@
       }
     }
 
+    // Extra safety net on top of the onend/catch retries above: if
+    // something leaves the session wedged in a way that never calls
+    // onend or onerror at all (seen in practice after enough
+    // start/stop cycles), background listening would otherwise just
+    // stay silently dead - this notices and forces a clean restart.
+    function armWatchdog() {
+      if (watchdogInterval) return;
+      watchdogInterval = setInterval(function () {
+        if (!enabled) return;
+        if (Date.now() - lastActivityAt > 20000) {
+          try { if (recognition) recognition.abort(); } catch (e) {}
+          recognition = null;
+          starting = false;
+          lastActivityAt = Date.now();
+          startRecognition();
+        }
+      }, 15000);
+    }
+
+    function disarmWatchdog() {
+      clearInterval(watchdogInterval);
+      watchdogInterval = null;
+    }
+
     window.thToggleVoiceAssistant = function () {
       enabled = !enabled;
       localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
       updateButtonsUI();
-      if (enabled) startRecognition(); else stopRecognition();
+      if (enabled) {
+        lastActivityAt = Date.now();
+        startRecognition();
+        armWatchdog();
+      } else {
+        stopRecognition();
+      }
     };
 
     updateButtonsUI();
-    if (enabled) startRecognition();
+    if (enabled) {
+      startRecognition();
+      armWatchdog();
+    }
   })();
   </script>
 
