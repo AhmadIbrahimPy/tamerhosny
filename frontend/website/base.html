@@ -2748,6 +2748,12 @@
       if (typeof clarity === 'function') {
         clarity('set', 'page_path', window.location.pathname);
       }
+      // window.songId (set by the swapped-in page's own extra_js, if it's
+      // a song page) has just changed, but nothing else re-checks the
+      // global player bar against it - without this it can be left
+      // hidden on a page/song other than the one actually playing, or
+      // shown on the very song page whose audio it's mirroring.
+      syncGlobalPlayerVisibility();
     });
 
     // Fires for every element htmx is about to discard - #th-page-root's
@@ -2757,6 +2763,14 @@
     // definition up top for why 'beforeunload' can't be that hook here).
     document.body.addEventListener('htmx:beforeCleanupElement', function (evt) {
       if (evt.detail.elt && evt.detail.elt.id === 'th-page-root') thRunTeardown();
+      // window.songId is set by a song page's own extra_js and otherwise
+      // never touched - without clearing it here first, navigating from
+      // a song page to a non-song page would leave it stale, and
+      // syncGlobalPlayerVisibility() (htmx:afterSettle, above) would
+      // wrongly keep treating the new page as that old song's own page.
+      // A song page's extra_js re-sets it moments later if the page
+      // being swapped in actually is one.
+      window.songId = null;
     });
 
     // A boosted request that fails (network error, 4xx/5xx) would
