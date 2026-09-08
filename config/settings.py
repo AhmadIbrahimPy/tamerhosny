@@ -319,6 +319,20 @@ VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY', '')
 VAPID_CLAIM_EMAIL = env('VAPID_CLAIM_EMAIL', DEFAULT_FROM_EMAIL)
 
 
+# LLM access (backend.main_app.shared_utils.llm_providers) - used to
+# auto-classify a song's genre/mood from its title/lyrics
+# (backend.music_app.shared_utils.song_classification), which in turn
+# feeds the content-based fallback in
+# backend.main_app.shared_utils.song_recommendations. Three free-tier
+# providers tried in order (Gemini, then Groq, then OpenRouter); empty
+# means that provider is skipped, same no-op-when-unset pattern as
+# VAPID above - classification just does nothing until at least one key
+# is set.
+GEMINI_API_KEY = env('GEMINI_API_KEY', '')
+GROQ_API_KEY = env('GROQ_API_KEY', '')
+OPENROUTER_API_KEY = env('OPENROUTER_API_KEY', '')
+
+
 # CORS
 
 CORS_ALLOW_ALL_ORIGINS = False

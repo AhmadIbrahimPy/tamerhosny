@@ -125,3 +125,19 @@ def create_duet_song(self, project_id):
         project.processing_error = str(e)
         project.save(update_fields=['processing_status', 'processing_error'])
         _broadcast_duet_status(project_id, SingWithTamerProject.ProcessingStatus.FAILED, error=str(e))
+
+
+@shared_task(ignore_result=True)
+def classify_song_task(song_id):
+    """Auto-fills a song's genre/mood via an LLM call (see
+    backend.music_app.shared_utils.song_classification) - run as a task
+    (see music_app.signals) so a dashboard save or an import command
+    doesn't block on a network call to an LLM provider. A no-op if the
+    song already has both set, or no LLM provider is configured.
+    """
+    from backend.music_app.models import Song
+    from backend.music_app.shared_utils.song_classification import classify_and_save
+
+    song = Song.objects.filter(pk=song_id).first()
+    if song:
+        classify_and_save(song)

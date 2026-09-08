@@ -25,4 +25,8 @@ app.conf.beat_schedule = {
         'task': 'backend.music_app.tasks.send_daily_guess_reminders',
         'schedule': crontab(hour=18, minute=0),
     },
+    'nightly-recommendation-refresh': {
+        'task': 'backend.main_app.tasks.refresh_song_recommendations',
+        'schedule': crontab(hour=3, minute=0),
+    },
 }

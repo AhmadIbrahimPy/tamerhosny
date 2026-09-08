@@ -34,6 +34,20 @@ def song_pre_save(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Song)
 def song_post_save(sender, instance, created, **kwargs):
+    # Auto-classify genre/mood for a new song (or one still missing
+    # either) - see backend.music_app.shared_utils.song_classification.
+    # Only worth queuing when there's actually something to fill in;
+    # classify_and_save() no-ops anyway, but this skips the task/network
+    # round-trip entirely for the common case of an already-tagged song
+    # being saved again for something unrelated.
+    needs_classification = (
+        not instance.genre or instance.genre == instance.Genre.UNSPECIFIED
+        or not instance.mood or instance.mood == instance.Mood.UNSPECIFIED
+    )
+    if needs_classification:
+        from backend.music_app.tasks import classify_song_task
+        classify_song_task.delay(instance.pk)
+
     just_published = instance.visibility == instance.Visibility.PUBLISHED and (
         created or instance._push_old_visibility != instance.Visibility.PUBLISHED
     )
@@ -69,11 +83,19 @@ def album_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=SongLyricSegment)
 def lyric_segment_post_save(sender, instance, created, **kwargs):
-    # Only the FIRST segment added to a song is worth a push - every
-    # segment after that is just the same "it has lyrics now" fact again.
     if not created:
         return
+
     song = instance.song
+    # A song created without lyrics only got classified from its title
+    # (see song_post_save) - re-run now that real lyrics exist, still a
+    # no-op if it already has both genre and mood set.
+    if not song.genre or song.genre == song.Genre.UNSPECIFIED or not song.mood or song.mood == song.Mood.UNSPECIFIED:
+        from backend.music_app.tasks import classify_song_task
+        classify_song_task.delay(song.pk)
+
+    # Only the FIRST segment added to a song is worth a push - every
+    # segment after that is just the same "it has lyrics now" fact again.
     if song.visibility != song.Visibility.PUBLISHED:
         return
     if song.lyric_segments.count() == 1:

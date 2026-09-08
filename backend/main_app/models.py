@@ -300,6 +300,116 @@ class SongLeaderboardRank(models.Model):
         return f'{self.song} - #{self.rank} {self.user.username}'
 
 
+class SongSimilarity(models.Model):
+    """Precomputed "songs similar to this one" (see
+    `backend.main_app.shared_utils.song_recommendations`) - collaborative
+    where enough listening data exists (songs played by the same people,
+    weighted the same way as the leaderboard's engagement score), falling
+    back to content overlap (genre/mood/album/singers) for a song too new
+    or too rarely played to have that data yet. Recomputed periodically,
+    not on every play - a nightly batch job, not a live signal.
+    """
+
+    class Method(models.TextChoices):
+        COLLABORATIVE = 'COLLABORATIVE', _('تعاوني (حسب المستمعين)')
+        CONTENT = 'CONTENT', _('حسب المحتوى')
+
+    song = models.ForeignKey(
+        'music_app.Song', on_delete=models.CASCADE, related_name='similar_to',
+    )
+    similar_song = models.ForeignKey(
+        'music_app.Song', on_delete=models.CASCADE, related_name='similar_from',
+    )
+    score = models.FloatField(default=0.0)
+    method = models.CharField(max_length=15, choices=Method.choices)
+    rank = models.PositiveSmallIntegerField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['song', 'similar_song']
+        ordering = ['rank']
+        indexes = [
+            models.Index(fields=['song', 'rank']),
+        ]
+
+    def __str__(self):
+        return f'{self.song} ~ {self.similar_song} (#{self.rank})'
+
+
+class UserSongRecommendation(models.Model):
+    """Precomputed "recommended for you" - a user's own SongSimilarity
+    neighbors across everything they've listened to, weighted by how much
+    they engaged with each source song (same decayed score as the
+    leaderboard), excluding songs they've already played heavily. See
+    `backend.main_app.shared_utils.song_recommendations`. Recomputed
+    periodically alongside SongSimilarity, not live.
+    """
+
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.CASCADE, related_name='song_recommendations',
+    )
+    song = models.ForeignKey(
+        'music_app.Song', on_delete=models.CASCADE, related_name='recommended_to',
+    )
+    score = models.FloatField(default=0.0)
+    rank = models.PositiveSmallIntegerField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'song']
+        ordering = ['rank']
+        indexes = [
+            models.Index(fields=['user', 'rank']),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.song} (#{self.rank})'
+
+
+class UserMoodScore(models.Model):
+    """How much a user has been leaning into each Song.Mood recently, so
+    "recommended for you" can lean the same way (see
+    `backend.main_app.shared_utils.user_mood`) - someone on a two-day sad
+    streak keeps getting sad-leaning suggestions, but if that fades and
+    they're back to upbeat songs, so does this.
+
+    One row per (user, mood) they've ever full-listened to something in.
+    `decayed_score` is a snapshot as of `score_updated_at`, same
+    exponential-decay approach as UserSongPlay/the leaderboard - a
+    shorter half-life than that (a few days, not a week) since a mood is
+    meant to read as "right now", not "this user's whole history".
+    """
+
+    # Mirrors music_app.models.Song.Mood (minus UNSPECIFIED) - duplicated
+    # rather than imported to avoid a main_app -> music_app import at
+    # module load time (Song itself only ever references main_app via
+    # the 'main_app.Like' GenericRelation string, for the same reason).
+    class Mood(models.TextChoices):
+        ROMANTIC = 'ROMANTIC', _('Romantic / رومانسي')
+        SAD_HEARTBREAK = 'SAD_HEARTBREAK', _('Sad & Heartbreak / حزين / دراما / جرح')
+        ENERGETIC_UPBEAT = 'ENERGETIC_UPBEAT', _('Energetic & Upbeat / حماسي / طاقة عالية / أفراح')
+        MOTIVATIONAL_HOPEFUL = 'MOTIVATIONAL_HOPEFUL', _('Motivational & Hopeful / تحفيزي / أمل وتفاؤل')
+        CHILL_RELAXING = 'CHILL_RELAXING', _('Chill & Relaxing / رايق / هادئ للاسترخاء')
+        NOSTALGIC = 'NOSTALGIC', _('Nostalgic / ذكريات وحنين')
+        CONFIDENT_PLAYFUL = 'CONFIDENT_PLAYFUL', _('Confident & Playful / واثق / فريش')
+
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.CASCADE, related_name='mood_scores',
+    )
+    mood = models.CharField(max_length=25, choices=Mood.choices)
+    decayed_score = models.FloatField(default=0.0)
+    score_updated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['user', 'mood']
+        indexes = [
+            models.Index(fields=['user', 'mood']),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.mood} ({self.decayed_score:.2f})'
+
+
 class LoginSession(models.Model):
     """A record of one successful login, captured for security auditing:
     when it happened, from what device/IP, and whether it was a dashboard

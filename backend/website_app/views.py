@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 
 from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
-from backend.main_app.models import Like, Playlist, PlaylistItem, UserGameProfile, UserSongPlay, CurrentSongListener
+from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.gamification import (
     POINTS_GUESS_LOSS, POINTS_LIKE, award_points, get_rank_and_trend, unlocked_badges,
@@ -392,7 +392,19 @@ def song_detail(request, slug, duet_id=None):
     
     # Combine lists: same type first, then others
     other_songs = same_type_songs + remaining_songs
-    
+
+    # Precomputed (see main_app.shared_utils.song_recommendations) -
+    # collaborative where enough people have listened to both, content
+    # overlap otherwise. Falls back to the random other_songs pick above
+    # for a song that hasn't been through a recompute yet (freshly added,
+    # or the nightly job hasn't run since).
+    recommended_songs = [
+        row.similar_song for row in
+        SongSimilarity.objects.filter(song=song).select_related('similar_song__album').order_by('rank')[:12]
+    ]
+    if not recommended_songs:
+        recommended_songs = other_songs
+
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     all_credits = song.credits.select_related('person').all()
     singers = [credit for credit in all_credits if credit.role in vocal_roles]
@@ -434,6 +446,7 @@ def song_detail(request, slug, duet_id=None):
         'links': song.links.select_related('platform').all(),
         'album_songs': album_songs,
         'other_songs': other_songs,
+        'recommended_songs': recommended_songs,
         'top_ad': top_ad,
         'bottom_ad': bottom_ad,
         'is_liked': is_liked,

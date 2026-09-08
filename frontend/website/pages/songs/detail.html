@@ -2517,8 +2517,10 @@
     {% if top_ad %}
       {% include "website/partials/ad_banner.html" with ad=top_ad %}
     {% endif %}
-    <!-- Other Songs Slider -->
-    {% if other_songs %}
+    <!-- Recommended Songs Slider - see main_app.shared_utils.song_recommendations
+         (falls back to the old random other_songs pick when this song hasn't
+         been through a recompute yet). -->
+    {% if recommended_songs %}
       <section class="song-section">
         <div class="song-section-head">
           <h2 class="song-section-title"><i class="bi bi-stars"></i> {% translate "أغاني أخرى قد تعجبك" %}</h2>
@@ -2527,7 +2529,7 @@
         <div class="slider-wrap">
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
-            {% for other in other_songs %}
+            {% for other in recommended_songs %}
               <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
                 {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
                 <div class="th-img-wrap">
@@ -2643,6 +2645,41 @@
         </div>
       </section>
     {% endif %}
+    {% endif %}
+
+    <!-- Explore More Slider (plain random pick, unlike the personalized
+         "أغاني أخرى قد تعجبك" section above - see other_songs in
+         website_app.views.song_detail). -->
+    {% if other_songs %}
+      <section class="song-section">
+        <div class="song-section-head">
+          <h2 class="song-section-title"><i class="bi bi-shuffle"></i> {% translate "استكشف المزيد" %}</h2>
+          <a href="{% url 'website_app:songs' %}" class="song-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+        </div>
+        <div class="slider-wrap">
+          <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+          <div class="slider-track">
+            {% for other in other_songs %}
+              <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
+                {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
+                <div class="th-img-wrap">
+                  {% if other.display_cover_url %}
+                    <img src="{{ other.display_cover_url }}" alt="{{ other|localized_field:'title' }}">
+                  {% else %}
+                    <i class="bi bi-music-note-beamed icon-fallback"></i>
+                  {% endif %}
+                  <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+                </div>
+                <div class="th-body">
+                  <div class="th-title">{{ other|localized_field:'title' }}</div>
+                  <div class="th-meta">{{ other.get_song_type_display }}</div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+          <button type="button" class="slider-control slider-control-next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
+        </div>
+      </section>
     {% endif %}
 
     <!-- Bottom Ad -->
