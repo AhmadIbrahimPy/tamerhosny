@@ -28,6 +28,32 @@ TOP_NEIGHBORS = 20
 TOP_RECOMMENDATIONS = 30
 MIN_LISTENERS_FOR_COLLABORATIVE = 5
 MIN_COLLABORATIVE_NEIGHBORS = 5
+MOOD_MATCH_MULTIPLIER = 1.25
+
+
+def _current_moods_by_user():
+    """{user_id: mood} - each user's single strongest current mood (see
+    main_app.shared_utils.user_mood), computed in bulk here rather than
+    calling current_mood() per user, since this runs once for every user
+    in the same nightly batch that already reads everything else in bulk.
+    """
+    from backend.main_app.models import UserMoodScore
+    from backend.main_app.shared_utils.user_mood import DECAY_LAMBDA
+
+    now = timezone.now()
+    best = {}
+    for row in UserMoodScore.objects.values('user_id', 'mood', 'decayed_score', 'score_updated_at'):
+        if row['score_updated_at']:
+            elapsed_days = (now - row['score_updated_at']).total_seconds() / 86400
+            score = row['decayed_score'] * math.exp(-DECAY_LAMBDA * max(elapsed_days, 0))
+        else:
+            score = row['decayed_score']
+        if score < 0.5:
+            continue
+        current = best.get(row['user_id'])
+        if current is None or score > current[1]:
+            best[row['user_id']] = (row['mood'], score)
+    return {user_id: mood for user_id, (mood, _score) in best.items()}
 
 
 def _current_engagement_weights():
@@ -198,6 +224,8 @@ def refresh_user_recommendations():
     visible_song_ids = set(
         Song.visible_queryset(Song.objects.filter(is_duet=False)).values_list('pk', flat=True)
     )
+    song_moods = dict(Song.objects.values_list('pk', 'mood'))
+    moods_by_user = _current_moods_by_user()
 
     neighbors_by_song = defaultdict(list)
     for row in SongSimilarity.objects.all().values('song_id', 'similar_song_id', 'score'):
@@ -205,12 +233,20 @@ def refresh_user_recommendations():
 
     all_rows = []
     for user_id, played in user_weights.items():
+        current_mood = moods_by_user.get(user_id)
         candidate_scores = defaultdict(float)
         for song_id, engagement in played.items():
             for other_id, similarity in neighbors_by_song.get(song_id, []):
                 if other_id in played or other_id not in visible_song_ids:
                     continue
-                candidate_scores[other_id] += engagement * similarity
+                score = engagement * similarity
+                # Leaning into a mood the last few days? - matching
+                # suggestions get a boost, same spirit as the leaderboard's
+                # like multiplier, so "recommended for you" reads as
+                # in-tune with how the user's actually feeling right now.
+                if current_mood and song_moods.get(other_id) == current_mood:
+                    score *= MOOD_MATCH_MULTIPLIER
+                candidate_scores[other_id] += score
 
         ranked = sorted(candidate_scores.items(), key=lambda pair: pair[1], reverse=True)[:TOP_RECOMMENDATIONS]
         for rank, (song_id, score) in enumerate(ranked, start=1):

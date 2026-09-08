@@ -72,6 +72,12 @@ def record_full_listen(user, song_id):
     play.score_updated_at = now
     play.save(update_fields=['decayed_score', 'full_listen_count', 'score_updated_at'])
 
+    # What mood this user's been leaning into lately (main_app.
+    # shared_utils.user_mood) - same "a full, natural listen" signal,
+    # just aggregated by the song's mood instead of by the song itself.
+    from backend.main_app.shared_utils.user_mood import record_mood_signal
+    record_mood_signal(user, play.song)
+
     refresh_song_leaderboard(song_id)
 
 

@@ -55,6 +55,6 @@ class Command(BaseCommand):
             # back-to-back across a whole catalog exhausts each one in
             # turn faster than it would recover, leaving later songs
             # with nothing left to fall back to.
-            time.sleep(1.5)
+            time.sleep(3)
 
         self.stdout.write(self.style.SUCCESS(f'Classified {changed} of {total} songs.'))
