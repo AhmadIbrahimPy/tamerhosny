@@ -2999,19 +2999,18 @@
     // "الأغنية تاني" itself as a fuzzy song-title search and could
     // easily land on some unrelated song that happens to score above
     // the match threshold.
-    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$|شغل(?:ي)?\s+(?:ال)?(?:أغنية|اغنية)(?:\s+تاني)?\s*$|شغل(?:ي)?\s+اللي\s+كان\s+شغال|شغل(?:ي)?\s+اللي\s+كنت\s+سامع/i;
+    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$|^شغل$|^شغّل$|شغل(?:ي)?\s+(?:ال)?(?:أغنية|اغنية)(?:\s+تاني)?\s*$|شغل(?:ي)?\s+اللي\s+كان\s+شغال|شغل(?:ي)?\s+اللي\s+كنت\s+سامع/i;
     var LIKE_RE = /اعمل\s*لايك|اعمل\s*لايف|اعمل\s*لاف|حط\s*لايك|عجبتني|عجباني|\blike\s*(?:it|this)?\b/i;
     var OPEN_SONG_PAGE_RE = /افتح\s*(?:صفحة)?\s*الأغنية|افتح\s*(?:صفحة)?\s*الاغنية|روح\s*(?:ل|لصفحة)\s*الأغنية|وريني\s*صفحة\s*الأغنية|open\s*(?:the\s*)?song\s*page/i;
     var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
 
-    // Easter egg, not a real playback command - "بحبك يا تيمو/تامر/
-    // تيموري" or "I love you Tamer/Timo/Timouri" (or "بموت فيك"/"بعشقك"/
-    // "عاشقك") said together with the nickname, either order, either
-    // language, triggers a heart-burst reply instead of "مش لاقيها".
-    // Checked as two independent word-presence tests rather than one
-    // combined regex so word order/spacing don't matter.
+    // Easter egg, not a real playback command - "بحبك"/"احبك"/"بموت
+    // فيك"/"بعشقك"/"عاشقك" or "I love you"/"adore you" triggers a
+    // heart-burst reply instead of "مش لاقيها". A nickname (يا تامر/
+    // تيمو) used to be required too, but real usage logs show people
+    // just say the love phrase alone - unambiguous enough given who
+    // they're talking to here.
     var LOVE_WORDS_RE = /بحبك|احبك|بموت فيك|بعشقك|عاشقك|\bi\s*love\s*you\b|\badore\s*you\b/i;
-    var LOVE_NICKNAME_RE = /تيمو|تامر|\btamer\b|\btimo\w*\b/i;
 
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
     var MOOD_KEYWORDS = [
@@ -3325,10 +3324,6 @@
       var text = transcript.trim();
       if (!text) return false;
 
-      if (LOVE_WORDS_RE.test(text) && LOVE_NICKNAME_RE.test(text)) {
-        triggerLoveEasterEgg();
-        return true;
-      }
       if (NEXT_RE.test(text)) {
         playNext();
         return true;
@@ -3370,6 +3365,16 @@
       var playMatch = text.match(PLAY_SONG_RE);
       if (playMatch && playMatch[1]) {
         playSongByName(playMatch[1].trim());
+        return true;
+      }
+      // Checked last, after PLAY_SONG_RE - the nickname requirement was
+      // dropped (real usage logs show people just say "بحبك" alone),
+      // but "شغل أغنية بحبك" (an actual song request that happens to
+      // contain the word) must still be treated as that request, not
+      // this easter egg. Ordering it after every real command already
+      // does that: PLAY_SONG_RE above matches and returns first.
+      if (LOVE_WORDS_RE.test(text)) {
+        triggerLoveEasterEgg();
         return true;
       }
       return false;
@@ -3532,11 +3537,23 @@
         if (!enabled) return;
         if (Date.now() - lastActivityAt > 20000) {
           logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt });
-          try { if (recognition) recognition.abort(); } catch (e) {}
-          recognition = null;
-          starting = false;
-          lastActivityAt = Date.now();
-          startRecognition();
+          // Don't discard the recognition reference or spin up a new
+          // one here: abort() isn't guaranteed synchronous, so the old
+          // session can still be alive under the hood for a moment.
+          // Nulling `recognition` orphaned that still-live session with
+          // no way to ever regain control of it, while a brand new
+          // object tried to start() immediately and collided with it -
+          // "recognition has already started", forever, since nothing
+          // could ever tell the new attempts the old session was done.
+          // Just abort and let its own onend handler (still attached)
+          // restart it once the browser actually finishes tearing it
+          // down - same path every other restart already goes through.
+          lastActivityAt = Date.now(); // don't re-trigger every 15s while this settles
+          if (recognition) {
+            try { recognition.abort(); } catch (e) {}
+          } else {
+            startRecognition();
+          }
         }
       }, 15000);
     }
