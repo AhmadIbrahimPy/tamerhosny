@@ -741,6 +741,7 @@
       // detail.html's lyrics sync listens for exactly this event.
       globalAudio.addEventListener('play', function() {
         setPlayButtonsIcon('bi-pause-fill');
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } }));
         if (currentSongId !== null) {
           connectGlobalListenerSocket(currentSongId);
@@ -774,6 +775,7 @@
           setPlayButtonsIcon('bi-play-fill');
           isManualPause = false;
         }
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
         document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: false, songId: currentSongId } }));
         sendGlobalListenerAction('stop');
@@ -815,7 +817,21 @@
       });
 
       globalAudio.addEventListener('timeupdate', function() {
+        updateGlobalLyricsLine(globalAudio.currentTime);
         if (globalAudio.duration) {
+          // Lets the OS scrub bar (lock screen, media key overlay, etc.)
+          // show real position/duration and be dragged - without this,
+          // mediaSession.metadata alone gets you title/artwork/buttons
+          // but a scrub bar that does nothing.
+          if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+            try {
+              navigator.mediaSession.setPositionState({
+                duration: globalAudio.duration,
+                playbackRate: globalAudio.playbackRate,
+                position: globalAudio.currentTime,
+              });
+            } catch (e) {}
+          }
           var progress = (globalAudio.currentTime / globalAudio.duration) * 100;
           var currentTimeText = formatTime(globalAudio.currentTime);
           var durationText = formatTime(globalAudio.duration);
@@ -834,6 +850,48 @@
           if (mobileDuration) mobileDuration.textContent = durationText;
         }
       });
+
+      // Media Session - lets the lock screen, notification shade, media
+      // keys/headphone buttons, and Bluetooth/car controls drive the
+      // persistent player instead of only the on-page controls. Action
+      // handlers are registered once here; metadata (title/artist/
+      // artwork) is set per-song in playAudio() below.
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', function () {
+          thEnsureAudible();
+          globalAudio.play();
+        });
+        navigator.mediaSession.setActionHandler('pause', function () {
+          isManualPause = true;
+          globalAudio.pause();
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', function () { playPrevious(); });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { playNext(); });
+        navigator.mediaSession.setActionHandler('seekbackward', function (details) {
+          globalAudio.currentTime = Math.max(0, globalAudio.currentTime - (details.seekOffset || 10));
+        });
+        navigator.mediaSession.setActionHandler('seekforward', function (details) {
+          globalAudio.currentTime = Math.min(
+            globalAudio.duration || Infinity, globalAudio.currentTime + (details.seekOffset || 10),
+          );
+        });
+        // Dragging the lock-screen scrub bar - only fires on platforms
+        // that expose one (setPositionState above is what puts it there).
+        try {
+          navigator.mediaSession.setActionHandler('seekto', function (details) {
+            if (details.fastSeek && 'fastSeek' in globalAudio) {
+              globalAudio.fastSeek(details.seekTime);
+              return;
+            }
+            globalAudio.currentTime = details.seekTime;
+          });
+        } catch (e) { /* 'seekto' isn't supported on every browser */ }
+        navigator.mediaSession.setActionHandler('stop', function () {
+          isManualPause = true;
+          globalAudio.pause();
+          globalAudio.currentTime = 0;
+        });
+      }
     });
 
     function setPlayButtonsIcon(iconClass) {
@@ -970,6 +1028,23 @@
       
       if (link) {
         document.getElementById('playerLink').href = link;
+      }
+
+      if ('mediaSession' in navigator) {
+        var mediaImageUrl = '';
+        if (Array.isArray(image) && image.length > 0 && image[0]) {
+          mediaImageUrl = image[0];
+        } else if (typeof image === 'string' && image) {
+          mediaImageUrl = image;
+        }
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title || '',
+          artist: artist || '',
+          album: (isMix && songs) ? songs : (album || ''),
+          artwork: mediaImageUrl ? [
+            { src: mediaImageUrl, sizes: '512x512', type: 'image/jpeg' },
+          ] : [],
+        });
       }
 
       // Play audio
@@ -1186,6 +1261,13 @@
     });
   </script>
 
+  <!-- Global synced-lyrics panel (site-wide, not tied to a song's own page) -->
+  <div id="globalLyricsPanel" class="global-lyrics-panel">
+    <div class="global-lyrics-panel-inner">
+      <div id="globalLyricsText" class="global-lyrics-text"></div>
+    </div>
+  </div>
+
   <!-- Global Audio Player Bar -->
   <div id="globalAudioPlayer" style="display:none; position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:8px 16px; z-index:1000; box-shadow:0 -4px 20px rgba(0,0,0,.3);">
     <audio id="globalAudioElement" preload="auto" style="display:none;"></audio>
@@ -1217,6 +1299,9 @@
           </a>
           <a id="playerAlbum" href="#" onclick="return thPlayerNavClick(event, 'playerAlbum')" style="display:block; text-decoration:none; color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; unicode-bidi:plaintext; text-align:left; cursor:pointer; transition:color 0.2s ease;"></a>
         </div>
+        <button onclick="toggleLyricsPanel()" id="playerLyricsBtn" style="display:none; width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;" title="{% translate 'الكلمات' %}">
+          <i class="bi bi-chat-square-quote"></i>
+        </button>
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
           <i class="bi bi-heart"></i>
         </button>
@@ -1355,6 +1440,27 @@
         height: 48px;
       }
     }
+
+    /* Global synced-lyrics panel - floats just above the persistent
+       player bar so the current line is readable from anywhere on the
+       site, not only a song's own detail page (which already had its
+       own separate, page-scoped synced-lyrics view). */
+    .global-lyrics-panel{
+      position:fixed; left:0; right:0; bottom:72px; z-index:999;
+      display:flex; justify-content:center; pointer-events:none;
+      opacity:0; transform:translateY(10px); transition:opacity .25s ease, transform .25s ease;
+    }
+    .global-lyrics-panel.open{opacity:1; transform:translateY(0); pointer-events:auto;}
+    .global-lyrics-panel-inner{
+      max-width:600px; width:calc(100% - 32px); margin:0 16px;
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:16px 24px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.4);
+    }
+    .global-lyrics-text{font-size:16px; font-weight:700; min-height:24px; color:var(--text);}
+    .global-lyrics-text:empty::before{content:'\2026'; color:var(--muted); font-weight:400;}
+    .global-lyrics-text.pulse{animation:globalLyricPulse .3s ease;}
+    @keyframes globalLyricPulse{from{opacity:.35; transform:scale(.97);} to{opacity:1; transform:scale(1);}}
+    #playerLyricsBtn.active{color:var(--accent) !important;}
   </style>
 
   <script>
@@ -1431,6 +1537,9 @@
             isShuffle = state.isShuffle || false;
             currentSongId = state.currentSongId || null;
             syncToggleButtonStyles();
+            // Restoring bypasses playAudio() (and the songChanged event
+            // it fires), which is normally what triggers this.
+            if (typeof fetchGlobalLyrics === 'function') fetchGlobalLyrics(currentSongId);
 
             // Restore play state - browsers block autoplay-with-sound on
             // a fresh page load with no user gesture yet, so play() can
@@ -1707,6 +1816,75 @@
         console.error('Error checking like status:', error);
       });
     }
+
+    // Global synced lyrics - the same API a song's own detail page uses
+    // (see songs/detail.html's separate, page-scoped synced-lyrics view),
+    // just wired to the persistent player instead so the current line
+    // stays available no matter what page playback continues on.
+    var globalLyricSegments = [];
+    var globalLyricIndex = -1;
+    var globalLyricSongId = null;
+
+    function fetchGlobalLyrics(songId) {
+      globalLyricSegments = [];
+      globalLyricIndex = -1;
+      globalLyricSongId = songId;
+      updateLyricsButtonVisibility();
+      if (!songId) return;
+      fetch('/v1/music/songs/' + songId + '/lyrics-segments/')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          // The song changed again before this resolved - stale response.
+          if (globalLyricSongId !== songId || !data.results) return;
+          globalLyricSegments = data.results
+            .filter(function (s) { return s.segment_type === 'LYRICS' && s.text; })
+            .map(function (s) { return { start: parseFloat(s.start_seconds), end: parseFloat(s.end_seconds), text: s.text }; })
+            .sort(function (a, b) { return a.start - b.start; });
+          updateLyricsButtonVisibility();
+        })
+        .catch(function () {});
+    }
+
+    function updateLyricsButtonVisibility() {
+      var btn = document.getElementById('playerLyricsBtn');
+      if (btn) btn.style.display = globalLyricSegments.length ? 'flex' : 'none';
+      if (!globalLyricSegments.length) {
+        var panel = document.getElementById('globalLyricsPanel');
+        if (panel) panel.classList.remove('open');
+        if (btn) btn.classList.remove('active');
+      }
+    }
+
+    function updateGlobalLyricsLine(currentTime) {
+      if (!globalLyricSegments.length) return;
+      var newIndex = -1;
+      for (var i = 0; i < globalLyricSegments.length; i++) {
+        if (currentTime >= globalLyricSegments[i].start && currentTime < globalLyricSegments[i].end) {
+          newIndex = i;
+          break;
+        }
+      }
+      if (newIndex === globalLyricIndex) return;
+      globalLyricIndex = newIndex;
+      var textEl = document.getElementById('globalLyricsText');
+      if (!textEl) return;
+      textEl.textContent = newIndex >= 0 ? globalLyricSegments[newIndex].text : '';
+      textEl.classList.remove('pulse');
+      void textEl.offsetWidth;
+      textEl.classList.add('pulse');
+    }
+
+    window.toggleLyricsPanel = function () {
+      var panel = document.getElementById('globalLyricsPanel');
+      var btn = document.getElementById('playerLyricsBtn');
+      if (!panel) return;
+      var isOpen = panel.classList.toggle('open');
+      if (btn) btn.classList.toggle('active', isOpen);
+    };
+
+    document.addEventListener('songChanged', function (e) {
+      fetchGlobalLyrics(e.detail && e.detail.songId ? e.detail.songId : null);
+    });
 
     function toggleLike() {
       if (!currentSongId) return;
