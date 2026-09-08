@@ -559,6 +559,12 @@
       songTitle: '{{ answer.title|escapejs }}',
       coverUrl: '{% if answer.cover_url %}{{ answer.cover_url|escapejs }}{% endif %}',
       hypeLine: '{% if hype_line %}{{ hype_line|escapejs }}{% endif %}',
+      // The card is drawn on a <canvas> (plain JS strings, not template
+      // text), which never goes through gettext on its own - text drawn
+      // straight from Arabic literals here would ignore the site's
+      // active language entirely and always render Arabic.
+      braveTitle: '{% translate "برافو! 🎉" %}',
+      brandLine: '{% translate "خمّن الأغنية" %} · th.lexora.vip',
     };
     imageBtn.addEventListener('click', function () {
       imageBtn.disabled = true;
@@ -594,7 +600,7 @@ async function buildGuessWinCard(data) {
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   ThShareCard.scatterSparkles(ctx, W, H, 60, 'rgba(255,255,255,.6)');
 
-  ctx.direction = 'rtl';
+  ctx.direction = document.documentElement.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
   ctx.textAlign = 'center';
 
   ctx.font = '110px ' + FONT;
@@ -602,7 +608,7 @@ async function buildGuessWinCard(data) {
 
   ctx.fillStyle = '#fff';
   ctx.font = '900 68px ' + FONT;
-  ctx.fillText('برافو! 🎉', W / 2, 360);
+  ctx.fillText(data.braveTitle, W / 2, 360);
 
   var avatarCy = 470, avatarR = 74;
   function drawAvatarFallback() {
@@ -653,7 +659,7 @@ async function buildGuessWinCard(data) {
 
   ctx.font = '700 32px ' + FONT;
   ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.fillText('🎵 خمّن الأغنية · th.lexora.vip', W / 2, H - 70);
+  ctx.fillText('🎵 ' + data.brandLine, W / 2, H - 70);
 
   return canvas;
 }

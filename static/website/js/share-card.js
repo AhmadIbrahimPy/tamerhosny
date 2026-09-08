@@ -4,6 +4,23 @@
 // where supported, a plain download otherwise. Used by the daily-guess
 // win screen and the personal recap page.
 (function () {
+  // Cover art can point at a third-party CDN (e.g. imported from
+  // Anghami) that sends no Access-Control-Allow-Origin header - loading
+  // it with crossOrigin='anonymous' then fails outright (the browser's
+  // CORS-mode fetch is refused), and without crossOrigin set at all the
+  // canvas would just be "tainted" and throw on toBlob()/toDataURL()
+  // later instead. Routing anything not already same-origin through our
+  // own same-origin proxy (see backend.website_app.proxy_views) sidesteps
+  // both - the proxy fetches it server-side and hands it back from our
+  // own domain, which needs no CORS header at all.
+  function resolveImageSrc(src) {
+    try {
+      var isSameOrigin = new URL(src, window.location.href).origin === window.location.origin;
+      if (!isSameOrigin) return '/img-proxy/?url=' + encodeURIComponent(src);
+    } catch (e) { /* a relative/malformed URL - just use it as-is below */ }
+    return src;
+  }
+
   function loadImage(src) {
     return new Promise(function (resolve, reject) {
       if (!src) { reject(new Error('no src')); return; }
@@ -11,7 +28,7 @@
       img.crossOrigin = 'anonymous';
       img.onload = function () { resolve(img); };
       img.onerror = reject;
-      img.src = src;
+      img.src = resolveImageSrc(src);
     });
   }
 

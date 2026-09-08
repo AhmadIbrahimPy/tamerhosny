@@ -268,6 +268,19 @@ if (imageBtn && window.ThShareCard) {
     totalDuets: {{ total_duets|default:0 }},
     topSongTitle: '{% if top_song %}{{ top_song|localized_field:"title"|escapejs }}{% endif %}',
     topSongCoverUrl: '{% if top_song.display_cover_url %}{{ top_song.display_cover_url|escapejs }}{% endif %}',
+    // The card is drawn on a <canvas> (plain JS strings, not template
+    // text), which never goes through gettext on its own - text drawn
+    // straight from Arabic literals here would ignore the site's active
+    // language entirely and always render Arabic.
+    brandLabel: '{% translate "أرشيف تامر حسني" %}',
+    memberSinceLabel: '{% translate "عضو من سنة" %}',
+    topSongLabel: '{% translate "الأغنية الأكتر استماعًا عندك" %}',
+    statLabels: {
+      plays: '{% translate "تشغيلة" %}',
+      fullListens: '{% translate "سمعها لآخرها" %}',
+      likes: '{% translate "إعجاب" %}',
+      duets: '{% translate "دويتو مع تامر" %}',
+    },
   };
 
   imageBtn.addEventListener('click', function () {
@@ -309,11 +322,11 @@ async function buildRecapCard(data) {
 
   ThShareCard.scatterSparkles(ctx, W, H, 46, 'rgba(255,255,255,.55)');
 
-  ctx.direction = 'rtl';
+  ctx.direction = document.documentElement.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#d4af37';
   ctx.font = '800 32px ' + FONT;
-  ctx.fillText('أرشيف تامر حسني', W / 2, 100);
+  ctx.fillText(data.brandLabel, W / 2, 100);
 
   var avatarCy = 270, avatarR = 100;
 
@@ -350,13 +363,13 @@ async function buildRecapCard(data) {
 
   ctx.fillStyle = '#b9bad0';
   ctx.font = '600 28px ' + FONT;
-  ctx.fillText('عضو من سنة ' + data.memberSinceYear, W / 2, avatarCy + avatarR + 122);
+  ctx.fillText(data.memberSinceLabel + ' ' + data.memberSinceYear, W / 2, avatarCy + avatarR + 122);
 
   var stats = [
-    { emoji: '▶️', value: data.totalPlays, label: 'تشغيلة' },
-    { emoji: '🎧', value: data.totalFullListens, label: 'سمعها لآخرها' },
-    { emoji: '❤️', value: data.totalLikes, label: 'إعجاب' },
-    { emoji: '🎤', value: data.totalDuets, label: 'دويتو مع تامر' },
+    { emoji: '▶️', value: data.totalPlays, label: data.statLabels.plays },
+    { emoji: '🎧', value: data.totalFullListens, label: data.statLabels.fullListens },
+    { emoji: '❤️', value: data.totalLikes, label: data.statLabels.likes },
+    { emoji: '🎤', value: data.totalDuets, label: data.statLabels.duets },
   ];
   var cellW = 460, cellH = 210, gapX = 40, gapY = 32;
   var gridTop = avatarCy + avatarR + 190;
@@ -388,7 +401,7 @@ async function buildRecapCard(data) {
     ctx.textAlign = 'center';
     ctx.font = '800 28px ' + FONT;
     ctx.fillStyle = '#d4af37';
-    ctx.fillText('الأغنية الأكتر استماعًا عندك', W / 2, afterGridY);
+    ctx.fillText(data.topSongLabel, W / 2, afterGridY);
 
     var coverSize = 260, coverX = W / 2 - coverSize / 2, coverY = afterGridY + 30;
     if (data.topSongCoverUrl) {
