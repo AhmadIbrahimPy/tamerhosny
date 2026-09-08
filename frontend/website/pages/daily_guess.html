@@ -8,39 +8,56 @@
 
 {% block extra_css %}
 <style>
-  .guess-page{max-width:520px; margin:0 auto; padding-block:40px 64px;}
+  .guess-page{max-width:520px; margin:0 auto; padding-block:40px 64px; position:relative;}
+
+  /* A quiet animated glow behind the whole page - the same trick as the
+     win card's gradient, just far more subtle, so the game reads as a
+     "place" rather than a plain form even before anyone's played. */
+  .guess-page::before{
+    content:''; position:absolute; inset:-40px -20px auto -20px; height:420px; z-index:-1;
+    background:
+      radial-gradient(320px 220px at 15% 10%, rgba(138,92,255,.16), transparent 65%),
+      radial-gradient(300px 200px at 85% 25%, rgba(212,175,55,.14), transparent 65%);
+    pointer-events:none;
+  }
+
   .guess-header{text-align:center; margin-bottom:28px;}
   .guess-header .mark{
     width:56px;height:56px;border-radius:16px;margin:0 auto 14px;
     background:linear-gradient(135deg, var(--accent), var(--accent-2));
     display:flex;align-items:center;justify-content:center;font-size:24px;color:#0b0c14;
   }
-  .guess-header h1{font-size:22px;font-weight:900;margin:0 0 6px;}
+  .guess-header h1{font-size:24px;font-weight:900;margin:0 0 6px;}
   .guess-header p{color:var(--muted); font-size:13.5px; margin:0;}
 
-  /* Mystery cover: the actual art stays hidden until the round ends,
-     but a plain empty box read as unfinished/broken rather than "the
-     answer is hidden on purpose" - an animated gradient block with a
-     pulsing "?" reads as a deliberate reveal-as-you-play mechanic. */
-  @keyframes guessGradientShift{
-    0%, 100%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
+  /* Mystery cover: a spinning vinyl record rather than a flat box - the
+     actual art stays hidden until the round ends, and "a record playing"
+     reads as a deliberate reveal-as-you-play mechanic instead of a
+     placeholder. Grooves are concentric box-shadows (no extra markup),
+     spins only while the clip is actually playing. */
+  @keyframes guessVinylSpin{ to{transform:rotate(360deg);} }
+  @keyframes guessGlowPulse{
+    0%, 100%{box-shadow:0 0 0 0 rgba(138,92,255,.35), 0 16px 40px -14px rgba(0,0,0,.6);}
+    50%{box-shadow:0 0 0 22px rgba(138,92,255,0), 0 16px 40px -14px rgba(0,0,0,.6);}
   }
-  @keyframes guessMarkPulse{
-    0%, 100%{transform:scale(1); opacity:.9;}
-    50%{transform:scale(1.12); opacity:1;}
+  .guess-vinyl-wrap{width:180px; height:180px; margin:0 auto 22px; position:relative;}
+  .guess-vinyl{
+    width:100%; height:100%; border-radius:50%; position:relative;
+    background:radial-gradient(circle at 50% 50%, #23263a 0 22%, #14151f 23% 30%, #1b1d2b 31% 38%, #14151f 39% 46%, #1b1d2b 47% 54%, #14151f 55% 100%);
+    box-shadow:0 16px 40px -14px rgba(0,0,0,.6);
+    animation:guessGlowPulse 2.6s ease-in-out infinite;
+    transition:transform .3s ease;
   }
-  .guess-mystery-cover{
-    width:120px; height:120px; border-radius:22px; margin:0 auto 20px;
-    background:linear-gradient(120deg, #8a5cff, #d4af37, #ff5c8a, #4fd4ff, #8a5cff);
-    background-size:300% 300%;
-    animation:guessGradientShift 6s ease infinite;
+  .guess-vinyl.spinning{animation:guessGlowPulse 2.6s ease-in-out infinite, guessVinylSpin 3.2s linear infinite;}
+  .guess-vinyl-label{
+    position:absolute; inset:0; margin:auto; width:64px; height:64px; border-radius:50%;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 16px 36px -12px rgba(138,92,255,.5);
+    font-size:26px; font-weight:900; color:#0b0c14;
+    box-shadow:0 0 0 5px #14151f, 0 6px 18px rgba(0,0,0,.4);
   }
-  .guess-mystery-cover span{
-    font-size:44px; font-weight:900; color:rgba(255,255,255,.92);
-    animation:guessMarkPulse 1.8s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce){
+    .guess-vinyl, .guess-vinyl.spinning{animation:none !important;}
   }
 
   @keyframes guessFadeUp{
@@ -57,39 +74,59 @@
   .guess-choices .guess-choice-btn:nth-child(2){animation-delay:.32s;}
   .guess-choices .guess-choice-btn:nth-child(3){animation-delay:.38s;}
   @media (prefers-reduced-motion: reduce){
-    .guess-mystery-cover, .guess-mystery-cover span,
+    .guess-vinyl-wrap,
     .guess-header, .guess-player, .guess-choices,
     .guess-choice-btn, .guess-history-item, .guess-result{
       animation:none !important; opacity:1 !important; transform:none !important;
     }
   }
+  .guess-vinyl-wrap{animation:guessFadeUp .5s ease both; animation-delay:.03s;}
 
   .guess-player{
     background:var(--card); border:1px solid var(--border); border-radius:20px;
     padding:26px 22px; margin-bottom:20px; text-align:center;
   }
-  .guess-play-btn{
-    width:64px;height:64px;border-radius:50%; border:none; cursor:pointer;
-    background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14;
-    font-size:24px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
-    transition:transform .15s ease;
+  @keyframes guessPlayPulse{
+    0%, 100%{box-shadow:0 0 0 0 rgba(212,175,55,.45);}
+    50%{box-shadow:0 0 0 14px rgba(212,175,55,0);}
   }
-  .guess-play-btn:hover{transform:scale(1.06);}
-  .guess-play-btn:disabled{opacity:.5; cursor:default;}
-  .guess-progress{height:8px; border-radius:8px; background:var(--bg); overflow:hidden; position:relative; margin-bottom:8px;}
-  .guess-progress-fill{position:absolute; inset-inline-start:0; top:0; bottom:0; width:0%; background:var(--accent); transition:width .1s linear;}
+  .guess-play-btn{
+    width:72px;height:72px;border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14;
+    font-size:26px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
+    transition:transform .15s ease; animation:guessPlayPulse 2.2s ease-in-out infinite;
+  }
+  .guess-play-btn:hover{transform:scale(1.08);}
+  .guess-play-btn:disabled{opacity:.5; cursor:default; animation:none;}
+  .guess-play-btn.playing{animation:none;}
+  @media (prefers-reduced-motion: reduce){.guess-play-btn{animation:none;}}
+  .guess-progress{height:9px; border-radius:8px; background:var(--bg); overflow:hidden; position:relative; margin-bottom:8px;}
+  .guess-progress-fill{
+    position:absolute; inset-inline-start:0; top:0; bottom:0; width:0%; transition:width .1s linear;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
+    background-size:200% auto;
+  }
   .guess-progress-marks{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); font-family:monospace;}
 
-  .guess-choices{display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
+  .guess-choices{display:flex; flex-direction:column; gap:12px; margin-bottom:14px;}
   .guess-choice-btn{
-    width:100%; padding:14px 18px; border-radius:12px; border:1px solid var(--border);
-    background:var(--card); color:var(--text); font-size:14px; font-weight:700; cursor:pointer;
-    text-align:start; transition:border-color .15s ease, background .15s ease;
+    width:100%; padding:16px 20px; border-radius:14px; border:1.5px solid var(--border);
+    background:var(--card); color:var(--text); font-size:14.5px; font-weight:700; cursor:pointer;
+    text-align:start; transition:border-color .15s ease, background .15s ease, transform .15s ease;
+    display:flex; align-items:center; gap:12px;
   }
-  .guess-choice-btn:hover{border-color:var(--accent); background:rgba(212,175,55,.08);}
+  .guess-choice-btn .num{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0; font-size:12px; font-weight:900;
+    background:rgba(255,255,255,.06); color:var(--muted);
+    display:flex; align-items:center; justify-content:center; transition:background .15s ease, color .15s ease;
+  }
+  .guess-choice-btn:hover:not(:disabled){border-color:var(--accent); background:rgba(212,175,55,.08); transform:translateY(-2px);}
+  .guess-choice-btn:hover:not(:disabled) .num{background:var(--accent); color:#0b0c14;}
   .guess-choice-btn:disabled{cursor:default; opacity:.6;}
   .guess-choice-btn.correct{border-color:#2ecc71; background:rgba(46,204,113,.12); color:#4fd486;}
+  .guess-choice-btn.correct .num{background:#2ecc71; color:#0b0c14;}
   .guess-choice-btn.wrong{border-color:#dc3545; background:rgba(220,53,69,.12); color:#ff9aa5;}
+  .guess-choice-btn.wrong .num{background:#dc3545; color:#fff;}
 
   .guess-history{margin-bottom:20px;}
   .guess-history-item{
@@ -106,11 +143,20 @@
      celebration. .won below overrides this into the flashy shareable
      card, since only a correct guess is something worth showing off. */
   .guess-result{
-    position:relative; overflow:hidden; text-align:center; padding:28px 22px 22px;
+    position:relative; overflow:hidden; text-align:center; padding:30px 22px 24px;
     border-radius:22px; margin-bottom:20px;
-    background:linear-gradient(135deg, rgba(212,175,55,.12), rgba(138,92,255,.1));
+    background:linear-gradient(160deg, rgba(212,175,55,.14), rgba(138,92,255,.1), var(--card) 70%);
     border:1px solid var(--border);
+    box-shadow:0 18px 40px -20px rgba(0,0,0,.5);
   }
+  .guess-result-note{
+    display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:9px 16px;
+    border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+    color:var(--text); font-size:12.5px; font-weight:700; position:relative; z-index:1;
+  }
+  .guess-result.won .guess-result-note{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); color:#fff;}
+  .guess-result-note i{color:var(--accent);}
+  .guess-result.won .guess-result-note i{color:#ffd35c;}
 
   @keyframes guessCoverPop{
     from{opacity:0; transform:scale(.6) rotate(-10deg);}
@@ -135,8 +181,14 @@
   }
   .guess-btn:hover{border-color:var(--accent); color:var(--accent);}
   .guess-btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14; border:none;}
+  .guess-btn:disabled{opacity:.6; cursor:default; pointer-events:none;}
 
   .guess-emoji-grid{font-size:20px; letter-spacing:4px; margin-bottom:14px;}
+
+  /* Confetti burst on a win - a fixed full-viewport canvas the JS draws
+     a couple hundred falling pieces onto for ~2.5s then removes; sits
+     above everything else but never blocks clicks/taps underneath. */
+  #guessConfettiCanvas{position:fixed; inset:0; z-index:3000; pointer-events:none;}
 
   /* Win card: this is the one people screenshot and post, so it gets
      the full "Wrapped"-style treatment - vivid animated gradient,
@@ -239,7 +291,11 @@
     <audio id="guessAudio" src="{{ audio_url }}" preload="metadata"></audio>
 
     {% if not finished %}
-    <div class="guess-mystery-cover"><span>?</span></div>
+    <div class="guess-vinyl-wrap">
+      <div class="guess-vinyl" id="guessVinyl">
+        <div class="guess-vinyl-label">?</div>
+      </div>
+    </div>
 
     <div class="guess-player">
       <button type="button" class="guess-play-btn" id="guessPlayBtn">
@@ -256,7 +312,9 @@
 
     <div class="guess-choices" id="guessChoices">
       {% for choice in choices %}
-      <button type="button" class="guess-choice-btn" data-song-id="{{ choice.id }}">{{ choice.title }}</button>
+      <button type="button" class="guess-choice-btn" data-song-id="{{ choice.id }}">
+        <span class="num">{{ forloop.counter }}</span> {{ choice.title }}
+      </button>
       {% endfor %}
     </div>
 
@@ -309,9 +367,22 @@
         <i class="bi bi-music-note-beamed"></i> {% translate "خمّن الأغنية" %} · th.lexora.vip
       </div>
       {% endif %}
+
+      <div class="guess-result-note">
+        <i class="bi bi-calendar2-check"></i>
+        {% translate "لعبة جديدة كل يوم - ارجع بكرة تلعب تاني!" %}
+      </div>
     </div>
 
     <div class="guess-result-actions">
+      {% if won %}
+      <button type="button" class="guess-btn primary" id="guessImageBtn">
+        <i class="bi bi-image"></i> {% translate "احفظ الصورة" %}
+      </button>
+      <button type="button" class="guess-btn" id="guessShareBtn">
+        <i class="bi bi-share"></i> {% translate "شارك النتيجة" %}
+      </button>
+      {% endif %}
       {% if answer.slug %}
       <a href="{% url 'website_app:song-detail' answer.slug %}" class="guess-btn">
         <i class="bi bi-play-circle"></i> {% translate "اسمع الأغنية كاملة" %}
@@ -367,6 +438,8 @@
     }).catch(function () {});
   }
 
+  var vinyl = document.getElementById('guessVinyl');
+
   if (playBtn) {
     playBtn.addEventListener('click', function () {
       if (audio.paused) {
@@ -379,12 +452,16 @@
 
     audio.addEventListener('play', function () {
       playIcon.className = 'bi bi-pause-fill';
+      playBtn.classList.add('playing');
+      if (vinyl) vinyl.classList.add('spinning');
       playStartedAt = Date.now();
       sendGuessTrackEvent('play');
     });
 
     audio.addEventListener('pause', function () {
       playIcon.className = 'bi bi-play-fill';
+      playBtn.classList.remove('playing');
+      if (vinyl) vinyl.classList.remove('spinning');
       if (playStartedAt !== null) {
         var elapsed = (Date.now() - playStartedAt) / 1000;
         playStartedAt = null;
@@ -453,17 +530,14 @@
     });
   });
 
-  // Share result (Wordle-style emoji in the shared text)
+  {% if finished and won %}
+  // Text-share (quick message to a friend) - the image button below
+  // covers the "post it somewhere" case with a proper branded card.
   var shareBtn = document.getElementById('guessShareBtn');
   if (shareBtn) {
-    var guessResults = [];
-    document.querySelectorAll('#guessHistory .guess-history-item').forEach(function (el) {
-      guessResults.push(el.classList.contains('correct') ? '🟩' : '⬛');
-    });
-    if (!guessResults.length) guessResults.push('⬛');
-
     shareBtn.addEventListener('click', function () {
-      var text = '{% translate "خمّن الأغنية" %} - ' + guessResults.join(' ') + '\n' + window.location.origin + '{% url "website_app:daily-guess" %}';
+      var text = '{% blocktranslate with title=answer.title %}خمّنت أغنية "{{ title }}" في خمّن الأغنية! 🎉{% endblocktranslate %}'
+        + '\n' + window.location.origin + '{% url "website_app:daily-guess" %}';
       if (navigator.share) {
         navigator.share({ text: text }).catch(function () {});
       } else {
@@ -474,6 +548,161 @@
       }
     });
   }
+
+  // Save-as-image - same idea as the recap card (ThShareCard, base.html):
+  // hand-drawn on canvas rather than screenshotting the live DOM.
+  var imageBtn = document.getElementById('guessImageBtn');
+  if (imageBtn && window.ThShareCard) {
+    var winData = {
+      username: '{{ user.first_name|default:user.username|escapejs }}',
+      avatarUrl: '{% if user.profile_image %}{{ user.profile_image.url|escapejs }}{% endif %}',
+      songTitle: '{{ answer.title|escapejs }}',
+      coverUrl: '{% if answer.cover_url %}{{ answer.cover_url|escapejs }}{% endif %}',
+      hypeLine: '{% if hype_line %}{{ hype_line|escapejs }}{% endif %}',
+    };
+    imageBtn.addEventListener('click', function () {
+      imageBtn.disabled = true;
+      var originalHtml = imageBtn.innerHTML;
+      imageBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> {% translate "جاري التجهيز..." %}';
+      buildGuessWinCard(winData).then(function (canvas) {
+        return ThShareCard.canvasToBlob(canvas);
+      }).then(function (blob) {
+        return ThShareCard.shareOrDownloadBlob(blob, 'guess-the-song-win.png', winData.songTitle);
+      }).catch(function (err) {
+        console.error('guess win image failed', err);
+      }).then(function () {
+        imageBtn.disabled = false;
+        imageBtn.innerHTML = originalHtml;
+      });
+    });
+  }
+
+  // Confetti burst - fires once, right when the win card is first shown.
+  fireConfetti();
+  {% endif %}
 })();
+
+async function buildGuessWinCard(data) {
+  var W = 1080, H = 1920;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  var FONT = 'system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif';
+
+  var bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#2b0b5e'); bg.addColorStop(.5, '#8c0f47'); bg.addColorStop(1, '#142a6e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ThShareCard.scatterSparkles(ctx, W, H, 60, 'rgba(255,255,255,.6)');
+
+  ctx.direction = 'rtl';
+  ctx.textAlign = 'center';
+
+  ctx.font = '110px ' + FONT;
+  ctx.fillText('🏆', W / 2, 250);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 68px ' + FONT;
+  ctx.fillText('برافو! 🎉', W / 2, 360);
+
+  var avatarCy = 470, avatarR = 74;
+  function drawAvatarFallback() {
+    ctx.beginPath();
+    ctx.arc(W / 2, avatarCy, avatarR, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.25)';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 60px ' + FONT;
+    ctx.textBaseline = 'middle';
+    ctx.fillText((data.username || '?').slice(0, 1).toUpperCase(), W / 2, avatarCy + 4);
+    ctx.textBaseline = 'alphabetic';
+  }
+  if (data.avatarUrl) {
+    try {
+      var avatarImg = await ThShareCard.loadImage(data.avatarUrl);
+      ThShareCard.drawCircleImage(ctx, avatarImg, W / 2, avatarCy, avatarR);
+    } catch (e) { drawAvatarFallback(); }
+  } else {
+    drawAvatarFallback();
+  }
+  ctx.fillStyle = '#fff';
+  ctx.font = '800 42px ' + FONT;
+  ctx.fillText(data.username, W / 2, avatarCy + avatarR + 52);
+
+  var coverSize = 460, coverX = W / 2 - coverSize / 2, coverY = avatarCy + avatarR + 100;
+  ThShareCard.roundRectPath(ctx, coverX - 8, coverY - 8, coverSize + 16, coverSize + 16, 34);
+  var frameGrad = ctx.createLinearGradient(coverX, coverY, coverX + coverSize, coverY + coverSize);
+  frameGrad.addColorStop(0, '#ffd35c'); frameGrad.addColorStop(1, '#8a5cff');
+  ctx.fillStyle = frameGrad;
+  ctx.fill();
+  if (data.coverUrl) {
+    try {
+      var coverImg = await ThShareCard.loadImage(data.coverUrl);
+      ThShareCard.drawCoverImage(ctx, coverImg, coverX, coverY, coverSize, coverSize, 28);
+    } catch (e) { /* no cover art available - the gradient frame stands alone */ }
+  }
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 50px ' + FONT;
+  ThShareCard.drawWrappedText(ctx, data.songTitle, W / 2, coverY + coverSize + 80, 880, 58, 2);
+
+  if (data.hypeLine) {
+    ctx.fillStyle = '#ffd35c';
+    ctx.font = '700 34px ' + FONT;
+    ThShareCard.drawWrappedText(ctx, data.hypeLine, W / 2, coverY + coverSize + 170, 880, 44, 2);
+  }
+
+  ctx.font = '700 32px ' + FONT;
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.fillText('🎵 خمّن الأغنية · th.lexora.vip', W / 2, H - 70);
+
+  return canvas;
+}
+
+function fireConfetti() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var canvas = document.createElement('canvas');
+  canvas.id = 'guessConfettiCanvas';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  var ctx = canvas.getContext('2d');
+  var colors = ['#d4af37', '#8a5cff', '#ff5c8a', '#4fd4ff', '#ffd35c'];
+  var pieces = [];
+  for (var i = 0; i < 140; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height * .5,
+      size: 6 + Math.random() * 8,
+      color: colors[i % colors.length],
+      speedY: 2 + Math.random() * 3,
+      speedX: (Math.random() - .5) * 2,
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - .5) * 10,
+    });
+  }
+  var start = null;
+  function frame(ts) {
+    if (start === null) start = ts;
+    var elapsed = ts - start;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(function (p) {
+      p.y += p.speedY;
+      p.x += p.speedX;
+      p.rotation += p.rotationSpeed;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * .6);
+      ctx.restore();
+    });
+    if (elapsed < 2600) {
+      requestAnimationFrame(frame);
+    } else {
+      canvas.remove();
+    }
+  }
+  requestAnimationFrame(frame);
+}
 </script>
 {% endblock %}

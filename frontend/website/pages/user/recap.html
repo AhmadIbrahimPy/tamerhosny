@@ -71,6 +71,9 @@
     font-weight:700; font-size:13.5px; cursor:pointer; text-decoration:none;
   }
   .recap-share-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .recap-share-btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b0c14; border:none;}
+  .recap-share-btn.primary:hover{color:#0b0c14; opacity:.92;}
+  .recap-share-btn:disabled{opacity:.6; cursor:default;}
 
   .recap-empty{text-align:center; padding:40px 20px; color:var(--muted);}
 
@@ -212,6 +215,9 @@
   {% endif %}
 
   <div class="recap-share-bar">
+    <button type="button" class="recap-share-btn primary" id="recapImageBtn">
+      <i class="bi bi-image"></i> {% translate "احفظ ملخصك كصورة" %}
+    </button>
     <button type="button" class="recap-share-btn" id="recapCopyLinkBtn">
       <i class="bi bi-link-45deg"></i> {% translate "نسخ الرابط" %}
     </button>
@@ -243,6 +249,165 @@ if (btn) {
     btn.innerHTML = '<i class="bi bi-check-lg"></i> {% translate "اتنسخ!" %}';
     setTimeout(function () { btn.innerHTML = original; }, 1800);
   });
+}
+
+// "Save as image" - draws a shareable 1080x1920 (story-ratio) card by
+// hand on a canvas rather than screenshotting the live DOM (html2canvas
+// style libraries choke on gradients/backdrop-filter and need an extra
+// dependency); ThShareCard (base.html) has the drawing primitives this
+// shares with the daily-guess win card.
+var imageBtn = document.getElementById('recapImageBtn');
+if (imageBtn && window.ThShareCard) {
+  var recapData = {
+    username: '{{ recap_user.username|escapejs }}',
+    avatarUrl: '{% if recap_user.profile_image %}{{ recap_user.profile_image.url|escapejs }}{% endif %}',
+    memberSinceYear: '{{ member_since|date:"Y" }}',
+    totalPlays: {{ total_plays|default:0 }},
+    totalFullListens: {{ total_full_listens|default:0 }},
+    totalLikes: {{ total_likes|default:0 }},
+    totalDuets: {{ total_duets|default:0 }},
+    topSongTitle: '{% if top_song %}{{ top_song|localized_field:"title"|escapejs }}{% endif %}',
+    topSongCoverUrl: '{% if top_song.display_cover_url %}{{ top_song.display_cover_url|escapejs }}{% endif %}',
+  };
+
+  imageBtn.addEventListener('click', function () {
+    imageBtn.disabled = true;
+    var originalHtml = imageBtn.innerHTML;
+    imageBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> {% translate "جاري التجهيز..." %}';
+
+    buildRecapCard(recapData).then(function (canvas) {
+      return ThShareCard.canvasToBlob(canvas);
+    }).then(function (blob) {
+      return ThShareCard.shareOrDownloadBlob(blob, 'my-tamer-hosny-recap.png', '{% translate "شوف ملخصي على أرشيف تامر حسني" %}');
+    }).catch(function (err) {
+      console.error('recap image failed', err);
+    }).then(function () {
+      imageBtn.disabled = false;
+      imageBtn.innerHTML = originalHtml;
+    });
+  });
+}
+
+async function buildRecapCard(data) {
+  var W = 1080, H = 1920;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  var FONT = 'system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif';
+
+  var bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#150b28'); bg.addColorStop(.55, '#1c1030'); bg.addColorStop(1, '#0b0c12');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  var glow1 = ctx.createRadialGradient(W * .18, H * .06, 0, W * .18, H * .06, 520);
+  glow1.addColorStop(0, 'rgba(138,92,255,.38)'); glow1.addColorStop(1, 'rgba(138,92,255,0)');
+  ctx.fillStyle = glow1; ctx.fillRect(0, 0, W, H);
+
+  var glow2 = ctx.createRadialGradient(W * .85, H * .96, 0, W * .85, H * .96, 600);
+  glow2.addColorStop(0, 'rgba(212,175,55,.3)'); glow2.addColorStop(1, 'rgba(212,175,55,0)');
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+
+  ThShareCard.scatterSparkles(ctx, W, H, 46, 'rgba(255,255,255,.55)');
+
+  ctx.direction = 'rtl';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#d4af37';
+  ctx.font = '800 32px ' + FONT;
+  ctx.fillText('أرشيف تامر حسني', W / 2, 100);
+
+  var avatarCy = 270, avatarR = 100;
+
+  function drawAvatarFallback() {
+    var grad = ctx.createLinearGradient(W / 2 - avatarR, avatarCy - avatarR, W / 2 + avatarR, avatarCy + avatarR);
+    grad.addColorStop(0, '#d4af37'); grad.addColorStop(1, '#8a5cff');
+    ctx.beginPath();
+    ctx.arc(W / 2, avatarCy, avatarR, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 90px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((data.username || '?').slice(0, 1).toUpperCase(), W / 2, avatarCy + 6);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  if (data.avatarUrl) {
+    try {
+      var avatarImg = await ThShareCard.loadImage(data.avatarUrl);
+      ThShareCard.drawCircleImage(ctx, avatarImg, W / 2, avatarCy, avatarR);
+    } catch (e) {
+      drawAvatarFallback();
+    }
+  } else {
+    drawAvatarFallback();
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 54px ' + FONT;
+  ctx.fillText(data.username, W / 2, avatarCy + avatarR + 78);
+
+  ctx.fillStyle = '#b9bad0';
+  ctx.font = '600 28px ' + FONT;
+  ctx.fillText('عضو من سنة ' + data.memberSinceYear, W / 2, avatarCy + avatarR + 122);
+
+  var stats = [
+    { emoji: '▶️', value: data.totalPlays, label: 'تشغيلة' },
+    { emoji: '🎧', value: data.totalFullListens, label: 'سمعها لآخرها' },
+    { emoji: '❤️', value: data.totalLikes, label: 'إعجاب' },
+    { emoji: '🎤', value: data.totalDuets, label: 'دويتو مع تامر' },
+  ];
+  var cellW = 460, cellH = 210, gapX = 40, gapY = 32;
+  var gridTop = avatarCy + avatarR + 190;
+  var startX = W / 2 - cellW - gapX / 2;
+  stats.forEach(function (s, i) {
+    var col = i % 2, row = Math.floor(i / 2);
+    var x = startX + col * (cellW + gapX);
+    var y = gridTop + row * (cellH + gapY);
+    ThShareCard.roundRectPath(ctx, x, y, cellW, cellH, 28);
+    ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.font = '44px ' + FONT;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(s.emoji, x + cellW / 2, y + 66);
+
+    ctx.font = '900 56px ' + FONT;
+    ctx.fillText(String(s.value), x + cellW / 2, y + 132);
+
+    ctx.font = '600 25px ' + FONT;
+    ctx.fillStyle = '#c9c9d6';
+    ctx.fillText(s.label, x + cellW / 2, y + 172);
+  });
+
+  var afterGridY = gridTop + 2 * cellH + gapY + 70;
+
+  if (data.topSongTitle) {
+    ctx.textAlign = 'center';
+    ctx.font = '800 28px ' + FONT;
+    ctx.fillStyle = '#d4af37';
+    ctx.fillText('الأغنية الأكتر استماعًا عندك', W / 2, afterGridY);
+
+    var coverSize = 260, coverX = W / 2 - coverSize / 2, coverY = afterGridY + 30;
+    if (data.topSongCoverUrl) {
+      try {
+        var coverImg = await ThShareCard.loadImage(data.topSongCoverUrl);
+        ThShareCard.drawCoverImage(ctx, coverImg, coverX, coverY, coverSize, coverSize, 26);
+      } catch (e) { /* no cover art - just skip drawing it */ }
+    }
+    ctx.font = '900 40px ' + FONT;
+    ctx.fillStyle = '#fff';
+    ThShareCard.drawWrappedText(ctx, data.topSongTitle, W / 2, coverY + coverSize + 60, 820, 48, 2);
+  }
+
+  ctx.textAlign = 'center';
+  ctx.font = '700 30px ' + FONT;
+  ctx.fillStyle = 'rgba(255,255,255,.65)';
+  ctx.fillText('🎵 th.lexora.vip', W / 2, H - 70);
+
+  return canvas;
 }
 
 // Count up each stat from 0 to its real value instead of just
