@@ -2927,6 +2927,30 @@
     }
 
     var STORAGE_KEY = 'thVoiceAssistantEnabled';
+
+    // Diagnostic trail only - see backend.main_app.models.VoiceAssistantLog's
+    // docstring. One random id per page load so every event from the
+    // same visit/attempt groups together in admin regardless of login
+    // state. Best-effort and silent: a failed log POST must never
+    // affect the assistant itself.
+    var VOICE_LOG_SESSION_ID = Math.random().toString(36).slice(2, 10);
+    function logVoiceEvent(eventType, extra) {
+      try {
+        var payload = { event_type: eventType, session_id: VOICE_LOG_SESSION_ID };
+        if (extra) {
+          if (extra.detail !== undefined) payload.detail = String(extra.detail);
+          if (extra.transcript !== undefined) payload.transcript = String(extra.transcript);
+          if (extra.ms_value !== undefined) payload.ms_value = Math.round(extra.ms_value);
+        }
+        fetch('/player/voice-log/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(function () {});
+      } catch (e) {}
+    }
+
     var COMMAND_WINDOW_MS = 5000;
     // Android/iOS Chrome and Safari don't really support continuous
     // listening - they tear the whole recognition session down right
@@ -3009,9 +3033,21 @@
       }
     }
 
+    // Mirrors every status line onto the browser tab title too, so
+    // switching away to another tab still shows whether it heard you
+    // and what it's doing/replying - restored to whatever the tab title
+    // actually was right before the wake word, once the interaction
+    // ends. Captured lazily (not once at page load) since htmx boosted
+    // navigation changes document.title without a real page load, so
+    // "the title from before this happened" has to be read fresh each
+    // time a fresh interaction starts.
+    var savedDocumentTitle = null;
+
     function setStatus(text) {
       elements();
       if (statusEl) statusEl.textContent = text;
+      if (savedDocumentTitle === null) savedDocumentTitle = document.title;
+      document.title = text;
     }
 
     function showAvatar(text) {
@@ -3023,6 +3059,10 @@
     function hideAvatar() {
       elements();
       if (avatarEl) avatarEl.classList.remove('active');
+      if (savedDocumentTitle !== null) {
+        document.title = savedDocumentTitle;
+        savedDocumentTitle = null;
+      }
     }
 
     function updateButtonsUI() {
@@ -3037,6 +3077,7 @@
       listeningForCommand = true;
       wakeResultIndex = index;
       lastArmedAt = Date.now();
+      logVoiceEvent('WAKE_DETECTED');
       showAvatar('{% translate "أنا هنا... قول أمرك" %}');
       clearTimeout(commandTimer);
       commandTimer = setTimeout(function () {
@@ -3092,6 +3133,10 @@
         return;
       }
       setStatus('{% translate "تمام، بافتحلك صفحتها" %}');
+      // A real navigation is about to set its own tab title - don't let
+      // hideAvatar()'s restore race that and stomp the new page's title
+      // back to whatever it was before this command.
+      savedDocumentTitle = null;
       if (typeof thBoostedNavigate === 'function') {
         thBoostedNavigate(href);
       } else {
@@ -3223,6 +3268,9 @@
         case 'navigate':
           if (!data.page) return false;
           setStatus('{% translate "تمام" %}');
+          // Same reasoning as openCurrentSongPage() - let the real
+          // navigation own the tab title from here.
+          savedDocumentTitle = null;
           if (typeof thBoostedNavigate === 'function') thBoostedNavigate(data.page);
           else window.location.href = data.page;
           return true;
@@ -3256,12 +3304,14 @@
           if (executeIntent(data)) {
             setTimeout(hideAvatar, 900);
           } else {
+            logVoiceEvent('COMMAND_FAILED', { transcript: text, detail: data && data.intent });
             setStatus('{% translate "أووبس، مش لاقيها! جرب تاني" %}');
             setTimeout(hideAvatar, 1400);
           }
         })
         .catch(function () {
           clearTimeout(timeoutId);
+          logVoiceEvent('COMMAND_FAILED', { transcript: text, detail: 'fetch_error' });
           setStatus('{% translate "أووبس، مش لاقيها! جرب تاني" %}');
           setTimeout(hideAvatar, 1400);
         });
@@ -3360,6 +3410,7 @@
         var matched = resolveCommand(candidate);
 
         if (matched) {
+          logVoiceEvent('COMMAND_MATCHED', { transcript: candidate });
           clearTimeout(commandTimer);
           listeningForCommand = false;
           wakeResultIndex = -1;
@@ -3372,11 +3423,13 @@
           // user's real command (see POST_ARM_GRACE_MS's comment) -
           // stay armed and silently ignore it instead of failing or
           // spending an AI-fallback call on likely restart noise.
+          logVoiceEvent('COMMAND_IGNORED_GRACE', { transcript: candidate, ms_value: Date.now() - lastArmedAt });
           continue;
         }
 
         // None of the fixed local patterns recognized it - hand it to
         // the AI fallback instead of failing immediately.
+        logVoiceEvent('COMMAND_AI_FALLBACK', { transcript: candidate });
         clearTimeout(commandTimer);
         listeningForCommand = false;
         wakeResultIndex = -1;
@@ -3397,15 +3450,19 @@
       r.continuous = true;
       r.interimResults = true;
       r.lang = 'ar-EG';
+      var sessionStartedAt = 0;
       r.onstart = function () {
         starting = false;
         lastActivityAt = Date.now();
+        sessionStartedAt = lastActivityAt;
+        logVoiceEvent('RECOGNITION_START');
       };
       r.onresult = function (event) {
         lastActivityAt = Date.now();
         handleResult(event);
       };
       r.onerror = function (e) {
+        logVoiceEvent('RECOGNITION_ERROR', { detail: e.error });
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           enabled = false;
           localStorage.setItem(STORAGE_KEY, '0');
@@ -3417,6 +3474,7 @@
       };
       r.onend = function () {
         starting = false;
+        logVoiceEvent('RECOGNITION_END', { ms_value: Date.now() - sessionStartedAt });
         if (!enabled) return;
         // continuous:true is barely honored on mobile (Android/iOS
         // Chrome and Safari end the session after basically every
@@ -3438,6 +3496,7 @@
         recognition = recognition || createRecognition();
         recognition.start();
       } catch (e) {
+        logVoiceEvent('START_EXCEPTION', { detail: (e && (e.message || e.name)) || 'unknown' });
         // start() can throw synchronously (Chrome's InvalidStateError
         // when called too soon after a stop/end, more likely the more
         // often a session cycles through wake->command->re-arm) - onend
@@ -3472,6 +3531,7 @@
       watchdogInterval = setInterval(function () {
         if (!enabled) return;
         if (Date.now() - lastActivityAt > 20000) {
+          logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt });
           try { if (recognition) recognition.abort(); } catch (e) {}
           recognition = null;
           starting = false;

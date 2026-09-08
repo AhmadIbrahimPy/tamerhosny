@@ -21,7 +21,7 @@ from django.views.decorators.http import require_POST
 
 from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
-from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener
+from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener, VoiceAssistantLog
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.llm_providers import ask_json
 from backend.main_app.shared_utils.gamification import (
@@ -488,6 +488,44 @@ def voice_intent(request):
         'mood': mood,
         'page': page_path,
     })
+
+
+def voice_log(request):
+    """Diagnostic beacon for the voice assistant (see VoiceAssistantLog's
+    docstring) - the browser posts here at each lifecycle event as it
+    happens, purely so a pattern that's invisible server-side otherwise
+    (mobile browsers tearing the whole recognition session down after
+    nearly every utterance) can actually be inspected afterwards, in
+    Django admin, instead of guessed at. Best-effort by design: a
+    malformed or missing field just gets dropped/defaulted rather than
+    erroring, since a failure here must never surface to the user or
+    interrupt the assistant itself.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body or b'{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid JSON body'}, status=400)
+
+    event_type = body.get('event_type')
+    if event_type not in VoiceAssistantLog.EventType.values:
+        return JsonResponse({'error': 'invalid event_type'}, status=400)
+
+    ms_value = body.get('ms_value')
+    ms_value = ms_value if isinstance(ms_value, int) else None
+
+    VoiceAssistantLog.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        client_session_id=str(body.get('session_id') or '')[:32],
+        event_type=event_type,
+        detail=str(body.get('detail') or '')[:255],
+        transcript=str(body.get('transcript') or '')[:300],
+        ms_value=ms_value,
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+    )
+    return JsonResponse({'ok': True})
 
 
 # ---------------------------------------------------------------------------

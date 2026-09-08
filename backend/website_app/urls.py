@@ -29,6 +29,7 @@ urlpatterns = [
     path('player/song-data/', views.song_player_data, name='song-player-data'),
     path('player/voice-search/', views.voice_search_songs, name='voice-search-songs'),
     path('player/voice-intent/', views.voice_intent, name='voice-intent'),
+    path('player/voice-log/', views.voice_log, name='voice-log'),
 
     path('people/', views.people_list, name='people'),
     path('people/<str:slug>/', views.person_detail, name='person-detail'),

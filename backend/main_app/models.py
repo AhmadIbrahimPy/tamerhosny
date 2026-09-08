@@ -491,3 +491,55 @@ class PushSubscription(models.Model):
 
     def __str__(self):
         return f'{self.user or "anonymous"} - {self.endpoint[:40]}...'
+
+
+class VoiceAssistantLog(models.Model):
+    """Diagnostic trail for the site-wide voice assistant (the "TH" wake
+    word - see frontend/website/base.html), written by the browser
+    itself at each lifecycle event as it happens. Mobile browsers barely
+    honor SpeechRecognition's continuous:true - Android/iOS Chrome and
+    Safari tear the whole recognition session down after nearly every
+    utterance and restart it - which is invisible from the server side
+    otherwise; this exists purely to see that restart/error pattern
+    (and what got transcribed around it) after the fact, since it can't
+    be reproduced on demand without the exact device/browser it happened
+    on. Not meant to be permanent telemetry - safe to stop writing to
+    or drop once the mobile behaviour it's tracking is understood.
+    """
+
+    class EventType(models.TextChoices):
+        RECOGNITION_START = 'RECOGNITION_START', 'Recognition session started'
+        RECOGNITION_END = 'RECOGNITION_END', 'Recognition session ended'
+        RECOGNITION_ERROR = 'RECOGNITION_ERROR', 'Recognition error event'
+        START_EXCEPTION = 'START_EXCEPTION', 'recognition.start() threw synchronously'
+        WATCHDOG_RESTART = 'WATCHDOG_RESTART', 'Watchdog forced a restart'
+        WAKE_DETECTED = 'WAKE_DETECTED', 'Wake word detected'
+        COMMAND_MATCHED = 'COMMAND_MATCHED', 'Command matched a local pattern'
+        COMMAND_IGNORED_GRACE = 'COMMAND_IGNORED_GRACE', 'Ignored as post-arm restart noise'
+        COMMAND_AI_FALLBACK = 'COMMAND_AI_FALLBACK', 'Sent to the AI intent fallback'
+        COMMAND_FAILED = 'COMMAND_FAILED', 'No match found anywhere'
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        UserAccount, on_delete=models.SET_NULL, null=True, blank=True, related_name='voice_assistant_logs',
+    )
+    # One random id generated per page load (frontend) - not a login
+    # session - so every event from the same visit/attempt can be
+    # grouped together regardless of whether the visitor is logged in.
+    client_session_id = models.CharField(max_length=32, blank=True)
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    detail = models.CharField(max_length=255, blank=True)
+    transcript = models.CharField(max_length=300, blank=True)
+    # Generic numeric field, meaning depends on event_type: session
+    # duration for RECOGNITION_END, time since the wake word armed for
+    # WAKE_DETECTED/COMMAND_* events, etc. - see where each is written
+    # from in base.html for the exact meaning.
+    ms_value = models.IntegerField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        indexes = [models.Index(fields=['client_session_id', 'created_at'])]
+
+    def __str__(self):
+        return f'{self.get_event_type_display()} - {self.created_at:%Y-%m-%d %H:%M:%S}'
