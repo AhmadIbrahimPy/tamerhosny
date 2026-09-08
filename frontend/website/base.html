@@ -672,6 +672,16 @@
      the explicit window.scrollTo(0, 0) in htmx:afterSettle below is what
      should decide scroll position on every boosted navigation instead. -->
 <body hx-boost="true" hx-target="#th-page-root" hx-select="#th-page-root" hx-swap="outerHTML show:none" hx-indicator="#th-nav-progress">
+  <!-- Applied synchronously, before anything below paints - car mode
+     (song detail page) persists across next/prev via localStorage, but
+     next/prev there is a real full page reload; without this the full
+     (uncar-moded) page would flash on screen for a moment every time
+     before the song page's own JS got around to hiding it. -->
+  <script>
+    try {
+      if (localStorage.getItem('thCarMode') === '1') document.body.classList.add('car-mode');
+    } catch (e) {}
+  </script>
   <div id="th-nav-progress" class="th-nav-progress"></div>
 
   {% include "website/partials/header.html" %}

@@ -451,7 +451,26 @@
        cover art (a plain gradient, not the actual photo) and big
        play/skip controls. Everything else on the page, including the
        lyrics and the wave decoration, is hidden. Persisted across song
-       navigation via localStorage - see toggleCarMode()/applyCarMode(). */
+       navigation via localStorage - see toggleCarMode()/applyCarMode()
+       and base.html's early inline script (avoids a flash of the full
+       page on every song's full-reload next/prev).
+
+       Transitions only animate the on/off toggle actually happening
+       live on screen (clicking the button) - car mode being applied
+       before first paint on a fresh page load means these never get a
+       "from" state to animate out of there, so no flash either way.
+       Only the cover photo/gradient swap and the control sizes animate
+       - .synced-lyrics/.cover-listening-badge/everything below the hero
+       just cut instantly, same as before, since they're off to the side
+       rather than the one thing being stared at while this happens. */
+    .song-cover,
+    .song-cover img,
+    .cover-play-btn,
+    .cover-play-btn i,
+    .cover-skip-btn {
+      transition: opacity .35s ease, width .35s ease, height .35s ease,
+        font-size .35s ease, background .35s ease;
+    }
     body.car-mode .song-container > *:not(.song-hero) {
       display: none !important;
     }
@@ -461,10 +480,18 @@
       display: none !important;
     }
     body.car-mode .song-cover img {
-      display: none;
+      opacity: 0;
     }
     body.car-mode .song-cover {
-      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      /* Calm/muted on purpose, unlike the vibrant accent gradient used
+         elsewhere - this is meant to not grab a driver's attention. */
+      background: linear-gradient(135deg, #3a3d52, #2a2c3d);
+    }
+    /* No .song-cover > qualifier - placeMoreMenu() (JS) moves this
+       between .song-cover and .song-actions depending on width, and car
+       mode's own breakpoint (992px) is wider than that move's (577px). */
+    body.car-mode .song-actions-more-wrap {
+      display: none !important;
     }
     body.car-mode .cover-play-btn {
       width: 88px;
@@ -479,6 +506,9 @@
       height: 58px;
       font-size: 24px;
     }
+  }
+  body.car-mode .th-footer {
+    display: none !important;
   }
 
   /* --- Song Info & Meta --- */
