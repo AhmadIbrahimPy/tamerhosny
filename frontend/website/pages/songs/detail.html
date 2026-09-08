@@ -1922,7 +1922,27 @@
       width: 100%;
       justify-content: flex-start;
     }
-    .streaming-link,
+    .streaming-link {
+      width: 52px;
+      height: 52px;
+      padding: 0;
+      justify-content: center;
+      gap: 0;
+    }
+    .streaming-link img {
+      width: 24px;
+      height: 24px;
+    }
+    /* Just the icon on mobile - name text still in the DOM for a11y/hover
+       title, but visually hidden. */
+    .streaming-link-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
     .original-song-card {
       width: 100%;
     }
@@ -2242,13 +2262,13 @@
         </div>
         <div class="streaming-links">
           {% for link in links %}
-            <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="streaming-link" onclick="thTrack('EXTERNAL_CLICK', 'song', {{ song.pk }}, {platform:'{{ link.platform.platform_name }}', external_link_id:{{ link.pk }}});">
+            <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="streaming-link" title="{{ link.platform.get_platform_name_display }}" onclick="thTrack('EXTERNAL_CLICK', 'song', {{ song.pk }}, {platform:'{{ link.platform.platform_name }}', external_link_id:{{ link.pk }}});">
               {% if link.platform.logo_icon_url %}
                 <img src="{{ link.platform.logo_icon_url }}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'bi bi-box-arrow-up-right'}));">
               {% else %}
                 <i class="bi bi-box-arrow-up-right"></i>
               {% endif %}
-              {{ link.platform.get_platform_name_display }}
+              <span class="streaming-link-label">{{ link.platform.get_platform_name_display }}</span>
             </a>
           {% endfor %}
         </div>
