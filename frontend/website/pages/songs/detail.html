@@ -132,12 +132,16 @@
     max-width: 280px;
   }
 
+  /* overflow isn't hidden here (unlike before) - the mobile "..." menu
+     and its dropdown now live inside this box (see .song-actions-more-wrap
+     below) and need to render outside its bounds without being clipped.
+     The image/fallback get their own border-radius instead to still look
+     clipped to the box's corners. */
   .song-cover {
     position: relative;
     width: 90%;
     max-width: 280px;
     aspect-ratio: 1;
-    overflow: hidden;
     border-radius: 24px;
     background: var(--bg-2);
     border: 2px solid rgba(99, 102, 241, 0.3);
@@ -163,16 +167,27 @@
     }
   }
 
+  /* Groups play/prev/next into one centered row - was just the lone play
+     button before; prev/next (.cover-skip-btn) only ever show once this
+     page's song is the one actually loaded in the persistent player, via
+     .song-hero.is-current-song below. */
+  .cover-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 2;
+  }
+
   /* Matches the global player bar's play button (#playerPlayBtn): solid
      accent circle, dark icon, plain scale-on-hover - was previously a
      purple gradient at a different size per breakpoint (72px desktop,
      44px mobile, then further shrunk by base.html's mobile zoom), so it
      looked inconsistent in scale and style depending on screen size. */
   .cover-play-btn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -185,10 +200,11 @@
     color: #111;
     font-size: 22px;
     transition: transform 0.2s ease;
+    flex-shrink: 0;
   }
 
   .cover-play-btn:hover {
-    transform: translate(-50%, -50%) scale(1.08);
+    transform: scale(1.08);
   }
 
   .cover-play-btn i {
@@ -196,15 +212,41 @@
     margin-left: 2px;
   }
 
+  .cover-skip-btn {
+    display: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .5);
+    border: none;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    flex-shrink: 0;
+    transition: transform .2s ease, background .2s ease;
+  }
+  .cover-skip-btn:hover {
+    background: rgba(0, 0, 0, .7);
+    transform: scale(1.08);
+  }
+  .song-hero.is-current-song .cover-skip-btn {
+    display: flex;
+  }
+
   .song-cover img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 22px;
+    display: block;
   }
 
   .song-cover-fallback {
     width: 100%;
     height: 100%;
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -214,6 +256,75 @@
   .song-cover-fallback i {
     font-size: 64px;
     color: var(--accent);
+  }
+
+  /* Seek bar under the cover - same width as it at every breakpoint (the
+     values below mirror .song-cover's own width rules exactly), scrubbing
+     only actually does anything once this page's song is the one loaded
+     in the player (see the JS: clicks/drags on it before that just start
+     the song instead of seeking nowhere). */
+  .cover-progress {
+    width: 90%;
+    max-width: 280px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, .12);
+    cursor: pointer;
+    position: relative;
+    touch-action: none;
+  }
+  .cover-progress-fill {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  @media (min-width: 992px) {
+    .cover-progress { width: 280px; max-width: none; }
+  }
+  @media (max-width: 992px) and (min-width: 577px) {
+    .cover-progress { width: 220px; }
+  }
+  @media (max-width: 576px) {
+    .cover-progress { width: 90%; max-width: none; }
+  }
+
+  /* The "..." menu trigger + dropdown overlaid on the cover's corner
+     (JS moves .song-actions-more-wrap here on narrow screens only - see
+     placeMoreMenu() - desktop keeps it inline among the other actions,
+     unchanged from before). .song-cover being position:relative (and no
+     longer clipping via overflow) is what lets the dropdown extend below
+     the cover without being cut off. */
+  .song-cover > .song-actions-more-wrap {
+    display: block;
+    position: absolute;
+    top: 10px;
+    inset-inline-end: 10px;
+    z-index: 6;
+  }
+  .song-cover > .song-actions-more-wrap .song-action-more {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    border: none;
+    backdrop-filter: blur(6px);
+  }
+  .song-cover > .song-actions-more-wrap .song-action-more:hover {
+    background: rgba(0, 0, 0, .7);
+  }
+  .song-cover > .song-actions-more-wrap .song-actions-menu {
+    top: calc(100% + 8px);
+    bottom: auto;
+    inset-inline: auto 0;
+    width: max-content;
+    max-width: min(300px, 80vw);
   }
 
   /* --- Song Info & Meta --- */
@@ -469,23 +580,11 @@
   }
 
   @media (max-width: 576px) {
-    /* Anchored to .song-actions (the full-width row), not the narrow
-       wrap around the "..." button - anchoring to the wrap let the
-       panel's own width push past the edge of the screen, and with
-       overflow-x:hidden on body that made it invisible rather than
-       just misplaced. */
-    .song-actions {
-      position: relative;
-    }
-    .song-actions-more-wrap {
-      display: block;
-      text-align: end;
-    }
-    .song-action-more {
-      display: inline-flex;
-      width: 100%;
-      padding: 12px;
-    }
+    /* The trigger + dropdown itself is repositioned onto the cover at
+       this width (see .song-cover > .song-actions-more-wrap and
+       placeMoreMenu() in the JS) - this block only supplies the popup's
+       card styling and the menu-items/info-block's mobile layout, not
+       where it's anchored. */
     .song-actions-menu {
       display: none;
       flex-direction: column;
@@ -730,6 +829,17 @@
     color: inherit;
     cursor: pointer;
     padding: 0;
+  }
+
+  /* Likes stat doubles as the like/unlike toggle now (the old standalone
+     "Like" button in .song-actions is gone) - same red tint the button
+     used to switch to (.song-action-danger) when liked. */
+  .song-stat.is-liked .song-stat-icon {
+    color: #ff6474;
+    background: rgba(255, 100, 116, 0.15);
+  }
+  .song-stat-like:hover .song-stat-icon {
+    color: #ff6474;
   }
 
   /* Always-on pulse so the "listening now" stat reads as live/clickable
@@ -1704,14 +1814,106 @@
 
             <!-- العمود الأول: الصورة وتحت منها الإحصائيات -->
             <div class="song-hero-media">
-                <div class="song-cover">
+                <div class="song-cover" id="songCover">
                     <img src="{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}" alt="{{ song|localized_field:'title' }}">
                     {% if audio_url %}
-                    <button id="audioPlayBtn" class="cover-play-btn" onclick="toggleGlobalSongAudio(this)">
-                        <i class="bi bi-play-fill" id="playIcon"></i>
-                    </button>
+                    <div class="cover-controls">
+                        <button type="button" class="cover-skip-btn cover-skip-prev" onclick="playPrevious()" aria-label="{% translate 'السابق' %}">
+                            <i class="bi bi-skip-start-fill"></i>
+                        </button>
+                        <button id="audioPlayBtn" class="cover-play-btn" onclick="toggleGlobalSongAudio(this)">
+                            <i class="bi bi-play-fill" id="playIcon"></i>
+                        </button>
+                        <button type="button" class="cover-skip-btn cover-skip-next" onclick="playNext()" aria-label="{% translate 'التالي' %}">
+                            <i class="bi bi-skip-end-fill"></i>
+                        </button>
+                    </div>
                     {% endif %}
+
+                    <!-- Repositioned onto the cover's corner on narrow screens
+                         by placeMoreMenu() in the JS - lives inline among
+                         .song-actions' other buttons on wider ones, unchanged
+                         from before. -->
+                    <div class="song-actions-more-wrap">
+                        <button type="button" class="song-action song-action-secondary song-action-more" onclick="toggleSongActionsMenu(this)" aria-label="{% translate 'المزيد' %}" aria-expanded="false">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <div class="song-actions-menu" id="songActionsMenu">
+                            <div class="song-actions-menu-info">
+                                <div class="song-actions-menu-info-row">
+                                    <span class="song-type">{% if song.album %}{% translate "أغنية من ألبوم" %}{% else %}{% translate "أغنية" %}{% endif %}</span>
+                                </div>
+                                {% if song.album or song.release_year or song.duration_seconds %}
+                                <div class="song-actions-menu-info-row song-info-row">
+                                    {% if song.album %}
+                                    <span class="song-info-item"><i class="bi bi-disc"></i> <a href="/albums/{{ song.album.slug }}/">{{ song.album|localized_field:'title' }}</a></span>
+                                    {% endif %}
+                                    {% if song.release_year %}
+                                    <span class="song-info-item"><i class="bi bi-calendar3"></i> {{ song.release_year }}</span>
+                                    {% endif %}
+                                    {% if song.duration_seconds %}
+                                    <span class="song-info-item"><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% if not duet or duet.is_public %}
+                                <div class="song-actions-menu-info-row song-share">
+                                    <span class="song-share-label">{% translate "مشاركة" %}</span>
+                                    <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+                                    <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </a>
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
+                                        <i class="bi bi-facebook"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <button type="button" class="song-actions-menu-item" onclick="showPlaylistModal()">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>{% translate "قائمة التشغيل" %}</span>
+                            </button>
+
+                            {% if is_duet_owner %}
+                            <button type="button" class="song-actions-menu-item" id="togglePrivacyBtn" data-pk="{{ duet.pk }}">
+                                {% if duet.is_public %}
+                                    <i class="bi bi-lock-fill"></i> <span>{% translate "خليها خاصة" %}</span>
+                                {% else %}
+                                    <i class="bi bi-globe"></i> <span>{% translate "خليها عامة" %}</span>
+                                {% endif %}
+                            </button>
+                            {% endif %}
+
+                            {% if song.lyric_segments.exists %}
+                            <button type="button" class="song-actions-menu-item" onclick="showLyricsModal()">
+                                <i class="bi bi-file-text"></i>
+                                <span>{% translate "الكلمات" %}</span>
+                            </button>
+
+                            {% if not duet %}
+                            <button type="button" class="song-actions-menu-item" onclick="showRemixModal()">
+                                <i class="bi bi-music-note-beamed"></i>
+                                <span>{% translate "ريمكس" %}</span>
+                            </button>
+
+                            <a href="/sing-with-tamer/{{ song.slug }}/" class="song-actions-menu-item">
+                                <i class="bi bi-mic-fill"></i>
+                                <span>{% translate "غني مع تامر" %}</span>
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
+
+                {% if audio_url %}
+                <div class="cover-progress" id="coverProgress">
+                    <div class="cover-progress-fill" id="coverProgressFill"></div>
+                </div>
+                {% endif %}
 
                 <!-- تم نقل الإحصائيات هنا لتكون تحت الصورة مباشرة -->
                 <div class="song-stats">
@@ -1722,6 +1924,15 @@
                             <div class="song-stat-label">{% translate "تشغيل" %}</div>
                         </div>
                     </div>
+                    {% if not duet %}
+                    <button type="button" class="song-stat song-stat-clickable song-stat-like{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
+                        <div class="song-stat-icon"><i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i></div>
+                        <div>
+                            <div class="song-stat-value" data-like-count="{{ like_count }}">{{ like_count }}</div>
+                            <div class="song-stat-label">{% translate "إعجاب" %}</div>
+                        </div>
+                    </button>
+                    {% else %}
                     <div class="song-stat">
                         <div class="song-stat-icon"><i class="bi bi-heart"></i></div>
                         <div>
@@ -1729,6 +1940,7 @@
                             <div class="song-stat-label">{% translate "إعجاب" %}</div>
                         </div>
                     </div>
+                    {% endif %}
                     <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}">
                         <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
                         <div>
@@ -1850,88 +2062,13 @@
                 </div>
                 {% endif %}
 
-                <div class="song-actions">
-                    {% if not duet %}
-                    <button type="button" class="song-action song-action-secondary{% if is_liked %} song-action-danger{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}">
-                        <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
-                        <span>{% if is_liked %}{% translate "أعجبتني" %}{% else %}{% translate "أعجبني" %}{% endif %}</span>
-                    </button>
-                    {% endif %}
-
-                    <button type="button" class="song-action song-action-secondary" onclick="showPlaylistModal()">
-                        <i class="bi bi-plus-lg"></i>
-                        <span>{% translate "قائمة التشغيل" %}</span>
-                    </button>
-
-                    <div class="song-actions-more-wrap">
-                        <button type="button" class="song-action song-action-secondary song-action-more" onclick="toggleSongActionsMenu(this)" aria-label="{% translate 'المزيد' %}" aria-expanded="false">
-                            <i class="bi bi-three-dots"></i>
-                        </button>
-                        <div class="song-actions-menu" id="songActionsMenu">
-                            <div class="song-actions-menu-info">
-                                <div class="song-actions-menu-info-row">
-                                    <span class="song-type">{% if song.album %}{% translate "أغنية من ألبوم" %}{% else %}{% translate "أغنية" %}{% endif %}</span>
-                                </div>
-                                {% if song.album or song.release_year or song.duration_seconds %}
-                                <div class="song-actions-menu-info-row song-info-row">
-                                    {% if song.album %}
-                                    <span class="song-info-item"><i class="bi bi-disc"></i> <a href="/albums/{{ song.album.slug }}/">{{ song.album|localized_field:'title' }}</a></span>
-                                    {% endif %}
-                                    {% if song.release_year %}
-                                    <span class="song-info-item"><i class="bi bi-calendar3"></i> {{ song.release_year }}</span>
-                                    {% endif %}
-                                    {% if song.duration_seconds %}
-                                    <span class="song-info-item"><i class="bi bi-clock"></i> {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}</span>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if not duet or duet.is_public %}
-                                <div class="song-actions-menu-info-row song-share">
-                                    <span class="song-share-label">{% translate "مشاركة" %}</span>
-                                    <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
-                                        <i class="bi bi-link-45deg"></i>
-                                    </button>
-                                    <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
-                                        <i class="bi bi-whatsapp"></i>
-                                    </a>
-                                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
-                                        <i class="bi bi-facebook"></i>
-                                    </a>
-                                </div>
-                                {% endif %}
-                            </div>
-
-                            {% if is_duet_owner %}
-                            <button type="button" class="song-actions-menu-item" id="togglePrivacyBtn" data-pk="{{ duet.pk }}">
-                                {% if duet.is_public %}
-                                    <i class="bi bi-lock-fill"></i> <span>{% translate "خليها خاصة" %}</span>
-                                {% else %}
-                                    <i class="bi bi-globe"></i> <span>{% translate "خليها عامة" %}</span>
-                                {% endif %}
-                            </button>
-                            {% endif %}
-
-                            {% if song.lyric_segments.exists %}
-                            <button type="button" class="song-actions-menu-item" onclick="showLyricsModal()">
-                                <i class="bi bi-file-text"></i>
-                                <span>{% translate "الكلمات" %}</span>
-                            </button>
-
-                            {% if not duet %}
-                            <button type="button" class="song-actions-menu-item" onclick="showRemixModal()">
-                                <i class="bi bi-music-note-beamed"></i>
-                                <span>{% translate "ريمكس" %}</span>
-                            </button>
-
-                            <a href="/sing-with-tamer/{{ song.slug }}/" class="song-actions-menu-item">
-                                <i class="bi bi-mic-fill"></i>
-                                <span>{% translate "غني مع تامر" %}</span>
-                            </a>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                <!-- Empty on load - placeMoreMenu() (JS) moves the
+                     trigger+menu (currently rendered inside .song-cover,
+                     see songCover above) in here instead on wide screens,
+                     where it flows inline among these other pill buttons
+                     via display:contents. Narrow screens leave it on the
+                     cover untouched. -->
+                <div class="song-actions"></div>
 
                 <!-- Synchronized Lyrics Display -->
                 {% if song.lyric_segments.exists %}
@@ -2414,6 +2551,31 @@
       const moreBtn = wrap.querySelector('.song-action-more');
       if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
     }
+  });
+
+  // The "..." trigger + its dropdown are written into the markup inside
+  // .song-cover (see songCover) - on wide screens it belongs inline among
+  // .song-actions' other pill buttons instead (matching how this worked
+  // before), so this moves the one DOM node between the two containers
+  // rather than keeping two separate copies in sync. CSS alone can't do
+  // this (nothing lets a descendant of one box render as a child of an
+  // unrelated one), and .song-cover no longer clips overflow specifically
+  // so the dropdown isn't cut off while it (briefly, before this runs, or
+  // on a very old browser where matchMedia is missing) lives there.
+  function placeMoreMenu() {
+    const wrap = document.querySelector('.song-actions-more-wrap');
+    const cover = document.getElementById('songCover');
+    const actions = document.querySelector('.song-actions');
+    if (!wrap || !cover || !actions) return;
+    const wide = window.matchMedia('(min-width: 577px)').matches;
+    const target = wide ? actions : cover;
+    if (wrap.parentElement !== target) target.appendChild(wrap);
+  }
+  placeMoreMenu();
+  let placeMoreMenuResizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(placeMoreMenuResizeTimer);
+    placeMoreMenuResizeTimer = setTimeout(placeMoreMenu, 150);
   });
 
   window.showRemixModal = function () {
@@ -3484,22 +3646,22 @@
 
     const songId = button.dataset.songId;
     const icon = button.querySelector('i');
-    const text = button.querySelector('span');
     const likeCountElements = document.querySelectorAll('[data-like-count]');
-    const oldLiked = button.classList.contains('song-action-danger');
+    // Liked state now lives on the stat itself (is-liked) - the old
+    // standalone "Like" button (song-action-danger, plus a "أعجبني"/
+    // "أعجبتني" label swap on a <span> this button doesn't have) is gone;
+    // the icon fill communicates state on its own.
+    const oldLiked = button.classList.contains('is-liked');
 
-    if (oldLiked) {
-      button.classList.remove('song-action-danger');
-      icon.classList.remove('bi-heart-fill');
-      icon.classList.add('bi-heart');
-      text.textContent = '{% translate "إعجاب" %}';
-    } else {
-      button.classList.add('song-action-danger');
-      icon.classList.remove('bi-heart');
-      icon.classList.add('bi-heart-fill');
-      text.textContent = '{% translate "أعجبتني" %}';
+    function applyState(liked) {
+      button.classList.toggle('is-liked', liked);
+      if (icon) {
+        icon.classList.toggle('bi-heart-fill', liked);
+        icon.classList.toggle('bi-heart', !liked);
+      }
     }
 
+    applyState(!oldLiked);
     likeCountElements.forEach(function (element) {
       const current = parseInt(element.textContent, 10) || 0;
       element.textContent = Math.max(0, current + (oldLiked ? -1 : 1));
@@ -3520,18 +3682,7 @@
       })
       .catch(function (error) {
         console.error('Error toggling favorite:', error);
-        // Rollback UI
-        if (oldLiked) {
-          button.classList.add('song-action-danger');
-          icon.classList.remove('bi-heart');
-          icon.classList.add('bi-heart-fill');
-          text.textContent = '{% translate "أعجبتني" %}';
-        } else {
-          button.classList.remove('song-action-danger');
-          icon.classList.remove('bi-heart-fill');
-          icon.classList.add('bi-heart');
-          text.textContent = '{% translate "إعجاب" %}';
-        }
+        applyState(oldLiked);
         likeCountElements.forEach(function (element) {
           const current = parseInt(element.textContent, 10) || 0;
           element.textContent = Math.max(0, current + (oldLiked ? 1 : -1));
@@ -3747,6 +3898,7 @@
           // Song changed away from this page's song - disconnect socket
           disconnectListenerSocket();
         }
+        if (typeof updateCurrentSongClass === 'function') updateCurrentSongClass();
       };
       document.addEventListener('songChanged', onSongChanged);
 
@@ -3800,6 +3952,50 @@
       };
       document.addEventListener('audioPlayPause', onAudioPlayPause);
 
+      // Prev/next skip buttons on the cover (see .cover-skip-btn) only
+      // show up once this page's song is the one actually loaded in the
+      // player - is-current-song is deliberately separate from is-playing
+      // above (which only tracks play vs pause): skipping should still
+      // work while paused, not just while actively playing.
+      const songHero = document.getElementById('songHero');
+      function updateCurrentSongClass() {
+        if (songHero) songHero.classList.toggle('is-current-song', Number(currentSongId) === songId);
+      }
+      updateCurrentSongClass();
+
+      // Seek bar under the cover - mirrors base.html's #mobilePlayerProgress
+      // click-to-seek, plus pointer-drag, scoped to this page's own song.
+      const coverProgress = document.getElementById('coverProgress');
+      const coverProgressFill = document.getElementById('coverProgressFill');
+      function updateCoverProgress() {
+        if (!coverProgressFill || !globalAudio.duration || Number(currentSongId) !== songId) return;
+        const percent = Math.min(100, Math.max(0, (globalAudio.currentTime / globalAudio.duration) * 100));
+        coverProgressFill.style.width = percent + '%';
+      }
+      const onCoverTimeUpdate = function () { updateCoverProgress(); };
+      globalAudio.addEventListener('timeupdate', onCoverTimeUpdate);
+
+      let isDraggingCoverProgress = false;
+      function seekCoverProgress(clientX) {
+        if (!coverProgress || !globalAudio.duration || Number(currentSongId) !== songId) return;
+        const rect = coverProgress.getBoundingClientRect();
+        const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        globalAudio.currentTime = ratio * globalAudio.duration;
+        updateCoverProgress();
+      }
+      if (coverProgress) {
+        coverProgress.addEventListener('pointerdown', function (e) {
+          isDraggingCoverProgress = true;
+          coverProgress.setPointerCapture(e.pointerId);
+          seekCoverProgress(e.clientX);
+        });
+        coverProgress.addEventListener('pointermove', function (e) {
+          if (isDraggingCoverProgress) seekCoverProgress(e.clientX);
+        });
+        coverProgress.addEventListener('pointerup', function () { isDraggingCoverProgress = false; });
+        coverProgress.addEventListener('pointercancel', function () { isDraggingCoverProgress = false; });
+      }
+
       // A page refresh restores playback from localStorage (see
       // restorePlayerState in base.html) on a ~300ms delay, after this
       // song's own audioPlayPause listener above is already registered -
@@ -3823,6 +4019,8 @@
           const hero = document.getElementById('songHero');
           if (hero) hero.classList.add('is-playing');
         }
+        updateCurrentSongClass();
+        updateCoverProgress();
       }, 600);
 
       const onSongEnded = function () {
@@ -3857,6 +4055,7 @@
           document.removeEventListener('audioLoading', onAudioLoading);
           document.removeEventListener('audioPlayPause', onAudioPlayPause);
           globalAudio.removeEventListener('ended', onSongEnded);
+          globalAudio.removeEventListener('timeupdate', onCoverTimeUpdate);
           disconnectListenerSocket();
           if (leaderboardSocket) leaderboardSocket.close();
         });
