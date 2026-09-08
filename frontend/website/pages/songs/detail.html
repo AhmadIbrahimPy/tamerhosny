@@ -1991,6 +1991,11 @@
                                     {% endif %}
                                 </div>
                                 {% endif %}
+                                {% if song.album.record_label %}
+                                <div class="song-actions-menu-info-row song-info-row">
+                                    <span class="song-info-item"><i class="bi bi-building"></i> {{ song.album.record_label.name }}</span>
+                                </div>
+                                {% endif %}
                                 <div class="song-actions-menu-info-row song-info-row">
                                     <span class="song-info-item"><i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i> <span data-like-count="{{ like_count }}">{{ like_count }}</span> {% translate "إعجاب" %}</span>
                                     <span class="song-info-item"><i class="bi bi-play-circle"></i> <span data-play-count="{{ song.play_count }}">{{ song.play_count }}</span> {% translate "تشغيل" %}</span>
