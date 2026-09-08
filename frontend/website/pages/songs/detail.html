@@ -348,20 +348,25 @@
   /* "Listening now" badge - same corner treatment as the "..." button
      above, mirrored to the opposite corner. Icon and count sit side by
      side (not stacked, unlike the other .song-stat entries) since this
-     one has to fit in a small pill on the cover itself. Hidden via
-     .song-hero-media .song-stat[hidden] (further down) while nobody's
+     one has to fit in a small rounded rectangle on the cover itself.
+     Selector needs .song-hero-media in it to out-specificity
+     .song-hero-media .song-stat's flex-direction:column further down -
+     without it that rule wins the tie and stacks icon/count vertically.
+     Hidden via .song-hero-media .song-stat[hidden] while nobody's
      listening. */
-  .song-cover > .cover-listening-badge {
+  .song-hero-media .song-cover > .cover-listening-badge {
     display: flex;
+    flex-direction: row;
     align-items: center;
+    text-align: start;
     gap: 6px;
     position: absolute;
     top: 10px;
     inset-inline-start: 10px;
     z-index: 6;
-    height: 36px;
-    padding: 0 12px;
-    border-radius: 18px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
     background: rgba(0, 0, 0, .5);
     color: #fff;
     border: none;
@@ -370,7 +375,7 @@
     font-weight: 750;
     cursor: pointer;
   }
-  .song-cover > .cover-listening-badge:hover {
+  .song-hero-media .song-cover > .cover-listening-badge:hover {
     background: rgba(0, 0, 0, .7);
   }
   .cover-listening-badge .song-stat-icon-pulse {
@@ -2032,7 +2037,6 @@
                 </div>
                 {% endif %}
 
-                <!-- تم نقل الإحصائيات هنا لتكون تحت الصورة مباشرة -->
                 <div class="song-stats">
                     {% if not duet %}
                     <button type="button" class="song-stat song-stat-clickable song-stat-like{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
