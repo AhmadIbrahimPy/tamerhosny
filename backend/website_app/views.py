@@ -395,15 +395,19 @@ def song_detail(request, slug, duet_id=None):
 
     # Precomputed (see main_app.shared_utils.song_recommendations) -
     # collaborative where enough people have listened to both, content
-    # overlap otherwise. Falls back to the random other_songs pick above
-    # for a song that hasn't been through a recompute yet (freshly added,
-    # or the nightly job hasn't run since).
+    # overlap otherwise. Falls back to its own random pick (not the
+    # other_songs one above, a separate query) for a song that hasn't
+    # been through a recompute yet (freshly added, or the nightly job
+    # hasn't run since) - reusing other_songs verbatim here made both
+    # sliders show the exact same songs whenever this fell back.
     recommended_songs = [
         row.similar_song for row in
         SongSimilarity.objects.filter(song=song).select_related('similar_song__album').order_by('rank')[:12]
     ]
     if not recommended_songs:
-        recommended_songs = other_songs
+        recommended_songs = list(
+            Song.visible_queryset(Song.objects.exclude(pk=song.pk).select_related('album')).order_by('?')[:12]
+        )
 
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     all_credits = song.credits.select_related('person').all()
