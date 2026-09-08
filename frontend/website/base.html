@@ -2918,6 +2918,7 @@
     var enabled = localStorage.getItem(STORAGE_KEY) === '1';
     var starting = false;
     var listeningForCommand = false;
+    var wakeResultIndex = -1;
     var commandTimer = null;
     var restartTimer = null;
 
@@ -2981,12 +2982,14 @@
       });
     }
 
-    function armCommandWindow() {
+    function armCommandWindow(index) {
       listeningForCommand = true;
+      wakeResultIndex = index;
       showAvatar('{% translate "أنا هنا... قول أمرك" %}');
       clearTimeout(commandTimer);
       commandTimer = setTimeout(function () {
         listeningForCommand = false;
+        wakeResultIndex = -1;
         hideAvatar();
       }, COMMAND_WINDOW_MS);
     }
@@ -3092,15 +3095,35 @@
         if (!transcript) continue;
 
         if (!listeningForCommand) {
-          if (WAKE_WORD_RE.test(transcript)) armCommandWindow();
+          if (WAKE_WORD_RE.test(transcript)) armCommandWindow(i);
+          continue;
+        }
+
+        // The engine doesn't necessarily start a new result index for
+        // the command - if there's no long-enough pause after the wake
+        // word, it keeps extending this same index's transcript as the
+        // speaker keeps talking, and finalizes the whole thing (wake
+        // word + command) together. So a result at the index the wake
+        // word was first heard at isn't automatically just that word
+        // settling - strip the wake phrase back out and see what's left.
+        var candidate = (i === wakeResultIndex) ? transcript.replace(WAKE_WORD_RE, ' ').trim() : transcript;
+
+        if (!candidate) {
+          // Nothing beyond the wake word yet - not a failed command,
+          // just not said yet. A final result here means *this*
+          // utterance is done (it really was wake-word-only); a
+          // command said next arrives as its own index and is handled
+          // above like any other while listeningForCommand is true.
+          if (result.isFinal) wakeResultIndex = -1;
           continue;
         }
 
         if (!result.isFinal) continue;
 
-        var matched = resolveCommand(transcript);
+        var matched = resolveCommand(candidate);
         clearTimeout(commandTimer);
         listeningForCommand = false;
+        wakeResultIndex = -1;
         if (!matched) setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
         setTimeout(hideAvatar, matched ? 900 : 1400);
       }
@@ -3147,6 +3170,7 @@
       clearTimeout(restartTimer);
       clearTimeout(commandTimer);
       listeningForCommand = false;
+      wakeResultIndex = -1;
       hideAvatar();
       if (recognition) {
         try { recognition.stop(); } catch (e) {}
