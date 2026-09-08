@@ -1323,11 +1323,12 @@
     gap: 16px;
     overflow-x: auto;
     padding-bottom: 8px;
-    scrollbar-width: thin;
+    scrollbar-width: none;
     touch-action: pan-x pan-y;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
+  .credits-wrap::-webkit-scrollbar { display: none; }
 
   .credit-card {
     width: 110px;
@@ -1430,6 +1431,9 @@
   .slider-control:hover { color: var(--accent); border-color: var(--accent); }
   .slider-control-prev { inset-inline-start: -14px; }
   .slider-control-next { inset-inline-end: -14px; }
+  /* Beats .slider-control's own display:flex above (same specificity,
+     author rules win source-order ties over the UA [hidden] default). */
+  .slider-control[hidden] { display: none; }
 
   /* --- Modals Customization --- */
   .remix-modal .modal-content,
@@ -2315,18 +2319,22 @@
         <div class="song-section-head">
           <h2 class="song-section-title"><i class="bi bi-people"></i> {% translate "المشاركون" %}</h2>
         </div>
-        <div class="credits-wrap">
-          {% for entry in credits %}
-            <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="credit-card">
-              {% if entry.person.profile_image %}
-                <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="credit-avatar">
-              {% else %}
-                <span class="credit-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
-              {% endif %}
-              <div class="credit-name">{{ entry.person|localized_field:'full_name' }}</div>
-              <div class="credit-role">{{ entry.roles|join:"، " }}</div>
-            </a>
-          {% endfor %}
+        <div class="slider-wrap">
+          <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
+          <div class="credits-wrap">
+            {% for entry in credits %}
+              <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="credit-card">
+                {% if entry.person.profile_image %}
+                  <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="credit-avatar">
+                {% else %}
+                  <span class="credit-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+                {% endif %}
+                <div class="credit-name">{{ entry.person|localized_field:'full_name' }}</div>
+                <div class="credit-role">{{ entry.roles|join:"، " }}</div>
+              </a>
+            {% endfor %}
+          </div>
+          <button type="button" class="slider-control slider-control-next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
         </div>
       </section>
     {% endif %}
@@ -3507,7 +3515,8 @@
     {% endfor %}
   ];
 
-  // Set otherSongsList for base.html compatibility
+  // Set otherSongsList for base.html compatibility - this song's own
+  // real album/queue, never a random one (see playFromQueue in base.html).
   window.otherSongsList = window.albumSongsList.map(function(song) {
     return {
       songId: song.songId,
@@ -3517,6 +3526,7 @@
       link: song.link
     };
   });
+  window.otherSongsListIsRandom = false;
 
   // Same album/artist for every track in this list, so it's safe to
   // compute once and reuse for whichever one gets played next/prev.
@@ -3533,7 +3543,10 @@
     const song = window.albumSongsList[index];
     if (song && song.link) {
       if (song.url && typeof playAudio === 'function') {
-        playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, albumSongsArtist, albumSongsAlbum, false, song.songId, albumSongsAlbumLink);
+        // Always this song's own real album/queue, never a random one -
+        // explicitly false so a random flag from browsing elsewhere
+        // doesn't linger into this page's own next/prev.
+        playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, albumSongsArtist, albumSongsAlbum, false, song.songId, albumSongsAlbumLink, false);
       }
       window.location.href = song.link;
     }
@@ -3585,6 +3598,7 @@
       image: songImage,
       songId: {{ song.pk }},
       url: songUrl,
+      isRandomQueue: false,
       otherSongs: [
         {% for song in album_songs %}
         {
@@ -3618,7 +3632,7 @@
     localStorage.setItem('currentSongData', JSON.stringify(songData));
 
     if (typeof toggleAudio === 'function') {
-      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink);
+      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, false);
     } else {
       console.error('Global audio player not available');
     }
@@ -4324,7 +4338,7 @@
 
     // Sliders scroll controls
     document.querySelectorAll('.slider-wrap').forEach(function (wrapper) {
-      const track = wrapper.querySelector('.slider-track');
+      const track = wrapper.querySelector('.slider-track, .credits-wrap');
       const prev = wrapper.querySelector('.slider-control-prev');
       const next = wrapper.querySelector('.slider-control-next');
       if (!track) return;
@@ -4341,6 +4355,25 @@
           track.scrollBy({ left: rtl ? -360 : 360, behavior: 'smooth' });
         });
       }
+
+      // Only worth showing a scroll button when there's actually
+      // somewhere left to scroll to in that direction.
+      const updateControls = function () {
+        const rtl = document.documentElement.dir === 'rtl';
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        const canScroll = maxScroll > 1;
+        // Math.abs() because RTL scrollLeft ranges negative in some
+        // browsers (e.g. Chrome) and positive in others - this reads the
+        // same "how far from the start" distance either way.
+        const pos = Math.abs(track.scrollLeft);
+        const atStart = pos <= 1;
+        const atEnd = pos >= maxScroll - 1;
+        if (prev) prev.hidden = !canScroll || (rtl ? atEnd : atStart);
+        if (next) next.hidden = !canScroll || (rtl ? atStart : atEnd);
+      };
+      updateControls();
+      track.addEventListener('scroll', updateControls);
+      window.addEventListener('resize', updateControls);
     });
   });
 

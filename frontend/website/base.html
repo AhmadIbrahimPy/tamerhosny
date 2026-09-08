@@ -921,7 +921,7 @@
       playerBar.style.display = onOwnSongPage ? 'none' : 'block';
     }
 
-    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
+    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue) {
       // Check if this is the same song - don't reset position
       let isSameSong = false;
       if (globalAudio.src) {
@@ -1001,7 +1001,12 @@
         album: album || '',
         image: image && image[0] ? image[0] : '',
         songId: songId || null,
-        url: url || ''
+        url: url || '',
+        // Always overwritten (never preserved from existingData) - a
+        // stale true here is exactly what made /player/ keep showing a
+        // song's album tracklist after playback had actually moved on
+        // to an unrelated random queue.
+        isRandomQueue: !!isRandomQueue
       };
       localStorage.setItem('currentSongData', JSON.stringify(songData));
       
@@ -1080,7 +1085,7 @@
       });
     }
 
-    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink) {
+    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue) {
       if (globalAudio && globalAudio.src) {
         // Check if current audio is the same song (compare URLs more loosely)
         const currentUrl = globalAudio.src;
@@ -1101,7 +1106,7 @@
         }
       }
       // Different song or no audio - play new song
-      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink);
+      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue);
     }
 
     // Play-on-hover affordance for every song thumbnail grid (.th-card-song)
@@ -1759,19 +1764,26 @@
       return (currentIndex + step + list.length) % list.length;
     }
 
-    function playFromQueue(list, index, step) {
+    // isRandomQueue: whether `list` is a not-tied-to-any-album random
+    // pool - undefined means "unknown, keep whatever the existing queue
+    // already was" (playAdjacentSong doesn't rebuild the list, so it
+    // doesn't know either way; fetchFallbackQueue and an album's own
+    // list both know for certain and say so explicitly).
+    function playFromQueue(list, index, step, isRandomQueue) {
       window.otherSongsList = list;
+      if (isRandomQueue !== undefined) window.otherSongsListIsRandom = isRandomQueue;
+      const effectiveRandom = !!window.otherSongsListIsRandom;
       const targetIndex = pickAdjacentIndex(list, index, step);
 
       // On the player page, its own function keeps richer page state in sync.
       if (typeof playSongFromList === 'function') {
-        playSongFromList(targetIndex);
+        playSongFromList(targetIndex, effectiveRandom);
         return;
       }
 
       const song = list[targetIndex];
       const btn = currentPlayBtn || document.getElementById('playerPlayBtn');
-      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link || null, song.artist, song.album, false, song.songId, song.albumLink);
+      playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link || null, song.artist, song.album, false, song.songId, song.albumLink, effectiveRandom);
     }
 
     // No queue set up yet (e.g. next/prev pressed outside the player page
@@ -1791,7 +1803,7 @@
           if (data.error || !data.otherSongs || data.otherSongs.length === 0) return;
           const index = data.otherSongs.findIndex(function(song) { return song.songId == currentSongId; });
           if (index === -1) return;
-          playFromQueue(data.otherSongs, index, step);
+          playFromQueue(data.otherSongs, index, step, true);
         })
         .catch(function() {});
     }

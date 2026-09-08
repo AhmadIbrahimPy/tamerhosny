@@ -1012,6 +1012,8 @@ thOnReady(function() {
 
   // Load song data from localStorage
   if (currentSongData.title) {
+    // See playSongFromList's comment - kept in sync for the same reason.
+    window.otherSongsListIsRandom = !!currentSongData.isRandomQueue;
     // If songId is missing but we have other data, try to fetch from API
     if (!currentSongData.songId && currentSongData.otherSongs && currentSongData.otherSongs.length > 0) {
       const firstSong = currentSongData.otherSongs[0];
@@ -1272,6 +1274,10 @@ function fetchSongDataFromAPI(songId) {
   const params = new URLSearchParams();
   if (songId) params.set('song_id', songId);
   if (currentSongData.songId) params.set('current_song_id', currentSongData.songId);
+  // Otherwise a song that happens to have an album gets that album's
+  // tracklist here even when playback actually got here via shuffle/a
+  // random queue elsewhere on the site - not what's really playing.
+  if (currentSongData.isRandomQueue) params.set('random', '1');
   const url = `/player/song-data/?${params.toString()}`;
 
   fetch(url)
@@ -1288,6 +1294,8 @@ function fetchSongDataFromAPI(songId) {
       ...currentSongData,
       ...data
     };
+    // See playSongFromList's comment - kept in sync for the same reason.
+    window.otherSongsListIsRandom = !!currentSongData.isRandomQueue;
     localStorage.setItem('currentSongData', JSON.stringify(currentSongData));
 
     // Reload the page data with the new data (without triggering another API call)
@@ -1346,9 +1354,14 @@ function loadOtherSongs(songs, activeSongId = null) {
   window.otherSongsList = songs;
 }
 
-function playSongFromList(index) {
+function playSongFromList(index, isRandomQueue) {
   const song = window.otherSongsList[index];
   if (!song) return;
+
+  // isRandomQueue undefined (e.g. clicking a track directly in the
+  // shown tracklist, rather than via next/prev) means "stay in whatever
+  // mode this list already was".
+  const effectiveRandom = isRandomQueue !== undefined ? isRandomQueue : !!currentSongData.isRandomQueue;
 
   // Update currentSongData with the selected song
   currentSongData = {
@@ -1359,8 +1372,13 @@ function playSongFromList(index) {
     image: song.image,
     url: song.url,
     link: song.link,
-    otherSongs: window.otherSongsList
+    otherSongs: window.otherSongsList,
+    isRandomQueue: effectiveRandom
   };
+  // Kept in sync with currentSongData.isRandomQueue - base.html's
+  // playFromQueue (used for next/prev) reads this one, not
+  // currentSongData, to decide the mode of an ongoing queue.
+  window.otherSongsListIsRandom = effectiveRandom;
 
   // Save to localStorage
   localStorage.setItem('currentSongData', JSON.stringify(currentSongData));
