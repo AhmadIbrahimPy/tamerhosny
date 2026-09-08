@@ -1532,7 +1532,15 @@
        persistent audio bar. See thToggleVoiceAssistant()'s script below. -->
   <div id="thVoiceAssistant" class="th-voice-assistant" aria-live="polite">
     <div class="th-voice-avatar">
-      <img id="thVoiceAvatarGif" src="{% static 'website/img/voice-assistant.gif' %}" alt=""
+      <!-- Deliberately a plain path, not the static template tag:
+           ManifestStaticFilesStorage (see config/settings.py) raises a
+           hard error at render time - for every page, since this markup
+           lives in base.html - if the referenced file isn't actually
+           present under static/ yet. Once the real GIF is added at
+           static/website/img/voice-assistant.gif and collectstatic has
+           run, this plain path still resolves fine; onerror below
+           covers the file missing either way. -->
+      <img id="thVoiceAvatarGif" src="/static/website/img/voice-assistant.gif" alt=""
            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
       <div class="th-voice-avatar-fallback"><i class="bi bi-mic-fill"></i></div>
     </div>
