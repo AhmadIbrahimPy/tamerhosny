@@ -1247,7 +1247,13 @@
       slider.scrollBy({ left: delta, behavior: 'smooth' });
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // Wires up each hero video's poster-fade-out and unmute button. Has
+    // to re-run after every boosted navigation, not just the real page
+    // load - #th-page-root's content (a movie/album/concert page's own
+    // .th-hero-video included) is swapped in fresh by htmx without
+    // 'DOMContentLoaded' ever firing again, so a video swapped in later
+    // would otherwise keep playing behind a poster that never fades.
+    function initHeroVideos() {
       document.querySelectorAll('.th-hero-video').forEach(function (video) {
         video.addEventListener('playing', function () {
           var poster = video.parentElement.querySelector('.th-hero-poster-box');
@@ -1259,7 +1265,7 @@
         // button rather than trying (and silently failing) to play with
         // sound from the start.
         var banner = video.closest('.th-hero-banner');
-        if (!banner) return;
+        if (!banner || banner.querySelector('.th-hero-unmute-btn')) return;
         var unmuteBtn = document.createElement('button');
         unmuteBtn.type = 'button';
         unmuteBtn.className = 'th-hero-unmute-btn';
@@ -1279,6 +1285,10 @@
         });
         banner.appendChild(unmuteBtn);
       });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initHeroVideos();
 
       // Close dropdown when clicking outside
       document.addEventListener('click', function (e) {
@@ -2766,6 +2776,9 @@
       // hidden on a page/song other than the one actually playing, or
       // shown on the very song page whose audio it's mirroring.
       syncGlobalPlayerVisibility();
+      // A freshly-swapped-in .th-hero-video (movie/album/concert page)
+      // needs its own poster-fade/unmute wiring - see initHeroVideos().
+      initHeroVideos();
     });
 
     // Fires for every element htmx is about to discard - #th-page-root's
