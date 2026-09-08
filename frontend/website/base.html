@@ -2927,6 +2927,8 @@
 
     var NEXT_RE = /اللي بعدها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر الاغنية|غير الاغنية|غيّر الأغنية|غير الأغنية/i;
     var PREV_RE = /اللي قبلها|اللي قبله|الاغنية السابقة|الأغنية السابقة/i;
+    var STOP_RE = /وقف|أوقف|ايقاف|إيقاف|استوقف|باز|اسكت|بس كده/i;
+    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل/i;
     var PLAY_SONG_RE = /شغل(?:ي)?\s+(?:أغنية|اغنية)\s+(.+)/i;
 
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
@@ -2983,6 +2985,25 @@
       }, COMMAND_WINDOW_MS);
     }
 
+    function stopPlayback() {
+      // globalAudio/isManualPause/thEnsureAudible are plain top-level
+      // vars/functions declared earlier in base.html (not inside an
+      // IIFE), so they're reachable here as real globals.
+      if (typeof globalAudio !== 'undefined' && globalAudio && !globalAudio.paused) {
+        isManualPause = true;
+        globalAudio.pause();
+      }
+      setStatus('{% translate "وقفت الأغنية" %}');
+    }
+
+    function resumePlayback() {
+      if (typeof globalAudio !== 'undefined' && globalAudio && globalAudio.paused && globalAudio.src) {
+        thEnsureAudible();
+        globalAudio.play();
+      }
+      setStatus('{% translate "تمام، كملنا" %}');
+    }
+
     function playSongByName(name) {
       setStatus('{% translate "بدور على الأغنية..." %}');
       fetch('/player/voice-search/?q=' + encodeURIComponent(name) + '&limit=1')
@@ -3034,6 +3055,14 @@
       }
       if (PREV_RE.test(text)) {
         playPrevious();
+        return true;
+      }
+      if (STOP_RE.test(text)) {
+        stopPlayback();
+        return true;
+      }
+      if (RESUME_RE.test(text)) {
+        resumePlayback();
         return true;
       }
       for (var i = 0; i < MOOD_KEYWORDS.length; i++) {

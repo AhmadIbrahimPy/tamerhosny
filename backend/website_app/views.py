@@ -1,5 +1,8 @@
 import random
+import re
+import unicodedata
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -271,6 +274,39 @@ def song_player_data(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+_ARABIC_DIACRITICS_RE = re.compile(r'[ؐ-ًؚ-ْٰۖ-ۭ]')
+_ARABIC_NORMALIZE_MAP = str.maketrans({
+    'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا',
+    'ى': 'ي', 'ئ': 'ي',
+    'ة': 'ه',
+    'ؤ': 'و',
+    'ـ': '',  # tatweel
+})
+
+
+def _normalize_arabic(text):
+    """Folds spelling variants a speech-to-text engine routinely picks
+    between for the exact same spoken word - alef forms (أ/إ/آ), ya vs
+    alef maqsura (ي/ى), ta marbuta vs ha (ة/ه), tashkeel - down to one
+    canonical form, so a transcript like "اتحامي فيه" still matches a
+    catalog title spelled "اتحامى فيا".
+    """
+    if not text:
+        return ''
+    text = unicodedata.normalize('NFKC', text)
+    text = _ARABIC_DIACRITICS_RE.sub('', text)
+    text = text.translate(_ARABIC_NORMALIZE_MAP)
+    return re.sub(r'\s+', ' ', text).strip().lower()
+
+
+def _title_match_score(query_norm, title_norm):
+    if not title_norm or not query_norm:
+        return 0.0
+    if query_norm in title_norm or title_norm in query_norm:
+        return 1.0
+    return SequenceMatcher(None, query_norm, title_norm).ratio()
+
+
 def voice_search_songs(request):
     """Backs the site-wide voice assistant ("TH" wake word).
 
@@ -293,14 +329,33 @@ def voice_search_songs(request):
     playable_songs = Song.objects.select_related('album').exclude(audio_file='')
     queryset = Song.visible_queryset(playable_songs).filter(is_duet=False)
 
-    if query:
-        queryset = queryset.filter(Q(title_ar__icontains=query) | Q(title_en__icontains=query))
     if mood:
         if mood not in Song.Mood.values:
             return JsonResponse({'error': 'Unknown mood'}, status=400)
         queryset = queryset.filter(mood=mood)
 
-    songs = list(queryset.order_by('?')[:limit]) if mood and not query else list(queryset[:limit])
+    if query:
+        # A plain DB icontains only catches an exact substring - a voice
+        # transcript almost never spells Arabic exactly like the catalog
+        # (different alef/ya/ta-marbuta forms, missing tashkeel, or just
+        # a mis-heard letter), so rank every candidate by normalized
+        # fuzzy similarity instead of filtering on an exact match.
+        query_norm = _normalize_arabic(query)
+        query_lower = query.lower()
+        scored = []
+        for s in queryset:
+            score = _title_match_score(query_norm, _normalize_arabic(s.title_ar))
+            if s.title_en:
+                title_en_lower = s.title_en.lower()
+                en_score = 1.0 if query_lower in title_en_lower or title_en_lower in query_lower \
+                    else SequenceMatcher(None, query_lower, title_en_lower).ratio()
+                score = max(score, en_score)
+            if score >= 0.45:
+                scored.append((score, s))
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        songs = [s for _, s in scored[:limit]]
+    else:
+        songs = list(queryset.order_by('?')[:limit])
 
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     results = [
