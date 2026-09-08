@@ -241,6 +241,28 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Content-hashed static filenames in production (collectstatic renames
+# e.g. app.js to app.<hash>.js and rewrites every {% static %} reference
+# to match) - nginx caches everything under /static/ for 30 days, so
+# without this a fix to a JS/CSS file never reaches a browser that
+# already cached the old one under the same unchanging URL. A content
+# change now always means a brand-new URL instead.
+# Local/DEBUG dev keeps the plain storage: the hashed one needs
+# `collectstatic` to have been run at least once (it looks up a
+# manifest file), which a fresh dev checkout normally never runs since
+# `runserver` already serves static files on its own.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG else
+            'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+        ),
+    },
+}
+
 # Not '/media/' - that collides with the app's own '/media/<slug>/'
 # route (movie/series/commercial detail pages). Locally that's masked
 # because Django's own URL resolver always tries the app's routes
