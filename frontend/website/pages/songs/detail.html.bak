@@ -697,7 +697,6 @@
 
   /* --- Synchronized Lyrics --- */
   .synced-lyrics {
-    margin-top: 20px;
     display: none;
     opacity: 0;
     transform: translateY(-10px);

@@ -520,6 +520,30 @@
     font-size: 12px;
   }
 
+  /* Toggles the artist name between the page's language and Arabic -
+     only rendered when they'd actually differ (see LANGUAGE_CODE check
+     in the template). */
+  .song-artist-lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+  .song-artist-lang-toggle:hover,
+  .song-artist-lang-toggle.is-arabic {
+    background: var(--accent);
+    color: #fff;
+  }
+
   /* Multiple singers - one pill with overlapping avatars instead of a
      separate pill per person. */
   .song-artist-group {
@@ -821,7 +845,6 @@
 
   /* --- Synchronized Lyrics --- */
   .synced-lyrics {
-    margin-top: 20px;
     display: none;
     opacity: 0;
     transform: translateY(-10px);
@@ -2201,7 +2224,12 @@
                         {% else %}
                         <div class="song-artist-fallback">{{ singer.person|localized_field:'full_name'|slice:":2" }}</div>
                         {% endif %}
-                        <span>{{ singer.person|localized_field:'full_name' }}</span>
+                        <span class="song-artist-name" data-name-default="{{ singer.person|localized_field:'full_name' }}" data-name-ar="{{ singer.person.full_name_ar }}">{{ singer.person|localized_field:'full_name' }}</span>
+                        {% if LANGUAGE_CODE != 'ar' and singer.person.full_name_ar %}
+                        <button type="button" class="song-artist-lang-toggle" onclick="toggleArtistNameLang(event, this)" aria-label="{% translate 'عرض الاسم بالعربي' %}">
+                            <i class="bi bi-translate"></i>
+                        </button>
+                        {% endif %}
                     </a>
                     {% endfor %}
                     {% endif %}
@@ -3913,6 +3941,18 @@
 
     list.innerHTML = guestBanner + rowsHtml;
   }
+
+  // Swaps an artist's displayed name between the page's own language and
+  // Arabic - stopPropagation/preventDefault since the button sits inside
+  // the artist's own <a href="/people/..."> link.
+  window.toggleArtistNameLang = function (event, btn) {
+    event.preventDefault();
+    event.stopPropagation();
+    var nameEl = btn.previousElementSibling;
+    if (!nameEl) return;
+    var isArabic = btn.classList.toggle('is-arabic');
+    nameEl.textContent = isArabic ? nameEl.dataset.nameAr : nameEl.dataset.nameDefault;
+  };
 
   window.toggleFavorite = function (button) {
     if (typeof requireAuth === 'function' && requireAuth(function () { toggleFavorite(button); }, '{% translate "سجل دخولك عشان تقدر تعمل إعجاب" %}')) return;
