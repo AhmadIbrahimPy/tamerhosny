@@ -345,6 +345,44 @@
     max-width: min(300px, 80vw);
   }
 
+  /* "Listening now" badge - same corner treatment as the "..." button
+     above, mirrored to the opposite corner. Icon and count sit side by
+     side (not stacked, unlike the other .song-stat entries) since this
+     one has to fit in a small pill on the cover itself. Hidden via
+     .song-hero-media .song-stat[hidden] (further down) while nobody's
+     listening. */
+  .song-cover > .cover-listening-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    top: 10px;
+    inset-inline-start: 10px;
+    z-index: 6;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    border: none;
+    backdrop-filter: blur(6px);
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+  .song-cover > .cover-listening-badge:hover {
+    background: rgba(0, 0, 0, .7);
+  }
+  .cover-listening-badge .song-stat-icon-pulse {
+    position: relative;
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+  }
+  .cover-listening-badge .song-stat-icon-pulse::after {
+    border-radius: 50%;
+  }
+
   /* --- Song Info & Meta --- */
   .song-content {
     min-width: 0;
@@ -799,7 +837,7 @@
   /* --- Stats Bar (Under Cover) --- */
   .song-hero-media .song-stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 32px;
     padding: 12px 10px;
     background: rgba(255, 255, 255, 0.04);
@@ -1974,6 +2012,14 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    <!-- Mirrors .song-actions-more-wrap's corner placement on
+                         the opposite side - only shown while someone's
+                         actually listening (see updateListenerCount()). -->
+                    <button type="button" class="song-stat cover-listening-badge" id="listeningStatBtn" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}"{% if not listener_count %} hidden{% endif %}>
+                        <div class="song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
+                        <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
+                    </button>
                 </div>
 
                 {% if audio_url %}
@@ -2012,13 +2058,6 @@
                             <div class="song-stat-label">{% translate "تشغيل" %}</div>
                         </div>
                     </div>
-                    <button type="button" class="song-stat song-stat-clickable" id="listeningStatBtn" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}"{% if not listener_count %} hidden{% endif %}>
-                        <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones" id="listeningStatIcon"></i></div>
-                        <div>
-                            <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
-                            <div class="song-stat-label">{% translate "يستمع الآن" %}</div>
-                        </div>
-                    </button>
                 </div>
 
                 {% if duet %}
