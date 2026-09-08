@@ -948,7 +948,14 @@
 
       // Dispatch custom event when song changes
       if (previousSongId !== songId) {
-        const event = new CustomEvent('songChanged', { detail: { songId: songId, previousSongId: previousSongId } });
+        const event = new CustomEvent('songChanged', {
+          detail: {
+            songId: songId, previousSongId: previousSongId,
+            url: url, link: link, title: title,
+            image: (image && image[0]) || null,
+            artist: artist, album: album, albumLink: albumLink
+          }
+        });
         document.dispatchEvent(event);
       }
 
@@ -1698,11 +1705,51 @@
       }
     }
 
+    // Session-only (sessionStorage, not localStorage) record of every song
+    // actually played, in play order - {songId, link} so playPrevious()
+    // can jump straight back to exactly what played before instead of
+    // recomputing an adjacent index, which goes wrong the moment shuffle
+    // or a random fallback queue was involved in getting here.
+    function getPlayHistory() {
+      try {
+        return JSON.parse(sessionStorage.getItem('thPlayHistory') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+    function setPlayHistory(history) {
+      try {
+        sessionStorage.setItem('thPlayHistory', JSON.stringify(history));
+      } catch (e) {}
+    }
+    document.addEventListener('songChanged', function (e) {
+      const detail = e.detail || {};
+      if (!detail.songId) return;
+      const history = getPlayHistory();
+      if (history.length && history[history.length - 1].songId == detail.songId) return;
+      history.push({
+        songId: detail.songId, url: detail.url || null, link: detail.link || null,
+        title: detail.title || null, image: detail.image || null,
+        artist: detail.artist || null, album: detail.album || null, albumLink: detail.albumLink || null
+      });
+      if (history.length > 200) history.shift();
+      setPlayHistory(history);
+    });
+
     // Shared by playPrevious/playNext. `step` is -1 or +1.
     // Picks the next queue index. Shuffle only applies going forward
-    // (step === 1) - a random track that isn't the one currently playing.
+    // (step === 1) - a random track that isn't the one currently playing,
+    // and preferably one not already played this session (falls back to
+    // allowing a repeat once everything in the list has been heard).
     function pickAdjacentIndex(list, currentIndex, step) {
       if (step === 1 && isShuffle && list.length > 1) {
+        const played = getPlayHistory().map(function (entry) { return entry.songId; });
+        const unplayed = list
+          .map(function (song, i) { return i; })
+          .filter(function (i) { return i !== currentIndex && played.indexOf(list[i].songId) === -1; });
+        if (unplayed.length > 0) {
+          return unplayed[Math.floor(Math.random() * unplayed.length)];
+        }
         let index;
         do {
           index = Math.floor(Math.random() * list.length);
@@ -1731,9 +1778,13 @@
     // and outside an album context) - fetch one from the backend instead
     // of doing nothing. Random by default; only actual album playback
     // (started from that album's own page) queues the album's tracks.
+    // played_ids tells the backend what this session has already heard,
+    // so it can pick something fresh instead (it falls back to allowing
+    // a repeat once nothing unheard is left).
     function fetchFallbackQueue(step) {
       if (currentSongId === null) return;
-      const params = 'song_id=' + currentSongId + '&current_song_id=' + currentSongId + '&random=1';
+      const playedIds = getPlayHistory().map(function (entry) { return entry.songId; });
+      const params = 'song_id=' + currentSongId + '&current_song_id=' + currentSongId + '&random=1&played_ids=' + playedIds.join(',');
       fetch('/player/song-data/?' + params)
         .then(function(response) { return response.json(); })
         .then(function(data) {
@@ -1759,6 +1810,26 @@
     }
 
     function playPrevious() {
+      // Prefer real play history over index math - the current song
+      // should be the last entry (pushed by the songChanged listener
+      // above), so the one before it is the actual previous song,
+      // regardless of whether shuffle/a random queue got us here.
+      const history = getPlayHistory();
+      const last = history[history.length - 1];
+      const prev = history[history.length - 2];
+      if (last && prev && last.songId == currentSongId && prev.link) {
+        history.pop();
+        setPlayHistory(history);
+        // Sync the player to it before navigating away - otherwise
+        // 'beforeunload' (savePlayerState) persists the song still
+        // playing right now, and the new page's restorePlayerState()
+        // resurrects that stale song instead of this one.
+        if (prev.url) {
+          playAudio(prev.url, currentPlayBtn, prev.title, '', prev.image ? [prev.image] : null, prev.link, prev.artist, prev.album, false, prev.songId, prev.albumLink);
+        }
+        window.location.href = prev.link;
+        return;
+      }
       playAdjacentSong(-1);
     }
 

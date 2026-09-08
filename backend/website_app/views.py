@@ -179,6 +179,8 @@ def song_player_data(request):
         song_id = request.POST.get('song_id') if request.method == 'POST' else request.GET.get('song_id')
         current_song_id = request.POST.get('current_song_id') if request.method == 'POST' else request.GET.get('current_song_id')
         force_random = (request.POST.get('random') if request.method == 'POST' else request.GET.get('random')) == '1'
+        played_ids_param = request.POST.get('played_ids') if request.method == 'POST' else request.GET.get('played_ids')
+        played_ids = [int(pk) for pk in played_ids_param.split(',') if pk.strip().isdigit()] if played_ids_param else []
 
         playable_songs = Song.objects.select_related('album').exclude(audio_file='')
         # User-submitted "Sing with Tamer" duets live as Song rows too
@@ -204,9 +206,11 @@ def song_player_data(request):
             if song not in album_songs:
                 album_songs = [song] + album_songs
         else:
-            random_songs = list(
-                catalog_songs.exclude(pk=song.pk).order_by('?')[:19]
-            )
+            remaining_catalog = catalog_songs.exclude(pk=song.pk)
+            # Prefer something this session hasn't heard yet - only fall
+            # back to allowing a repeat once that pool is actually empty.
+            unheard = remaining_catalog.exclude(pk__in=played_ids) if played_ids else remaining_catalog
+            random_songs = list((unheard if unheard.exists() else remaining_catalog).order_by('?')[:19])
             album_songs = [song] + random_songs
         # Get credits
         all_credits = list(song.credits.select_related('person').all())
