@@ -391,15 +391,15 @@
     border-radius: 50%;
   }
 
-  /* Like button, stacked directly under .song-actions-more-wrap in the
-     same corner (36px + 8px gap below its top:10px). */
+  /* Like button - bottom-start corner of the cover (opposite the "..."
+     button, which sits top-end). */
   .song-cover > .cover-like-badge {
     display: flex;
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 54px;
-    inset-inline-end: 10px;
+    bottom: 10px;
+    inset-inline-start: 10px;
     z-index: 6;
     width: 36px;
     height: 36px;
@@ -2002,7 +2002,7 @@
                         <div class="song-stat-value" data-listener-count="{{ listener_count }}">{{ listener_count }}</div>
                     </button>
 
-                    <!-- Stacked under .song-actions-more-wrap, same corner. -->
+                    <!-- Bottom-start corner of the cover. -->
                     {% if not duet %}
                     <button type="button" class="cover-like-badge{% if is_liked %} is-liked{% endif %}" onclick="toggleFavorite(this)" data-song-id="{{ song.pk }}" aria-label="{% translate 'إعجاب' %}">
                         <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
