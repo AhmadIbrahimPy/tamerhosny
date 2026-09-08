@@ -479,6 +479,15 @@
     body.car-mode .cover-listening-badge {
       display: none !important;
     }
+    /* .song-content otherwise still shows everything (share row, album/
+       year/duration, alt title, the "..." menu) - car mode keeps only
+       the artist name and the song title itself. */
+    body.car-mode .song-topline,
+    body.car-mode .song-alt-title,
+    body.car-mode .song-title-row .song-info-row,
+    body.car-mode .song-actions {
+      display: none !important;
+    }
     body.car-mode .song-cover img {
       opacity: 0;
     }
@@ -1978,6 +1987,15 @@
     }
     .cover-play-btn { width: 48px; height: 48px; font-size: 19px; }
     .cover-play-btn i { font-size: 19px; }
+    /* A bit bigger here - too small to tap comfortably at this size,
+       in both car mode and normal (car mode only changes their color/
+       background, not size, so this applies to both as-is). */
+    .song-cover > .cover-like-badge,
+    .song-cover > .cover-car-mode-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 19px;
+    }
     .song-content { padding: 0; }
     .song-artists { margin-bottom: 0; }
     .song-hero-media { padding: 0; gap: 12px; }
