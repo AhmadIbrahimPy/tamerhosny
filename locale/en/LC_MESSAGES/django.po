@@ -3513,7 +3513,7 @@ msgstr "Google sign-in isn't available right now, try email instead"
 
 #: frontend/website/base.html:3130
 msgid "أنا هنا... قول أمرك"
-msgstr "I'm here... go ahead"
+msgstr "I am here... go ahead"
 
 #: frontend/website/base.html:3147
 msgid "وقفت الأغنية"
@@ -3565,7 +3565,7 @@ msgstr "Looking for the song..."
 
 #: frontend/website/base.html:3257
 msgid "أووبس، مش لاقي أغنية بالاسم ده"
-msgstr "Oops, couldn't find a song by that name"
+msgstr "Oops, could not find a song by that name"
 
 #: frontend/website/base.html:3264 frontend/website/base.html:3284
 msgid "حصل خطأ، حاول تاني"
@@ -3577,7 +3577,7 @@ msgstr "Looking for songs that match your mood..."
 
 #: frontend/website/base.html:3274
 msgid "أووبس، مش لاقي أغاني للمزاج ده"
-msgstr "Oops, couldn't find songs for that mood"
+msgstr "Oops, could not find songs for that mood"
 
 #: frontend/website/base.html:3319
 msgid "تمام"
@@ -3589,7 +3589,7 @@ msgstr "Thinking..."
 
 #: frontend/website/base.html:3357 frontend/website/base.html:3364
 msgid "أووبس، مش لاقيها! جرب تاني"
-msgstr "Oops, couldn't find that! Try again"
+msgstr "Oops, could not find that! Try again"
 
 #: frontend/website/base.html:3542
 msgid ""
@@ -3601,11 +3601,11 @@ msgstr ""
 
 #: frontend/website/base.html:3600
 msgid "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶"
-msgstr "Can't respond right now - your connection is too weak 📶"
+msgstr "Cannot respond right now - your connection is too weak 📶"
 
 #: frontend/website/base.html:3633
 msgid "حصلت مشكلة في المايكروفون - جرب تفصله وتشغله تاني"
-msgstr "There's a microphone issue - try turning it off and back on"
+msgstr "There is a microphone issue - try turning it off and back on"
 
 #: frontend/website/base.html:3819
 msgid "الإشعارات مفعّلة"
