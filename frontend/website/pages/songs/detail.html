@@ -2100,11 +2100,11 @@
                     {% for singer in singers %}
                     <a href="/people/{{ singer.person.slug }}/" class="song-artist">
                         {% if singer.person.profile_image %}
-                        <img src="{{ singer.person.profile_image.url }}" alt="{{ singer.person.full_name_ar }}">
+                        <img src="{{ singer.person.profile_image.url }}" alt="{{ singer.person|localized_field:'full_name' }}">
                         {% else %}
-                        <div class="song-artist-fallback">{{ singer.person.full_name_ar|slice:":2" }}</div>
+                        <div class="song-artist-fallback">{{ singer.person|localized_field:'full_name'|slice:":2" }}</div>
                         {% endif %}
-                        <span>{{ singer.person.full_name_ar }}</span>
+                        <span>{{ singer.person|localized_field:'full_name' }}</span>
                     </a>
                     {% endfor %}
                     {% if duet %}
