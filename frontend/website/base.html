@@ -2947,18 +2947,28 @@
     // but Chrome's ar-EG model routinely keeps a codeswitched English
     // word or phrase in Latin script rather than transliterating it - so
     // a command spoken in English still has a real chance of matching.
-    var NEXT_RE = /اللي بعدها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر الاغنية|غير الاغنية|غيّر الأغنية|غير الأغنية|\bnext\b|\bskip\b/i;
-    var PREV_RE = /اللي قبلها|اللي قبله|الاغنية السابقة|الأغنية السابقة|\bprevious\b|\bgo back\b|\blast song\b/i;
+    var NEXT_RE = /اللي بعدها|اللي بعديها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر\s*(?:ال)?(?:أغنية|اغنية)|غير\s*(?:ال)?(?:أغنية|اغنية)|\bnext\b|\bskip\b/i;
+    var PREV_RE = /اللي قبلها|اللي قبليها|اللي قبله|الاغنية السابقة|الأغنية السابقة|\bprevious\b|\bgo back\b|\blast song\b/i;
     var STOP_RE = /وقف|أوقف|ايقاف|إيقاف|استوقف|باز|اسكت|بس كده|\bstop\b|\bpause\b/i;
-    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$/i;
+    // "شغل الأغنية"/"شغل الأغنية تاني"/"شغل اللي كان شغال"/"شغل اللي
+    // كنت سامعه" all mean "resume what's already loaded", not "search
+    // for and play a song titled that" - has to be checked (and win)
+    // before PLAY_SONG_RE below, which would otherwise treat e.g.
+    // "الأغنية تاني" itself as a fuzzy song-title search and could
+    // easily land on some unrelated song that happens to score above
+    // the match threshold.
+    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$|شغل(?:ي)?\s+(?:ال)?(?:أغنية|اغنية)(?:\s+تاني)?\s*$|شغل(?:ي)?\s+اللي\s+كان\s+شغال|شغل(?:ي)?\s+اللي\s+كنت\s+سامع/i;
+    var LIKE_RE = /اعمل\s*لايك|اعمل\s*لايف|اعمل\s*لاف|حط\s*لايك|عجبتني|عجباني|\blike\s*(?:it|this)?\b/i;
+    var OPEN_SONG_PAGE_RE = /افتح\s*(?:صفحة)?\s*الأغنية|افتح\s*(?:صفحة)?\s*الاغنية|روح\s*(?:ل|لصفحة)\s*الأغنية|وريني\s*صفحة\s*الأغنية|open\s*(?:the\s*)?song\s*page/i;
     var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
 
     // Easter egg, not a real playback command - "بحبك يا تيمو/تامر/
-    // تيموري" or "I love you Tamer/Timo/Timouri" said together (either
-    // order, either language) triggers a heart-burst reply instead of
-    // "معلقيتش عليك". Checked as two independent word-presence tests
-    // rather than one combined regex so word order/spacing don't matter.
-    var LOVE_WORDS_RE = /بحبك|احبك|\bi\s*love\s*you\b/i;
+    // تيموري" or "I love you Tamer/Timo/Timouri" (or "بموت فيك"/"بعشقك"/
+    // "عاشقك") said together with the nickname, either order, either
+    // language, triggers a heart-burst reply instead of "معلقيتش عليك".
+    // Checked as two independent word-presence tests rather than one
+    // combined regex so word order/spacing don't matter.
+    var LOVE_WORDS_RE = /بحبك|احبك|بموت فيك|بعشقك|عاشقك|\bi\s*love\s*you\b|\badore\s*you\b/i;
     var LOVE_NICKNAME_RE = /تيمو|تامر|\btamer\b|\btimo\w*\b/i;
 
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
@@ -3036,6 +3046,25 @@
       setStatus('{% translate "تمام، كملنا" %}');
     }
 
+    function openCurrentSongPage() {
+      // #playerLink's href is kept current by playAudio() itself
+      // (base.html) on every song change - the single source of truth
+      // for "what's the page of the thing playing right now", same as
+      // the player page's own click handler already relies on.
+      var link = document.getElementById('playerLink');
+      var href = link ? link.getAttribute('href') : null;
+      if (!href || href === '#') {
+        setStatus('{% translate "مفيش أغنية شغالة دلوقتي" %}');
+        return;
+      }
+      setStatus('{% translate "تمام، بافتحلك صفحتها" %}');
+      if (typeof thBoostedNavigate === 'function') {
+        thBoostedNavigate(href);
+      } else {
+        window.location.href = href;
+      }
+    }
+
     var LOVE_REPLIES = [
       '{% translate "وأنا كمان بحبك ❤️" %}',
       '{% translate "تامر حسني بيحبك برضو يا قمر ❤️" %}',
@@ -3058,19 +3087,19 @@
         layer.className = 'th-love-hearts-layer';
         document.body.appendChild(layer);
       }
-      for (var i = 0; i < 12; i++) {
+      for (var i = 0; i < 32; i++) {
         (function (delay) {
           setTimeout(function () {
             var heart = document.createElement('span');
             heart.className = 'th-love-heart';
             heart.textContent = '❤️';
-            heart.style.left = (42 + Math.random() * 16) + 'vw';
-            heart.style.setProperty('--drift', (Math.random() * 70 - 35) + 'px');
-            heart.style.fontSize = (18 + Math.random() * 22) + 'px';
+            heart.style.left = (30 + Math.random() * 40) + 'vw';
+            heart.style.setProperty('--drift', (Math.random() * 90 - 45) + 'px');
+            heart.style.fontSize = (16 + Math.random() * 26) + 'px';
             layer.appendChild(heart);
             heart.addEventListener('animationend', function () { heart.remove(); });
           }, delay);
-        })(i * 90);
+        })(i * 60);
       }
     }
 
@@ -3111,6 +3140,82 @@
         .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
     }
 
+    // Dispatches one classified intent from /player/voice-intent/ (see
+    // resolveWithAI below) to a pre-built handler - the backend only
+    // ever returns one of this fixed intent list plus already-validated
+    // arguments (a real Song.Mood value, one of a fixed page path list),
+    // never a raw URL or code to run, so this stays a closed set of safe
+    // actions regardless of what the LLM classifier returns.
+    function executeIntent(data) {
+      if (!data || !data.intent) return false;
+      switch (data.intent) {
+        case 'next': playNext(); return true;
+        case 'previous': playPrevious(); return true;
+        case 'stop': stopPlayback(); return true;
+        case 'resume': resumePlayback(); return true;
+        case 'like':
+        case 'unlike':
+          if (typeof toggleLike !== 'function') return false;
+          toggleLike();
+          return true;
+        case 'open_current_song':
+          openCurrentSongPage();
+          return true;
+        case 'play_song':
+          if (!data.song_query) return false;
+          playSongByName(data.song_query);
+          return true;
+        case 'play_mood':
+          if (!data.mood) return false;
+          playSongsByMood(data.mood);
+          return true;
+        case 'navigate':
+          if (!data.page) return false;
+          setStatus('{% translate "تمام" %}');
+          if (typeof thBoostedNavigate === 'function') thBoostedNavigate(data.page);
+          else window.location.href = data.page;
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    // Fallback once none of the fixed regex patterns above match - lets
+    // the assistant understand phrasing/requests those patterns don't
+    // cover (site navigation, unusual wording, ...) via the same LLM
+    // fallback chain already used elsewhere on the site for song
+    // classification (see backend.website_app.views.voice_intent).
+    // Aborted client-side after 12s so a slow/hung provider can't leave
+    // the UI stuck on "بفكر..." - resolveCommand's own local patterns
+    // already handle every fast/common case without ever reaching here.
+    function resolveWithAI(text) {
+      setStatus('{% translate "بفكر..." %}');
+      var controller = ('AbortController' in window) ? new AbortController() : null;
+      var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 12000) : null;
+
+      fetch('/player/voice-intent/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+        body: JSON.stringify({ text: text }),
+        signal: controller ? controller.signal : undefined,
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          clearTimeout(timeoutId);
+          if (executeIntent(data)) {
+            setTimeout(hideAvatar, 900);
+          } else {
+            setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
+            setTimeout(hideAvatar, 1400);
+          }
+        })
+        .catch(function () {
+          clearTimeout(timeoutId);
+          setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
+          setTimeout(hideAvatar, 1400);
+        });
+    }
+
     // Order matters: navigation first, then mood (a mood word said on
     // its own, or inside "شغل أغنية حزينة", both mean "play me something
     // that fits this mood" - not literally a song titled "حزينة"), and
@@ -3137,6 +3242,14 @@
       }
       if (RESUME_RE.test(text)) {
         resumePlayback();
+        return true;
+      }
+      if (LIKE_RE.test(text)) {
+        if (typeof toggleLike === 'function') toggleLike();
+        return true;
+      }
+      if (OPEN_SONG_PAGE_RE.test(text)) {
+        openCurrentSongPage();
         return true;
       }
       for (var i = 0; i < MOOD_KEYWORDS.length; i++) {
@@ -3189,8 +3302,13 @@
         clearTimeout(commandTimer);
         listeningForCommand = false;
         wakeResultIndex = -1;
-        if (!matched) setStatus('{% translate "معلقيتش عليك، جرب تاني" %}');
-        setTimeout(hideAvatar, matched ? 900 : 1400);
+        if (matched) {
+          setTimeout(hideAvatar, 900);
+        } else {
+          // None of the fixed local patterns recognized it - hand it to
+          // the AI fallback instead of failing immediately.
+          resolveWithAI(candidate);
+        }
       }
     }
 

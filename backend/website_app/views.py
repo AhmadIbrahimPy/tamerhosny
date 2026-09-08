@@ -1,3 +1,4 @@
+import json
 import random
 import re
 import unicodedata
@@ -22,6 +23,7 @@ from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
 from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener
 from backend.main_app.shared_utils.credits import dedupe_credits
+from backend.main_app.shared_utils.llm_providers import ask_json
 from backend.main_app.shared_utils.gamification import (
     POINTS_GUESS_LOSS, POINTS_LIKE, award_points, get_rank_and_trend, unlocked_badges,
 )
@@ -376,6 +378,113 @@ def voice_search_songs(request):
     ]
 
     return JsonResponse({'songs': results})
+
+
+# Fixed, safe set of site sections the voice assistant's "navigate" intent
+# is allowed to land on - deliberately only whole-catalog list/home pages,
+# never a specific song/album/person's own page (there's no reliable way
+# for the LLM to resolve "افتح صفحة الأغنية اللي شغالة" to a slug - that's
+# handled entirely client-side instead, from whatever's actually playing).
+VOICE_NAV_PAGES = {
+    'home': '/',
+    'bio': '/tamer-hosny/',
+    'player': '/player/',
+    'songs': '/songs/',
+    'albums': '/albums/',
+    'people': '/people/',
+    'movies': '/movies/',
+    'series': '/series/',
+    'commercials': '/commercials/',
+    'concerts': '/concerts/',
+    'daily_guess': '/guess/',
+    'leaderboard': '/leaderboard/',
+    'likes': '/likes/',
+    'duets': '/my-duets/',
+    'recently_played': '/recently-played/',
+    'playlists': '/playlists/',
+    'remixes': '/remixes/',
+}
+
+_VOICE_INTENT_SYSTEM_PROMPT = """You are the voice-command intent classifier for an Arabic Tamer Hosny fan website's site-wide voice assistant. The user just spoke a short command, in Egyptian Arabic or English, right after saying a wake word - classify ONLY that command.
+
+Respond with STRICT JSON ONLY (no markdown fences, no commentary) matching exactly this shape:
+{
+  "intent": one of "next", "previous", "stop", "resume", "like", "unlike", "open_current_song", "play_song", "play_mood", "navigate", "unknown",
+  "song_query": the song title/name mentioned (for play_song), or null,
+  "mood": one of "ROMANTIC", "SAD_HEARTBREAK", "ENERGETIC_UPBEAT", "MOTIVATIONAL_HOPEFUL", "CHILL_RELAXING", "NOSTALGIC", "CONFIDENT_PLAYFUL" (for play_mood), or null,
+  "page": one of __PAGES__ (for navigate), or null
+}
+
+Guidance:
+- next/previous/stop/resume are playback transport controls.
+- like/unlike is about liking or unliking whatever song is currently playing.
+- open_current_song means "open the page for whatever song is playing right now" - never pick this for a request naming a specific different song/album/person.
+- play_song is for "play <specific song name>" - extract just the title into song_query.
+- play_mood is for a request to play something matching a mood/feeling, not a specific title.
+- navigate is ONLY for going to one of the fixed site sections listed above (never a specific song/album/person's own page - there is no intent for that; if the user asks for a specific item's page other than the current song, use "unknown").
+- Use "unknown" whenever the command doesn't clearly and confidently fit one of the above.
+
+Every key must be present; use null for any that don't apply to the chosen intent."""
+
+
+def voice_intent(request):
+    """Open-ended fallback for the voice assistant: once none of its
+    fixed regex patterns match a command, the frontend posts the raw
+    transcript here and gets back one classified intent from the same
+    LLM fallback chain already used for song genre/mood classification
+    (backend.music_app.shared_utils.song_classification) - reused as-is,
+    just with a different prompt/schema.
+
+    Deliberately narrow: the model only ever picks from a fixed intent
+    list, a fixed mood list, and a fixed page list (never a raw URL/free
+    text it makes up) - the frontend dispatches each intent to one
+    pre-built handler, so a bad or hallucinated classification can only
+    ever no-op or trigger the wrong *safe* action, never something
+    arbitrary.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body or b'{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid JSON body'}, status=400)
+
+    text = (body.get('text') or '').strip()[:300]
+    if not text:
+        return JsonResponse({'error': 'text is required'}, status=400)
+
+    system_prompt = _VOICE_INTENT_SYSTEM_PROMPT.replace('__PAGES__', str(list(VOICE_NAV_PAGES.keys())))
+    data = ask_json(text, system_prompt, required_keys=('intent',)) or {}
+
+    valid_intents = {
+        'next', 'previous', 'stop', 'resume', 'like', 'unlike',
+        'open_current_song', 'play_song', 'play_mood', 'navigate', 'unknown',
+    }
+    intent = data.get('intent') if data.get('intent') in valid_intents else 'unknown'
+
+    mood = data.get('mood')
+    mood = mood if mood in Song.Mood.values else None
+
+    page_key = data.get('page')
+    page_path = VOICE_NAV_PAGES.get(page_key)
+
+    song_query = data.get('song_query')
+    song_query = song_query.strip() if isinstance(song_query, str) and song_query.strip() else None
+
+    if intent == 'navigate' and not page_path:
+        intent = 'unknown'
+    if intent == 'play_mood' and not mood:
+        intent = 'unknown'
+    if intent == 'play_song' and not song_query:
+        intent = 'unknown'
+
+    return JsonResponse({
+        'intent': intent,
+        'song_query': song_query,
+        'mood': mood,
+        'page': page_path,
+    })
 
 
 # ---------------------------------------------------------------------------
