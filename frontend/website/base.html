@@ -2925,21 +2925,27 @@
     // of the phonetic Arabic spellings a listener would actually type.
     var WAKE_WORD_RE = /(^|[^a-z])t\.?\s?h([^a-z]|$)|تي\s?[إا]تش|تى\s?[إا]تش/i;
 
-    var NEXT_RE = /اللي بعدها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر الاغنية|غير الاغنية|غيّر الأغنية|غير الأغنية/i;
-    var PREV_RE = /اللي قبلها|اللي قبله|الاغنية السابقة|الأغنية السابقة/i;
-    var STOP_RE = /وقف|أوقف|ايقاف|إيقاف|استوقف|باز|اسكت|بس كده/i;
-    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل/i;
-    var PLAY_SONG_RE = /شغل(?:ي)?\s+(?:أغنية|اغنية)\s+(.+)/i;
+    // English alternatives alongside the Arabic ones: the recognizer
+    // itself always listens with lang:'ar-EG' (Web Speech only allows
+    // one language per session, and the wake word/site are Arabic-first),
+    // but Chrome's ar-EG model routinely keeps a codeswitched English
+    // word or phrase in Latin script rather than transliterating it - so
+    // a command spoken in English still has a real chance of matching.
+    var NEXT_RE = /اللي بعدها|اللي بعده|الاغنية التالية|الأغنية التالية|^غير$|غيّر الاغنية|غير الاغنية|غيّر الأغنية|غير الأغنية|\bnext\b|\bskip\b/i;
+    var PREV_RE = /اللي قبلها|اللي قبله|الاغنية السابقة|الأغنية السابقة|\bprevious\b|\bgo back\b|\blast song\b/i;
+    var STOP_RE = /وقف|أوقف|ايقاف|إيقاف|استوقف|باز|اسكت|بس كده|\bstop\b|\bpause\b/i;
+    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$/i;
+    var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
 
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
     var MOOD_KEYWORDS = [
-      { re: /كئيب|حزين/i, mood: 'SAD_HEARTBREAK' },
-      { re: /روقان|رايق|هادئ/i, mood: 'CHILL_RELAXING' },
-      { re: /حماس/i, mood: 'ENERGETIC_UPBEAT' },
-      { re: /امل|تفاؤل|تحفيز/i, mood: 'MOTIVATIONAL_HOPEFUL' },
-      { re: /حنين|ذكريات/i, mood: 'NOSTALGIC' },
-      { re: /رومانس/i, mood: 'ROMANTIC' },
-      { re: /واثق|فريش/i, mood: 'CONFIDENT_PLAYFUL' },
+      { re: /كئيب|حزين|\bsad\b|heartbreak/i, mood: 'SAD_HEARTBREAK' },
+      { re: /روقان|رايق|هادئ|\bchill\b|\brelax/i, mood: 'CHILL_RELAXING' },
+      { re: /حماس|\benergetic\b|\bupbeat\b|\bhype\b/i, mood: 'ENERGETIC_UPBEAT' },
+      { re: /امل|تفاؤل|تحفيز|\bmotivat|\bhopeful\b/i, mood: 'MOTIVATIONAL_HOPEFUL' },
+      { re: /حنين|ذكريات|\bnostalgic\b|\bmemories\b/i, mood: 'NOSTALGIC' },
+      { re: /رومانس|\bromantic\b|\bromance\b/i, mood: 'ROMANTIC' },
+      { re: /واثق|فريش|\bconfident\b|\bplayful\b/i, mood: 'CONFIDENT_PLAYFUL' },
     ];
 
     var avatarEl = null;
