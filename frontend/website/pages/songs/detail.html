@@ -414,6 +414,73 @@
     color: #ff6474;
   }
 
+  /* Car mode toggle - bottom-start corner of the cover, mobile/tablet
+     only (a driver isn't looking at a desktop). */
+  .cover-car-mode-btn {
+    display: none;
+  }
+  @media (max-width: 992px) {
+    .song-cover > .cover-car-mode-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      bottom: 10px;
+      inset-inline-start: 10px;
+      z-index: 6;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .5);
+      color: #fff;
+      border: none;
+      backdrop-filter: blur(6px);
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .song-cover > .cover-car-mode-btn:hover {
+      background: rgba(0, 0, 0, .7);
+    }
+    body.car-mode .song-cover > .cover-car-mode-btn {
+      background: var(--accent);
+      color: #111;
+    }
+
+    /* Car mode itself - a distraction-free, glance-only view: just the
+       cover art (a plain gradient, not the actual photo) and big
+       play/skip controls. Everything else on the page, including the
+       lyrics and the wave decoration, is hidden. Persisted across song
+       navigation via localStorage - see toggleCarMode()/applyCarMode(). */
+    body.car-mode .song-container > *:not(.song-hero) {
+      display: none !important;
+    }
+    body.car-mode .song-wave-bg,
+    body.car-mode .synced-lyrics,
+    body.car-mode .cover-listening-badge {
+      display: none !important;
+    }
+    body.car-mode .song-cover img {
+      display: none;
+    }
+    body.car-mode .song-cover {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    }
+    body.car-mode .cover-play-btn {
+      width: 88px;
+      height: 88px;
+      font-size: 36px;
+    }
+    body.car-mode .cover-play-btn i {
+      font-size: 36px;
+    }
+    body.car-mode .cover-skip-btn {
+      width: 58px;
+      height: 58px;
+      font-size: 24px;
+    }
+  }
+
   /* --- Song Info & Meta --- */
   .song-content {
     min-width: 0;
@@ -518,30 +585,6 @@
     background: var(--bg-2);
     color: var(--accent);
     font-size: 12px;
-  }
-
-  /* Toggles the artist name between the page's language and Arabic -
-     only rendered when they'd actually differ (see LANGUAGE_CODE check
-     in the template). */
-  .song-artist-lang-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    border: none;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.12);
-    color: inherit;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.2s ease;
-  }
-  .song-artist-lang-toggle:hover,
-  .song-artist-lang-toggle.is-arabic {
-    background: var(--accent);
-    color: #fff;
   }
 
   /* Multiple singers - one pill with overlapping avatars instead of a
@@ -1906,6 +1949,7 @@
     .cover-play-btn { width: 48px; height: 48px; font-size: 19px; }
     .cover-play-btn i { font-size: 19px; }
     .song-content { padding: 0; }
+    .song-artists { margin-bottom: 0; }
     .song-hero-media { padding: 0; gap: 12px; }
     /* Icon-only buttons at this width used to end up small and centered,
        with empty space on both sides of them - flex:1 makes them share
@@ -2117,6 +2161,15 @@
                         <i class="bi bi-heart"></i>
                     </div>
                     {% endif %}
+
+                    <!-- Bottom-start corner of the cover (the one free
+                         corner - top-start is the listening badge,
+                         top-end the "..." menu, bottom-end the like
+                         button) - mobile/tablet only, see the
+                         .cover-car-mode-btn media query below. -->
+                    <button type="button" id="carModeBtn" class="cover-car-mode-btn" onclick="toggleCarMode()" aria-label="{% translate 'وضع السيارة' %}">
+                        <i class="bi bi-car-front-fill"></i>
+                    </button>
                 </div>
 
                 {% if audio_url %}
@@ -2224,12 +2277,7 @@
                         {% else %}
                         <div class="song-artist-fallback">{{ singer.person|localized_field:'full_name'|slice:":2" }}</div>
                         {% endif %}
-                        <span class="song-artist-name" data-name-default="{{ singer.person|localized_field:'full_name' }}" data-name-ar="{{ singer.person.full_name_ar }}">{{ singer.person|localized_field:'full_name' }}</span>
-                        {% if LANGUAGE_CODE != 'ar' and singer.person.full_name_ar %}
-                        <button type="button" class="song-artist-lang-toggle" onclick="toggleArtistNameLang(event, this)" aria-label="{% translate 'عرض الاسم بالعربي' %}">
-                            <i class="bi bi-translate"></i>
-                        </button>
-                        {% endif %}
+                        <span>{{ singer.person|localized_field:'full_name' }}</span>
                     </a>
                     {% endfor %}
                     {% endif %}
@@ -2737,6 +2785,19 @@
     return response.json();
   }
 
+  // Persisted (not just per-page) since next/prev here are full page
+  // navigations - without this, car mode would reset on every song.
+  function applyCarMode() {
+    var on = localStorage.getItem('thCarMode') === '1';
+    document.body.classList.toggle('car-mode', on);
+  }
+  window.toggleCarMode = function () {
+    var on = !document.body.classList.contains('car-mode');
+    localStorage.setItem('thCarMode', on ? '1' : '0');
+    applyCarMode();
+  };
+  applyCarMode();
+
   window.toggleSongActionsMenu = function (btn) {
     const menu = document.getElementById('songActionsMenu');
     if (!menu) return;
@@ -3020,7 +3081,11 @@
             }
             
             if (currentSegment.segment_type === 'MUSIC') {
-              // Show animated music icons for music segments
+              // Show animated music icons for music segments - fades in
+              // like every lyric-text transition here, instead of
+              // snapping in with no animation.
+              textElement.style.animation = 'none';
+              textElement.offsetHeight; // Trigger reflow
               textElement.innerHTML = `
                 <div class="music-wave">
                   <span class="music-bar"></span>
@@ -3030,6 +3095,7 @@
                   <span class="music-bar"></span>
                 </div>
               `;
+              textElement.style.animation = 'lyricGapFade 0.4s ease-in-out';
             } else {
               // Show lyrics text with different animation based on repeat count
               getLyricAnimation(textElement, currentSegment.text, newIndex, currentSegment);
@@ -3313,6 +3379,14 @@
     @keyframes wave {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
+    }
+    /* Entering/leaving an instrumental gap (the music-wave indicator)
+       used to swap in with no animation at all, unlike every lyric-text
+       transition here - a jarring snap right where the design should
+       read as "opening/closing" for the gap instead. */
+    @keyframes lyricGapFade {
+      0% { opacity: 0; transform: scale(.85); }
+      100% { opacity: 1; transform: scale(1); }
     }
   `;
   document.head.appendChild(animationsStyle);
@@ -3941,18 +4015,6 @@
 
     list.innerHTML = guestBanner + rowsHtml;
   }
-
-  // Swaps an artist's displayed name between the page's own language and
-  // Arabic - stopPropagation/preventDefault since the button sits inside
-  // the artist's own <a href="/people/..."> link.
-  window.toggleArtistNameLang = function (event, btn) {
-    event.preventDefault();
-    event.stopPropagation();
-    var nameEl = btn.previousElementSibling;
-    if (!nameEl) return;
-    var isArabic = btn.classList.toggle('is-arabic');
-    nameEl.textContent = isArabic ? nameEl.dataset.nameAr : nameEl.dataset.nameDefault;
-  };
 
   window.toggleFavorite = function (button) {
     if (typeof requireAuth === 'function' && requireAuth(function () { toggleFavorite(button); }, '{% translate "سجل دخولك عشان تقدر تعمل إعجاب" %}')) return;
