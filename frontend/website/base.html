@@ -3649,6 +3649,12 @@
         armWatchdog();
       } else {
         stopRecognition();
+        // The promo toast only ever checked `enabled` once, right at
+        // page load - if the mic was already on then (as it will be on
+        // every later visit, since the toggle persists), it exited
+        // immediately and never got a second chance even after turning
+        // the mic back off in the same session. Re-check now too.
+        maybeShowVoicePromo();
       }
     };
 
