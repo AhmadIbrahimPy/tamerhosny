@@ -1696,6 +1696,9 @@ def recap(request, username):
     total_likes = Like.objects.filter(user=recap_user).count()
     total_duets = SingWithTamerProject.objects.filter(user=recap_user, is_completed=True).count()
 
+    game_profile = UserGameProfile.objects.filter(user=recap_user).first()
+    game_rank, game_rank_trend = get_rank_and_trend(game_profile) if game_profile else (None, None)
+
     return render(request, 'website/pages/user/recap.html', {
         'recap_user': recap_user,
         'total_plays': totals['total_plays'] or 0,
@@ -1705,6 +1708,9 @@ def recap(request, username):
         'total_likes': total_likes,
         'total_duets': total_duets,
         'member_since': recap_user.date_joined,
+        'game_profile': game_profile,
+        'game_rank': game_rank,
+        'game_rank_trend': game_rank_trend,
     })
 
 

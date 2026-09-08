@@ -29,13 +29,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
 <!-- Theme CSS -->
-<!-- build:css {% static 'dashboard/assets/css/theme.min.css' %} -->
 {% if LANGUAGE_BIDI %}
 <link rel="stylesheet" href="{% static 'dashboard/assets/css/theme.rtl.css' %}" />
 {% else %}
 <link rel="stylesheet" href="{% static 'dashboard/assets/css/theme.css' %}" />
 {% endif %}
-<!-- endbuild -->
 
 <!-- Visual polish overrides (kept separate from the vendor theme build) -->
 <link rel="stylesheet" href="{% static 'dashboard/assets/css/custom-theme.css' %}" />
