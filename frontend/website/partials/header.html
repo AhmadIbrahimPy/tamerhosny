@@ -90,14 +90,16 @@
       </button>
       {% endif %}
     </div>
-    {% if VAPID_PUBLIC_KEY %}
-    <button type="button" class="th-push-btn th-push-btn-mobile" onclick="thTogglePushNotifications()" title="{% translate 'فعّل الإشعارات' %}">
-      <i class="bi bi-bell"></i>
-    </button>
-    {% endif %}
-    <button type="button" class="th-nav-toggle" id="thNavToggle" onclick="thToggleMobilePanel();" aria-label="{% translate 'القائمة' %}" aria-expanded="false">
-      <i class="bi bi-list"></i>
-    </button>
+    <div class="th-mobile-toggles">
+      {% if VAPID_PUBLIC_KEY %}
+      <button type="button" class="th-push-btn th-push-btn-mobile" onclick="thTogglePushNotifications()" title="{% translate 'فعّل الإشعارات' %}">
+        <i class="bi bi-bell"></i>
+      </button>
+      {% endif %}
+      <button type="button" class="th-nav-toggle" id="thNavToggle" onclick="thToggleMobilePanel();" aria-label="{% translate 'القائمة' %}" aria-expanded="false">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
   </div>
   <div class="container-xl">
     <div class="th-mobile-panel" id="thMobilePanel">

@@ -157,6 +157,12 @@
     .th-nav-links > .th-push-btn:hover{background:rgba(255,255,255,.06); color:var(--text);}
     .th-nav-links > .th-push-btn.is-on{border-color:var(--accent); color:var(--accent);}
     .th-nav-links > .th-push-btn:disabled{opacity:.4; cursor:not-allowed;}
+    /* Groups the mobile bell + hamburger into one flex item so
+       .th-nav-inner's justify-content:space-between (logo at one end,
+       this group at the other) can't split them apart - with the two
+       as separate direct children, space-between spread the bell out
+       to roughly the middle of the bar instead of next to the toggle. */
+    .th-mobile-toggles{display:flex; align-items:center; flex-shrink:0;}
     .th-push-btn-mobile{
       display:none; align-items:center; justify-content:center; width:36px; height:36px; padding:0;
       border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
