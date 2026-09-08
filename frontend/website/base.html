@@ -1547,6 +1547,23 @@
     <div class="th-voice-status" id="thVoiceStatus">{% translate "أنا هنا" %}</div>
   </div>
 
+  <!-- One-time discovery toast for the voice assistant, shown to anyone
+       who hasn't turned the mic on yet - see maybeShowVoicePromo() in
+       the script below. -->
+  <div id="thVoicePromoToast" class="th-voice-promo-toast" style="display:none;" role="status">
+    <div class="th-voice-promo-icon"><i class="bi bi-mic-fill"></i></div>
+    <div class="th-voice-promo-text">
+      <strong>{% translate "جرّب المساعد الصوتي!" %}</strong>
+      <div>{% translate 'فعّل الميكروفون وقول "TH"، وقولنا عايز تسمع إيه' %}</div>
+    </div>
+    <button type="button" class="th-voice-promo-enable" onclick="window.thToggleVoiceAssistant(); window.thDismissVoicePromo();">
+      {% translate "فعّل الميكروفون" %}
+    </button>
+    <button type="button" class="th-voice-promo-close" onclick="window.thDismissVoicePromo()" aria-label="{% translate 'إغلاق' %}">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
   <style>
     .th-voice-assistant{
       position:fixed; z-index:1050; bottom:90px; inset-inline-end:20px;
@@ -1590,6 +1607,32 @@
       0%{opacity:0; transform:translate(0,0) scale(.6) rotate(0deg);}
       15%{opacity:1;}
       100%{opacity:0; transform:translate(var(--drift), -75vh) scale(1.15) rotate(15deg);}
+    }
+
+    .th-voice-promo-toast{
+      position:fixed; z-index:1040; bottom:90px; left:50%; transform:translateX(-50%) translateY(16px);
+      display:flex; align-items:center; gap:12px; max-width:calc(100% - 32px); width:460px;
+      background:var(--card); border:1px solid var(--accent); border-radius:16px;
+      padding:12px 14px; box-shadow:0 12px 40px rgba(0,0,0,.4);
+      opacity:0; transition:opacity .3s ease, transform .3s ease; pointer-events:none;
+    }
+    .th-voice-promo-toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+    .th-voice-promo-icon{
+      flex-shrink:0; width:36px; height:36px; border-radius:50%; background:rgba(212,175,55,.15);
+      color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:16px;
+    }
+    .th-voice-promo-text{flex:1; min-width:0; font-size:12.5px; color:var(--muted); line-height:1.5;}
+    .th-voice-promo-text strong{display:block; color:var(--text); font-size:13.5px; margin-bottom:2px;}
+    .th-voice-promo-enable{
+      flex-shrink:0; background:var(--accent); color:#111; border:none; border-radius:10px;
+      padding:8px 14px; font-size:12.5px; font-weight:800; cursor:pointer; white-space:nowrap;
+    }
+    .th-voice-promo-close{
+      flex-shrink:0; background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px;
+    }
+    @media (max-width:600px){
+      .th-voice-promo-toast{ bottom:150px; flex-wrap:wrap; }
+      .th-voice-promo-enable{ order:3; width:100%; }
     }
   </style>
 
@@ -3614,6 +3657,34 @@
       startRecognition();
       armWatchdog();
     }
+
+    // One-time discovery toast so people who've never touched the mic
+    // button actually learn the feature exists and how to use it -
+    // shown once ever per browser (localStorage flag), never once
+    // they've enabled it, and only after a short delay so it doesn't
+    // ambush a visitor the instant the page loads.
+    var PROMO_STORAGE_KEY = 'thVoiceAssistantPromoShown';
+
+    window.thDismissVoicePromo = function () {
+      localStorage.setItem(PROMO_STORAGE_KEY, '1');
+      var toast = document.getElementById('thVoicePromoToast');
+      if (!toast) return;
+      toast.classList.remove('show');
+      setTimeout(function () { toast.style.display = 'none'; }, 300);
+    };
+
+    function maybeShowVoicePromo() {
+      if (enabled || localStorage.getItem(PROMO_STORAGE_KEY) === '1') return;
+      var toast = document.getElementById('thVoicePromoToast');
+      if (!toast) return;
+      setTimeout(function () {
+        if (enabled) return; // enabled via the header button in the meantime
+        toast.style.display = 'flex';
+        requestAnimationFrame(function () { toast.classList.add('show'); });
+      }, 4000);
+    }
+
+    maybeShowVoicePromo();
   })();
   </script>
 
