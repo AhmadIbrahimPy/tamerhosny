@@ -3397,12 +3397,35 @@
       // toggleLike() is a strict toggle (POST /likes/toggle/ flips
       // whatever the current state is) - a voice "اعمل لايك"/"لاف"
       // should always leave the song liked, never flip an existing like
-      // back off, so only call it when it isn't already liked.
-      if (typeof isLiked !== 'undefined' && !isLiked && typeof toggleLike === 'function') {
-        toggleLike();
-      }
-      setStatus('{% translate "تمام ❤️" %}');
-      spawnLoveHearts();
+      // back off. The cached `isLiked` isn't trustworthy here though -
+      // it's only ever set once checkLikeStatus()'s own fetch (fired
+      // from playAudio() when the song started) actually resolves, so a
+      // voice command coming in before that lands still reads the
+      // initial `false` even for an already-liked song - which used to
+      // toggle it straight back OFF. Re-check the real state fresh
+      // instead of trusting the cache.
+      var songIdAtRequest = currentSongId;
+      var requestId = ++likeStatusRequestId;
+      fetch('/likes/toggle/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCSRFToken(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'content_type=song&object_id=' + songIdAtRequest + '&check_only=true',
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (requestId !== likeStatusRequestId || data.status !== 'success') return;
+          isLiked = data.liked;
+          updateLikeButton();
+          if (!isLiked && typeof toggleLike === 'function') {
+            toggleLike();
+          }
+          setStatus('{% translate "تمام ❤️" %}');
+          spawnLoveHearts();
+        })
+        .catch(function () {});
     }
 
     function openCurrentSongPage() {
@@ -3536,6 +3559,53 @@
         .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
     }
 
+    // "شغل أغنية من ألبوم X" - fuzzy-matches the album name server-side
+    // (same approach as playSongByName's title match), then picks a
+    // random track from it.
+    function playSongByAlbum(albumQuery) {
+      setStatus('{% translate "بدور على الألبوم..." %}');
+      fetch('/player/voice-search/?album=' + encodeURIComponent(albumQuery) + '&limit=15')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var songs = data.songs || [];
+          if (!songs.length) {
+            setStatus('{% translate "أووبس، مش لاقي الألبوم ده" %}');
+            return;
+          }
+          window.otherSongsList = songs;
+          window.otherSongsListIsRandom = true;
+          var song = songs[Math.floor(Math.random() * songs.length)];
+          setStatus(song.title);
+          var btn = document.getElementById('playerPlayBtn');
+          playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+        })
+        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+    }
+
+    // "شغل حاجة قديمة"/"شغل حاجة 2010" - year picks an exact (or closest
+    // available) release year server-side; era is the vague "قديمة"/
+    // "جديدة" fallback with no year mentioned at all.
+    function playSongByEra(year, era) {
+      setStatus('{% translate "بدور على حاجة..." %}');
+      var param = year ? 'year=' + encodeURIComponent(year) : 'era=' + encodeURIComponent(era);
+      fetch('/player/voice-search/?' + param + '&limit=15')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var songs = data.songs || [];
+          if (!songs.length) {
+            setStatus('{% translate "أووبس، مش لاقي أغاني تناسب الفترة دي" %}');
+            return;
+          }
+          window.otherSongsList = songs;
+          window.otherSongsListIsRandom = true;
+          var song = songs[Math.floor(Math.random() * songs.length)];
+          setStatus(song.title);
+          var btn = document.getElementById('playerPlayBtn');
+          playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+        })
+        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+    }
+
     // "اقترح أغنية"/"شغل حاجة على ذوق" - no name or mood given, just
     // pick something. /player/song-data/ with no song_id already picks
     // a random playable song server-side (same bootstrap used landing
@@ -3597,6 +3667,14 @@
           // path instead of two doing the same thing.
           if (!data.lyrics_query) return false;
           playSongByName(data.lyrics_query);
+          return true;
+        case 'play_album':
+          if (!data.album_query) return false;
+          playSongByAlbum(data.album_query);
+          return true;
+        case 'play_era':
+          if (!data.year && !data.era) return false;
+          playSongByEra(data.year, data.era);
           return true;
         case 'play_mood':
           if (!data.mood) return false;
@@ -3722,7 +3800,15 @@
       // contain the word) must still be treated as that request, not
       // this easter egg. Ordering it after every real command already
       // does that: PLAY_SONG_RE above matches and returns first.
-      if (LOVE_WORDS_RE.test(text)) {
+      //
+      // Word-count guard on top of that: someone actually addressing the
+      // assistant says "بحبك" short and alone (at most a name/filler
+      // word or two around it - "بحبك يا تامر"), while a real lyric
+      // containing the word ("بحبك يا حياتي ومش هعرف أعيش من غيرك") or a
+      // song literally titled "بحبك انت" runs much longer. A long match
+      // here used to always win the easter egg and never even reach the
+      // lyrics/title search below.
+      if (LOVE_WORDS_RE.test(text) && text.split(/\s+/).filter(Boolean).length <= 4) {
         triggerLoveEasterEgg();
         return true;
       }

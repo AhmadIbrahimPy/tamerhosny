@@ -358,21 +358,30 @@ def voice_search_songs(request):
 
     `q` matches song titles (for "شغل أغنية X"); `mood` matches
     Song.Mood (for "شغلي حاجة حزينة"/"روقان"/etc.); `lyrics` matches
-    song lyrics (for "كلمات فيها X"/"غنية بتيقول X"). At least one is
-    required. Results come back in the same per-song shape the player
-    page's `otherSongs` queue items use, so the frontend can hand one
-    straight to `playAudio()`/queue it without a second round trip.
+    song lyrics (for "كلمات فيها X"/"غنية بتيقول X"); `album` matches an
+    album by name (for "شغل أغنية من ألبوم X") and picks a random track
+    from it; `year` picks a random song released that year (for "شغل
+    حاجة 2010"), falling back to the closest year with any songs if
+    that exact year has none; `era` is "OLD" or "RECENT" for a vague
+    "شغل حاجة قديمة"/"شغل حاجة جديدة" with no specific year, picking
+    from the oldest/newest quarter of the catalog. At least one of
+    these is required. Results come back in the same per-song shape the
+    player page's `otherSongs` queue items use, so the frontend can hand
+    one straight to `playAudio()`/queue it without a second round trip.
     """
     query = (request.GET.get('q') or '').strip()
     mood = (request.GET.get('mood') or '').strip().upper()
     lyrics_query = (request.GET.get('lyrics') or '').strip()
+    album_query = (request.GET.get('album') or '').strip()
+    year_param = (request.GET.get('year') or '').strip()
+    era_param = (request.GET.get('era') or '').strip().upper()
     try:
         limit = min(int(request.GET.get('limit', 10)), 20)
     except ValueError:
         limit = 10
 
-    if not query and not mood and not lyrics_query:
-        return JsonResponse({'error': 'q, mood, or lyrics is required'}, status=400)
+    if not any([query, mood, lyrics_query, album_query, year_param, era_param]):
+        return JsonResponse({'error': 'q, mood, lyrics, album, year, or era is required'}, status=400)
 
     playable_songs = Song.objects.select_related('album').exclude(audio_file='')
     queryset = Song.visible_queryset(playable_songs).filter(is_duet=False)
@@ -462,6 +471,43 @@ def voice_search_songs(request):
 
         scored.sort(key=lambda pair: pair[0], reverse=True)
         songs = [s for _, s in scored[:limit]]
+    elif album_query:
+        album_norm = _normalize_arabic(album_query)
+        album_lower = album_query.lower()
+        best_album = None
+        best_album_score = 0.0
+        for a in Album.objects.all():
+            score = _title_match_score(album_norm, _normalize_arabic(a.title_ar))
+            if a.title_en:
+                title_en_lower = a.title_en.lower()
+                en_score = 1.0 if album_lower in title_en_lower or title_en_lower in album_lower \
+                    else SequenceMatcher(None, album_lower, title_en_lower).ratio()
+                score = max(score, en_score)
+            if score > best_album_score:
+                best_album_score = score
+                best_album = a
+        songs = list(queryset.filter(album=best_album).order_by('?')[:limit]) if best_album_score >= 0.45 else []
+    elif year_param.isdigit():
+        year = int(year_param)
+        songs_with_year = queryset.exclude(release_year__isnull=True)
+        songs = list(songs_with_year.filter(release_year=year).order_by('?')[:limit])
+        if not songs:
+            # Nothing released exactly that year - the closest year that
+            # actually has songs reads better than an empty result for a
+            # vague "شغل حاجة 2010"-style request.
+            available_years = sorted(set(songs_with_year.values_list('release_year', flat=True)))
+            if available_years:
+                closest_year = min(available_years, key=lambda y: abs(y - year))
+                songs = list(songs_with_year.filter(release_year=closest_year).order_by('?')[:limit])
+    elif era_param in ('OLD', 'RECENT'):
+        songs_with_year = queryset.exclude(release_year__isnull=True)
+        available_years = sorted(set(songs_with_year.values_list('release_year', flat=True)))
+        if available_years:
+            quarter = max(1, len(available_years) // 4)
+            era_years = available_years[:quarter] if era_param == 'OLD' else available_years[-quarter:]
+            songs = list(songs_with_year.filter(release_year__in=era_years).order_by('?')[:limit])
+        else:
+            songs = []
     else:
         songs = list(queryset.order_by('?')[:limit])
 
@@ -490,10 +536,13 @@ _VOICE_INTENT_SYSTEM_PROMPT = """You are the voice-command intent classifier for
 
 Respond with STRICT JSON ONLY (no markdown fences, no commentary) matching exactly this shape:
 {
-  "intent": one of "next", "previous", "stop", "resume", "seek_forward", "seek_backward", "like", "unlike", "open_current_song", "play_song", "play_mood", "play_lyrics", "play_random", "navigate", "unknown",
+  "intent": one of "next", "previous", "stop", "resume", "seek_forward", "seek_backward", "like", "unlike", "open_current_song", "play_song", "play_mood", "play_lyrics", "play_album", "play_era", "play_random", "navigate", "unknown",
   "song_query": the song title/name mentioned (for play_song), or null,
   "mood": one of "ROMANTIC", "SAD_HEARTBREAK", "ENERGETIC_UPBEAT", "MOTIVATIONAL_HOPEFUL", "CHILL_RELAXING", "NOSTALGIC", "CONFIDENT_PLAYFUL" (for play_mood), or null,
   "lyrics_query": the lyrics phrase mentioned (for play_lyrics), or null,
+  "album_query": the album name mentioned (for play_album), or null,
+  "year": a specific 4-digit release year mentioned (for play_era), or null,
+  "era": "OLD" or "RECENT" (for play_era, only when no specific year was given - "قديمة"/"old" -> OLD, "جديدة"/"حديثة"/"recent" -> RECENT), or null,
   "page": one of __PAGES__ (for navigate), or null
 }
 
@@ -506,7 +555,9 @@ Guidance:
 - play_song is for "play <specific song name>" - extract just the title into song_query.
 - play_mood is for a request to play something matching a mood/feeling, not a specific title.
 - play_lyrics is for a request to play a song containing specific lyrics/words - either explicitly framed (e.g. "كلمات فيها حب"/"غنية بتيقول يا حبيبي"/"song that says love") OR the user just singing/quoting an actual line from a song with no framing at all (e.g. "عايزك تعيديني يا حبيبتي"/"رزق من السنين وتملي تقولي لي") - a multi-word phrase (3+ words) that reads like a sung lyric rather than a command or a request phrased as one of the other intents should also be classified play_lyrics, with the full phrase as lyrics_query.
-- play_random is for a request to just play *something* with no specific song or mood given at all (e.g. "اقترح أغنية"/"suggest a song"/"شغل حاجة على ذوق"/"surprise me").
+- play_album is for "play a song from album X" (e.g. "شغل أغنية من ألبوم لينا معاد"/"play something from album X") - extract just the album name into album_query.
+- play_era is for a request by time period rather than a specific title/mood: a specific year ("شغل حاجة 2010"/"play something from 2010") -> put it in year; a vague "قديمة"/"من زمان"/"old" (no year given) -> era "OLD"; a vague "جديدة"/"حديثة"/"recent"/"new" (no year given) -> era "RECENT".
+- play_random is for a request to just play *something* with no specific song, mood, album, or era given at all (e.g. "اقترح أغنية"/"suggest a song"/"شغل حاجة على ذوق"/"surprise me").
 - navigate is ONLY for going to one of the fixed site sections listed above (never a specific song/album/person's own page - there is no intent for that; if the user asks for a specific item's page other than the current song, use "unknown").
 - Use "unknown" whenever the command doesn't clearly and confidently fit one of the above.
 
@@ -568,6 +619,15 @@ def voice_intent(request):
     song_query = data.get('song_query')
     song_query = song_query.strip() if isinstance(song_query, str) and song_query.strip() else None
 
+    album_query = data.get('album_query')
+    album_query = album_query.strip() if isinstance(album_query, str) and album_query.strip() else None
+
+    year = data.get('year')
+    year = year if isinstance(year, int) and 1900 <= year <= 2100 else None
+
+    era = data.get('era')
+    era = era if era in ('OLD', 'RECENT') else None
+
     if intent == 'navigate' and not page_path:
         intent = 'unknown'
     if intent == 'play_mood' and not mood:
@@ -575,6 +635,10 @@ def voice_intent(request):
     if intent == 'play_song' and not song_query:
         intent = 'unknown'
     if intent == 'play_lyrics' and not lyrics_query:
+        intent = 'unknown'
+    if intent == 'play_album' and not album_query:
+        intent = 'unknown'
+    if intent == 'play_era' and not year and not era:
         intent = 'unknown'
 
     # The classifier's "does this read like a sung lyric" call is
@@ -593,6 +657,9 @@ def voice_intent(request):
         'song_query': song_query,
         'mood': mood,
         'lyrics_query': lyrics_query,
+        'album_query': album_query,
+        'year': year,
+        'era': era,
         'page': page_path,
     })
 

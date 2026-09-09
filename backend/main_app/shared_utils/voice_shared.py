@@ -37,5 +37,5 @@ VOICE_NAV_PAGES = {
 VOICE_VALID_INTENTS = {
     'next', 'previous', 'stop', 'resume', 'seek_forward', 'seek_backward',
     'like', 'unlike', 'open_current_song', 'play_song', 'play_mood',
-    'play_lyrics', 'play_random', 'navigate', 'unknown',
+    'play_lyrics', 'play_album', 'play_era', 'play_random', 'navigate', 'unknown',
 }
