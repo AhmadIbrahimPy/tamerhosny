@@ -4,7 +4,7 @@
   <div class="th-ad-slides">
     {% for ad in ads %}
     <div class="th-ad-slide {% if forloop.first %}active{% endif %}">
-      <a href="{{ ad.get_target_url }}" {% if ad.is_linked_externally %}target="_blank" rel="noopener sponsored"{% endif %}
+      <a {% if ad.get_target_url %}href="{{ ad.get_target_url }}" {% if ad.is_linked_externally %}target="_blank" rel="noopener sponsored"{% endif %}{% endif %}
          class="th-ad-banner plain" onclick="thTrack('EXTERNAL_CLICK', 'ad', {{ ad.pk }}, {});">
         <img src="{{ ad.image.url }}" alt="{{ ad.title }}">
         <span class="th-ad-tag">{% translate "إعلان" %}</span>
