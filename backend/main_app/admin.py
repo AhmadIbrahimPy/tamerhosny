@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from backend.main_app.models import UserAccount, VoiceAssistantLog
+from backend.main_app.models import UserAccount, VoiceAssistantLog, VoiceKnownPhrase
 
 
 @admin.register(UserAccount)
@@ -21,4 +21,15 @@ class VoiceAssistantLogAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(VoiceKnownPhrase)
+class VoiceKnownPhraseAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'intent', 'original_transcript', 'song_query', 'mood', 'page', 'hit_count')
+    list_filter = ('intent',)
+    search_fields = ('original_transcript', 'song_query')
+    readonly_fields = ('created_at', 'original_transcript', 'intent', 'song_query', 'mood', 'page', 'paraphrases', 'hit_count')
+
+    def has_add_permission(self, request):
         return False

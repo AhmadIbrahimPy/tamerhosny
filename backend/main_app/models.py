@@ -545,3 +545,43 @@ class VoiceAssistantLog(models.Model):
 
     def __str__(self):
         return f'{self.get_event_type_display()} - {self.created_at:%Y-%m-%d %H:%M:%S}'
+
+
+class VoiceKnownPhrase(models.Model):
+    """A voice command the fixed regex patterns in base.html couldn't
+    match, classified once in the background by the same LLM chain
+    voice_intent() already uses live (see
+    backend.main_app.tasks.analyze_failed_voice_command, triggered from
+    website_app.views.voice_log on a COMMAND_FAILED event) - along with
+    a handful of AI-generated paraphrases of the same request in
+    different wording.
+
+    voice_intent() checks this table (fuzzy match against
+    original_transcript and every paraphrase) before ever calling the
+    LLM fresh - a request phrased similarly to one seen and classified
+    before then resolves from this local table instantly, without a
+    new API round-trip. Every field here is re-validated against the
+    exact same fixed choices voice_intent() itself enforces before
+    being trusted, regardless of what got stored - this table only
+    ever short-circuits a lookup that would otherwise happen live, it
+    never gets to introduce a new kind of action.
+    """
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    original_transcript = models.CharField(max_length=300)
+    intent = models.CharField(max_length=32)
+    song_query = models.CharField(max_length=200, blank=True)
+    mood = models.CharField(max_length=32, blank=True)
+    page = models.CharField(max_length=64, blank=True)
+    # AI-generated alternative phrasings of original_transcript with the
+    # same meaning - checked alongside it on every future lookup.
+    paraphrases = models.JSONField(default=list, blank=True)
+    # How many times a later lookup actually matched this row - purely
+    # to see which learned phrases are pulling their weight.
+    hit_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f'{self.intent}: {self.original_transcript[:50]}'

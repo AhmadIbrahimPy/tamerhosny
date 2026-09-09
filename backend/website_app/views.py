@@ -21,9 +21,10 @@ from django.views.decorators.http import require_POST
 
 from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
-from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener, VoiceAssistantLog
+from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener, VoiceAssistantLog, VoiceKnownPhrase
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.llm_providers import ask_json
+from backend.main_app.shared_utils.voice_shared import VOICE_NAV_PAGES, VOICE_VALID_INTENTS
 from backend.main_app.shared_utils.gamification import (
     POINTS_GUESS_LOSS, POINTS_LIKE, award_points, get_rank_and_trend, unlocked_badges,
 )
@@ -309,6 +310,43 @@ def _title_match_score(query_norm, title_norm):
     return SequenceMatcher(None, query_norm, title_norm).ratio()
 
 
+# How closely a live transcript has to match a previously-learned phrase
+# (or one of its AI-generated paraphrases) before voice_intent() trusts
+# it over calling the LLM fresh - stricter than song-title search's own
+# threshold, since this one drives which action actually executes.
+_KNOWN_PHRASE_MATCH_THRESHOLD = 0.75
+
+
+def _find_known_phrase(text):
+    """Fuzzy-matches `text` against VoiceKnownPhrase.original_transcript
+    and every stored paraphrase (see that model's docstring) - the most
+    recent 500 rows only, a pragmatic cap rather than a real limit on
+    how many can ever be learned. Returns the best-matching row, or None
+    if nothing clears the threshold.
+    """
+    text_norm = _normalize_arabic(text)
+    text_lower = text.lower()
+    best = None
+    best_score = 0.0
+
+    for phrase in VoiceKnownPhrase.objects.all()[:500]:
+        for candidate in [phrase.original_transcript, *phrase.paraphrases]:
+            score = _title_match_score(text_norm, _normalize_arabic(candidate))
+            if score < 1.0:
+                # Also try a plain-lowercase compare, in case the
+                # transcript or a stored paraphrase came through in
+                # Latin script (an English command/paraphrase).
+                candidate_lower = candidate.lower()
+                latin_score = 1.0 if text_lower in candidate_lower or candidate_lower in text_lower \
+                    else SequenceMatcher(None, text_lower, candidate_lower).ratio()
+                score = max(score, latin_score)
+            if score > best_score:
+                best_score = score
+                best = phrase
+
+    return best if best_score >= _KNOWN_PHRASE_MATCH_THRESHOLD else None
+
+
 def voice_search_songs(request):
     """Backs the site-wide voice assistant ("TH" wake word).
 
@@ -380,31 +418,6 @@ def voice_search_songs(request):
     return JsonResponse({'songs': results})
 
 
-# Fixed, safe set of site sections the voice assistant's "navigate" intent
-# is allowed to land on - deliberately only whole-catalog list/home pages,
-# never a specific song/album/person's own page (there's no reliable way
-# for the LLM to resolve "افتح صفحة الأغنية اللي شغالة" to a slug - that's
-# handled entirely client-side instead, from whatever's actually playing).
-VOICE_NAV_PAGES = {
-    'home': '/',
-    'bio': '/tamer-hosny/',
-    'player': '/player/',
-    'songs': '/songs/',
-    'albums': '/albums/',
-    'people': '/people/',
-    'movies': '/movies/',
-    'series': '/series/',
-    'commercials': '/commercials/',
-    'concerts': '/concerts/',
-    'daily_guess': '/guess/',
-    'leaderboard': '/leaderboard/',
-    'likes': '/likes/',
-    'duets': '/my-duets/',
-    'recently_played': '/recently-played/',
-    'playlists': '/playlists/',
-    'remixes': '/remixes/',
-}
-
 _VOICE_INTENT_SYSTEM_PROMPT = """You are the voice-command intent classifier for an Arabic Tamer Hosny fan website's site-wide voice assistant. The user just spoke a short command, in Egyptian Arabic or English, right after saying a wake word - classify ONLY that command.
 
 Respond with STRICT JSON ONLY (no markdown fences, no commentary) matching exactly this shape:
@@ -457,15 +470,20 @@ def voice_intent(request):
     if not text:
         return JsonResponse({'error': 'text is required'}, status=400)
 
-    system_prompt = _VOICE_INTENT_SYSTEM_PROMPT.replace('__PAGES__', str(list(VOICE_NAV_PAGES.keys())))
-    data = ask_json(text, system_prompt, required_keys=('intent',)) or {}
+    known = _find_known_phrase(text)
+    if known:
+        VoiceKnownPhrase.objects.filter(pk=known.pk).update(hit_count=F('hit_count') + 1)
+        data = {
+            'intent': known.intent,
+            'song_query': known.song_query or None,
+            'mood': known.mood or None,
+            'page': known.page or None,
+        }
+    else:
+        system_prompt = _VOICE_INTENT_SYSTEM_PROMPT.replace('__PAGES__', str(list(VOICE_NAV_PAGES.keys())))
+        data = ask_json(text, system_prompt, required_keys=('intent',)) or {}
 
-    valid_intents = {
-        'next', 'previous', 'stop', 'resume', 'seek_forward', 'seek_backward',
-        'like', 'unlike', 'open_current_song', 'play_song', 'play_mood',
-        'play_random', 'navigate', 'unknown',
-    }
-    intent = data.get('intent') if data.get('intent') in valid_intents else 'unknown'
+    intent = data.get('intent') if data.get('intent') in VOICE_VALID_INTENTS else 'unknown'
 
     mood = data.get('mood')
     mood = mood if mood in Song.Mood.values else None
@@ -516,16 +534,32 @@ def voice_log(request):
 
     ms_value = body.get('ms_value')
     ms_value = ms_value if isinstance(ms_value, int) else None
+    transcript = str(body.get('transcript') or '')[:300]
 
     VoiceAssistantLog.objects.create(
         user=request.user if request.user.is_authenticated else None,
         client_session_id=str(body.get('session_id') or '')[:32],
         event_type=event_type,
         detail=str(body.get('detail') or '')[:255],
-        transcript=str(body.get('transcript') or '')[:300],
+        transcript=transcript,
         ms_value=ms_value,
         user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
     )
+
+    if event_type == 'COMMAND_FAILED' and transcript:
+        # Analyzed in the background (AI classification + paraphrase
+        # generation) and stored for voice_intent() to check on future
+        # similarly-worded requests - see main_app.tasks.
+        # analyze_failed_voice_command and VoiceKnownPhrase's docstring.
+        # Queuing itself must never break this beacon endpoint (a
+        # broker hiccup here is still just a missed learning
+        # opportunity, same as everything else in this view).
+        try:
+            from backend.main_app.tasks import analyze_failed_voice_command
+            analyze_failed_voice_command.delay(transcript)
+        except Exception:
+            pass
+
     return JsonResponse({'ok': True})
 
 
