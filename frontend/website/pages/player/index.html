@@ -1232,7 +1232,26 @@ function loadPlayerPageData() {
 
   if (currentSongData.songId && listenerSocketSongId !== currentSongData.songId) {
     connectListenerSocket(currentSongData.songId);
-    if (typeof globalAudio !== 'undefined' && globalAudio && !globalAudio.paused &&
+    // Right after a refresh, globalAudio.paused is still true here even
+    // when this song was genuinely playing before it - restorePlayerState()
+    // (base.html) resumes it with .play(), which browsers can only grant
+    // after a user gesture, so it's still pending (or silently blocked)
+    // at this exact moment. Not sending 'start' in that case left this
+    // client briefly (or indefinitely, if autoplay never resolves)
+    // unregistered server-side - the socket's own connect() immediately
+    // sends the *current* count, which then doesn't include this client,
+    // so the correct count the page just showed a moment ago (from the
+    // REST fetch above) flickered down to one fewer. Falling back to the
+    // saved playerState's own isPlaying flag (the actual pre-refresh
+    // intent) catches that case; the persistent audioPlayPause listener
+    // (already registered above) still corrects things either way once
+    // the real play/pause state is known for certain.
+    var wasPlayingBeforeRefresh = false;
+    try {
+      wasPlayingBeforeRefresh = !!JSON.parse(localStorage.getItem('playerState') || '{}').isPlaying;
+    } catch (e) {}
+    if (typeof globalAudio !== 'undefined' && globalAudio &&
+        (!globalAudio.paused || wasPlayingBeforeRefresh) &&
         Number(currentSongId) === Number(currentSongData.songId)) {
       isCurrentlyListening = true;
       sendListenerAction('start');
