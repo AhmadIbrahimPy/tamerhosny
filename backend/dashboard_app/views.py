@@ -22,6 +22,7 @@ from backend.concerts_app.models import Concert
 from backend.main_app.shared_utils.credits import dedupe_credits
 from backend.main_app.shared_utils.decorators import dashboard_required
 from backend.main_app.shared_utils.login_sessions import record_login_session
+from backend.main_app.shared_utils.profanity import mask_profanity
 from backend.dashboard_app.forms import (
     AdvertisementForm, AlbumForm, CinemaVenueForm, ConcertForm, ExternalLinkForm, MediaCreditForm,
     MEDIA_SECTION_FORMS, PersonForm, PlatformForm, ScreeningForm, SongCreditForm, SongForm, SongLyricSegmentForm,
@@ -814,6 +815,27 @@ def song_edit(request, pk):
         'back_url': _smart_back_url(request, reverse('dashboard_app:songs')),
         'album_years_json': _album_years_json(),
     })
+
+
+@dashboard_required
+def song_upload_audio(request, pk):
+    """Quick inline upload for the songs list's "missing audio" filter
+    (?missing=audio) - lets an admin fix a row without leaving the list
+    and re-finding it after a full add/edit form round-trip. AJAX-only
+    (JsonResponse either way); the list template's own JS is the only
+    caller.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    song = get_object_or_404(Song, pk=pk)
+    audio_file = request.FILES.get('audio_file')
+    if not audio_file:
+        return JsonResponse({'error': _('لم يتم اختيار ملف')}, status=400)
+
+    song.audio_file = audio_file
+    song.save(update_fields=['audio_file'])
+    return JsonResponse({'status': 'success'})
 
 
 @dashboard_required
@@ -1896,6 +1918,8 @@ def user_view(request, pk):
     voice_logs_qs = VoiceAssistantLog.objects.filter(user=account).exclude(transcript='').order_by('-created_at')
     voice_logs_page = _paginate_named(request, voice_logs_qs, 'voice_logs_page')
     voice_requests_count = voice_logs_qs.count()
+    for log in voice_logs_page:
+        log.masked_transcript, log.is_flagged = mask_profanity(log.transcript)
 
     return render(request, 'dashboard/pages/user_detail.html', {
         'account': account,

@@ -2,6 +2,13 @@
 {% load static i18n %}
 {% block title %}{% translate "الأغاني" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .audio-upload-cell:hover .audio-upload-status { display: none !important; }
+  .audio-upload-cell:hover .audio-upload-trigger { display: inline-flex !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="custom-container">
   <div class="card card-lg">
@@ -37,7 +44,20 @@
               </a>
             </td>
             <td class="text-center">
-              {% if song.audio_file %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
+              {% if song.audio_file %}
+                <i class="ti ti-check text-success" style="font-size:18px;"></i>
+              {% else %}
+                <div class="audio-upload-cell d-inline-flex align-items-center justify-content-center position-relative"
+                     style="width:28px;height:28px;"
+                     data-upload-url="{% url 'dashboard_app:song-upload-audio' song.pk %}">
+                  <i class="ti ti-x text-danger audio-upload-status" style="font-size:18px;"></i>
+                  <button type="button" class="audio-upload-trigger btn btn-sm btn-outline-primary p-0 d-none align-items-center justify-content-center position-absolute top-0 start-0"
+                          style="width:28px;height:28px;" title="{% translate 'رفع ملف صوتي' %}">
+                    <i class="ti ti-upload" style="font-size:15px;"></i>
+                  </button>
+                  <input type="file" accept="audio/*" class="audio-upload-input d-none">
+                </div>
+              {% endif %}
             </td>
             <td class="text-center">
               {% if song.segments_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
@@ -67,4 +87,58 @@
     {% include "dashboard/partials/pagination.html" with page_obj=songs %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrftoken') return decodeURIComponent(value);
+    }
+    return '';
+  }
+
+  // Clicking the upload icon (only visible on hover - see extra_css
+  // above) opens the hidden file picker sitting next to it.
+  document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('.audio-upload-trigger');
+    if (!trigger) return;
+    const cell = trigger.closest('.audio-upload-cell');
+    cell.querySelector('.audio-upload-input').click();
+  });
+
+  document.addEventListener('change', function (e) {
+    const input = e.target.closest('.audio-upload-input');
+    if (!input || !input.files.length) return;
+    const cell = input.closest('.audio-upload-cell');
+    const uploadUrl = cell.dataset.uploadUrl;
+    const file = input.files[0];
+
+    cell.innerHTML = '<span class="spinner-border spinner-border-sm text-primary" role="status"></span>';
+
+    const formData = new FormData();
+    formData.append('audio_file', file);
+
+    fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': getCSRFToken() },
+    })
+      .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+      .then(function (result) {
+        if (result.ok && result.data.status === 'success') {
+          cell.innerHTML = '<i class="ti ti-check text-success" style="font-size:18px;"></i>';
+        } else {
+          alert(result.data.error || '{% translate "حدث خطأ أثناء الرفع" %}');
+          window.location.reload();
+        }
+      })
+      .catch(function () {
+        alert('{% translate "حدث خطأ أثناء الرفع" %}');
+        window.location.reload();
+      });
+  });
+</script>
 {% endblock %}

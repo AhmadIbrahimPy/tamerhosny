@@ -354,7 +354,18 @@
                 {% for log in voice_logs_page %}
                 <tr>
                   <td class="text-nowrap">{{ log.created_at }}</td>
-                  <td>{{ log.transcript }}</td>
+                  <td>
+                    {% if log.is_flagged %}
+                      <span class="badge bg-danger-subtle text-danger me-1">{% translate "غير لائق" %}</span>
+                      <span class="voice-transcript-masked">{{ log.masked_transcript }}</span>
+                      <span class="voice-transcript-real d-none">{{ log.transcript }}</span>
+                      <button type="button" class="btn btn-sm btn-link p-0 ms-1 voice-transcript-reveal" title="{% translate 'إظهار النص' %}">
+                        <i class="ti ti-eye"></i>
+                      </button>
+                    {% else %}
+                      {{ log.transcript }}
+                    {% endif %}
+                  </td>
                   <td>
                     {% if log.event_type == 'COMMAND_MATCHED' %}
                       <span class="badge bg-success-subtle text-success">{% translate "اتنفذ" %}</span>
@@ -379,4 +390,20 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.voice-transcript-reveal');
+    if (!btn) return;
+    var cell = btn.closest('td');
+    var masked = cell.querySelector('.voice-transcript-masked');
+    var real = cell.querySelector('.voice-transcript-real');
+    var revealed = !real.classList.contains('d-none');
+    masked.classList.toggle('d-none', !revealed);
+    real.classList.toggle('d-none', revealed);
+    btn.querySelector('i').className = revealed ? 'ti ti-eye' : 'ti ti-eye-off';
+  });
+</script>
 {% endblock %}
