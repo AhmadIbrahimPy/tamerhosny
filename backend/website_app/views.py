@@ -284,6 +284,12 @@ _ARABIC_NORMALIZE_MAP = str.maketrans({
     'ة': 'ه',
     'ؤ': 'و',
     'ـ': '',  # tatweel
+    # Egyptian dialect pronounces ث like ت (not the formal "th") - a
+    # speech engine transcribing "تاني" (again) routinely picks the
+    # formal spelling "ثاني" instead, which then never matched a lyric
+    # actually spelled with ت (e.g. "ما تخافش تاني من الحياة" heard back
+    # as "...ثاني...").
+    'ث': 'ت',
 })
 
 
