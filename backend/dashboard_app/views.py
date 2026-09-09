@@ -28,7 +28,7 @@ from backend.dashboard_app.forms import (
     StudioForm, UserAccountForm,
 )
 from backend.links_app.models import ExternalLink, Platform
-from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserGameProfile, UserSongPlay
+from backend.main_app.models import CurrentSongListener, Like, LoginSession, Playlist, UserAccount, UserGameProfile, UserSongPlay, VoiceAssistantLog
 from backend.main_app.shared_utils.gamification import get_rank_and_trend, unlocked_badges
 from backend.media_app.models import CinemaScreening, CinemaVenue, Media, MediaCredit
 from backend.music_app.models import (
@@ -1791,8 +1791,18 @@ def users_list(request):
         last_heartbeat__gte=timezone.now() - LISTENING_NOW_CUTOFF,
     ).select_related('song')
     listening_by_user = {row.user_id: row.song for row in listening}
+
+    # Only rows with an actual transcript count as a "request" - the same
+    # user_id also carries pure lifecycle noise (RECOGNITION_START/END,
+    # WATCHDOG_RESTART, ...) that was never something the user asked for.
+    voice_counts = dict(
+        VoiceAssistantLog.objects.filter(user_id__in=[account.pk for account in accounts])
+        .exclude(transcript='')
+        .values('user_id').annotate(c=Count('id')).values_list('user_id', 'c')
+    )
     for account in accounts:
         account.now_listening = listening_by_user.get(account.pk)
+        account.voice_requests_count = voice_counts.get(account.pk, 0)
 
     return render(request, 'dashboard/pages/users/all.html', {
         'accounts': accounts,
@@ -1881,6 +1891,12 @@ def user_view(request, pk):
     sessions_qs = LoginSession.objects.filter(user=account).order_by('-created_at')
     sessions_page = _paginate_named(request, sessions_qs, 'sessions_page')
 
+    # Only rows with an actual transcript - see users_list()'s own
+    # voice_counts comment for why (lifecycle noise excluded).
+    voice_logs_qs = VoiceAssistantLog.objects.filter(user=account).exclude(transcript='').order_by('-created_at')
+    voice_logs_page = _paginate_named(request, voice_logs_qs, 'voice_logs_page')
+    voice_requests_count = voice_logs_qs.count()
+
     return render(request, 'dashboard/pages/user_detail.html', {
         'account': account,
         'now_listening': now_listening,
@@ -1896,6 +1912,8 @@ def user_view(request, pk):
         'duets_page': duets_page,
         'guesses_page': guesses_page,
         'sessions_page': sessions_page,
+        'voice_logs_page': voice_logs_page,
+        'voice_requests_count': voice_requests_count,
         'public_profile_url': reverse('website_app:public-profile', args=[account.username]),
         'edit_url': reverse('dashboard_app:user-edit', args=[pk]),
         'toggle_url': reverse('dashboard_app:user-toggle', args=[pk]),

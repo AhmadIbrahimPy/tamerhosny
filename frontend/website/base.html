@@ -4087,6 +4087,7 @@
       // history in git log for this file).
       var pttSilenceTimer = null;
       function pttTapToggle() {
+        if (requireAuth(null, '{% translate "سجل دخولك عشان تقدر تستخدم المساعد الصوتي" %}')) return;
         if (pttActive) {
           pttStop();
           return;
@@ -4149,6 +4150,7 @@
       });
 
       window.thToggleVoiceAssistant = function () {
+        if (!enabled && requireAuth(null, '{% translate "سجل دخولك عشان تقدر تستخدم المساعد الصوتي" %}')) return;
         enabled = !enabled;
         localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
         updateButtonsUI();
@@ -4167,6 +4169,13 @@
         }
       };
 
+      // enabled persists in localStorage across visits - if the session
+      // that turned it on has since expired (logged out, cookie
+      // cleared, ...), don't silently keep it listening.
+      if (enabled && !window.isAuthenticated) {
+        enabled = false;
+        localStorage.setItem(STORAGE_KEY, '0');
+      }
       updateButtonsUI();
       if (enabled) {
         startRecognition();

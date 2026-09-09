@@ -16,6 +16,7 @@
             <th>{% translate "اسم المستخدم" %}</th>
             <th>{% translate "الدور" %}</th>
             <th>{% translate "يستمع الآن" %}</th>
+            <th>{% translate "طلبات المساعد الصوتي" %}</th>
             <th>{% translate "الحالة" %}</th>
             <th class="text-end">{% translate "إجراءات" %}</th>
           </tr>
@@ -45,6 +46,11 @@
               {% endif %}
             </td>
             <td>
+              <a href="{% url 'dashboard_app:user-view' account.pk %}?tab=voice" class="text-inherit text-decoration-none">
+                <span class="badge bg-primary-subtle text-primary">{{ account.voice_requests_count }}</span>
+              </a>
+            </td>
+            <td>
               {% if account.is_active %}
                 <span class="badge bg-success-subtle text-success">{% translate "مفعّل" %}</span>
               {% else %}
@@ -71,7 +77,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          <tr><td colspan="6" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

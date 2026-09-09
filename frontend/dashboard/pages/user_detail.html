@@ -145,6 +145,11 @@
                 {% translate "جلسات الدخول" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ sessions_page.paginator.count }}</span>
               </a>
             </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if active_tab == 'voice' %}active{% endif %}" href="?tab=voice">
+                {% translate "المساعد الصوتي" %} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ voice_requests_count }}</span>
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -336,6 +341,37 @@
             </table>
           </div>
           {% include "dashboard/partials/pagination_named.html" with page_obj=sessions_page param="sessions_page" prefix="tab=sessions&" %}
+
+          {% elif active_tab == 'voice' %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr>
+                <th>{% translate "الوقت" %}</th>
+                <th>{% translate "قال" %}</th>
+                <th>{% translate "النتيجة" %}</th>
+              </tr></thead>
+              <tbody>
+                {% for log in voice_logs_page %}
+                <tr>
+                  <td class="text-nowrap">{{ log.created_at }}</td>
+                  <td>{{ log.transcript }}</td>
+                  <td>
+                    {% if log.event_type == 'COMMAND_MATCHED' %}
+                      <span class="badge bg-success-subtle text-success">{% translate "اتنفذ" %}</span>
+                    {% elif log.event_type == 'COMMAND_FAILED' %}
+                      <span class="badge bg-danger-subtle text-danger">{% translate "فشل" %}</span>
+                    {% else %}
+                      <span class="badge bg-secondary-subtle text-secondary">{{ log.get_event_type_display }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include "dashboard/partials/pagination_named.html" with page_obj=voice_logs_page param="voice_logs_page" prefix="tab=voice&" %}
           {% endif %}
 
         </div>
