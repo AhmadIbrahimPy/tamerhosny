@@ -875,28 +875,17 @@ def song_detail(request, slug, duet_id=None):
     # Combine lists: same type first, then others
     other_songs = same_type_songs + remaining_songs
 
-    # Precomputed (see main_app.shared_utils.song_recommendations) -
-    # collaborative where enough people have listened to both, content
-    # overlap otherwise. Falls back to its own random pick (not the
-    # other_songs one above, a separate query) for a song that hasn't
-    # been through a recompute yet (freshly added, or the nightly job
-    # hasn't run since) - reusing other_songs verbatim here made both
-    # sliders show the exact same songs whenever this fell back.
-    #
-    # Same-album tracks excluded either way - the content-similarity
-    # signal leans heavily on shared album/genre/mood, which for a song
-    # whose whole album is tagged alike returned literally that album's
-    # own tracklist as its "similar" songs, duplicating the "أغاني
-    # ألبوم" slider above verbatim instead of surfacing anything new.
-    similarity_qs = SongSimilarity.objects.filter(song=song).select_related('similar_song__album')
+    # Random songs excluding same album and songs with duets
+    fallback_qs = Song.objects.exclude(pk=song.pk).select_related('album')
     if song.album_id:
-        similarity_qs = similarity_qs.exclude(similar_song__album_id=song.album_id)
-    recommended_songs = [row.similar_song for row in similarity_qs.order_by('rank')[:12]]
-    if not recommended_songs:
-        fallback_qs = Song.objects.exclude(pk=song.pk).select_related('album')
-        if song.album_id:
-            fallback_qs = fallback_qs.exclude(album_id=song.album_id)
-        recommended_songs = list(Song.visible_queryset(fallback_qs).order_by('?')[:12])
+        fallback_qs = fallback_qs.exclude(album_id=song.album_id)
+    # Exclude songs that have duets for this song
+    duet_song_ids = SingWithTamerProject.objects.filter(
+        song=song, is_completed=True, is_public=True
+    ).exclude(final_audio_file='').values_list('song_id', flat=True)
+    if duet_song_ids:
+        fallback_qs = fallback_qs.exclude(pk__in=duet_song_ids)
+    recommended_songs = list(Song.visible_queryset(fallback_qs).order_by('?')[:12])
 
     vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
     all_credits = song.credits.select_related('person').all()
