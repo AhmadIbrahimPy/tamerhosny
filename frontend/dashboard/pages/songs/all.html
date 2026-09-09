@@ -93,7 +93,7 @@
               {% if song.lyrics %}
                 <i class="ti ti-check text-success" style="font-size:18px;"></i>
               {% else %}
-                <button type="button" class="btn btn-sm btn-link p-0 full-lyrics-missing-btn" data-song-id="{{ song.pk }}" data-song-title="{{ song.title_ar }}" title="{% translate 'إضافة الكلمات كاملة' %}">
+                <button type="button" class="btn btn-sm btn-link p-0 full-lyrics-missing-btn" data-song-id="{{ song.pk }}" data-song-title="{{ song.title_ar }}" data-update-url="{% url 'dashboard_app:song-update-field' song.pk %}" title="{% translate 'إضافة الكلمات كاملة' %}">
                   <i class="ti ti-x text-danger" style="font-size:18px;"></i>
                 </button>
               {% endif %}
@@ -293,11 +293,13 @@
   var fullLyricsTextarea = document.getElementById('fullLyricsTextarea');
   var fullLyricsSaveBtn = document.getElementById('fullLyricsSaveBtn');
   var currentFullLyricsSongId = null;
+  var currentFullLyricsUpdateUrl = null;
 
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('.full-lyrics-missing-btn');
     if (!btn || !fullLyricsModal) return;
     currentFullLyricsSongId = btn.dataset.songId;
+    currentFullLyricsUpdateUrl = btn.dataset.updateUrl;
     document.getElementById('fullLyricsModalSongTitle').textContent = btn.dataset.songTitle || '';
     fullLyricsTextarea.value = '';
     fullLyricsModal.show();
@@ -305,14 +307,14 @@
 
   if (fullLyricsSaveBtn) {
     fullLyricsSaveBtn.addEventListener('click', function () {
-      if (!currentFullLyricsSongId) return;
+      if (!currentFullLyricsUpdateUrl) return;
       const text = fullLyricsTextarea.value.trim();
       if (!text) {
         alert('{% translate "لازم تكتب الكلمات الأول" %}');
         return;
       }
 
-      const updateUrl = '{% url "dashboard_app:song-update-field" 0 %}'.replace('0', currentFullLyricsSongId);
+      const updateUrl = currentFullLyricsUpdateUrl;
       fullLyricsSaveBtn.disabled = true;
 
       const formData = new FormData();
