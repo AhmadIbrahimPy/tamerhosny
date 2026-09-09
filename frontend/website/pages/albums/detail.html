@@ -238,7 +238,13 @@ function playAlbumTrack(index, btn) {
   const track = window.albumTracks[index];
   if (!track || !track.url) return;
   window.otherSongsList = window.albumTracks;
-  toggleAudio(track.url, btn, track.title, '', track.image ? [track.image] : null, track.link, '', track.album, false, track.songId);
+  // isRandomQueue=false, explicitly - playAudio() (base.html) mirrors
+  // this into localStorage's thAlbumContext, which the song's own
+  // detail page (songs/detail.html) reads to decide whether its own
+  // next/prev should keep walking this album or fall back to a random
+  // pick. Leaving it unspecified here meant playing from the album page
+  // itself never actually marked "album context" at all.
+  toggleAudio(track.url, btn, track.title, '', track.image ? [track.image] : null, track.link, '', track.album, false, track.songId, null, false);
 }
 
 function playAlbum(btn) {

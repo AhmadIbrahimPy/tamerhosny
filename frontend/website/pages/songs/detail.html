@@ -3837,17 +3837,27 @@
   // itself (album_songs, like the /player/song-data/ queue it mirrors,
   // excludes it) - otherwise playAdjacentSong() in base.html can never
   // find currentSongId in this list, and falls back to a random sitewide
-  // queue (fetchFallbackQueue, forced random=1) instead of the album.
+  // queue (fetchFallbackQueue, forced random=1, excluding what this
+  // session already heard) instead of the album.
   //
-  // A song with no album (song.album is None) has an empty album_songs -
-  // that used to leave this list holding only the song itself, so
-  // next/prev on its own cover controls "found" it, wrapped right back
-  // to index 0, and just kept replaying the same song. Falls back to
-  // recommended_songs (already computed for the "أغاني أخرى قد تعجبك"
-  // slider below) in that case instead, filtered to playable songs -
-  // same reasoning /player/song-data/ already applies server-side for a
-  // song with no album (a random queue, not a stuck single-song list).
-  window.albumSongsList = [
+  // That fallback is exactly what a NON-album-context visit should get
+  // too, not a fabricated list of this song's own "قد تعجبك"/"استكشف"
+  // picks - those aren't session-aware (no exclusion of what was just
+  // heard) and aren't real navigation history, so next/prev through them
+  // wandered inconsistently once a pick from one of those lists (which
+  // might belong to some unrelated album) got treated as if arriving
+  // there was itself "album playback". thAlbumContext (set by
+  // playAudio() in base.html, from the isRandomQueue every play call
+  // site already threads through) is the single source of truth for
+  // "did this listening session actually start from the album's own
+  // page or this song's own أغاني-ألبوم slider" - only then does this
+  // page's own next/prev walk the album; anything else falls through to
+  // the random/unheard fallback exactly like /player/ already does.
+  var thInAlbumContext = (function () {
+    try { return localStorage.getItem('thAlbumContext') === '1'; } catch (e) { return false; }
+  })();
+
+  window.albumSongsList = (thInAlbumContext && {{ album_songs|length }} > 0) ? [
     {
       songId: {{ song.pk }},
       slug: '{{ song.slug|escapejs }}',
@@ -3855,7 +3865,8 @@
       image: '{% if song.display_cover_url %}{{ song.display_cover_url|escapejs }}{% endif %}',
       url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
       link: '/songs/{{ song.slug|escapejs }}/'
-    }{% if album_songs %},{% for song in album_songs %}
+    },
+    {% for song in album_songs %}
     {
       songId: {{ song.pk }},
       slug: '{{ song.slug|escapejs }}',
@@ -3864,18 +3875,12 @@
       url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
       link: '/songs/{{ song.slug|escapejs }}/'
     }{% if not forloop.last %},{% endif %}
-    {% endfor %}{% else %}{% for other in recommended_songs %}{% if other.audio_file %},
-    {
-      songId: {{ other.pk }},
-      slug: '{{ other.slug|escapejs }}',
-      title: '{{ other|localized_field:"title"|escapejs }}',
-      image: '{% if other.display_cover_url %}{{ other.display_cover_url|escapejs }}{% endif %}',
-      url: '{{ other.audio_file.url|escapejs }}',
-      link: '/songs/{{ other.slug|escapejs }}/'
-    }{% endif %}{% endfor %}{% endif %}
-  ];
+    {% endfor %}
+  ] : [];
 
-  // Set otherSongsList for base.html compatibility.
+  // Set otherSongsList for base.html compatibility - left empty outside
+  // album context so playAdjacentSong() can't find currentSongId in it
+  // and reaches for fetchFallbackQueue() instead (see above).
   window.otherSongsList = window.albumSongsList.map(function(song) {
     return {
       songId: song.songId,
@@ -3885,10 +3890,7 @@
       link: song.link
     };
   });
-  // This song's own real album, never a random one - unless there was no
-  // album to begin with, in which case the list above is really the
-  // random fallback (see the comment above).
-  window.otherSongsListIsRandom = {% if album_songs %}false{% else %}true{% endif %};
+  window.otherSongsListIsRandom = !thInAlbumContext;
 
   // Same album/artist for every track in this list, so it's safe to
   // compute once and reuse for whichever one gets played next/prev.
@@ -3901,14 +3903,25 @@
   // (base.html) persists the song still playing at click time, and the
   // new page's restorePlayerState() resurrects that stale song instead
   // of switching to the one just picked.
-  window.playSongFromList = function(index) {
-    const song = window.albumSongsList[index];
+  window.playSongFromList = function(index, isRandomQueue) {
+    // window.otherSongsList - not albumSongsList - is what actually
+    // reflects the list currently being navigated: base.html's
+    // playFromQueue()/fetchFallbackQueue() both set otherSongsList
+    // directly (a real fetched random/unheard queue when this page
+    // isn't in album context) and call this function with that same
+    // index, which albumSongsList (this page's own static initial
+    // value, empty outside album context) would never contain.
+    const song = window.otherSongsList[index];
     if (song && song.link) {
       if (song.url && typeof playAudio === 'function') {
-        // Always this song's own real album/queue, never a random one -
-        // explicitly false so a random flag from browsing elsewhere
-        // doesn't linger into this page's own next/prev.
-        playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, albumSongsArtist, albumSongsAlbum, false, song.songId, albumSongsAlbumLink, false);
+        // In album context every item shares this page's own
+        // artist/album (album_songs entries don't carry their own -
+        // they're all the same album); outside it (the random
+        // fallback), each song carries its own real artist/album.
+        const songArtist = isRandomQueue ? (song.artist || '') : albumSongsArtist;
+        const songAlbum = isRandomQueue ? (song.album || '') : albumSongsAlbum;
+        const songAlbumLink = isRandomQueue ? (song.albumLink || '') : albumSongsAlbumLink;
+        playAudio(song.url, document.getElementById('audioPlayBtn'), song.title, '', song.image ? [song.image] : null, song.link, songArtist, songAlbum, false, song.songId, songAlbumLink, !!isRandomQueue);
       }
       // Boosted (AJAX swap of #th-page-root), not a real navigation - a
       // full reload here flashed a blank page and re-fetched everything

@@ -1180,6 +1180,19 @@
         isRandomQueue: !!isRandomQueue
       };
       localStorage.setItem('currentSongData', JSON.stringify(songData));
+
+      // Mirrors isRandomQueue into its own key, read by songs/detail.html
+      // to decide whether ITS OWN next/prev (the cover-art buttons, a
+      // separate mechanism from /player/'s queue) should keep walking an
+      // album's tracklist or treat this as a random pick too - only when
+      // isRandomQueue was actually specified by the caller (a real
+      // decision about how THIS song started), not left undefined (an
+      // internal replay like playPrevious()'s history-based resume,
+      // which isn't a fresh "how did this song start" decision and
+      // should leave whatever context was already in effect alone).
+      if (typeof isRandomQueue === 'boolean') {
+        try { localStorage.setItem('thAlbumContext', isRandomQueue ? '0' : '1'); } catch (e) {}
+      }
       
       checkLikeStatus(songId);
       
@@ -1242,8 +1255,17 @@
           title: title || '',
           artist: artist || '',
           album: (isMix && songs) ? songs : (album || ''),
+          // No hardcoded sizes/type - covers had genuinely mismatched
+          // this (declared 'image/jpeg' when most of these URLs are
+          // actually webp, e.g. artwork.anghcdn.co/webp/...), which some
+          // platforms' lock-screen/notification media UI takes as a
+          // strict decoding hint - a wrong one silently fails to load
+          // the artwork at all instead of falling back gracefully, and
+          // the OS shows the site's own icon/name in its place. Omitting
+          // both is a valid MediaMetadata artwork entry - the browser
+          // sniffs the real type itself instead of trusting a guess.
           artwork: mediaImageUrl ? [
-            { src: mediaImageUrl, sizes: '512x512', type: 'image/jpeg' },
+            { src: mediaImageUrl },
           ] : [],
         });
       }
