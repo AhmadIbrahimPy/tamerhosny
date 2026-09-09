@@ -182,16 +182,35 @@
     }
     .th-nav-links > .th-mic-btn:hover{background:rgba(255,255,255,.06); color:var(--text);}
     .th-nav-links > .th-mic-btn.is-on{border-color:var(--accent); color:var(--accent);}
-    .th-mic-btn-mobile{
-      display:none; align-items:center; justify-content:center; width:36px; height:36px; padding:0;
-      border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
-      color:var(--muted); font-size:16px; cursor:pointer; transition:all .2s ease; margin-inline-end:6px;
-      touch-action:none;
+    /* Floating mic button (mobile only) - not docked in the navbar
+       (too far from the thumb one-handed), a fixed circle above the
+       audio bar instead. Positioned from JS (side-start/side-end,
+       alternating per page load) with a spring slide-in entrance. */
+    .th-mic-fab{
+      display:none; position:fixed; z-index:1030; bottom:90px;
+      align-items:center; justify-content:center; width:52px; height:52px; padding:0;
+      border-radius:50%; border:1px solid var(--border); background:var(--card);
+      color:var(--muted); font-size:20px; cursor:pointer;
+      box-shadow:0 8px 24px rgba(0,0,0,.35); touch-action:none;
     }
-    .th-mic-btn-mobile.is-on{border-color:var(--accent); color:var(--accent);}
+    @media (max-width:980px){ .th-mic-fab{ display:flex; } }
+    @media (max-width:768px){ .th-mic-fab{ bottom:150px; } }
+    .th-mic-fab.is-on{border-color:var(--accent); color:var(--accent);}
+    .th-mic-fab.side-start{ inset-inline-start:16px; }
+    .th-mic-fab.side-end{ inset-inline-end:16px; }
+    @keyframes thMicFabEnterStart{
+      from{ transform:translate(-46px, 24px) scale(.5); opacity:0; }
+      to{ transform:translate(0,0) scale(1); opacity:1; }
+    }
+    @keyframes thMicFabEnterEnd{
+      from{ transform:translate(46px, 24px) scale(.5); opacity:0; }
+      to{ transform:translate(0,0) scale(1); opacity:1; }
+    }
+    .th-mic-fab.side-start.entering{ animation:thMicFabEnterStart .5s cubic-bezier(.34,1.56,.64,1) both; }
+    .th-mic-fab.side-end.entering{ animation:thMicFabEnterEnd .5s cubic-bezier(.34,1.56,.64,1) both; }
     /* Push-to-talk press feedback (mobile only - see IS_MOBILE in the
        voice assistant script below). */
-    .th-mic-btn.recording, .th-mic-btn-mobile.recording{
+    .th-mic-btn.recording, .th-mic-fab.recording{
       border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,.12);
       animation:thMicRecordingPulse 1s ease-in-out infinite;
     }
@@ -614,7 +633,6 @@
       .th-nav-links{display:none;}
       .th-nav-toggle{display:block;}
       .th-push-btn-mobile{display:inline-flex;}
-      .th-mic-btn-mobile{display:inline-flex;}
     }
 
     /* Single dial for "everything reads a bit big on mobile" - the site
@@ -1552,6 +1570,13 @@
     @keyframes globalLyricPulse{from{opacity:.35; transform:scale(.97);} to{opacity:1; transform:scale(1);}}
     #playerLyricsBtn.active{color:var(--accent) !important;}
   </style>
+
+  <!-- Floating mic (mobile only) - not docked in the navbar (too far
+       from the thumb one-handed); side/entrance handled from the voice
+       assistant script below. -->
+  <button type="button" class="th-mic-btn th-mic-fab" id="thMicBtnMobile" onclick="thToggleVoiceAssistant()" aria-label="{% translate 'المساعد الصوتي' %}">
+    <i class="bi bi-mic-mute"></i>
+  </button>
 
   <!-- Voice assistant ("TH" wake word) avatar - shown for the ~5s command
        window after the wake word is heard, floating just above the
@@ -4026,6 +4051,21 @@
       // buttons' onclick="thToggleVoiceAssistant()" markup now just
       // means "tap to talk", same as car mode's button.
       window.thToggleVoiceAssistant = pttTapToggle;
+
+      // Floating mic (#thMicBtnMobile, .th-mic-fab): alternates which
+      // bottom corner it slides in from on each fresh page load, so it
+      // doesn't sit static in one spot forever - stored in localStorage
+      // (survives across page loads, not just this one).
+      var fab = document.getElementById('thMicBtnMobile');
+      if (fab) {
+        var lastFabSide = localStorage.getItem('thMicFabSide') === 'start' ? 'start' : 'end';
+        var nextFabSide = lastFabSide === 'end' ? 'start' : 'end';
+        localStorage.setItem('thMicFabSide', nextFabSide);
+        fab.classList.add('side-' + nextFabSide);
+        setTimeout(function () {
+          fab.classList.add('entering');
+        }, 600);
+      }
 
       if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
         setTimeout(showVoicePromoNow, 4000);
