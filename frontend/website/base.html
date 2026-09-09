@@ -192,20 +192,26 @@
       border-radius:50%; border:1px solid var(--border); background:var(--card);
       color:var(--muted); font-size:20px; cursor:pointer;
       box-shadow:0 8px 24px rgba(0,0,0,.35); touch-action:none;
-      /* Hidden until .entering plays (added from JS) - without this it's
-         fully visible the instant display:flex applies at page load,
-         well before that class shows up, which read as "no animation,
-         just appears". */
-      opacity:0;
     }
     @media (max-width:980px){ .th-mic-fab{ display:flex; } }
     @media (max-width:768px){ .th-mic-fab{ bottom:150px; } }
     .th-mic-fab.is-on{border-color:var(--accent); color:var(--accent);}
     /* Matches .song-container's own mobile padding-inline (songs/detail.html)
        rather than sitting flush against the raw viewport edge - plus the
-       safe area on notched/rounded-corner phones. */
-    .th-mic-fab.side-start{ inset-inline-start:max(16px, env(safe-area-inset-left)); }
-    .th-mic-fab.side-end{ inset-inline-end:max(16px, env(safe-area-inset-right)); }
+       safe area on notched/rounded-corner phones. The entrance animation
+       runs entirely in CSS (delay + fill-mode:both, no JS-added class to
+       time) - JS only ever has to add side-start/side-end, synchronously,
+       so visibility can't be left stranded by a setTimeout that doesn't
+       fire the way expected. animation-fill-mode:both covers the delay
+       too, so the button is invisible for the delay then plays in. */
+    .th-mic-fab.side-start{
+      inset-inline-start:max(16px, env(safe-area-inset-left));
+      animation:thMicFabEnterStart .5s cubic-bezier(.34,1.56,.64,1) .6s both;
+    }
+    .th-mic-fab.side-end{
+      inset-inline-end:max(16px, env(safe-area-inset-right));
+      animation:thMicFabEnterEnd .5s cubic-bezier(.34,1.56,.64,1) .6s both;
+    }
     @keyframes thMicFabEnterStart{
       from{ transform:translate(-46px, 24px) scale(.5); opacity:0; }
       to{ transform:translate(0,0) scale(1); opacity:1; }
@@ -214,8 +220,29 @@
       from{ transform:translate(46px, 24px) scale(.5); opacity:0; }
       to{ transform:translate(0,0) scale(1); opacity:1; }
     }
-    .th-mic-fab.side-start.entering{ animation:thMicFabEnterStart .5s cubic-bezier(.34,1.56,.64,1) both; }
-    .th-mic-fab.side-end.entering{ animation:thMicFabEnterEnd .5s cubic-bezier(.34,1.56,.64,1) both; }
+
+    /* Periodic feature-discovery tip bubble - see nextMicTip() below. */
+    .th-mic-tip-bubble{
+      display:none; position:fixed; z-index:1029; bottom:152px;
+      max-width:220px; background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:10px 14px; font-size:12.5px; line-height:1.5;
+      color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
+      opacity:0; transform:translateY(8px) scale(.92);
+      transition:opacity .25s ease, transform .25s ease;
+    }
+    @media (max-width:980px){ .th-mic-tip-bubble{ display:block; } }
+    @media (max-width:768px){ .th-mic-tip-bubble{ bottom:212px; } }
+    .th-mic-tip-bubble.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+    .th-mic-tip-bubble.side-start{ inset-inline-start:max(16px, env(safe-area-inset-left)); }
+    .th-mic-tip-bubble.side-end{ inset-inline-end:max(16px, env(safe-area-inset-right)); }
+    .th-mic-tip-bubble::after{
+      content:''; position:absolute; bottom:-6px; width:12px; height:12px;
+      background:var(--card); transform:rotate(45deg);
+      border-inline-end:1px solid var(--border); border-block-end:1px solid var(--border);
+    }
+    .th-mic-tip-bubble.side-start::after{ inset-inline-start:20px; }
+    .th-mic-tip-bubble.side-end::after{ inset-inline-end:20px; }
+
     /* Push-to-talk press feedback (mobile only - see IS_MOBILE in the
        voice assistant script below). */
     .th-mic-btn.recording, .th-mic-fab.recording{
@@ -1585,6 +1612,10 @@
   <button type="button" class="th-mic-btn th-mic-fab" id="thMicBtnMobile" onclick="thToggleVoiceAssistant()" aria-label="{% translate 'المساعد الصوتي' %}">
     <i class="bi bi-mic-mute"></i>
   </button>
+
+  <!-- Periodic feature-discovery tip, Messenger-bubble style, pointing
+       at the floating mic above - see nextMicTip() in the script below. -->
+  <div id="thMicTipBubble" class="th-mic-tip-bubble" role="status" onclick="this.classList.remove('show')"></div>
 
   <!-- Voice assistant ("TH" wake word) avatar - shown for the ~5s command
        window after the wake word is heard, floating just above the
@@ -4070,9 +4101,57 @@
         var nextFabSide = lastFabSide === 'end' ? 'start' : 'end';
         localStorage.setItem('thMicFabSide', nextFabSide);
         fab.classList.add('side-' + nextFabSide);
-        setTimeout(function () {
-          fab.classList.add('entering');
-        }, 600);
+      }
+
+      // Periodic feature-discovery tips (Messenger-bubble style, next to
+      // the floating mic) - teaches one capability at a time rather than
+      // dumping everything in the one-time promo toast. Never interrupts
+      // an active listening session or a backgrounded tab. If several
+      // page views have gone by with nothing actually playing, a
+      // "اقترح أغنية" nudge takes priority over the regular rotation.
+      var MIC_TIPS = [
+        '{% translate "أقدر أوقف الأغنية لو قولتلي" %}',
+        '{% translate "أقدر أعمل لايك للأغنية اللي شغالة لو قولتلي" %}',
+        '{% translate "قولي اللي بعدها وهغيّر الأغنية" %}',
+        '{% translate "قولي اقترح أغنية لو مش عارف تسمع إيه" %}',
+        '{% translate "قولي شغل أغنية واسمها وهجيبهالك" %}',
+        '{% translate "أقدر أفتحلك صفحة الأغنية اللي شغالة لو قولتلي" %}',
+      ];
+      var MIC_TIP_SUGGEST = '{% translate "قولي اقترح أغنية لو عايز تسمع حاجة دلوقتي" %}';
+      var MIC_TIP_INTERVAL_MS = 25000;
+      var MIC_TIP_SHOW_MS = 6000;
+      var micTipIndex = -1;
+      var pagesViewedWithoutPlaying = 0;
+
+      document.body.addEventListener('htmx:afterSettle', function () {
+        pagesViewedWithoutPlaying++;
+      });
+      document.addEventListener('songChanged', function () {
+        pagesViewedWithoutPlaying = 0;
+      });
+
+      function nextMicTip() {
+        var bubble = document.getElementById('thMicTipBubble');
+        if (!bubble || !fab || pttActive || document.hidden) return;
+        var noSongPlaying = typeof currentSongId === 'undefined' || currentSongId === null ||
+          (typeof globalAudio !== 'undefined' && globalAudio && globalAudio.paused);
+        var text;
+        if (pagesViewedWithoutPlaying >= 3 && noSongPlaying) {
+          text = MIC_TIP_SUGGEST;
+          pagesViewedWithoutPlaying = 0; // don't nag every single cycle
+        } else {
+          micTipIndex = (micTipIndex + 1) % MIC_TIPS.length;
+          text = MIC_TIPS[micTipIndex];
+        }
+        bubble.textContent = text;
+        bubble.classList.remove('side-start', 'side-end');
+        bubble.classList.add(fab.classList.contains('side-start') ? 'side-start' : 'side-end');
+        bubble.classList.add('show');
+        setTimeout(function () { bubble.classList.remove('show'); }, MIC_TIP_SHOW_MS);
+      }
+
+      if (fab) {
+        setInterval(nextMicTip, MIC_TIP_INTERVAL_MS);
       }
 
       if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
