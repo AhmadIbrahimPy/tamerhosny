@@ -865,6 +865,16 @@
     var globalAudio = null;
     var currentPlayBtn = null;
     var isManualPause = false;
+    // Set only around playAudio()'s own internal pause-then-reload when
+    // switching to a different song (never a real pause - play resumes
+    // immediately after) - the 'pause' listener below uses this, not
+    // isManualPause, to decide whether to update the UI, since
+    // isManualPause is only ever set by our own button/voice-command
+    // code paths and stays false for a pause the OS/browser triggers
+    // directly (lock-screen, notification, hardware media key) - which
+    // used to leave the UI (play icon, .music-wave) looking like it was
+    // still playing even though the audio had actually stopped.
+    var isSwitchingSong = false;
 
     // Initialize audio element when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -883,6 +893,7 @@
       // detail.html's lyrics sync listens for exactly this event.
       globalAudio.addEventListener('play', function() {
         setPlayButtonsIcon('bi-pause-fill');
+        document.body.classList.remove('th-audio-paused');
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } }));
         if (currentSongId !== null) {
@@ -915,13 +926,20 @@
 
       globalAudio.addEventListener('playing', function() {
         setPlayButtonsIcon('bi-pause-fill');
+        document.body.classList.remove('th-audio-paused');
         document.dispatchEvent(new CustomEvent('audioLoading', { detail: { loading: false, songId: currentSongId } }));
       });
 
       globalAudio.addEventListener('pause', function() {
-        if (!globalAudio.ended && isManualPause) {
+        if (!globalAudio.ended && !isSwitchingSong) {
           setPlayButtonsIcon('bi-play-fill');
           isManualPause = false;
+          // Not gated on why it paused (button, voice command, hardware
+          // media key, lock-screen/notification control) - any of them
+          // means playback genuinely stopped, so anything on the page
+          // that implies "still playing" (songs/detail.html's
+          // .music-wave instrumental-gap indicator) should reflect that.
+          document.body.classList.add('th-audio-paused');
         }
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
@@ -1071,8 +1089,13 @@
         isSameSong = currentUrl.includes(url) || url.includes(currentUrl);
         
         if (!isSameSong) {
-          // Different song - stop and reset
+          // Different song - stop and reset. Not a real pause (playback
+          // of the new song starts right after) - isSwitchingSong keeps
+          // the 'pause' listener from flipping the UI to "paused" for
+          // what's really just a mid-switch blip.
+          isSwitchingSong = true;
           globalAudio.pause();
+          isSwitchingSong = false;
           globalAudio.currentTime = 0;
           if (currentPlayBtn) {
             currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
@@ -1141,7 +1164,13 @@
         title: title || '',
         artist: artist || '',
         album: album || '',
-        image: image && image[0] ? image[0] : '',
+        // image can arrive here as either an array (cover-art callers)
+        // or a plain string (the generic card click delegate below) -
+        // `image[0]` on a string is just its first CHARACTER, not the
+        // URL, which was silently corrupting this into a single letter
+        // for every song played that way (breaking /player/'s cover and
+        // track-list thumbnails, which read straight from this).
+        image: (Array.isArray(image) ? image[0] : image) || '',
         songId: songId || null,
         url: url || '',
         // Always overwritten (never preserved from existingData) - a

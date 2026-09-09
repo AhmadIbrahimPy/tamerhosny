@@ -1031,6 +1031,16 @@
     height: 40px;
   }
 
+  /* th-audio-paused (base.html's globalAudio play/pause listeners) is
+     set for ANY real pause - the in-page button, a voice command, a
+     hardware media key, or the phone/lock-screen notification controls
+     - not just ones triggered from this page's own code. Without this,
+     the bars kept animating (a pure CSS loop with no play-state
+     awareness of its own) even after playback had actually stopped. */
+  body.th-audio-paused .music-wave {
+    display: none;
+  }
+
   .music-bar {
     width: 4px;
     height: 20px;
@@ -3828,6 +3838,15 @@
   // excludes it) - otherwise playAdjacentSong() in base.html can never
   // find currentSongId in this list, and falls back to a random sitewide
   // queue (fetchFallbackQueue, forced random=1) instead of the album.
+  //
+  // A song with no album (song.album is None) has an empty album_songs -
+  // that used to leave this list holding only the song itself, so
+  // next/prev on its own cover controls "found" it, wrapped right back
+  // to index 0, and just kept replaying the same song. Falls back to
+  // recommended_songs (already computed for the "أغاني أخرى قد تعجبك"
+  // slider below) in that case instead, filtered to playable songs -
+  // same reasoning /player/song-data/ already applies server-side for a
+  // song with no album (a random queue, not a stuck single-song list).
   window.albumSongsList = [
     {
       songId: {{ song.pk }},
@@ -3836,8 +3855,7 @@
       image: '{% if song.display_cover_url %}{{ song.display_cover_url|escapejs }}{% endif %}',
       url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
       link: '/songs/{{ song.slug|escapejs }}/'
-    }{% if album_songs %},{% endif %}
-    {% for song in album_songs %}
+    }{% if album_songs %},{% for song in album_songs %}
     {
       songId: {{ song.pk }},
       slug: '{{ song.slug|escapejs }}',
@@ -3846,11 +3864,18 @@
       url: '{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% endif %}',
       link: '/songs/{{ song.slug|escapejs }}/'
     }{% if not forloop.last %},{% endif %}
-    {% endfor %}
+    {% endfor %}{% else %}{% for other in recommended_songs %}{% if other.audio_file %},
+    {
+      songId: {{ other.pk }},
+      slug: '{{ other.slug|escapejs }}',
+      title: '{{ other|localized_field:"title"|escapejs }}',
+      image: '{% if other.display_cover_url %}{{ other.display_cover_url|escapejs }}{% endif %}',
+      url: '{{ other.audio_file.url|escapejs }}',
+      link: '/songs/{{ other.slug|escapejs }}/'
+    }{% endif %}{% endfor %}{% endif %}
   ];
 
-  // Set otherSongsList for base.html compatibility - this song's own
-  // real album/queue, never a random one (see playFromQueue in base.html).
+  // Set otherSongsList for base.html compatibility.
   window.otherSongsList = window.albumSongsList.map(function(song) {
     return {
       songId: song.songId,
@@ -3860,7 +3885,10 @@
       link: song.link
     };
   });
-  window.otherSongsListIsRandom = false;
+  // This song's own real album, never a random one - unless there was no
+  // album to begin with, in which case the list above is really the
+  // random fallback (see the comment above).
+  window.otherSongsListIsRandom = {% if album_songs %}false{% else %}true{% endif %};
 
   // Same album/artist for every track in this list, so it's safe to
   // compute once and reuse for whichever one gets played next/prev.

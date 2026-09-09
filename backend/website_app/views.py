@@ -234,7 +234,7 @@ def song_player_data(request):
             'artistSlugs': [credit.person.slug for credit in singers],
             'album': localized_field(song.album, 'title') if song.album else '',
             'albumSlug': song.album.slug if song.album else '',
-            'image': song.cover_image.url if song.cover_image else (song.album.cover_image.url if song.album and song.album.cover_image else ''),
+            'image': song.display_cover_url or '',
             'songId': song.pk,
             'url': song.audio_file.url if song.audio_file else '',
             'currentSongId': int(current_song_id) if current_song_id else song.pk,
@@ -244,7 +244,7 @@ def song_player_data(request):
             'otherSongs': [
                 {
                     'title': localized_field(s, 'title'),
-                    'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
+                    'image': s.display_cover_url or '',
                     'link': f'/songs/{s.slug}/',
                     'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
                     'songId': s.pk,
@@ -550,7 +550,7 @@ def voice_search_songs(request):
     results = [
         {
             'title': localized_field(s, 'title'),
-            'image': s.cover_image.url if s.cover_image else (s.album.cover_image.url if s.album and s.album.cover_image else ''),
+            'image': s.display_cover_url or '',
             'link': f'/songs/{s.slug}/',
             'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
             'songId': s.pk,
