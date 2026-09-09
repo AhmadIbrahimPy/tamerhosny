@@ -3509,6 +3509,11 @@
     // hammering forever.
     var consecutiveStartFailures = 0;
     var MAX_START_FAILURES = 8;
+    // True from the moment the watchdog aborts a wedged session until a
+    // fresh onstart actually confirms recovery - lets it tell a genuine
+    // first-time wedge from one that already tried graceful recovery
+    // and failed (see armWatchdog below).
+    var pendingWatchdogRecovery = false;
 
     function createRecognition() {
       var r = new RecognitionCtor();
@@ -3519,6 +3524,7 @@
       r.onstart = function () {
         starting = false;
         consecutiveStartFailures = 0;
+        pendingWatchdogRecovery = false;
         lastActivityAt = Date.now();
         sessionStartedAt = lastActivityAt;
         logVoiceEvent('RECOGNITION_START');
@@ -3646,6 +3652,7 @@
       disarmWatchdog();
       listeningForCommand = false;
       wakeResultIndex = -1;
+      pendingWatchdogRecovery = false;
       hideAvatar();
       if (recognition) {
         try { recognition.stop(); } catch (e) {}
@@ -3669,23 +3676,35 @@
         // Leave it alone until that loop either recovers or gives up.
         if (consecutiveStartFailures > 0) return;
         if (Date.now() - lastActivityAt > 20000) {
-          logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt });
-          // Don't discard the recognition reference or spin up a new
-          // one here: abort() isn't guaranteed synchronous, so the old
-          // session can still be alive under the hood for a moment.
-          // Nulling `recognition` orphaned that still-live session with
-          // no way to ever regain control of it, while a brand new
-          // object tried to start() immediately and collided with it -
-          // "recognition has already started", forever, since nothing
-          // could ever tell the new attempts the old session was done.
-          // Just abort and let its own onend handler (still attached)
-          // restart it once the browser actually finishes tearing it
-          // down - same path every other restart already goes through.
+          logVoiceEvent('WATCHDOG_RESTART', { ms_value: Date.now() - lastActivityAt, detail: pendingWatchdogRecovery ? 'escalate' : 'graceful' });
           lastActivityAt = Date.now(); // don't re-trigger every 15s while this settles
-          if (recognition) {
-            try { recognition.abort(); } catch (e) {}
-          } else {
+          if (pendingWatchdogRecovery) {
+            // The graceful abort() from last cycle never actually led
+            // to a fresh onstart - real device logs showed onend simply
+            // never firing for it at all on some browsers (WATCHDOG_
+            // RESTART repeating every ~30s for 7+ minutes straight, zero
+            // RECOGNITION_START/END in between - the mic stayed
+            // completely dead). Graceful recovery already had one full
+            // cycle to work; force a clean recreate now as a last resort.
+            recognition = null;
+            starting = false;
+            pendingWatchdogRecovery = false;
             startRecognition();
+          } else {
+            // First attempt: don't discard the recognition reference or
+            // spin up a new one - abort() isn't guaranteed synchronous,
+            // so the old session can still be alive under the hood for a
+            // moment, and nulling the reference here orphaned it with no
+            // way to regain control while a new object collided with it
+            // ("recognition has already started", forever). Just abort
+            // and give its own onend handler (still attached) a chance
+            // to restart it normally first.
+            pendingWatchdogRecovery = true;
+            if (recognition) {
+              try { recognition.abort(); } catch (e) {}
+            } else {
+              startRecognition();
+            }
           }
         }
       }, 15000);
