@@ -1615,6 +1615,24 @@
     box-shadow: 0 32px 90px rgba(0, 0, 0, 0.6);
   }
 
+  /* Bootstrap's own .modal-content defaults to a plain white card with
+     no color override - without this, #fullLyricsViewModal rendered as
+     white-on-white (the lyrics text's color:var(--text) is meant for
+     the dark site background, invisible against Bootstrap's default). */
+  .full-lyrics-modal .modal-content {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+  }
+  .full-lyrics-modal .modal-header {
+    border-bottom: 1px solid var(--border);
+  }
+  .full-lyrics-modal .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+  }
+
   .playlist-modal {
     position: fixed;
     inset: 0;
@@ -2914,7 +2932,7 @@
      (modal-body max-height) rather than the whole page for a very long
      lyric. -->
 {% if song.full_lyrics_text %}
-<div class="modal fade" id="fullLyricsViewModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade full-lyrics-modal" id="fullLyricsViewModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
