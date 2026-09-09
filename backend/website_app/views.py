@@ -1198,7 +1198,13 @@ def increment_play_count(request):
     try:
         
         song = Song.objects.get(pk=song_id)
-        
+
+        # A duet play isn't a play of the official track - don't count it
+        # (moved here from the one caller that used to check this
+        # client-side, so it holds no matter which play path calls this).
+        if song.is_duet:
+            return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': False})
+
         # Only track logged in users
         if not request.user.is_authenticated:
             return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': False})

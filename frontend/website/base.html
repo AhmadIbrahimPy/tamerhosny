@@ -831,6 +831,36 @@
       return '';
     }
 
+    // Counts a play the moment playback actually starts (not on full
+    // listen) - called from globalAudio's 'play' listener below, the one
+    // place every playback route funnels through. The backend already
+    // dedupes to once/hour per user+song, so it's safe to call on every
+    // resume too, not just a fresh song load.
+    function thIncrementPlayCount(songId) {
+      fetch('/songs/increment-play/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: 'song_id=' + encodeURIComponent(songId)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.status !== 'success' || !data.incremented) return;
+          document.querySelectorAll('[data-play-count]').forEach(function (el) {
+            if (typeof bumpStatValue === 'function') {
+              bumpStatValue(el, data.play_count);
+            } else {
+              el.textContent = data.play_count;
+            }
+          });
+          var playerPageCount = document.getElementById('playerPagePlayCount');
+          if (playerPageCount) playerPageCount.textContent = data.play_count;
+        })
+        .catch(function () {});
+    }
+
     // Global Audio Player
     var globalAudio = null;
     var currentPlayBtn = null;
@@ -864,6 +894,12 @@
           // ...), so the dashboard's "Plays" stat was permanently 0
           // despite the event type existing.
           thTrack('PLAY', 'song', currentSongId);
+          // Same reasoning: previously only the song detail page's own
+          // cover-art button counted a play - every other play route
+          // (home/album cards, playlists, next/prev, voice commands...)
+          // never incremented play_count at all, so the "plays" stat
+          // barely moved and only really tracked from that one button.
+          thIncrementPlayCount(currentSongId);
         }
       });
 
@@ -4158,6 +4194,11 @@
           lastActivityAt = Date.now();
           startRecognition();
           armWatchdog();
+          // Confirms the mic actually turned on and reminds how to use
+          // it - before this, enabling gave no feedback at all besides
+          // the icon swapping to bi-mic-fill (easy to miss).
+          showAvatar('{% translate "المساعد الصوتي شغال - قول TH وقولنا عايز تسمع إيه" %}');
+          setTimeout(hideAvatar, 4000);
         } else {
           stopRecognition();
           // The promo toast only ever checked `enabled` once, right at
