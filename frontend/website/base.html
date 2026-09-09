@@ -3236,6 +3236,8 @@
     var AMBIGUOUS_RESUME_RE = /^شغل$|^شغّل$|^play$/i;
     var LIKE_RE = /اعمل\s*لايك|اعمل\s*لايف|اعمل\s*لاف|حط\s*لايك|عجبتني|عجباني|\blike\s*(?:it|this)?\b/i;
     var OPEN_SONG_PAGE_RE = /افتح\s*(?:صفحة)?\s*الأغنية|افتح\s*(?:صفحة)?\s*الاغنية|روح\s*(?:ل|لصفحة)\s*الأغنية|وريني\s*صفحة\s*الأغنية|open\s*(?:the\s*)?song\s*page/i;
+
+    var SHOW_LISTENERS_RE = /مين\s*بيسمع|مين\s*عم\s*يسمع|وريني\s*مين\s*بيسمع|بيسمعها\s*مين|يستمع\s*الآن|يسمعوا\s*لايف|بيسمع\s*لايف|\bwho'?s?\s*listening\b/i;
     var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
 
     // Easter egg, not a real playback command - "بحبك"/"احبك"/"بموت
@@ -3456,6 +3458,20 @@
         thBoostedNavigate(href);
       } else {
         window.location.href = href;
+      }
+    }
+
+    // "وريني مين بيسمع لايف"/"مين بيسمع معايا الأغنية" - #leaderboardModal
+    // (the "يستمع الآن" popup) only exists on the song detail page and
+    // /player/ (openLeaderboardModal is defined there, window-scoped) -
+    // this lives in base.html so it has to check for it rather than
+    // assume it, since the voice assistant listens site-wide.
+    function showListenersModal() {
+      if (typeof window.openLeaderboardModal === 'function') {
+        window.openLeaderboardModal();
+        setStatus('{% translate "تمام" %}');
+      } else {
+        setStatus('{% translate "افتح صفحة الأغنية أو صفحة البلاير الأول عشان تقدر تشوف مين بيسمع" %}');
       }
     }
 
@@ -3871,6 +3887,10 @@
       }
       if (OPEN_SONG_PAGE_RE.test(text)) {
         openCurrentSongPage();
+        return true;
+      }
+      if (SHOW_LISTENERS_RE.test(text)) {
+        showListenersModal();
         return true;
       }
       for (var i = 0; i < MOOD_KEYWORDS.length; i++) {
