@@ -41,8 +41,8 @@
           <tr>
             <th>{% translate "العنوان" %}</th>
             <th class="text-center">{% translate "ملف صوتي" %}</th>
-            <th class="text-center">{% translate "كلمات" %}</th>
             <th class="text-center">{% translate "كلمات كاملة" %}</th>
+            <th class="text-center">{% translate "كلمات" %}</th>
             <th class="text-center">{% translate "منصات" %}</th>
             <th>{% translate "الألبوم" %}</th>
             <th>{% translate "سنة الإصدار" %}</th>
@@ -86,9 +86,6 @@
                 </div>
               {% endif %}
             </td>
-            <td class="text-center">
-              {% if song.segments_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
-            </td>
             <td class="text-center" data-full-lyrics-cell="{{ song.pk }}">
               {% if song.lyrics or song.full_song_segments_count %}
                 <i class="ti ti-check text-success" style="font-size:18px;"></i>
@@ -97,6 +94,9 @@
                   <i class="ti ti-x text-danger" style="font-size:18px;"></i>
                 </button>
               {% endif %}
+            </td>
+            <td class="text-center">
+              {% if song.segments_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
             </td>
             <td class="text-center">
               {% if song.links_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
