@@ -1326,6 +1326,30 @@
     line-height: 2.4;
     white-space: pre-line;
     text-align: center;
+    max-height: 7.2em;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .lyrics-text.expanded {
+    max-height: none;
+  }
+
+  .lyrics-toggle-btn {
+    display: block;
+    margin: 16px auto 0;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 20px;
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .lyrics-toggle-btn:hover {
+    background: var(--accent-hover);
   }
 
   /* --- Lyrics Modal --- */
@@ -2513,6 +2537,7 @@
         </div>
         <div class="lyrics-card">
           <p class="lyrics-text">{{ song.full_lyrics_text }}</p>
+          <button type="button" class="lyrics-toggle-btn">{% translate "عرض الكل" %}</button>
         </div>
       </section>
     {% endif %}
@@ -2928,6 +2953,20 @@
       throw new Error(`HTTP ${response.status}`);
     }
     return response.json();
+  }
+
+  // Lyrics toggle functionality
+  const lyricsToggleBtn = document.querySelector('.lyrics-toggle-btn');
+  const lyricsText = document.querySelector('.lyrics-text');
+  if (lyricsToggleBtn && lyricsText) {
+    lyricsToggleBtn.addEventListener('click', function () {
+      lyricsText.classList.toggle('expanded');
+      if (lyricsText.classList.contains('expanded')) {
+        lyricsToggleBtn.textContent = '{% translate "عرض أقل" %}';
+      } else {
+        lyricsToggleBtn.textContent = '{% translate "عرض الكل" %}';
+      }
+    });
   }
 
   // Persisted (not just per-page) since next/prev here are full page
