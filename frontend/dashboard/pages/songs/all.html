@@ -6,6 +6,25 @@
 <style>
   .audio-upload-cell:hover .audio-upload-status { display: none !important; }
   .audio-upload-cell:hover .audio-upload-trigger { display: inline-flex !important; }
+  .field-dropdown {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .field-dropdown:hover {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+  }
+  .field-dropdown:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  }
 </style>
 {% endblock %}
 
@@ -26,8 +45,10 @@
             <th class="text-center">{% translate "منصات" %}</th>
             <th>{% translate "الألبوم" %}</th>
             <th>{% translate "سنة الإصدار" %}</th>
-            <th>{% translate "دويتو" %}</th>
+            <th>{% translate "النوع" %}</th>
             <th>{% translate "الحالة" %}</th>
+            <th>{% translate "دويتو" %}</th>
+            <th>{% translate "النشر" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +93,22 @@
             </td>
             <td>{{ song.album.title_ar|default:"-" }}</td>
             <td>{{ song.release_year|default:"-" }}</td>
+            <td>
+              <select class="field-dropdown song-field-select" data-song-id="{{ song.pk }}" data-field="genre" style="min-width: 120px;">
+                <option value="" {% if not song.genre %}selected{% endif %}>-</option>
+                {% for value, label in song.__class__.Genre.choices %}
+                  <option value="{{ value }}" {% if song.genre == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <select class="field-dropdown song-field-select" data-song-id="{{ song.pk }}" data-field="mood" style="min-width: 120px;">
+                <option value="" {% if not song.mood %}selected{% endif %}>-</option>
+                {% for value, label in song.__class__.Mood.choices %}
+                  <option value="{{ value }}" {% if song.mood == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </td>
             <td>{% if song.is_duet %}<span class="badge bg-success-subtle text-success">{% translate "نعم" %}</span>{% else %}-{% endif %}</td>
             <td>
               {% if song.visibility == "PUBLISHED" %}
@@ -84,7 +121,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          <tr><td colspan="10" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -164,5 +201,56 @@
       alert('{% translate "فشل نسخ الاسم" %}');
     });
   });
+
+  // Update genre/mood fields via AJAX
+  document.addEventListener('change', function (e) {
+    const select = e.target.closest('.song-field-select');
+    if (!select) return;
+
+    const songId = select.dataset.songId;
+    const field = select.dataset.field;
+    const value = select.value;
+    const updateUrl = '{% url "dashboard_app:song-update-field" 0 %}'.replace('0', songId);
+
+    // Show loading state
+    select.disabled = true;
+    select.style.opacity = '0.5';
+
+    const formData = new FormData();
+    formData.append('field', field);
+    formData.append('value', value);
+
+    fetch(updateUrl, {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': getCSRFToken() },
+    })
+      .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+      .then(function (result) {
+        if (result.ok && result.data.status === 'success') {
+          // Success - dropdown already shows the new value
+          select.style.opacity = '1';
+        } else {
+          alert(result.data.error || '{% translate "حدث خطأ أثناء التحديث" %}');
+          select.value = select.getAttribute('data-original-value') || '';
+        }
+      })
+      .catch(function () {
+        alert('{% translate "حدث خطأ أثناء التحديث" %}');
+        select.value = select.getAttribute('data-original-value') || '';
+      })
+      .finally(function () {
+        select.disabled = false;
+        select.style.opacity = '1';
+      });
+  });
+
+  // Store original value on focus for rollback on error
+  document.addEventListener('focus', function (e) {
+    const select = e.target.closest('.song-field-select');
+    if (select) {
+      select.setAttribute('data-original-value', select.value);
+    }
+  }, true);
 </script>
 {% endblock %}

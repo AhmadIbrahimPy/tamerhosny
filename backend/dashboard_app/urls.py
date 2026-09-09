@@ -44,6 +44,7 @@ urlpatterns = [
     path('songs/<int:pk>/', views.song_view, name='song-view'),
     path('songs/<int:pk>/edit/', views.song_edit, name='song-edit'),
     path('songs/<int:pk>/upload-audio/', views.song_upload_audio, name='song-upload-audio'),
+    path('songs/<int:pk>/update-field/', views.song_update_field, name='song-update-field'),
     path('songs/<int:pk>/delete/', views.song_delete, name='song-delete'),
     path('songs/<int:pk>/toggle/', views.song_toggle_visibility, name='song-toggle'),
     path('songs/<int:pk>/credits/', views.song_credits, name='song-credits'),

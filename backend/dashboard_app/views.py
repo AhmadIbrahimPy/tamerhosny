@@ -839,6 +839,27 @@ def song_upload_audio(request, pk):
 
 
 @dashboard_required
+def song_update_field(request, pk):
+    """Quick inline update for genre and mood fields in the songs list.
+    AJAX-only (JsonResponse either way); the list template's own JS is the only caller.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    song = get_object_or_404(Song, pk=pk)
+    field_name = request.POST.get('field')
+    field_value = request.POST.get('value')
+
+    if field_name not in ['genre', 'mood']:
+        return JsonResponse({'error': _('Invalid field')}, status=400)
+
+    setattr(song, field_name, field_value)
+    song.save(update_fields=[field_name])
+
+    display_value = getattr(song, f'get_{field_name}_display')()
+    return JsonResponse({'status': 'success', 'display_value': display_value})
+
+@dashboard_required
 def song_view(request, pk):
     """One song's full dashboard page: an overview tab with its own
     fields/audio player, plus one tab per data-heavy relation (credits,
