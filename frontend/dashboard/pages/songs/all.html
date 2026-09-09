@@ -34,14 +34,19 @@
           {% for song in songs %}
           <tr>
             <td>
-              <a href="{% url 'dashboard_app:song-view' song.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
-                {% if song.display_cover_url %}
-                  <img src="{{ song.display_cover_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
-                {% else %}
-                  <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ song.title_ar|slice:":1" }}</span>
-                {% endif %}
-                <span>{{ song.title_ar }}</span>
-              </a>
+              <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'dashboard_app:song-view' song.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
+                  {% if song.display_cover_url %}
+                    <img src="{{ song.display_cover_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                  {% else %}
+                    <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ song.title_ar|slice:":1" }}</span>
+                  {% endif %}
+                  <span>{{ song.title_ar }}</span>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary copy-song-name-btn" data-song-name="{{ song.title_ar }}" title="{% translate 'نسخ اسم الأغنية' %}">
+                  <i class="ti ti-copy" style="font-size:14px;"></i>
+                </button>
+              </div>
             </td>
             <td class="text-center">
               {% if song.audio_file %}
@@ -139,6 +144,25 @@
         alert('{% translate "حدث خطأ أثناء الرفع" %}');
         window.location.reload();
       });
+  });
+
+  // Copy song name to clipboard
+  document.addEventListener('click', function (e) {
+    const copyBtn = e.target.closest('.copy-song-name-btn');
+    if (!copyBtn) return;
+
+    const songName = copyBtn.dataset.songName;
+    if (!songName) return;
+
+    navigator.clipboard.writeText(songName).then(function () {
+      const icon = copyBtn.querySelector('i');
+      icon.className = 'ti ti-check text-success';
+      setTimeout(function () {
+        icon.className = 'ti ti-copy';
+      }, 1500);
+    }).catch(function () {
+      alert('{% translate "فشل نسخ الاسم" %}');
+    });
   });
 </script>
 {% endblock %}
