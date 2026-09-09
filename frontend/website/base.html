@@ -3842,7 +3842,11 @@
       var pttTranscriptParts = [];
 
       function pttButtons() {
-        return document.querySelectorAll('#thMicBtn, #thMicBtnMobile');
+        // #carModeVoiceBtn lives on the song detail page's car-mode view
+        // (frontend/website/pages/songs/detail.html) - included here too
+        // so it gets the same recording-state pulse as the header mic
+        // buttons, whichever one actually triggered a session.
+        return document.querySelectorAll('#thMicBtn, #thMicBtnMobile, #carModeVoiceBtn');
       }
 
       function createPttRecognition() {
@@ -3911,6 +3915,24 @@
         if (!pttActive || !pttRecognition) return;
         try { pttRecognition.stop(); } catch (e) {}
       }
+
+      // Car mode's own tap-to-talk button (not hold-to-talk, since a
+      // driver glancing at the screen taps once rather than holding it
+      // down): starts a session and auto-stops it after 5s if nothing
+      // was said at all, instead of leaving it open indefinitely. A
+      // second tap while already listening stops it early.
+      var carModeSilenceTimer = null;
+      window.thCarModeListen = function () {
+        if (pttActive) {
+          pttStop();
+          return;
+        }
+        pttStart();
+        clearTimeout(carModeSilenceTimer);
+        carModeSilenceTimer = setTimeout(function () {
+          if (pttActive && pttTranscriptParts.length === 0) pttStop();
+        }, 5000);
+      };
 
       pttButtons().forEach(function (btn) {
         btn.addEventListener('pointerdown', function (e) { e.preventDefault(); pttStart(); });

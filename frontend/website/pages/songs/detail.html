@@ -515,6 +515,34 @@
       height: 58px;
       font-size: 24px;
     }
+    /* Tap-to-talk button, car mode only - see window.thCarModeListen()
+       in base.html. Hidden outside car mode/this breakpoint by default
+       (.car-mode-voice-btn below); shown here, below the progress bar. */
+    body.car-mode .car-mode-voice-btn {
+      display: flex;
+    }
+    body.car-mode .car-mode-voice-btn.recording {
+      background: #ef4444;
+      color: #fff;
+      animation: thMicRecordingPulse 1s ease-in-out infinite;
+    }
+  }
+  .car-mode-voice-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+    margin: 18px auto 0;
+    padding: 14px 20px;
+    border-radius: 999px;
+    border: none;
+    background: var(--accent);
+    color: #111;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
   }
   body.car-mode .th-footer {
     display: none !important;
@@ -2229,6 +2257,14 @@
                     <span class="cover-progress-time" id="coverDuration">0:00</span>
                 </div>
                 {% endif %}
+
+                <!-- Tap-to-talk, car mode only (see .car-mode-voice-btn
+                     above and window.thCarModeListen() in base.html) -
+                     hidden the rest of the time via that same rule. -->
+                <button type="button" id="carModeVoiceBtn" class="car-mode-voice-btn" onclick="window.thCarModeListen && window.thCarModeListen()" aria-label="{% translate 'المساعد الصوتي' %}">
+                    <i class="bi bi-mic-fill"></i>
+                    <span>{% translate "اضغط وقول أمرك" %}</span>
+                </button>
 
                 {% if duet %}
                 <a href="{% url 'website_app:song-detail' song.slug %}" class="original-song-card">
