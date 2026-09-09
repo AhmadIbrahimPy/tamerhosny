@@ -1598,12 +1598,12 @@
 
   <style>
     .th-voice-assistant{
-      position:fixed; z-index:1050; bottom:90px; inset-inline-end:20px;
+      position:fixed; z-index:1050; bottom:90px; left:50%;
       display:flex; flex-direction:column; align-items:center; gap:10px;
-      pointer-events:none; opacity:0; transform:translateY(12px) scale(.9);
+      pointer-events:none; opacity:0; transform:translateX(-50%) translateY(12px) scale(.9);
       transition:opacity .25s ease, transform .25s ease;
     }
-    .th-voice-assistant.active{opacity:1; transform:translateY(0) scale(1);}
+    .th-voice-assistant.active{opacity:1; transform:translateX(-50%) translateY(0) scale(1);}
     .th-voice-avatar{
       width:92px; height:92px; border-radius:50%; overflow:hidden;
       border:3px solid var(--accent); background:var(--card);
@@ -3325,6 +3325,17 @@
           setStatus(song.title);
           var btn = document.getElementById('playerPlayBtn');
           playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, false);
+          // Same pattern as playSongFromList() (songs/detail.html's own
+          // album-list clicks): a request naming a specific song is
+          // asking to hear THAT song, which reads as "go there and play
+          // it" - not "keep playing whatever page I'm on and just start
+          // this in the background bar". Especially jarring in car mode,
+          // where the whole point is a single glanceable view; leaving
+          // it showing an unrelated song while this one played invisibly
+          // behind it read as the command being ignored.
+          if (song.link && typeof thBoostedNavigate === 'function') {
+            thBoostedNavigate(song.link);
+          }
         })
         .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
     }
@@ -3839,7 +3850,7 @@
         if (textEl) {
           textEl.innerHTML =
             '<strong>{% translate "جرّب المساعد الصوتي!" %}</strong>' +
-            '<div>{% translate "اضغط مع الاستمرار على أيقونة الميكروفون وقول اللي عايزه" %}</div>';
+            '<div>{% translate "اضغط على أيقونة الميكروفون وقول اللي عايزه" %}</div>';
         }
         var enableBtn = toast.querySelector('.th-voice-promo-enable');
         if (enableBtn) enableBtn.style.display = 'none';
@@ -3858,22 +3869,13 @@
       var pttTranscriptParts = [];
 
       // #carModeVoiceBtn lives on the song detail page's car-mode view
-      // (frontend/website/pages/songs/detail.html) - included in the
-      // recording-state pulse (pttButtons) so it gets the same visual
-      // feedback whichever button actually triggered a session, but
-      // deliberately NOT in pttHoldButtons: that one drives the
-      // pointerdown/up hold-to-talk wiring below, and car mode's button
-      // is tap-to-talk (its own onclick="thCarModeListen()" already
-      // starts/stops it) - wiring it for hold too made a single tap
-      // fire pointerdown (start) then pointerup (stop) almost
-      // instantly, then the click's own thCarModeListen() saw it
-      // already stopped and started a fresh session again, reading as
-      // "opens and closes in the same second" on every press.
+      // (frontend/website/pages/songs/detail.html) - included here so
+      // it gets the same recording-state pulse as the header mic
+      // buttons, whichever one actually triggered a session. All three
+      // are tap-to-talk (see pttTapToggle below), so all three share
+      // this one selector now - no separate hold-only list needed.
       function pttButtons() {
         return document.querySelectorAll('#thMicBtn, #thMicBtnMobile, #carModeVoiceBtn');
-      }
-      function pttHoldButtons() {
-        return document.querySelectorAll('#thMicBtn, #thMicBtnMobile');
       }
 
       function createPttRecognition() {
@@ -3943,38 +3945,31 @@
         try { pttRecognition.stop(); } catch (e) {}
       }
 
-      // Car mode's own tap-to-talk button (not hold-to-talk, since a
-      // driver glancing at the screen taps once rather than holding it
-      // down): starts a session and auto-stops it after 5s if nothing
-      // was said at all, instead of leaving it open indefinitely. A
-      // second tap while already listening stops it early.
-      var carModeSilenceTimer = null;
-      window.thCarModeListen = function () {
+      // One tap starts a session; a second tap while listening stops it
+      // early; otherwise it auto-stops after 5s of nothing being said
+      // at all, instead of staying open indefinitely. Used by every
+      // mobile mic control - the header buttons and car mode's own -
+      // no more press-and-hold anywhere on mobile (a real hold gesture
+      // turned out unreliable across devices - see pointerdown/up
+      // history in git log for this file).
+      var pttSilenceTimer = null;
+      function pttTapToggle() {
         if (pttActive) {
           pttStop();
           return;
         }
         pttStart();
-        clearTimeout(carModeSilenceTimer);
-        carModeSilenceTimer = setTimeout(function () {
+        clearTimeout(pttSilenceTimer);
+        pttSilenceTimer = setTimeout(function () {
           if (pttActive && pttTranscriptParts.length === 0) pttStop();
         }, 5000);
-      };
+      }
 
-      pttHoldButtons().forEach(function (btn) {
-        btn.addEventListener('pointerdown', function (e) { e.preventDefault(); pttStart(); });
-        btn.addEventListener('pointerup', pttStop);
-        btn.addEventListener('pointercancel', pttStop);
-        btn.addEventListener('pointerleave', pttStop);
-      });
-
-      // No persistent on/off state to toggle on mobile - a plain tap
-      // (the button's own onclick="thToggleVoiceAssistant()" markup)
-      // just explains how to actually use it instead.
-      window.thToggleVoiceAssistant = function () {
-        showAvatar('{% translate "اضغط مع الاستمرار على أيقونة الميكروفون وقول اللي عايزه" %}');
-        setTimeout(hideAvatar, 3000);
-      };
+      window.thCarModeListen = pttTapToggle;
+      // No persistent on/off state to toggle on mobile - the header
+      // buttons' onclick="thToggleVoiceAssistant()" markup now just
+      // means "tap to talk", same as car mode's button.
+      window.thToggleVoiceAssistant = pttTapToggle;
 
       if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
         setTimeout(showVoicePromoNow, 4000);
