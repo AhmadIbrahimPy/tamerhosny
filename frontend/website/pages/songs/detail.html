@@ -2549,7 +2549,7 @@
           <div class="slider-track">
             {% for other in album_songs %}
               <a href="{% url 'website_app:song-detail' other.slug %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}"{% endif %}>
+                {% if other.audio_file %}data-song-id="{{ other.pk }}" data-audio-url="{{ other.audio_file.url }}" data-album-context="1"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other.display_cover_url %}
                     <img src="{{ other.display_cover_url }}" alt="{{ other|localized_field:'title' }}">
@@ -3902,7 +3902,12 @@
       // toggleAudio -> playAudio fires the globalAudio 'play' event
       // (base.html), which is now the one place that counts a play via
       // thIncrementPlayCount - no need to duplicate that call here.
-      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, false);
+      // isRandomQueue=true: this is "play this song" from its own cover
+      // button, not from the album-songs slider or the album's own page
+      // (the two contexts /player/'s queue is allowed to walk the whole
+      // album for) - so next/prev from here should be history+random,
+      // not a silent detour through the rest of the album.
+      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, true);
     } else {
       console.error('Global audio player not available');
     }

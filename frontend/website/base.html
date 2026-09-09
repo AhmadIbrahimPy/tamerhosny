@@ -1288,7 +1288,18 @@
         card.dataset.album || '',
         false,
         card.dataset.songId || null,
-        card.dataset.albumLink || ''
+        card.dataset.albumLink || '',
+        // /player/'s next/prev queue should only ever walk through an
+        // album's tracklist when playback actually started from that
+        // album's own context (its own page, or the "song's album"
+        // slider on that song's detail page - both mark their cards
+        // with data-album-context). Every other song grid site-wide
+        // (home, artist pages, "songs you may like", duets, "explore
+        // more"...) shares this exact same .th-card-song markup, so
+        // without this flag they'd inherit an unrelated album's
+        // tracklist just because the song they clicked happens to
+        // belong to one.
+        !card.dataset.albumContext
       );
     }, true);
 
