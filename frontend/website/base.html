@@ -3049,7 +3049,18 @@
     // "الأغنية تاني" itself as a fuzzy song-title search and could
     // easily land on some unrelated song that happens to score above
     // the match threshold.
-    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|^play$|^شغل$|^شغّل$|شغل(?:ي)?\s+(?:ال)?(?:أغنية|اغنية)(?:\s+تاني)?\s*$|شغل(?:ي)?\s+اللي\s+كان\s+شغال|شغل(?:ي)?\s+اللي\s+كنت\s+سامع/i;
+    var RESUME_RE = /كمل|استكمل|شغلها تاني|شغل تاني|كمّل|^resume$|^continue$|شغل(?:ي)?\s+(?:ال)?(?:أغنية|اغنية)(?:\s+تاني)?\s*$|شغل(?:ي)?\s+اللي\s+كان\s+شغال|شغل(?:ي)?\s+اللي\s+كنت\s+سامع/i;
+    // "شغل"/"play" said completely bare is ambiguous on mobile - real
+    // device logs (and a direct user report) showed mobile's ASR
+    // finalizing a single word as its own separate result far more
+    // aggressively than desktop, so a bare "شغل" reaching here is often
+    // just the truncated first word of "شغل أغنية <name>", not someone
+    // deliberately asking to resume. Not folded into RESUME_RE above -
+    // handled as a delayed, cancelable tentative action instead (see
+    // scheduleTentativeResume in handleResult) so a continuation
+    // arriving shortly after gets stitched back onto it and evaluated
+    // as the real command, rather than the resume just firing wrongly.
+    var AMBIGUOUS_RESUME_RE = /^شغل$|^شغّل$|^play$/i;
     var LIKE_RE = /اعمل\s*لايك|اعمل\s*لايف|اعمل\s*لاف|حط\s*لايك|عجبتني|عجباني|\blike\s*(?:it|this)?\b/i;
     var OPEN_SONG_PAGE_RE = /افتح\s*(?:صفحة)?\s*الأغنية|افتح\s*(?:صفحة)?\s*الاغنية|روح\s*(?:ل|لصفحة)\s*الأغنية|وريني\s*صفحة\s*الأغنية|open\s*(?:the\s*)?song\s*page/i;
     var PLAY_SONG_RE = /^(?:شغل(?:ي)?|play)\s+(?:أغنية|اغنية|song)?\s*(.+)/i;
@@ -3123,6 +3134,7 @@
     }
 
     function armCommandWindow(index) {
+      cancelPendingResume(); // a fresh wake word supersedes any leftover pending action from before
       listeningForCommand = true;
       wakeResultIndex = index;
       lastArmedAt = Date.now();
@@ -3132,6 +3144,7 @@
       commandTimer = setTimeout(function () {
         listeningForCommand = false;
         wakeResultIndex = -1;
+        cancelPendingResume();
         hideAvatar();
       }, COMMAND_WINDOW_MS);
     }
@@ -3153,6 +3166,32 @@
         globalAudio.play();
       }
       setStatus('{% translate "تمام، كملنا" %}');
+    }
+
+    var pendingResumeTimer = null;
+    var pendingResumeText = null;
+    var PENDING_RESUME_MS = 900;
+
+    // Fires the resume only if nothing stitched onto it in the
+    // meantime (see handleResult) - i.e. "شغل" really was said alone.
+    function scheduleTentativeResume(text) {
+      cancelPendingResume();
+      pendingResumeText = text;
+      pendingResumeTimer = setTimeout(function () {
+        pendingResumeTimer = null;
+        pendingResumeText = null;
+        resumePlayback();
+        clearTimeout(commandTimer);
+        listeningForCommand = false;
+        wakeResultIndex = -1;
+        setTimeout(hideAvatar, 900);
+      }, PENDING_RESUME_MS);
+    }
+
+    function cancelPendingResume() {
+      clearTimeout(pendingResumeTimer);
+      pendingResumeTimer = null;
+      pendingResumeText = null;
     }
 
     function likeCurrentSong() {
@@ -3462,6 +3501,16 @@
 
         if (!result.isFinal) continue;
 
+        // A tentative "شغل" from a moment ago is still waiting to see
+        // if it was really standalone - stitch this new fragment onto
+        // it so e.g. "شغل" then "اغنية اتحامي فيا" (mobile finalizing
+        // each as its own separate result) gets evaluated together as
+        // "شغل اغنية اتحامي فيا", not lost.
+        if (pendingResumeText) {
+          candidate = pendingResumeText + ' ' + candidate;
+          cancelPendingResume();
+        }
+
         var matched = resolveCommand(candidate);
 
         if (matched) {
@@ -3470,6 +3519,15 @@
           listeningForCommand = false;
           wakeResultIndex = -1;
           setTimeout(hideAvatar, 900);
+          continue;
+        }
+
+        if (AMBIGUOUS_RESUME_RE.test(candidate)) {
+          // Not a failure and not resolved yet either - wait briefly
+          // for a possible continuation instead of committing to
+          // "resume" or falling through to the AI fallback right away.
+          logVoiceEvent('COMMAND_TENTATIVE_RESUME', { transcript: candidate });
+          scheduleTentativeResume(candidate);
           continue;
         }
 
@@ -3650,6 +3708,7 @@
       clearTimeout(restartTimer);
       clearTimeout(commandTimer);
       disarmWatchdog();
+      cancelPendingResume();
       listeningForCommand = false;
       wakeResultIndex = -1;
       pendingWatchdogRecovery = false;
