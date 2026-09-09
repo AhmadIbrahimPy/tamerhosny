@@ -122,11 +122,23 @@
       --accent:#d4af37; --accent-2:#8a5cff;
     }
     *{box-sizing:border-box;}
-    html, body{max-width:100%; overflow-x:hidden;}
+    html, body{max-width:100%;}
     body{
       background:var(--bg); color:var(--text); font-family:'Cairo', system-ui, sans-serif;
       min-height:100vh;
     }
+    /* overflow-x:hidden used to live on html/body - clips content that
+       overflows horizontally (a slider row poking past the viewport
+       edge, etc.), but it has a well-known side effect: WebKit/Safari
+       stops honoring position:sticky on any element (like .th-nav
+       below) once ANY ancestor up to the viewport - including
+       html/body - has overflow-x set to anything but visible, even
+       with overflow-y left alone. That silently broke the sticky navbar
+       specifically on Safari/iOS. #th-page-root holds all the actual
+       page content that ever needs this clipping - .th-nav sits outside
+       it (a sibling, not a descendant), so scoping the clip there
+       instead keeps it fully sticky everywhere. */
+    #th-page-root{max-width:100%; overflow-x:hidden;}
     a{color:inherit;}
     a.plain{text-decoration:none; color:inherit;}
     .container-xl{max-width:1240px; margin-inline:auto;}
