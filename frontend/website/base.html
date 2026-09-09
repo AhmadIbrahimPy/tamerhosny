@@ -3099,6 +3099,11 @@
     // they're talking to here.
     var LOVE_WORDS_RE = /بحبك|احبك|بموت فيك|بعشقك|عاشقك|\bi\s*love\s*you\b|\badore\s*you\b/i;
 
+    // "اقترح أغنية"/"شغل حاجة على ذوق"/"فاجئني" - no specific song or
+    // mood named, just "play me something" - a random pick from the
+    // catalog (see playRandomSong).
+    var SUGGEST_SONG_RE = /اقترح|فاجئني|شغل حاجة|شغلي حاجة|شغل اي حاجة|شغل اى حاجة|ذوق|زوق|\bsurprise me\b|\bplay something\b|\bsuggest\b/i;
+
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
     var MOOD_KEYWORDS = [
       { re: /كئيب|حزين|\bsad\b|heartbreak/i, mood: 'SAD_HEARTBREAK' },
@@ -3231,8 +3236,21 @@
         setStatus('{% translate "مفيش أغنية شغالة عشان أعمللها لايك" %}');
         return;
       }
-      if (typeof toggleLike === 'function') toggleLike();
+      if (!window.isAuthenticated) {
+        // toggleLike() itself opens the login modal via requireAuth() -
+        // nothing was actually liked yet, so no heart burst here.
+        if (typeof toggleLike === 'function') toggleLike();
+        return;
+      }
+      // toggleLike() is a strict toggle (POST /likes/toggle/ flips
+      // whatever the current state is) - a voice "اعمل لايك"/"لاف"
+      // should always leave the song liked, never flip an existing like
+      // back off, so only call it when it isn't already liked.
+      if (typeof isLiked !== 'undefined' && !isLiked && typeof toggleLike === 'function') {
+        toggleLike();
+      }
       setStatus('{% translate "تمام ❤️" %}');
+      spawnLoveHearts();
     }
 
     function openCurrentSongPage() {
@@ -3360,6 +3378,33 @@
         .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
     }
 
+    // "اقترح أغنية"/"شغل حاجة على ذوق" - no name or mood given, just
+    // pick something. /player/song-data/ with no song_id already picks
+    // a random playable song server-side (same bootstrap used landing
+    // on /player/ with nothing in context).
+    function playRandomSong() {
+      setStatus('{% translate "بدور على حاجة تعجبك..." %}');
+      fetch('/player/song-data/')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error || !data.url) {
+            setStatus('{% translate "أووبس، معنديش حاجة أشغلها دلوقتي" %}');
+            return;
+          }
+          if (data.otherSongs && data.otherSongs.length) {
+            window.otherSongsList = data.otherSongs;
+            window.otherSongsListIsRandom = true;
+          }
+          setStatus(data.title || '');
+          var btn = document.getElementById('playerPlayBtn');
+          playAudio(data.url, btn, data.title, '', data.image ? [data.image] : null, data.link, data.artist, data.album, false, data.songId, null, true);
+          if (data.link && typeof thBoostedNavigate === 'function') {
+            thBoostedNavigate(data.link);
+          }
+        })
+        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+    }
+
     // Dispatches one classified intent from /player/voice-intent/ (see
     // resolveWithAI below) to a pre-built handler - the backend only
     // ever returns one of this fixed intent list plus already-validated
@@ -3389,6 +3434,9 @@
         case 'play_mood':
           if (!data.mood) return false;
           playSongsByMood(data.mood);
+          return true;
+        case 'play_random':
+          playRandomSong();
           return true;
         case 'navigate':
           if (!data.page) return false;
@@ -3487,6 +3535,14 @@
           playSongsByMood(MOOD_KEYWORDS[i].mood);
           return true;
         }
+      }
+      if (SUGGEST_SONG_RE.test(text)) {
+        // Checked after MOOD_KEYWORDS (a mood-specific request like
+        // "شغل حاجة حزينة" should still go there) and before
+        // PLAY_SONG_RE (which would otherwise treat "حاجة" itself as a
+        // literal song title to search for and fail to find anything).
+        playRandomSong();
+        return true;
       }
       var playMatch = text.match(PLAY_SONG_RE);
       if (playMatch && playMatch[1]) {
