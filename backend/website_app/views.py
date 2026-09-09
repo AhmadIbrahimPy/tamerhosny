@@ -402,37 +402,43 @@ def voice_search_songs(request):
         # below: SequenceMatcher's ratio is normalized by *combined*
         # length, so a short phrase against a whole song's lyrics scores
         # low even when it's an exact line from it), falling back to the
-        # per-line LYRICS segments for songs that don't have the full
-        # text filled in yet.
+        # per-line LYRICS segments only for songs that don't have the
+        # full text filled in yet. Each pass is scoped at the DB level to
+        # just the rows that actually have something to check, instead
+        # of pulling and looping the whole catalog through Python twice.
         lyrics_norm = _normalize_arabic(lyrics_query)
         lyrics_lower = lyrics_query.lower()
         scored = []
 
-        for s in queryset:
+        has_full_lyrics = queryset.exclude(lyrics='')
+        for s in has_full_lyrics:
+            full_norm = _normalize_arabic(s.lyrics)
+            full_lower = s.lyrics.lower()
+            if lyrics_norm in full_norm or lyrics_lower in full_lower:
+                scored.append((1.0, s))
+
+        # A song with its full lyrics filled in already got its shot
+        # above - only the ones missing it need the slower per-segment
+        # fallback.
+        missing_full_lyrics = queryset.filter(
+            lyrics='', lyric_segments__segment_type='LYRICS',
+        ).distinct()
+        for s in missing_full_lyrics:
             lyrics_score = 0.0
+            for segment in s.lyric_segments.filter(segment_type='LYRICS'):
+                if segment.text:
+                    segment_norm = _normalize_arabic(segment.text)
+                    segment_lower = segment.text.lower()
 
-            full_text = (s.lyrics or '').strip()
-            if full_text:
-                full_norm = _normalize_arabic(full_text)
-                full_lower = full_text.lower()
-                if lyrics_norm in full_norm or lyrics_lower in full_lower:
-                    lyrics_score = 1.0
+                    # Check for exact or partial match in normalized text
+                    if lyrics_norm in segment_norm or segment_norm in lyrics_norm:
+                        lyrics_score = max(lyrics_score, 1.0)
+                    else:
+                        lyrics_score = max(lyrics_score, SequenceMatcher(None, lyrics_norm, segment_norm).ratio())
 
-            if lyrics_score < 1.0 and s.lyric_segments.exists():
-                for segment in s.lyric_segments.filter(segment_type='LYRICS'):
-                    if segment.text:
-                        segment_norm = _normalize_arabic(segment.text)
-                        segment_lower = segment.text.lower()
-
-                        # Check for exact or partial match in normalized text
-                        if lyrics_norm in segment_norm or segment_norm in lyrics_norm:
-                            lyrics_score = max(lyrics_score, 1.0)
-                        else:
-                            lyrics_score = max(lyrics_score, SequenceMatcher(None, lyrics_norm, segment_norm).ratio())
-
-                        # Also check lowercase for English lyrics
-                        if lyrics_lower in segment_lower or segment_lower in lyrics_lower:
-                            lyrics_score = max(lyrics_score, 1.0)
+                    # Also check lowercase for English lyrics
+                    if lyrics_lower in segment_lower or segment_lower in lyrics_lower:
+                        lyrics_score = max(lyrics_score, 1.0)
 
             if lyrics_score >= 0.5:
                 scored.append((lyrics_score, s))
