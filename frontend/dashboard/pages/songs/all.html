@@ -96,7 +96,7 @@
             <td>
               <select class="field-dropdown song-field-select" data-song-id="{{ song.pk }}" data-field="genre" style="min-width: 120px;">
                 <option value="" {% if not song.genre %}selected{% endif %}>-</option>
-                {% for value, label in song.__class__.Genre.choices %}
+                {% for value, label in genre_choices %}
                   <option value="{{ value }}" {% if song.genre == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
@@ -104,7 +104,7 @@
             <td>
               <select class="field-dropdown song-field-select" data-song-id="{{ song.pk }}" data-field="mood" style="min-width: 120px;">
                 <option value="" {% if not song.mood %}selected{% endif %}>-</option>
-                {% for value, label in song.__class__.Mood.choices %}
+                {% for value, label in mood_choices %}
                   <option value="{{ value }}" {% if song.mood == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
