@@ -192,12 +192,20 @@
       border-radius:50%; border:1px solid var(--border); background:var(--card);
       color:var(--muted); font-size:20px; cursor:pointer;
       box-shadow:0 8px 24px rgba(0,0,0,.35); touch-action:none;
+      /* Hidden until .entering plays (added from JS) - without this it's
+         fully visible the instant display:flex applies at page load,
+         well before that class shows up, which read as "no animation,
+         just appears". */
+      opacity:0;
     }
     @media (max-width:980px){ .th-mic-fab{ display:flex; } }
     @media (max-width:768px){ .th-mic-fab{ bottom:150px; } }
     .th-mic-fab.is-on{border-color:var(--accent); color:var(--accent);}
-    .th-mic-fab.side-start{ inset-inline-start:16px; }
-    .th-mic-fab.side-end{ inset-inline-end:16px; }
+    /* Matches .song-container's own mobile padding-inline (songs/detail.html)
+       rather than sitting flush against the raw viewport edge - plus the
+       safe area on notched/rounded-corner phones. */
+    .th-mic-fab.side-start{ inset-inline-start:max(16px, env(safe-area-inset-left)); }
+    .th-mic-fab.side-end{ inset-inline-end:max(16px, env(safe-area-inset-right)); }
     @keyframes thMicFabEnterStart{
       from{ transform:translate(-46px, 24px) scale(.5); opacity:0; }
       to{ transform:translate(0,0) scale(1); opacity:1; }
