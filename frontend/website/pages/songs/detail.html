@@ -4,7 +4,7 @@
 {% block title %}{{ song|localized_field:'title' }}{% endblock %}
 
 {% block meta_description %}
-<meta name="description" content="{% blocktranslate with title=song|localized_field:'title' %}استمع لأغنية {{ title }} لتامر حسني{% endblocktranslate %}{% if song.album %} - {{ song.album|localized_field:'title' }}{% endif %}. {% if song.lyrics %}{{ song.lyrics|truncatewords:25 }}{% else %}{% translate 'كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني.' %}{% endif %}">
+<meta name="description" content="{% blocktranslate with title=song|localized_field:'title' %}استمع لأغنية {{ title }} لتامر حسني{% endblocktranslate %}{% if song.album %} - {{ song.album|localized_field:'title' }}{% endif %}. {% if song.full_lyrics_text %}{{ song.full_lyrics_text|truncatewords:25 }}{% else %}{% translate 'كلمات، تفاصيل الأغنية والمزيد على أرشيف تامر حسني.' %}{% endif %}">
 {% endblock %}
 
 {% block og_type %}music.song{% endblock %}
@@ -1221,16 +1221,6 @@
     color: var(--accent);
   }
 
-  /* Plain crawlable lyrics text - see the "كلمات أغنية ... كاملة" section
-     below (separate from .synced-lyrics, the JS-driven one-line-at-a-time
-     display). */
-  .song-full-lyrics {
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 2;
-    white-space: pre-line;
-  }
-
   .song-see-all {
     display: inline-flex;
     align-items: center;
@@ -2442,21 +2432,6 @@
     </div>
 
 
-    <!-- Full lyrics text - separate from .synced-lyrics above (the
-         line-by-line display driven by lyric_segments/JS): this is a
-         plain, fully-rendered text block so search engines can actually
-         index the song's lyrics (a synced line only ever shows one line
-         at a time via JS, nothing crawlable) and so people searching
-         "كلمات اغنية ..." land on a page that visibly has them. -->
-    {% if song.lyrics %}
-      <section class="song-section">
-        <div class="song-section-head">
-          <h2 class="song-section-title"><i class="bi bi-file-text"></i> {% blocktranslate with title=song|localized_field:'title' %}كلمات أغنية {{ title }} كاملة{% endblocktranslate %}</h2>
-        </div>
-        <div class="song-full-lyrics">{{ song.lyrics|linebreaksbr }}</div>
-      </section>
-    {% endif %}
-
     <!-- Streaming Links -->
     {% if links %}
       <section class="song-section">
@@ -2524,14 +2499,20 @@
       </section>
     {% endif %}
 
-    <!-- Lyrics -->
-    {% if song.lyrics %}
+    <!-- Lyrics - full_lyrics_text prefers Song.lyrics, falling back to a
+         FULL_SONG lyric_segment (music_app.models.Song.full_lyrics_text)
+         for a song entered from the segments editor instead. Separate
+         from .synced-lyrics up in the hero (the JS-driven one-line-at-a-
+         time display) - this is a plain, fully-rendered block so search
+         engines can actually index the lyrics and people searching
+         "كلمات اغنية ..." land on a page that visibly has them. -->
+    {% if song.full_lyrics_text %}
       <section class="song-section">
         <div class="song-section-head">
           <h2 class="song-section-title"><i class="bi bi-chat-quote"></i> {% translate "الكلمات" %}</h2>
         </div>
         <div class="lyrics-card">
-          <p class="lyrics-text">{{ song.lyrics }}</p>
+          <p class="lyrics-text">{{ song.full_lyrics_text }}</p>
         </div>
       </section>
     {% endif %}

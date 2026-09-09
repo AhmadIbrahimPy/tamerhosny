@@ -753,7 +753,12 @@ SONG_MISSING_CHOICES = [
 @dashboard_required
 def songs_list(request):
     queryset = Song.objects.select_related('album', 'recording_studio', 'related_media').annotate(
-        segments_count=Count('lyric_segments', distinct=True),
+        # FULL_SONG segments are a full-lyrics-text carrier, not a real
+        # timed slice - excluded so this stays "has actual timed
+        # lyrics/music/silence segments", matching what the "كلمات
+        # (توقيت)" column/filter is actually about.
+        segments_count=Count('lyric_segments', filter=~Q(lyric_segments__segment_type='FULL_SONG'), distinct=True),
+        full_song_segments_count=Count('lyric_segments', filter=Q(lyric_segments__segment_type='FULL_SONG'), distinct=True),
         links_count=Count('links', distinct=True),
     )
     q = request.GET.get('q')
@@ -769,7 +774,7 @@ def songs_list(request):
     elif missing_filter == 'lyrics':
         queryset = queryset.filter(segments_count=0)
     elif missing_filter == 'full_lyrics':
-        queryset = queryset.filter(Q(lyrics='') | Q(lyrics__isnull=True))
+        queryset = queryset.filter(Q(lyrics='') | Q(lyrics__isnull=True), full_song_segments_count=0)
     elif missing_filter == 'platforms':
         queryset = queryset.filter(links_count=0)
 
@@ -902,6 +907,7 @@ def song_view(request, pk):
         (_('دويتو'), _('نعم') if song.is_duet else _('لا')),
         (_('حالة الظهور'), _visibility_choices_display(song)),
         (_('موعد النشر'), song.publish_at),
+        (_('كلمات الأغنية كاملة'), song.full_lyrics_text),
     ]
 
     audio_url = song.audio_file.url if song.audio_file else None

@@ -397,32 +397,43 @@ def voice_search_songs(request):
         scored.sort(key=lambda pair: pair[0], reverse=True)
         songs = [s for _, s in scored[:limit]]
     elif lyrics_query:
-        # Search in lyrics - the song's full lyrics text (Song.lyrics)
-        # first (a plain substring check there, not the fuzzy ratio used
-        # below: SequenceMatcher's ratio is normalized by *combined*
-        # length, so a short phrase against a whole song's lyrics scores
-        # low even when it's an exact line from it), falling back to the
-        # per-line LYRICS segments only for songs that don't have the
-        # full text filled in yet. Each pass is scoped at the DB level to
-        # just the rows that actually have something to check, instead
-        # of pulling and looping the whole catalog through Python twice.
+        # Search in lyrics - the song's full lyrics text first (a plain
+        # substring check there, not the fuzzy ratio used below:
+        # SequenceMatcher's ratio is normalized by *combined* length, so
+        # a short phrase against a whole song's lyrics scores low even
+        # when it's an exact line from it), falling back to the per-line
+        # LYRICS segments only for songs that don't have the full text
+        # filled in yet either way. Full lyrics text comes from either
+        # Song.lyrics or a FULL_SONG lyric_segment - two ways to enter
+        # the same thing (see Song.full_lyrics_text) - so a song only
+        # ever needs one of them to skip the slower per-segment fallback.
+        # Each pass is scoped at the DB level to just the rows that
+        # actually have something to check, instead of pulling and
+        # looping the whole catalog through Python twice.
+        from backend.music_app.models import SongLyricSegment
+
         lyrics_norm = _normalize_arabic(lyrics_query)
         lyrics_lower = lyrics_query.lower()
         scored = []
 
-        has_full_lyrics = queryset.exclude(lyrics='')
+        has_full_lyrics = queryset.filter(
+            Q(lyrics__gt='') | Q(lyric_segments__segment_type=SongLyricSegment.SegmentType.FULL_SONG),
+        ).distinct()
         for s in has_full_lyrics:
-            full_norm = _normalize_arabic(s.lyrics)
-            full_lower = s.lyrics.lower()
+            full_text = s.full_lyrics_text
+            if not full_text:
+                continue
+            full_norm = _normalize_arabic(full_text)
+            full_lower = full_text.lower()
             if lyrics_norm in full_norm or lyrics_lower in full_lower:
                 scored.append((1.0, s))
 
-        # A song with its full lyrics filled in already got its shot
-        # above - only the ones missing it need the slower per-segment
-        # fallback.
+        # A song with its full lyrics filled in (either way) already got
+        # its shot above - only the ones missing both need the slower
+        # per-segment fallback.
         missing_full_lyrics = queryset.filter(
             lyrics='', lyric_segments__segment_type='LYRICS',
-        ).distinct()
+        ).exclude(pk__in=has_full_lyrics.values_list('pk', flat=True)).distinct()
         for s in missing_full_lyrics:
             lyrics_score = 0.0
             for segment in s.lyric_segments.filter(segment_type='LYRICS'):

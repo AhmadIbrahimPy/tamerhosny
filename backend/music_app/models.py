@@ -154,6 +154,22 @@ class Song(PublishableModel, HeroMediaMixin):
                 return self.album.cover_art_url
         return None
 
+    @property
+    def full_lyrics_text(self):
+        """The song's full lyrics as one block, for the website's SEO
+        lyrics section and the voice assistant's lyrics search - prefers
+        the plain Song.lyrics field, falling back to a FULL_SONG segment
+        (SongLyricSegment) for a song whose lyrics were entered from the
+        segments editor instead. Not for bulk/list use - each fallback
+        check is its own query; a single song-detail-page property.
+        """
+        if self.lyrics:
+            return self.lyrics
+        full_song_segment = self.lyric_segments.filter(
+            segment_type=SongLyricSegment.SegmentType.FULL_SONG,
+        ).exclude(text='').first()
+        return full_song_segment.text if full_song_segment else ''
+
     def __str__(self):
         return self.title_ar
 
@@ -193,6 +209,14 @@ class SongLyricSegment(models.Model):
         LYRICS = 'LYRICS', _('Lyrics')
         MUSIC = 'MUSIC', _('Music (instrumental)')
         SILENCE = 'SILENCE', _('Silence')
+        # Not a real timeline slice like the three above - a carrier row
+        # for the song's full lyrics text, entered from the same segments
+        # editor admins already use. Deliberately excluded from every
+        # synced-lyrics display (songs/detail.html, player/index.html,
+        # sing-with-tamer all allowlist-filter to LYRICS/MUSIC only) and
+        # fed into the same full-lyrics SEO block/mic-search path as
+        # Song.lyrics - see song_full_lyrics_text() below.
+        FULL_SONG = 'FULL_SONG', _('Full song lyrics')
 
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='lyric_segments')
     start_seconds = models.DecimalField(max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
@@ -210,7 +234,7 @@ class SongLyricSegment(models.Model):
         from django.core.exceptions import ValidationError
         if self.end_seconds is not None and self.start_seconds is not None and self.end_seconds <= self.start_seconds:
             raise ValidationError(_('End time must be after start time.'))
-        if self.segment_type == self.SegmentType.LYRICS and not self.text.strip():
+        if self.segment_type in (self.SegmentType.LYRICS, self.SegmentType.FULL_SONG) and not self.text.strip():
             raise ValidationError(_('Text is required for a lyrics segment.'))
 
     @property

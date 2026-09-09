@@ -90,7 +90,7 @@
               {% if song.segments_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
             </td>
             <td class="text-center" data-full-lyrics-cell="{{ song.pk }}">
-              {% if song.lyrics %}
+              {% if song.lyrics or song.full_song_segments_count %}
                 <i class="ti ti-check text-success" style="font-size:18px;"></i>
               {% else %}
                 <button type="button" class="btn btn-sm btn-link p-0 full-lyrics-missing-btn" data-song-id="{{ song.pk }}" data-song-title="{{ song.title_ar }}" data-update-url="{% url 'dashboard_app:song-update-field' song.pk %}" title="{% translate 'إضافة الكلمات كاملة' %}">

@@ -2339,6 +2339,25 @@
         icon.classList.add('bi-heart');
         likeBtn.style.color = 'var(--text)';
       }
+
+      // Also update the cover-like-badge on song detail pages if it exists
+      const coverLikeBtn = document.querySelector('.cover-like-badge');
+      if (coverLikeBtn) {
+        const coverIcon = coverLikeBtn.querySelector('i');
+        if (isLiked) {
+          coverLikeBtn.classList.add('is-liked');
+          if (coverIcon) {
+            coverIcon.classList.remove('bi-heart');
+            coverIcon.classList.add('bi-heart-fill');
+          }
+        } else {
+          coverLikeBtn.classList.remove('is-liked');
+          if (coverIcon) {
+            coverIcon.classList.remove('bi-heart-fill');
+            coverIcon.classList.add('bi-heart');
+          }
+        }
+      }
     }
 
     function syncToggleButtonStyles() {

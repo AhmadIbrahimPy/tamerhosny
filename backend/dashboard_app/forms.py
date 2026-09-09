@@ -407,7 +407,8 @@ class SongLyricSegmentForm(forms.ModelForm):
         end = cleaned.get('end_seconds')
         if start is not None and end is not None and end <= start:
             raise forms.ValidationError(_('وقت النهاية لازم يكون بعد وقت البداية.'))
-        if cleaned.get('segment_type') == SongLyricSegment.SegmentType.LYRICS and not cleaned.get('text', '').strip():
+        if cleaned.get('segment_type') in (SongLyricSegment.SegmentType.LYRICS, SongLyricSegment.SegmentType.FULL_SONG) \
+                and not cleaned.get('text', '').strip():
             self.add_error('text', _('لازم تكتب الكلمات لأن نوع المقطع "كلمات".'))
         return cleaned
 
