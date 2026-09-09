@@ -316,6 +316,37 @@ def _title_match_score(query_norm, title_norm):
     return SequenceMatcher(None, query_norm, title_norm).ratio()
 
 
+_PHRASE_IN_TEXT_MATCH_THRESHOLD = 0.82
+
+
+def _phrase_in_text_score(phrase_norm, text_norm):
+    """How well `phrase_norm` matches some contiguous stretch of
+    `text_norm` - an exact substring first, then a fuzzy slide (a
+    SequenceMatcher ratio over the *whole* text scores low even for an
+    exact line, since it's normalized by their combined length; sliding
+    a same-size window of text across it and taking the best ratio
+    isn't). Lets a single mistyped/mis-heard word in a long block of
+    lyrics ("بقع" in the catalog vs "بقى" actually spoken) still count as
+    a match instead of requiring the two to agree letter-for-letter.
+    """
+    if not phrase_norm or not text_norm:
+        return 0.0
+    if phrase_norm in text_norm:
+        return 1.0
+    phrase_words = phrase_norm.split()
+    text_words = text_norm.split()
+    if not phrase_words or len(text_words) < len(phrase_words):
+        return 0.0
+    window = len(phrase_words)
+    best = 0.0
+    for i in range(len(text_words) - window + 1):
+        candidate = ' '.join(text_words[i:i + window])
+        score = SequenceMatcher(None, phrase_norm, candidate).ratio()
+        if score > best:
+            best = score
+    return best
+
+
 # How closely a live transcript has to match a previously-learned phrase
 # (or one of its AI-generated paraphrases) before voice_intent() trusts
 # it over calling the LLM fresh - stricter than song-title search's own
@@ -440,8 +471,12 @@ def voice_search_songs(request):
                 continue
             full_norm = _normalize_arabic(full_text)
             full_lower = full_text.lower()
-            if lyrics_norm in full_norm or lyrics_lower in full_lower:
+            if lyrics_lower in full_lower:
                 scored.append((1.0, s))
+                continue
+            score = _phrase_in_text_score(lyrics_norm, full_norm)
+            if score >= _PHRASE_IN_TEXT_MATCH_THRESHOLD:
+                scored.append((score, s))
 
         # A song with its full lyrics filled in (either way) already got
         # its shot above - only the ones missing both need the slower
