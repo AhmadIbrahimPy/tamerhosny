@@ -745,6 +745,7 @@ def album_toggle_visibility(request, pk):
 SONG_MISSING_CHOICES = [
     ('audio', _('ملف صوتي')),
     ('lyrics', _('كلمات (توقيت)')),
+    ('full_lyrics', _('كلمات كاملة')),
     ('platforms', _('منصات')),
 ]
 
@@ -767,6 +768,8 @@ def songs_list(request):
         queryset = queryset.filter(Q(audio_file='') | Q(audio_file__isnull=True))
     elif missing_filter == 'lyrics':
         queryset = queryset.filter(segments_count=0)
+    elif missing_filter == 'full_lyrics':
+        queryset = queryset.filter(Q(lyrics='') | Q(lyrics__isnull=True))
     elif missing_filter == 'platforms':
         queryset = queryset.filter(links_count=0)
 
@@ -842,8 +845,9 @@ def song_upload_audio(request, pk):
 
 @dashboard_required
 def song_update_field(request, pk):
-    """Quick inline update for genre and mood fields in the songs list.
-    AJAX-only (JsonResponse either way); the list template's own JS is the only caller.
+    """Quick inline update for genre, mood and lyrics fields in the songs
+    list. AJAX-only (JsonResponse either way); the list template's own JS
+    is the only caller.
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -852,13 +856,16 @@ def song_update_field(request, pk):
     field_name = request.POST.get('field')
     field_value = request.POST.get('value')
 
-    if field_name not in ['genre', 'mood']:
+    if field_name not in ['genre', 'mood', 'lyrics']:
         return JsonResponse({'error': _('Invalid field')}, status=400)
 
     setattr(song, field_name, field_value)
     song.save(update_fields=[field_name])
 
-    display_value = getattr(song, f'get_{field_name}_display')()
+    # 'lyrics' is a plain text field, not a choice one - no
+    # get_lyrics_display() to call, and the list's popup doesn't need the
+    # value echoed back (it just flips the ✓/✗ icon on success).
+    display_value = getattr(song, f'get_{field_name}_display')() if field_name != 'lyrics' else None
     return JsonResponse({'status': 'success', 'display_value': display_value})
 
 @dashboard_required

@@ -42,6 +42,7 @@
             <th>{% translate "العنوان" %}</th>
             <th class="text-center">{% translate "ملف صوتي" %}</th>
             <th class="text-center">{% translate "كلمات" %}</th>
+            <th class="text-center">{% translate "كلمات كاملة" %}</th>
             <th class="text-center">{% translate "منصات" %}</th>
             <th>{% translate "الألبوم" %}</th>
             <th>{% translate "سنة الإصدار" %}</th>
@@ -88,6 +89,15 @@
             <td class="text-center">
               {% if song.segments_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
             </td>
+            <td class="text-center" data-full-lyrics-cell="{{ song.pk }}">
+              {% if song.lyrics %}
+                <i class="ti ti-check text-success" style="font-size:18px;"></i>
+              {% else %}
+                <button type="button" class="btn btn-sm btn-link p-0 full-lyrics-missing-btn" data-song-id="{{ song.pk }}" data-song-title="{{ song.title_ar }}" title="{% translate 'إضافة الكلمات كاملة' %}">
+                  <i class="ti ti-x text-danger" style="font-size:18px;"></i>
+                </button>
+              {% endif %}
+            </td>
             <td class="text-center">
               {% if song.links_count %}<i class="ti ti-check text-success" style="font-size:18px;"></i>{% else %}<i class="ti ti-x text-danger" style="font-size:18px;"></i>{% endif %}
             </td>
@@ -121,12 +131,33 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="10" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+          <tr><td colspan="11" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% include "dashboard/partials/pagination.html" with page_obj=songs %}
+  </div>
+
+  <!-- Full lyrics modal - one shared instance for the whole list, reused
+       for whichever row's ✗ (missing full lyrics) got clicked; see the
+       full-lyrics-missing-btn handler below. -->
+  <div class="modal fade" id="fullLyricsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{% translate "كلمات الأغنية كاملة" %} — <span id="fullLyricsModalSongTitle"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="fullLyricsTextarea" class="form-control" rows="14" placeholder="{% translate 'اكتب كلمات الأغنية كاملة هنا...' %}"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "إلغاء" %}</button>
+          <button type="button" class="btn btn-primary" id="fullLyricsSaveBtn">{% translate "حفظ" %}</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -252,5 +283,64 @@
       select.setAttribute('data-original-value', select.value);
     }
   }, true);
+
+  // Full lyrics popup: click the ✗ in the "كلمات كاملة" column to type
+  // the song's full lyrics text and save it in the background (AJAX via
+  // song-update-field, same endpoint the genre/mood dropdowns above use) -
+  // no page reload, the ✗ just flips to a ✓ in place on success.
+  var fullLyricsModalEl = document.getElementById('fullLyricsModal');
+  var fullLyricsModal = fullLyricsModalEl ? new bootstrap.Modal(fullLyricsModalEl) : null;
+  var fullLyricsTextarea = document.getElementById('fullLyricsTextarea');
+  var fullLyricsSaveBtn = document.getElementById('fullLyricsSaveBtn');
+  var currentFullLyricsSongId = null;
+
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.full-lyrics-missing-btn');
+    if (!btn || !fullLyricsModal) return;
+    currentFullLyricsSongId = btn.dataset.songId;
+    document.getElementById('fullLyricsModalSongTitle').textContent = btn.dataset.songTitle || '';
+    fullLyricsTextarea.value = '';
+    fullLyricsModal.show();
+  });
+
+  if (fullLyricsSaveBtn) {
+    fullLyricsSaveBtn.addEventListener('click', function () {
+      if (!currentFullLyricsSongId) return;
+      const text = fullLyricsTextarea.value.trim();
+      if (!text) {
+        alert('{% translate "لازم تكتب الكلمات الأول" %}');
+        return;
+      }
+
+      const updateUrl = '{% url "dashboard_app:song-update-field" 0 %}'.replace('0', currentFullLyricsSongId);
+      fullLyricsSaveBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('field', 'lyrics');
+      formData.append('value', text);
+
+      fetch(updateUrl, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCSRFToken() },
+      })
+        .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+        .then(function (result) {
+          if (result.ok && result.data.status === 'success') {
+            const cell = document.querySelector('[data-full-lyrics-cell="' + currentFullLyricsSongId + '"]');
+            if (cell) cell.innerHTML = '<i class="ti ti-check text-success" style="font-size:18px;"></i>';
+            fullLyricsModal.hide();
+          } else {
+            alert(result.data.error || '{% translate "حدث خطأ أثناء الحفظ" %}');
+          }
+        })
+        .catch(function () {
+          alert('{% translate "حدث خطأ أثناء الحفظ" %}');
+        })
+        .finally(function () {
+          fullLyricsSaveBtn.disabled = false;
+        });
+    });
+  }
 </script>
 {% endblock %}

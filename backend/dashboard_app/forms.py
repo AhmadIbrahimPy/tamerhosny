@@ -103,7 +103,7 @@ class SongForm(forms.ModelForm):
         fields = [
             'title_ar', 'title_en', 'cover_art_url', 'audio_file', 'cover_video', 'song_type',
             'genre', 'mood', 'duration_seconds', 'release_year', 'is_duet', 'recording_studio', 'album', 'related_media',
-            'visibility', 'publish_at',
+            'lyrics', 'visibility', 'publish_at',
         ]
         labels = {
             'title_ar': _('العنوان بالعربية'),
@@ -120,6 +120,7 @@ class SongForm(forms.ModelForm):
             'recording_studio': _('استوديو التسجيل'),
             'album': _('الألبوم'),
             'related_media': _('العمل الفني المرتبط'),
+            'lyrics': _('كلمات الأغنية كاملة'),
             'visibility': _('حالة الظهور'),
             'publish_at': _('موعد النشر'),
         }
@@ -138,6 +139,7 @@ class SongForm(forms.ModelForm):
             'recording_studio': forms.Select(attrs=SELECT_ATTRS),
             'album': forms.Select(attrs={**SELECT_ATTRS, 'id': 'id_album'}),
             'related_media': forms.Select(attrs=SELECT_ATTRS),
+            'lyrics': forms.Textarea(attrs={**WIDGET_ATTRS, 'rows': 10}),
             'visibility': forms.Select(attrs=SELECT_ATTRS),
             'publish_at': forms.DateTimeInput(attrs={**WIDGET_ATTRS, 'type': 'datetime-local'}),
         }

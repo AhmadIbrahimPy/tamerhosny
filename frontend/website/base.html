@@ -3456,7 +3456,13 @@
 
     function playSongByName(name) {
       setStatus('{% translate "بدور على الأغنية..." %}');
-      fetch('/player/voice-search/?q=' + encodeURIComponent(name) + '&limit=1')
+      // More than 3 words after "شغل أغنية" reads as someone quoting a
+      // line from the song, not naming its title ("شغل الأغنية اللي
+      // بتقول قلبي ملكك من زمان") - search the lyrics instead of trying
+      // to fuzzy-match that whole phrase against titles, which never hits.
+      var wordCount = name.split(/\s+/).filter(Boolean).length;
+      var param = wordCount > 3 ? 'lyrics=' : 'q=';
+      fetch('/player/voice-search/?' + param + encodeURIComponent(name) + '&limit=1')
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var song = data.songs && data.songs[0];

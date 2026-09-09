@@ -397,31 +397,42 @@ def voice_search_songs(request):
         scored.sort(key=lambda pair: pair[0], reverse=True)
         songs = [s for _, s in scored[:limit]]
     elif lyrics_query:
-        # Search in lyrics segments
-        from backend.music_app.models import SongLyricSegment
+        # Search in lyrics - the song's full lyrics text (Song.lyrics)
+        # first (a plain substring check there, not the fuzzy ratio used
+        # below: SequenceMatcher's ratio is normalized by *combined*
+        # length, so a short phrase against a whole song's lyrics scores
+        # low even when it's an exact line from it), falling back to the
+        # per-line LYRICS segments for songs that don't have the full
+        # text filled in yet.
         lyrics_norm = _normalize_arabic(lyrics_query)
         lyrics_lower = lyrics_query.lower()
         scored = []
 
         for s in queryset:
-            if not s.lyric_segments.exists():
-                continue
-
             lyrics_score = 0.0
-            for segment in s.lyric_segments.filter(segment_type='LYRICS'):
-                if segment.text:
-                    segment_norm = _normalize_arabic(segment.text)
-                    segment_lower = segment.text.lower()
 
-                    # Check for exact or partial match in normalized text
-                    if lyrics_norm in segment_norm or segment_norm in lyrics_norm:
-                        lyrics_score = max(lyrics_score, 1.0)
-                    else:
-                        lyrics_score = max(lyrics_score, SequenceMatcher(None, lyrics_norm, segment_norm).ratio())
+            full_text = (s.lyrics or '').strip()
+            if full_text:
+                full_norm = _normalize_arabic(full_text)
+                full_lower = full_text.lower()
+                if lyrics_norm in full_norm or lyrics_lower in full_lower:
+                    lyrics_score = 1.0
 
-                    # Also check lowercase for English lyrics
-                    if lyrics_lower in segment_lower or segment_lower in lyrics_lower:
-                        lyrics_score = max(lyrics_score, 1.0)
+            if lyrics_score < 1.0 and s.lyric_segments.exists():
+                for segment in s.lyric_segments.filter(segment_type='LYRICS'):
+                    if segment.text:
+                        segment_norm = _normalize_arabic(segment.text)
+                        segment_lower = segment.text.lower()
+
+                        # Check for exact or partial match in normalized text
+                        if lyrics_norm in segment_norm or segment_norm in lyrics_norm:
+                            lyrics_score = max(lyrics_score, 1.0)
+                        else:
+                            lyrics_score = max(lyrics_score, SequenceMatcher(None, lyrics_norm, segment_norm).ratio())
+
+                        # Also check lowercase for English lyrics
+                        if lyrics_lower in segment_lower or segment_lower in lyrics_lower:
+                            lyrics_score = max(lyrics_score, 1.0)
 
             if lyrics_score >= 0.5:
                 scored.append((lyrics_score, s))
