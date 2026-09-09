@@ -577,6 +577,17 @@ def voice_intent(request):
     if intent == 'play_lyrics' and not lyrics_query:
         intent = 'unknown'
 
+    # The classifier's "does this read like a sung lyric" call is
+    # inconsistent in practice (real transcripts logged as unknown even
+    # after the prompt above was made explicit about it) - a deterministic
+    # backstop beats relying on the LLM to keep getting that judgment
+    # right: nothing else matched, and it's long enough that it's far
+    # more likely someone quoting/singing a line than a command we just
+    # don't support yet.
+    if intent == 'unknown' and len(text.split()) >= 3:
+        intent = 'play_lyrics'
+        lyrics_query = text
+
     return JsonResponse({
         'intent': intent,
         'song_query': song_query,
