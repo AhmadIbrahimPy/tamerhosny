@@ -3251,6 +3251,14 @@
     // catalog (see playRandomSong).
     var SUGGEST_SONG_RE = /اقترح|فاجئني|شغل حاجة|شغلي حاجة|شغل اي حاجة|شغل اى حاجة|ذوق|زوق|\bsurprise me\b|\bplay something\b|\bsuggest\b/i;
 
+    // "شغل حاجة قديمة"/"شغل حاجة 2010" contain "شغل حاجة" too, which
+    // SUGGEST_SONG_RE above would otherwise catch first and treat as "no
+    // criteria, play anything" - checked wherever that's tested so a
+    // specific era/album/year request still falls through to
+    // PLAY_SONG_RE -> playSongByName's own era/year/album delegation
+    // instead of being swallowed by the generic random pick.
+    var ERA_OR_ALBUM_HINT_RE = /قديم|زمان|جديد|حديث|\b(19|20)\d{2}\b|(?:من|في)\s*(?:أ|ا)لبوم/i;
+
     // Mood keyword -> Song.Mood value (backend/music_app/models.py).
     var MOOD_KEYWORDS = [
       { re: /كئيب|حزين|\bsad\b|heartbreak/i, mood: 'SAD_HEARTBREAK' },
@@ -3505,41 +3513,101 @@
       }
     }
 
-    function playSongByName(name) {
+    // Logs the real outcome of an async play_* request once its search
+    // actually resolves - not just that the transcript's shape matched a
+    // pattern. The dashboard's voice log showed "اتنفذ" (executed) for
+    // every "شغل أغنية X"-shaped phrase purely because resolveCommand's
+    // caller used to log COMMAND_MATCHED synchronously the instant the
+    // regex matched, regardless of whether a song was ever actually
+    // found - so requests that came up empty still logged as successes.
+    function logPlayOutcome(found, transcript) {
+      logVoiceEvent(found ? 'COMMAND_MATCHED' : 'COMMAND_NO_RESULT', { transcript: transcript });
+    }
+
+    function playSongByName(name, transcript) {
+      transcript = transcript || name;
+      // "شغل أغنية من ألبوم X"/"شغل حاجة قديمة"/"شغل حاجة 2010" all still
+      // start with "شغل [أغنية]" so PLAY_SONG_RE (resolveCommand, below)
+      // captures them too and hands them here just like an actual song
+      // name - recognize and delegate these before treating the rest as
+      // a title/lyrics search, otherwise they'd search for the literal
+      // text "من ألبوم..."/"قديمة" as if it were a song name and always
+      // fail.
+      var albumMatch = name.match(/^(?:من|في)\s*(?:أ|ا)لبوم\s+(.+)/i);
+      if (albumMatch && albumMatch[1].trim()) {
+        playSongByAlbum(albumMatch[1].trim(), transcript);
+        return;
+      }
+      var yearMatch = name.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) {
+        playSongByEra(yearMatch[0], null, transcript);
+        return;
+      }
+      if (/قديم|زمان/i.test(name)) {
+        playSongByEra(null, 'OLD', transcript);
+        return;
+      }
+      if (/جديد|حديث/i.test(name)) {
+        playSongByEra(null, 'RECENT', transcript);
+        return;
+      }
+
       setStatus('{% translate "بدور على الأغنية..." %}');
       // 3 or more words after "شغل أغنية" reads as someone quoting a
       // line from the song, not naming its title ("شغل الأغنية اللي
-      // بتقول قلبي ملكك من زمان") - search the lyrics instead of trying
-      // to fuzzy-match that whole phrase against titles, which never hits.
+      // بتقول قلبي ملكك من زمان") - try the lyrics search first in that
+      // case. Either way, a short fragment can still be an actual lyric
+      // ("اتحامي فيا" - 2 words, no real title matches it, but it's a
+      // real line from "نسيني ليه") and a longer one can still be a
+      // literal title, so a miss on the first method now retries the
+      // other before giving up, instead of only ever trying one.
       var wordCount = name.split(/\s+/).filter(Boolean).length;
-      var param = wordCount >= 3 ? 'lyrics=' : 'q=';
-      fetch('/player/voice-search/?' + param + encodeURIComponent(name) + '&limit=1')
+      var primaryParam = wordCount >= 3 ? 'lyrics=' : 'q=';
+      var fallbackParam = primaryParam === 'lyrics=' ? 'q=' : 'lyrics=';
+
+      function finish(song) {
+        if (!song) {
+          setStatus('{% translate "أووبس، مش لاقي أغنية بالاسم ده" %}');
+          logPlayOutcome(false, transcript);
+          return;
+        }
+        setStatus(song.title);
+        var btn = document.getElementById('playerPlayBtn');
+        playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, false);
+        // Same pattern as playSongFromList() (songs/detail.html's own
+        // album-list clicks): a request naming a specific song is
+        // asking to hear THAT song, which reads as "go there and play
+        // it" - not "keep playing whatever page I'm on and just start
+        // this in the background bar". Especially jarring in car mode,
+        // where the whole point is a single glanceable view; leaving
+        // it showing an unrelated song while this one played invisibly
+        // behind it read as the command being ignored.
+        if (song.link && typeof thBoostedNavigate === 'function') {
+          thBoostedNavigate(song.link);
+        }
+        logPlayOutcome(true, transcript);
+      }
+
+      fetch('/player/voice-search/?' + primaryParam + encodeURIComponent(name) + '&limit=1')
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var song = data.songs && data.songs[0];
-          if (!song) {
-            setStatus('{% translate "أووبس، مش لاقي أغنية بالاسم ده" %}');
+          if (song) {
+            finish(song);
             return;
           }
-          setStatus(song.title);
-          var btn = document.getElementById('playerPlayBtn');
-          playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, false);
-          // Same pattern as playSongFromList() (songs/detail.html's own
-          // album-list clicks): a request naming a specific song is
-          // asking to hear THAT song, which reads as "go there and play
-          // it" - not "keep playing whatever page I'm on and just start
-          // this in the background bar". Especially jarring in car mode,
-          // where the whole point is a single glanceable view; leaving
-          // it showing an unrelated song while this one played invisibly
-          // behind it read as the command being ignored.
-          if (song.link && typeof thBoostedNavigate === 'function') {
-            thBoostedNavigate(song.link);
-          }
+          return fetch('/player/voice-search/?' + fallbackParam + encodeURIComponent(name) + '&limit=1')
+            .then(function (r) { return r.json(); })
+            .then(function (data2) { finish(data2.songs && data2.songs[0]); });
         })
-        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+        .catch(function () {
+          setStatus('{% translate "حصل خطأ، حاول تاني" %}');
+          logPlayOutcome(false, transcript);
+        });
     }
 
-    function playSongsByMood(mood) {
+    function playSongsByMood(mood, transcript) {
+      transcript = transcript || mood;
       setStatus('{% translate "بدور على أغاني تناسب مزاجك..." %}');
       fetch('/player/voice-search/?mood=' + encodeURIComponent(mood) + '&limit=15')
         .then(function (r) { return r.json(); })
@@ -3547,6 +3615,7 @@
           var songs = data.songs || [];
           if (!songs.length) {
             setStatus('{% translate "أووبس، مش لاقي أغاني للمزاج ده" %}');
+            logPlayOutcome(false, transcript);
             return;
           }
           window.otherSongsList = songs;
@@ -3555,14 +3624,19 @@
           setStatus(song.title);
           var btn = document.getElementById('playerPlayBtn');
           playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+          logPlayOutcome(true, transcript);
         })
-        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+        .catch(function () {
+          setStatus('{% translate "حصل خطأ، حاول تاني" %}');
+          logPlayOutcome(false, transcript);
+        });
     }
 
     // "شغل أغنية من ألبوم X" - fuzzy-matches the album name server-side
     // (same approach as playSongByName's title match), then picks a
     // random track from it.
-    function playSongByAlbum(albumQuery) {
+    function playSongByAlbum(albumQuery, transcript) {
+      transcript = transcript || albumQuery;
       setStatus('{% translate "بدور على الألبوم..." %}');
       fetch('/player/voice-search/?album=' + encodeURIComponent(albumQuery) + '&limit=15')
         .then(function (r) { return r.json(); })
@@ -3570,6 +3644,7 @@
           var songs = data.songs || [];
           if (!songs.length) {
             setStatus('{% translate "أووبس، مش لاقي الألبوم ده" %}');
+            logPlayOutcome(false, transcript);
             return;
           }
           window.otherSongsList = songs;
@@ -3578,14 +3653,19 @@
           setStatus(song.title);
           var btn = document.getElementById('playerPlayBtn');
           playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+          logPlayOutcome(true, transcript);
         })
-        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+        .catch(function () {
+          setStatus('{% translate "حصل خطأ، حاول تاني" %}');
+          logPlayOutcome(false, transcript);
+        });
     }
 
     // "شغل حاجة قديمة"/"شغل حاجة 2010" - year picks an exact (or closest
     // available) release year server-side; era is the vague "قديمة"/
     // "جديدة" fallback with no year mentioned at all.
-    function playSongByEra(year, era) {
+    function playSongByEra(year, era, transcript) {
+      transcript = transcript || (year || era);
       setStatus('{% translate "بدور على حاجة..." %}');
       var param = year ? 'year=' + encodeURIComponent(year) : 'era=' + encodeURIComponent(era);
       fetch('/player/voice-search/?' + param + '&limit=15')
@@ -3594,6 +3674,7 @@
           var songs = data.songs || [];
           if (!songs.length) {
             setStatus('{% translate "أووبس، مش لاقي أغاني تناسب الفترة دي" %}');
+            logPlayOutcome(false, transcript);
             return;
           }
           window.otherSongsList = songs;
@@ -3602,21 +3683,26 @@
           setStatus(song.title);
           var btn = document.getElementById('playerPlayBtn');
           playAudio(song.url, btn, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, null, true);
+          logPlayOutcome(true, transcript);
         })
-        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+        .catch(function () {
+          setStatus('{% translate "حصل خطأ، حاول تاني" %}');
+          logPlayOutcome(false, transcript);
+        });
     }
 
     // "اقترح أغنية"/"شغل حاجة على ذوق" - no name or mood given, just
     // pick something. /player/song-data/ with no song_id already picks
     // a random playable song server-side (same bootstrap used landing
     // on /player/ with nothing in context).
-    function playRandomSong() {
+    function playRandomSong(transcript) {
       setStatus('{% translate "بدور على حاجة تعجبك..." %}');
       fetch('/player/song-data/')
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.error || !data.url) {
             setStatus('{% translate "أووبس، معنديش حاجة أشغلها دلوقتي" %}');
+            logPlayOutcome(false, transcript);
             return;
           }
           if (data.otherSongs && data.otherSongs.length) {
@@ -3629,8 +3715,12 @@
           if (data.link && typeof thBoostedNavigate === 'function') {
             thBoostedNavigate(data.link);
           }
+          logPlayOutcome(true, transcript);
         })
-        .catch(function () { setStatus('{% translate "حصل خطأ، حاول تاني" %}'); });
+        .catch(function () {
+          setStatus('{% translate "حصل خطأ، حاول تاني" %}');
+          logPlayOutcome(false, transcript);
+        });
     }
 
     // Dispatches one classified intent from /player/voice-intent/ (see
@@ -3739,8 +3829,16 @@
     // its own, or inside "شغل أغنية حزينة", both mean "play me something
     // that fits this mood" - not literally a song titled "حزينة"), and
     // only then the generic by-title search as a fallback.
+    // Set by resolveCommand() (below) when the matched branch hands off
+    // to an async play_* call that logs its own real outcome once its
+    // search resolves - the caller checks this to skip its own blanket
+    // "matched" log for those, instead of logging success the instant
+    // the transcript's shape matched, before anything was actually found.
+    var deferCommandLog = false;
+
     function resolveCommand(transcript) {
       var text = transcript.trim();
+      deferCommandLog = false;
       if (!text) return false;
 
       if (NEXT_RE.test(text)) {
@@ -3777,21 +3875,26 @@
       }
       for (var i = 0; i < MOOD_KEYWORDS.length; i++) {
         if (MOOD_KEYWORDS[i].re.test(text)) {
-          playSongsByMood(MOOD_KEYWORDS[i].mood);
+          deferCommandLog = true;
+          playSongsByMood(MOOD_KEYWORDS[i].mood, text);
           return true;
         }
       }
-      if (SUGGEST_SONG_RE.test(text)) {
+      if (SUGGEST_SONG_RE.test(text) && !ERA_OR_ALBUM_HINT_RE.test(text)) {
         // Checked after MOOD_KEYWORDS (a mood-specific request like
         // "شغل حاجة حزينة" should still go there) and before
         // PLAY_SONG_RE (which would otherwise treat "حاجة" itself as a
         // literal song title to search for and fail to find anything).
-        playRandomSong();
+        // The era/album guard keeps "شغل حاجة قديمة"/"...2010" from
+        // being swallowed here as "no criteria, play anything" too.
+        deferCommandLog = true;
+        playRandomSong(text);
         return true;
       }
       var playMatch = text.match(PLAY_SONG_RE);
       if (playMatch && playMatch[1]) {
-        playSongByName(playMatch[1].trim());
+        deferCommandLog = true;
+        playSongByName(playMatch[1].trim(), text);
         return true;
       }
       // Checked last, after PLAY_SONG_RE - the nickname requirement was
@@ -3860,7 +3963,11 @@
         var matched = resolveCommand(candidate);
 
         if (matched) {
-          logVoiceEvent('COMMAND_MATCHED', { transcript: candidate });
+          // deferCommandLog: an async play_* handler will log its own
+          // real outcome once its search resolves - logging "matched"
+          // here too would be an extra, premature (and often wrong)
+          // success entry on top of that.
+          if (!deferCommandLog) logVoiceEvent('COMMAND_MATCHED', { transcript: candidate });
           clearTimeout(commandTimer);
           listeningForCommand = false;
           wakeResultIndex = -1;
@@ -4224,7 +4331,8 @@
           setStatus('{% translate "بفكر..." %}');
           var matched = resolveCommand(text);
           if (matched) {
-            logVoiceEvent('COMMAND_MATCHED', { transcript: text });
+            // See deferCommandLog's own comment above.
+            if (!deferCommandLog) logVoiceEvent('COMMAND_MATCHED', { transcript: text });
             setTimeout(hideAvatar, 900);
           } else {
             logVoiceEvent('COMMAND_AI_FALLBACK', { transcript: text });

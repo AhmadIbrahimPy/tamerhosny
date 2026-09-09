@@ -371,6 +371,8 @@
                       <span class="badge bg-success-subtle text-success">{% translate "اتنفذ" %}</span>
                     {% elif log.event_type == 'COMMAND_FAILED' %}
                       <span class="badge bg-danger-subtle text-danger">{% translate "فشل" %}</span>
+                    {% elif log.event_type == 'COMMAND_NO_RESULT' %}
+                      <span class="badge bg-warning-subtle text-warning">{% translate "اتفهم بس ملقاش نتيجة" %}</span>
                     {% else %}
                       <span class="badge bg-secondary-subtle text-secondary">{{ log.get_event_type_display }}</span>
                     {% endif %}
