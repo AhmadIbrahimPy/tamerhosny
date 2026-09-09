@@ -183,6 +183,16 @@
       color:var(--muted); font-size:16px; cursor:pointer; transition:all .2s ease; margin-inline-end:6px;
     }
     .th-mic-btn-mobile.is-on{border-color:var(--accent); color:var(--accent);}
+    /* Push-to-talk press feedback (mobile only - see IS_MOBILE in the
+       voice assistant script below). */
+    .th-mic-btn.recording, .th-mic-btn-mobile.recording{
+      border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,.12);
+      animation:thMicRecordingPulse 1s ease-in-out infinite;
+    }
+    @keyframes thMicRecordingPulse{
+      0%, 100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);}
+      50%{box-shadow:0 0 0 6px rgba(239,68,68,0);}
+    }
     @keyframes thBellAttention{
       0%, 100%{transform:rotate(0);}
       10%, 30%{transform:rotate(-15deg);}
@@ -3774,65 +3784,24 @@
       watchdogInterval = null;
     }
 
-    // Multiple tabs on the site each ran their own independent mic
-    // listener at once - confirmed from real VoiceAssistantLog data
-    // showing overlapping session ids at the same moment, some running
-    // stale JS from before a fix while a freshly-loaded tab ran the
-    // current code, giving genuinely inconsistent answers to the same
-    // spoken command. It also compounds mobile's tendency to duck other
-    // audio while the mic is active - every open tab keeps its own
-    // session alive, so the song audio stays muted far more than a
-    // single listener would ever need. Only the visible/focused tab
-    // should actually run the recognizer.
-    document.addEventListener('visibilitychange', function () {
-      if (!enabled) return;
-      if (document.hidden) {
-        disarmWatchdog();
-        clearTimeout(restartTimer);
-        clearTimeout(commandTimer);
-        listeningForCommand = false;
-        wakeResultIndex = -1;
-        hideAvatar();
-        if (recognition) {
-          try { recognition.stop(); } catch (e) {}
-        }
-      } else {
-        lastActivityAt = Date.now();
-        startRecognition();
-        armWatchdog();
-      }
-    });
-
-    window.thToggleVoiceAssistant = function () {
-      enabled = !enabled;
-      localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
-      updateButtonsUI();
-      if (enabled) {
-        lastActivityAt = Date.now();
-        startRecognition();
-        armWatchdog();
-      } else {
-        stopRecognition();
-        // The promo toast only ever checked `enabled` once, right at
-        // page load - if the mic was already on then (as it will be on
-        // every later visit, since the toggle persists), it exited
-        // immediately and never got a second chance even after turning
-        // the mic back off in the same session. Re-check now too.
-        maybeShowVoicePromo();
-      }
-    };
-
-    updateButtonsUI();
-    if (enabled) {
-      startRecognition();
-      armWatchdog();
-    }
+    // Android/iOS: continuous background "TH" listening keeps the mic
+    // hardware active essentially all the time, which - confirmed from
+    // a direct user report plus the RECOGNITION_START/END cadence in
+    // real VoiceAssistantLog data - makes the OS repeatedly duck
+    // (mute/pause) any other audio playing, in lockstep with however
+    // often the session cycles. That's an OS/browser audio-focus
+    // behavior, not something fixable from JS. Desktop doesn't have
+    // this problem, so it keeps the full always-on wake-word flow
+    // below unchanged; mobile instead gets push-to-talk (see further
+    // down) - the mic is only ever active while a button is physically
+    // held, so it never runs in the background at all.
+    var IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     // One-time discovery toast so people who've never touched the mic
     // button actually learn the feature exists and how to use it -
-    // shown once ever per browser (localStorage flag), never once
-    // they've enabled it, and only after a short delay so it doesn't
-    // ambush a visitor the instant the page loads.
+    // shown once ever per browser (localStorage flag), and only after a
+    // short delay so it doesn't ambush a visitor the instant the page
+    // loads.
     var PROMO_STORAGE_KEY = 'thVoiceAssistantPromoShown';
 
     window.thDismissVoicePromo = function () {
@@ -3843,18 +3812,188 @@
       setTimeout(function () { toast.style.display = 'none'; }, 300);
     };
 
-    function maybeShowVoicePromo() {
-      if (enabled || localStorage.getItem(PROMO_STORAGE_KEY) === '1') return;
+    function showVoicePromoNow() {
       var toast = document.getElementById('thVoicePromoToast');
       if (!toast) return;
-      setTimeout(function () {
-        if (enabled) return; // enabled via the header button in the meantime
-        toast.style.display = 'flex';
-        requestAnimationFrame(function () { toast.classList.add('show'); });
-      }, 4000);
+      if (IS_MOBILE) {
+        // The template's copy is written for the "say TH" desktop flow -
+        // push-to-talk has no wake word at all, so swap in instructions
+        // that actually match what pressing the button does here.
+        var textEl = toast.querySelector('.th-voice-promo-text');
+        if (textEl) {
+          textEl.innerHTML =
+            '<strong>{% translate "جرّب المساعد الصوتي!" %}</strong>' +
+            '<div>{% translate "اضغط مع الاستمرار على أيقونة الميكروفون وقول اللي عايزه" %}</div>';
+        }
+        var enableBtn = toast.querySelector('.th-voice-promo-enable');
+        if (enableBtn) enableBtn.style.display = 'none';
+      }
+      toast.style.display = 'flex';
+      requestAnimationFrame(function () { toast.classList.add('show'); });
     }
 
-    maybeShowVoicePromo();
+    if (IS_MOBILE) {
+      // Push-to-talk: one short-lived recognition session per press,
+      // resolved as a direct command the moment the button is released -
+      // no wake word, no continuous background listening, so the mic is
+      // never open except while actually held.
+      var pttRecognition = null;
+      var pttActive = false;
+      var pttTranscriptParts = [];
+
+      function pttButtons() {
+        return document.querySelectorAll('#thMicBtn, #thMicBtnMobile');
+      }
+
+      function createPttRecognition() {
+        var r = new RecognitionCtor();
+        r.continuous = true;
+        r.interimResults = false;
+        r.lang = 'ar-EG';
+        r.onresult = function (event) {
+          for (var i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              pttTranscriptParts.push(event.results[i][0].transcript);
+            }
+          }
+        };
+        r.onerror = function (e) {
+          logVoiceEvent('RECOGNITION_ERROR', { detail: e.error });
+          if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+            showAvatar('{% translate "الميكروفون متبلوك من إعدادات المتصفح - افتح إعدادات الموقع 🔒 جنب شريط العنوان وفعّله يدوي، وبعدين جرب تاني" %}');
+            setTimeout(hideAvatar, 6000);
+          }
+        };
+        r.onend = function () {
+          pttActive = false;
+          pttButtons().forEach(function (btn) { btn.classList.remove('recording'); });
+          var text = pttTranscriptParts.join(' ').trim();
+          pttTranscriptParts = [];
+          if (!text) {
+            hideAvatar();
+            return;
+          }
+          setStatus('{% translate "بفكر..." %}');
+          var matched = resolveCommand(text);
+          if (matched) {
+            logVoiceEvent('COMMAND_MATCHED', { transcript: text });
+            setTimeout(hideAvatar, 900);
+          } else {
+            logVoiceEvent('COMMAND_AI_FALLBACK', { transcript: text });
+            resolveWithAI(text);
+          }
+        };
+        return r;
+      }
+
+      function pttStart() {
+        if (pttActive) return;
+        if (!isNetworkGoodEnough()) {
+          showAvatar('{% translate "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶" %}');
+          setTimeout(hideAvatar, 4000);
+          return;
+        }
+        pttActive = true;
+        pttTranscriptParts = [];
+        pttButtons().forEach(function (btn) { btn.classList.add('recording'); });
+        showAvatar('{% translate "بسمعك... قول اللي عايزه" %}');
+        try {
+          pttRecognition = pttRecognition || createPttRecognition();
+          pttRecognition.start();
+        } catch (e) {
+          pttActive = false;
+          pttButtons().forEach(function (btn) { btn.classList.remove('recording'); });
+          hideAvatar();
+        }
+      }
+
+      function pttStop() {
+        if (!pttActive || !pttRecognition) return;
+        try { pttRecognition.stop(); } catch (e) {}
+      }
+
+      pttButtons().forEach(function (btn) {
+        btn.addEventListener('pointerdown', function (e) { e.preventDefault(); pttStart(); });
+        btn.addEventListener('pointerup', pttStop);
+        btn.addEventListener('pointercancel', pttStop);
+        btn.addEventListener('pointerleave', pttStop);
+      });
+
+      // No persistent on/off state to toggle on mobile - a plain tap
+      // (the button's own onclick="thToggleVoiceAssistant()" markup)
+      // just explains how to actually use it instead.
+      window.thToggleVoiceAssistant = function () {
+        showAvatar('{% translate "اضغط مع الاستمرار على أيقونة الميكروفون وقول اللي عايزه" %}');
+        setTimeout(hideAvatar, 3000);
+      };
+
+      if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
+        setTimeout(showVoicePromoNow, 4000);
+      }
+    } else {
+      // Desktop: unchanged always-on "TH" wake-word flow.
+
+      // Multiple tabs on the site each ran their own independent mic
+      // listener at once - confirmed from real VoiceAssistantLog data
+      // showing overlapping session ids at the same moment, some running
+      // stale JS from before a fix while a freshly-loaded tab ran the
+      // current code, giving genuinely inconsistent answers to the same
+      // spoken command. Only the visible/focused tab should actually
+      // run the recognizer.
+      document.addEventListener('visibilitychange', function () {
+        if (!enabled) return;
+        if (document.hidden) {
+          disarmWatchdog();
+          clearTimeout(restartTimer);
+          clearTimeout(commandTimer);
+          listeningForCommand = false;
+          wakeResultIndex = -1;
+          hideAvatar();
+          if (recognition) {
+            try { recognition.stop(); } catch (e) {}
+          }
+        } else {
+          lastActivityAt = Date.now();
+          startRecognition();
+          armWatchdog();
+        }
+      });
+
+      window.thToggleVoiceAssistant = function () {
+        enabled = !enabled;
+        localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
+        updateButtonsUI();
+        if (enabled) {
+          lastActivityAt = Date.now();
+          startRecognition();
+          armWatchdog();
+        } else {
+          stopRecognition();
+          // The promo toast only ever checked `enabled` once, right at
+          // page load - if the mic was already on then (as it will be on
+          // every later visit, since the toggle persists), it exited
+          // immediately and never got a second chance even after turning
+          // the mic back off in the same session. Re-check now too.
+          maybeShowVoicePromo();
+        }
+      };
+
+      updateButtonsUI();
+      if (enabled) {
+        startRecognition();
+        armWatchdog();
+      }
+
+      function maybeShowVoicePromo() {
+        if (enabled || localStorage.getItem(PROMO_STORAGE_KEY) === '1') return;
+        setTimeout(function () {
+          if (enabled) return; // enabled via the header button in the meantime
+          showVoicePromoNow();
+        }, 4000);
+      }
+
+      maybeShowVoicePromo();
+    }
   })();
   </script>
 

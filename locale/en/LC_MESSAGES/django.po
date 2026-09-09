@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-09 01:25+0300\n"
+"POT-Creation-Date: 2026-09-09 10:21+0300\n"
 "PO-Revision-Date: 2026-08-25 13:08+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -354,7 +354,7 @@ msgstr "Photo"
 #: frontend/dashboard/pages/song_detail.html:171
 #: frontend/dashboard/pages/studios/all.html:16
 #: frontend/dashboard/pages/user_detail.html:220
-#: frontend/website/base.html:2377
+#: frontend/website/base.html:2387
 msgid "الاسم"
 msgstr "Name"
 
@@ -715,8 +715,8 @@ msgstr "Username"
 
 #: backend/dashboard_app/forms.py:463
 #: frontend/dashboard/pages/user_detail.html:157
-#: frontend/website/base.html:2344 frontend/website/base.html:2381
-#: frontend/website/base.html:2403
+#: frontend/website/base.html:2354 frontend/website/base.html:2391
+#: frontend/website/base.html:2413
 msgid "البريد الإلكتروني"
 msgstr "Email"
 
@@ -1406,7 +1406,7 @@ msgstr "Playlist Item"
 msgid "عناصر قوائم التشغيل"
 msgstr "Playlist Items"
 
-#: backend/main_app/models.py:239 frontend/website/base.html:2415
+#: backend/main_app/models.py:239 frontend/website/base.html:2425
 msgid "الكود"
 msgstr "Code"
 
@@ -3352,57 +3352,57 @@ msgstr ""
 "Tamer Hosny's complete artistic archive - songs, albums, movies, series, "
 "concerts and commercials, all in one place."
 
-#: frontend/website/base.html:1296
+#: frontend/website/base.html:1306
 msgid "تشغيل الصوت"
 msgstr "Play Audio"
 
-#: frontend/website/base.html:1366 frontend/website/pages/player/index.html:733
+#: frontend/website/base.html:1376 frontend/website/pages/player/index.html:733
 #: frontend/website/pages/songs/detail.html:2176
 #: frontend/website/pages/songs/detail.html:2452
 msgid "الكلمات"
 msgstr "Lyrics"
 
-#: frontend/website/base.html:1547
+#: frontend/website/base.html:1557
 msgid "أنا هنا"
 msgstr "I'm here"
 
-#: frontend/website/base.html:1556
+#: frontend/website/base.html:1566 frontend/website/base.html:3825
 msgid "جرّب المساعد الصوتي!"
 msgstr "Try the voice assistant!"
 
-#: frontend/website/base.html:1561
+#: frontend/website/base.html:1571
 msgid "فعّل الميكروفون وقول"
 msgstr "Turn on the mic and say"
 
-#: frontend/website/base.html:1563
+#: frontend/website/base.html:1573
 msgid "وقولنا عايز تسمع إيه"
 msgstr "then tell us what you want to hear"
 
-#: frontend/website/base.html:1566
+#: frontend/website/base.html:1576
 msgid "فعّل الميكروفون"
 msgstr "Enable microphone"
 
-#: frontend/website/base.html:1568 frontend/website/base.html:2322
+#: frontend/website/base.html:1578 frontend/website/base.html:2332
 #: frontend/website/pages/player/index.html:770
 #: frontend/website/pages/songs/detail.html:2754
 #: frontend/website/pages/songs/detail.html:2791
 msgid "إغلاق"
 msgstr "Close"
 
-#: frontend/website/base.html:2146
+#: frontend/website/base.html:2156
 #: frontend/website/pages/songs/detail.html:4113
 msgid "سجل دخولك عشان تقدر تعمل إعجاب"
 msgstr "Sign in to like this"
 
-#: frontend/website/base.html:2168
+#: frontend/website/base.html:2178
 msgid "تمت الإضافة إلى المفضلة"
 msgstr "Added to favorites"
 
-#: frontend/website/base.html:2168
+#: frontend/website/base.html:2178
 msgid "تمت الإزالة من المفضلة"
 msgstr "Removed from favorites"
 
-#: frontend/website/base.html:2175
+#: frontend/website/base.html:2185
 #: frontend/website/pages/songs/detail.html:4294
 #: frontend/website/pages/songs/detail.html:4300
 #: frontend/website/pages/songs/detail.html:4316
@@ -3415,183 +3415,183 @@ msgstr "Removed from favorites"
 msgid "حدث خطأ"
 msgstr "Something went wrong"
 
-#: frontend/website/base.html:2332 frontend/website/base.html:2392
+#: frontend/website/base.html:2342 frontend/website/base.html:2402
 #: frontend/website/pages/player/index.html:999
 #: frontend/website/pages/songs/detail.html:4105
 msgid "تسجيل الدخول"
 msgstr "Log In"
 
-#: frontend/website/base.html:2333 frontend/website/base.html:2642
+#: frontend/website/base.html:2343 frontend/website/base.html:2652
 msgid "سجل دخولك عشان تقدر تسمع وتحفظ المفضلة عندك"
 msgstr "Sign in to listen and save your favorites"
 
-#: frontend/website/base.html:2337 frontend/website/base.html:2366
+#: frontend/website/base.html:2347 frontend/website/base.html:2376
 msgid "المتابعة بجوجل"
 msgstr "Continue with Google"
 
-#: frontend/website/base.html:2340 frontend/website/base.html:2369
+#: frontend/website/base.html:2350 frontend/website/base.html:2379
 msgid "أو"
 msgstr "Or"
 
-#: frontend/website/base.html:2348 frontend/website/base.html:2385
+#: frontend/website/base.html:2358 frontend/website/base.html:2395
 msgid "كلمة السر"
 msgstr "Password"
 
-#: frontend/website/base.html:2352
+#: frontend/website/base.html:2362
 msgid "دخول"
 msgstr "Sign in"
 
-#: frontend/website/base.html:2355
+#: frontend/website/base.html:2365
 msgid "نسيت كلمة السر؟"
 msgstr "Forgot password?"
 
-#: frontend/website/base.html:2356
+#: frontend/website/base.html:2366
 msgid "مش عندي حساب"
 msgstr "I don't have an account"
 
-#: frontend/website/base.html:2356 frontend/website/base.html:2361
+#: frontend/website/base.html:2366 frontend/website/base.html:2371
 msgid "إنشاء حساب"
 msgstr "Create account"
 
-#: frontend/website/base.html:2362
+#: frontend/website/base.html:2372
 msgid "انضم لأرشيف تامر حسني"
 msgstr "Join the Tamer Hosny Archive"
 
-#: frontend/website/base.html:2389
+#: frontend/website/base.html:2399
 msgid "إنشاء الحساب"
 msgstr "Create Account"
 
-#: frontend/website/base.html:2392
+#: frontend/website/base.html:2402
 msgid "عندي حساب بالفعل"
 msgstr "I already have an account"
 
-#: frontend/website/base.html:2397
+#: frontend/website/base.html:2407
 msgid "استعادة كلمة السر"
 msgstr "Reset Password"
 
-#: frontend/website/base.html:2400
+#: frontend/website/base.html:2410
 msgid "اكتب بريدك الإلكتروني وهنبعتلك كود"
 msgstr "Enter your email and we'll send you a code"
 
-#: frontend/website/base.html:2407
+#: frontend/website/base.html:2417
 msgid "إرسال الكود"
 msgstr "Send Code"
 
-#: frontend/website/base.html:2412
+#: frontend/website/base.html:2422
 msgid "اكتب الكود اللي وصلك على بريدك"
 msgstr "Enter the code sent to your email"
 
-#: frontend/website/base.html:2419
+#: frontend/website/base.html:2429
 msgid "تأكيد"
 msgstr "Confirm"
 
-#: frontend/website/base.html:2424
+#: frontend/website/base.html:2434
 msgid "اكتب كلمة السر الجديدة"
 msgstr "Enter your new password"
 
-#: frontend/website/base.html:2427
+#: frontend/website/base.html:2437
 msgid "كلمة السر الجديدة"
 msgstr "New Password"
 
-#: frontend/website/base.html:2431
+#: frontend/website/base.html:2441
 msgid "حفظ كلمة السر"
 msgstr "Save Password"
 
-#: frontend/website/base.html:2435
+#: frontend/website/base.html:2445
 msgid "رجوع لتسجيل الدخول"
 msgstr "Back to Log In"
 
-#: frontend/website/base.html:2718 frontend/website/base.html:2756
-#: frontend/website/base.html:2773 frontend/website/base.html:2791
-#: frontend/website/base.html:2806
+#: frontend/website/base.html:2728 frontend/website/base.html:2766
+#: frontend/website/base.html:2783 frontend/website/base.html:2801
+#: frontend/website/base.html:2816
 msgid "حدث خطأ، حاول تاني"
 msgstr "Something went wrong, try again"
 
-#: frontend/website/base.html:2839
+#: frontend/website/base.html:2849
 msgid "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني"
 msgstr "Google sign-in isn't available right now, try email instead"
 
-#: frontend/website/base.html:3130
+#: frontend/website/base.html:3152
 msgid "أنا هنا... قول أمرك"
 msgstr "I am here... go ahead"
 
-#: frontend/website/base.html:3147
+#: frontend/website/base.html:3170
 msgid "وقفت الأغنية"
 msgstr "Paused the song"
 
-#: frontend/website/base.html:3155
+#: frontend/website/base.html:3178
 msgid "تمام، كملنا"
 msgstr "Okay, resumed"
 
-#: frontend/website/base.html:3166
+#: frontend/website/base.html:3215
 msgid "مفيش أغنية شغالة عشان أعمللها لايك"
 msgstr "No song is playing to like"
 
-#: frontend/website/base.html:3170
+#: frontend/website/base.html:3219
 msgid "تمام ❤️"
 msgstr "Done ❤️"
 
-#: frontend/website/base.html:3181 frontend/website/base.html:3200
+#: frontend/website/base.html:3230 frontend/website/base.html:3249
 msgid "مفيش أغنية شغالة دلوقتي"
 msgstr "No song is playing right now"
 
-#: frontend/website/base.html:3184
+#: frontend/website/base.html:3233
 msgid "تمام، بافتحلك صفحتها"
 msgstr "Okay, opening its page"
 
-#: frontend/website/base.html:3205
+#: frontend/website/base.html:3254
 msgid "تمام، جريت شوية ⏩"
 msgstr "Okay, skipped ahead ⏩"
 
-#: frontend/website/base.html:3206
+#: frontend/website/base.html:3255
 msgid "تمام، رجعت شوية ⏪"
 msgstr "Okay, rewound a bit ⏪"
 
-#: frontend/website/base.html:3213
+#: frontend/website/base.html:3262
 msgid "وأنا كمان بحبك ❤️"
 msgstr "Love you too ❤️"
 
-#: frontend/website/base.html:3214
+#: frontend/website/base.html:3263
 msgid "تامر حسني بيحبك برضو يا قمر ❤️"
 msgstr "Tamer Hosny loves you too ❤️"
 
-#: frontend/website/base.html:3215
+#: frontend/website/base.html:3264
 msgid "ربنا يخليك ليا يا حبيبي ❤️"
 msgstr "Bless you too, my dear ❤️"
 
-#: frontend/website/base.html:3251
+#: frontend/website/base.html:3300
 msgid "بدور على الأغنية..."
 msgstr "Looking for the song..."
 
-#: frontend/website/base.html:3257
+#: frontend/website/base.html:3306
 msgid "أووبس، مش لاقي أغنية بالاسم ده"
 msgstr "Oops, could not find a song by that name"
 
-#: frontend/website/base.html:3264 frontend/website/base.html:3284
+#: frontend/website/base.html:3313 frontend/website/base.html:3333
 msgid "حصل خطأ، حاول تاني"
 msgstr "Something went wrong, try again"
 
-#: frontend/website/base.html:3268
+#: frontend/website/base.html:3317
 msgid "بدور على أغاني تناسب مزاجك..."
 msgstr "Looking for songs that match your mood..."
 
-#: frontend/website/base.html:3274
+#: frontend/website/base.html:3323
 msgid "أووبس، مش لاقي أغاني للمزاج ده"
 msgstr "Oops, could not find songs for that mood"
 
-#: frontend/website/base.html:3319
+#: frontend/website/base.html:3368
 msgid "تمام"
 msgstr "Okay"
 
-#: frontend/website/base.html:3340
+#: frontend/website/base.html:3389 frontend/website/base.html:3876
 msgid "بفكر..."
 msgstr "Thinking..."
 
-#: frontend/website/base.html:3357 frontend/website/base.html:3364
+#: frontend/website/base.html:3406 frontend/website/base.html:3413
 msgid "أووبس، مش لاقيها! جرب تاني"
 msgstr "Oops, could not find that! Try again"
 
-#: frontend/website/base.html:3542
+#: frontend/website/base.html:3616 frontend/website/base.html:3863
 msgid ""
 "الميكروفون متبلوك من إعدادات المتصفح - افتح إعدادات الموقع 🔒 جنب شريط "
 "العنوان وفعّله يدوي، وبعدين جرب تاني"
@@ -3599,28 +3599,36 @@ msgstr ""
 "Microphone access is blocked in your browser settings - open the site "
 "settings 🔒 next to the address bar, allow it manually, then try again"
 
-#: frontend/website/base.html:3600
+#: frontend/website/base.html:3674 frontend/website/base.html:3892
 msgid "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶"
 msgstr "Cannot respond right now - your connection is too weak 📶"
 
-#: frontend/website/base.html:3633
+#: frontend/website/base.html:3707
 msgid "حصلت مشكلة في المايكروفون - جرب تفصله وتشغله تاني"
 msgstr "There is a microphone issue - try turning it off and back on"
 
-#: frontend/website/base.html:3819
+#: frontend/website/base.html:3826 frontend/website/base.html:3926
+msgid "اضغط مع الاستمرار على أيقونة الميكروفون وقول اللي عايزه"
+msgstr "Press and hold the microphone icon and say what you want"
+
+#: frontend/website/base.html:3899
+msgid "بسمعك... قول اللي عايزه"
+msgstr "Listening... go ahead"
+
+#: frontend/website/base.html:4036
 msgid "الإشعارات مفعّلة"
 msgstr "Notifications enabled"
 
-#: frontend/website/base.html:3821
+#: frontend/website/base.html:4038
 msgid "الإشعارات متمنوعة من إعدادات المتصفح"
 msgstr "Notifications are blocked in your browser settings"
 
-#: frontend/website/base.html:3822 frontend/website/partials/header.html:29
+#: frontend/website/base.html:4039 frontend/website/partials/header.html:29
 #: frontend/website/partials/header.html:99
 msgid "فعّل الإشعارات"
 msgstr "Enable Notifications"
 
-#: frontend/website/base.html:3845
+#: frontend/website/base.html:4062
 msgid "تم تفعيل الإشعارات"
 msgstr "Notifications enabled"
 
