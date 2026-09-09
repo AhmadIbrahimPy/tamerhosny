@@ -196,6 +196,14 @@
     @media (max-width:980px){ .th-mic-fab{ display:flex; } }
     @media (max-width:768px){ .th-mic-fab{ bottom:150px; } }
     .th-mic-fab.is-on{border-color:var(--accent); color:var(--accent);}
+    /* Highlighted while a tip bubble is showing (see nextMicTip below) -
+       .th-mic-btn is shared by both the desktop navbar button (#thMicBtn)
+       and the mobile floating one, so the border draws the eye toward
+       whichever is actually in play. */
+    .th-mic-btn.tip-highlight{
+      border-color:var(--accent); border-width:2px; color:var(--accent);
+      box-shadow:0 0 0 3px rgba(212,175,55,.3);
+    }
     /* Matches .song-container's own mobile padding-inline (songs/detail.html)
        rather than sitting flush against the raw viewport edge - plus the
        safe area on notched/rounded-corner phones. The entrance animation
@@ -221,27 +229,32 @@
       to{ transform:translate(0,0) scale(1); opacity:1; }
     }
 
-    /* Periodic feature-discovery tip bubble - see nextMicTip() below. */
+    /* Periodic feature-discovery tip bubble - works for either the
+       mobile floating mic or the desktop navbar one, whichever is
+       actually in play; nextMicTip() (below) positions it via
+       getBoundingClientRect() on the relevant button each time, using
+       --tail-left to keep the little pointer aimed at it and
+       .point-up/.point-down for which edge that pointer sits on. */
     .th-mic-tip-bubble{
-      display:none; position:fixed; z-index:1029; bottom:152px;
+      display:none; position:fixed; z-index:1029;
       max-width:220px; background:var(--card); border:1px solid var(--border);
       border-radius:14px; padding:10px 14px; font-size:12.5px; line-height:1.5;
       color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
-      opacity:0; transform:translateY(8px) scale(.92);
+      opacity:0; transform:translateY(8px) scale(.92); pointer-events:none;
       transition:opacity .25s ease, transform .25s ease;
     }
-    @media (max-width:980px){ .th-mic-tip-bubble{ display:block; } }
-    @media (max-width:768px){ .th-mic-tip-bubble{ bottom:212px; } }
     .th-mic-tip-bubble.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
-    .th-mic-tip-bubble.side-start{ inset-inline-start:max(16px, env(safe-area-inset-left)); }
-    .th-mic-tip-bubble.side-end{ inset-inline-end:max(16px, env(safe-area-inset-right)); }
     .th-mic-tip-bubble::after{
-      content:''; position:absolute; bottom:-6px; width:12px; height:12px;
+      content:''; position:absolute; width:12px; height:12px;
       background:var(--card); transform:rotate(45deg);
-      border-inline-end:1px solid var(--border); border-block-end:1px solid var(--border);
+      left:var(--tail-left, 20px);
     }
-    .th-mic-tip-bubble.side-start::after{ inset-inline-start:20px; }
-    .th-mic-tip-bubble.side-end::after{ inset-inline-end:20px; }
+    .th-mic-tip-bubble.point-down::after{
+      bottom:-6px; border-inline-end:1px solid var(--border); border-block-end:1px solid var(--border);
+    }
+    .th-mic-tip-bubble.point-up::after{
+      top:-6px; border-inline-start:1px solid var(--border); border-block-start:1px solid var(--border);
+    }
 
     /* Push-to-talk press feedback (mobile only - see IS_MOBILE in the
        voice assistant script below). */
@@ -1615,7 +1628,7 @@
 
   <!-- Periodic feature-discovery tip, Messenger-bubble style, pointing
        at the floating mic above - see nextMicTip() in the script below. -->
-  <div id="thMicTipBubble" class="th-mic-tip-bubble" role="status" onclick="this.classList.remove('show')"></div>
+  <div id="thMicTipBubble" class="th-mic-tip-bubble" role="status" onclick="window.thDismissMicTip && window.thDismissMicTip()"></div>
 
   <!-- Voice assistant ("TH" wake word) avatar - shown for the ~5s command
        window after the wake word is heard, floating just above the
@@ -4103,57 +4116,6 @@
         fab.classList.add('side-' + nextFabSide);
       }
 
-      // Periodic feature-discovery tips (Messenger-bubble style, next to
-      // the floating mic) - teaches one capability at a time rather than
-      // dumping everything in the one-time promo toast. Never interrupts
-      // an active listening session or a backgrounded tab. If several
-      // page views have gone by with nothing actually playing, a
-      // "اقترح أغنية" nudge takes priority over the regular rotation.
-      var MIC_TIPS = [
-        '{% translate "أقدر أوقف الأغنية لو قولتلي" %}',
-        '{% translate "أقدر أعمل لايك للأغنية اللي شغالة لو قولتلي" %}',
-        '{% translate "قولي اللي بعدها وهغيّر الأغنية" %}',
-        '{% translate "قولي اقترح أغنية لو مش عارف تسمع إيه" %}',
-        '{% translate "قولي شغل أغنية واسمها وهجيبهالك" %}',
-        '{% translate "أقدر أفتحلك صفحة الأغنية اللي شغالة لو قولتلي" %}',
-      ];
-      var MIC_TIP_SUGGEST = '{% translate "قولي اقترح أغنية لو عايز تسمع حاجة دلوقتي" %}';
-      var MIC_TIP_INTERVAL_MS = 25000;
-      var MIC_TIP_SHOW_MS = 6000;
-      var micTipIndex = -1;
-      var pagesViewedWithoutPlaying = 0;
-
-      document.body.addEventListener('htmx:afterSettle', function () {
-        pagesViewedWithoutPlaying++;
-      });
-      document.addEventListener('songChanged', function () {
-        pagesViewedWithoutPlaying = 0;
-      });
-
-      function nextMicTip() {
-        var bubble = document.getElementById('thMicTipBubble');
-        if (!bubble || !fab || pttActive || document.hidden) return;
-        var noSongPlaying = typeof currentSongId === 'undefined' || currentSongId === null ||
-          (typeof globalAudio !== 'undefined' && globalAudio && globalAudio.paused);
-        var text;
-        if (pagesViewedWithoutPlaying >= 3 && noSongPlaying) {
-          text = MIC_TIP_SUGGEST;
-          pagesViewedWithoutPlaying = 0; // don't nag every single cycle
-        } else {
-          micTipIndex = (micTipIndex + 1) % MIC_TIPS.length;
-          text = MIC_TIPS[micTipIndex];
-        }
-        bubble.textContent = text;
-        bubble.classList.remove('side-start', 'side-end');
-        bubble.classList.add(fab.classList.contains('side-start') ? 'side-start' : 'side-end');
-        bubble.classList.add('show');
-        setTimeout(function () { bubble.classList.remove('show'); }, MIC_TIP_SHOW_MS);
-      }
-
-      if (fab) {
-        setInterval(nextMicTip, MIC_TIP_INTERVAL_MS);
-      }
-
       if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
         setTimeout(showVoicePromoNow, 4000);
       }
@@ -4221,6 +4183,94 @@
 
       maybeShowVoicePromo();
     }
+
+    // Periodic feature-discovery tips (Messenger-bubble style, next to
+    // whichever mic control is actually in play - the floating one on
+    // mobile, the navbar one on desktop) - teaches one capability at a
+    // time rather than dumping everything into the one-time promo
+    // toast. Never interrupts an active session/command window or a
+    // backgrounded tab. If several page views have gone by with
+    // nothing actually playing, a "اقترح أغنية" nudge takes priority
+    // over the regular rotation for that cycle.
+    var MIC_TIPS = [
+      '{% translate "أقدر أوقف الأغنية لو قولتلي" %}',
+      '{% translate "أقدر أعمل لايك للأغنية اللي شغالة لو قولتلي" %}',
+      '{% translate "قولي اللي بعدها وهغيّر الأغنية" %}',
+      '{% translate "قولي اقترح أغنية لو مش عارف تسمع إيه" %}',
+      '{% translate "قولي شغل أغنية واسمها وهجيبهالك" %}',
+      '{% translate "أقدر أفتحلك صفحة الأغنية اللي شغالة لو قولتلي" %}',
+    ];
+    var MIC_TIP_SUGGEST = '{% translate "قولي اقترح أغنية لو عايز تسمع حاجة دلوقتي" %}';
+    var MIC_TIP_INTERVAL_MS = 25000;
+    var MIC_TIP_SHOW_MS = 6000;
+    var micTipIndex = -1;
+    var micTipHideTimer = null;
+    var pagesViewedWithoutPlaying = 0;
+
+    document.body.addEventListener('htmx:afterSettle', function () {
+      pagesViewedWithoutPlaying++;
+    });
+    document.addEventListener('songChanged', function () {
+      pagesViewedWithoutPlaying = 0;
+    });
+
+    window.thDismissMicTip = function () {
+      clearTimeout(micTipHideTimer);
+      var bubble = document.getElementById('thMicTipBubble');
+      if (bubble) bubble.classList.remove('show');
+      var highlighted = document.querySelectorAll('.th-mic-btn.tip-highlight');
+      for (var i = 0; i < highlighted.length; i++) highlighted[i].classList.remove('tip-highlight');
+    };
+
+    function nextMicTip() {
+      var bubble = document.getElementById('thMicTipBubble');
+      var anchor = document.getElementById(IS_MOBILE ? 'thMicBtnMobile' : 'thMicBtn');
+      if (!bubble || !anchor || document.hidden) return;
+      // pttActive only ever gets assigned inside the IS_MOBILE branch
+      // above, but var hoists it to this whole function's scope either
+      // way - on desktop it just stays undefined (falsy), so this is
+      // safe to read regardless of which branch actually ran.
+      if (IS_MOBILE ? pttActive : listeningForCommand) return;
+
+      var noSongPlaying = typeof currentSongId === 'undefined' || currentSongId === null ||
+        (typeof globalAudio !== 'undefined' && globalAudio && globalAudio.paused);
+      var text;
+      if (pagesViewedWithoutPlaying >= 3 && noSongPlaying) {
+        text = MIC_TIP_SUGGEST;
+        pagesViewedWithoutPlaying = 0; // don't nag every single cycle
+      } else {
+        micTipIndex = (micTipIndex + 1) % MIC_TIPS.length;
+        text = MIC_TIPS[micTipIndex];
+      }
+
+      bubble.textContent = text;
+      bubble.style.display = 'block';
+      var rect = anchor.getBoundingClientRect();
+      // Anchor in the lower half of the screen (mobile FAB) -> bubble
+      // sits above it, tail pointing down; upper half (desktop navbar)
+      // -> bubble sits below it, tail pointing up.
+      var pointsDown = rect.top > window.innerHeight / 2;
+      bubble.classList.toggle('point-down', pointsDown);
+      bubble.classList.toggle('point-up', !pointsDown);
+      if (pointsDown) {
+        bubble.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+        bubble.style.top = 'auto';
+      } else {
+        bubble.style.top = (rect.bottom + 10) + 'px';
+        bubble.style.bottom = 'auto';
+      }
+      var idealLeft = rect.left + rect.width / 2 - bubble.offsetWidth / 2;
+      idealLeft = Math.max(12, Math.min(idealLeft, window.innerWidth - bubble.offsetWidth - 12));
+      bubble.style.left = idealLeft + 'px';
+      bubble.style.setProperty('--tail-left', (rect.left + rect.width / 2 - idealLeft - 6) + 'px');
+
+      bubble.classList.add('show');
+      anchor.classList.add('tip-highlight');
+      clearTimeout(micTipHideTimer);
+      micTipHideTimer = setTimeout(window.thDismissMicTip, MIC_TIP_SHOW_MS);
+    }
+
+    setInterval(nextMicTip, MIC_TIP_INTERVAL_MS);
   })();
   </script>
 
