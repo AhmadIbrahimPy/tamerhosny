@@ -572,6 +572,7 @@ class VoiceKnownPhrase(models.Model):
     intent = models.CharField(max_length=32)
     song_query = models.CharField(max_length=200, blank=True)
     mood = models.CharField(max_length=32, blank=True)
+    lyrics_query = models.CharField(max_length=200, blank=True)
     page = models.CharField(max_length=64, blank=True)
     # AI-generated alternative phrasings of original_transcript with the
     # same meaning - checked alongside it on every future lookup.

@@ -351,20 +351,22 @@ def voice_search_songs(request):
     """Backs the site-wide voice assistant ("TH" wake word).
 
     `q` matches song titles (for "شغل أغنية X"); `mood` matches
-    Song.Mood (for "شغلي حاجة حزينة"/"روقان"/etc.). At least one is
+    Song.Mood (for "شغلي حاجة حزينة"/"روقان"/etc.); `lyrics` matches
+    song lyrics (for "كلمات فيها X"/"غنية بتيقول X"). At least one is
     required. Results come back in the same per-song shape the player
     page's `otherSongs` queue items use, so the frontend can hand one
     straight to `playAudio()`/queue it without a second round trip.
     """
     query = (request.GET.get('q') or '').strip()
     mood = (request.GET.get('mood') or '').strip().upper()
+    lyrics_query = (request.GET.get('lyrics') or '').strip()
     try:
         limit = min(int(request.GET.get('limit', 10)), 20)
     except ValueError:
         limit = 10
 
-    if not query and not mood:
-        return JsonResponse({'error': 'q or mood is required'}, status=400)
+    if not query and not mood and not lyrics_query:
+        return JsonResponse({'error': 'q, mood, or lyrics is required'}, status=400)
 
     playable_songs = Song.objects.select_related('album').exclude(audio_file='')
     queryset = Song.visible_queryset(playable_songs).filter(is_duet=False)
@@ -392,6 +394,38 @@ def voice_search_songs(request):
                 score = max(score, en_score)
             if score >= 0.45:
                 scored.append((score, s))
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        songs = [s for _, s in scored[:limit]]
+    elif lyrics_query:
+        # Search in lyrics segments
+        from backend.music_app.models import SongLyricSegment
+        lyrics_norm = _normalize_arabic(lyrics_query)
+        lyrics_lower = lyrics_query.lower()
+        scored = []
+
+        for s in queryset:
+            if not s.lyric_segments.exists():
+                continue
+
+            lyrics_score = 0.0
+            for segment in s.lyric_segments.filter(segment_type='LYRICS'):
+                if segment.text:
+                    segment_norm = _normalize_arabic(segment.text)
+                    segment_lower = segment.text.lower()
+
+                    # Check for exact or partial match in normalized text
+                    if lyrics_norm in segment_norm or segment_norm in lyrics_norm:
+                        lyrics_score = max(lyrics_score, 1.0)
+                    else:
+                        lyrics_score = max(lyrics_score, SequenceMatcher(None, lyrics_norm, segment_norm).ratio())
+
+                    # Also check lowercase for English lyrics
+                    if lyrics_lower in segment_lower or segment_lower in lyrics_lower:
+                        lyrics_score = max(lyrics_score, 1.0)
+
+            if lyrics_score >= 0.5:
+                scored.append((lyrics_score, s))
+
         scored.sort(key=lambda pair: pair[0], reverse=True)
         songs = [s for _, s in scored[:limit]]
     else:
@@ -422,9 +456,10 @@ _VOICE_INTENT_SYSTEM_PROMPT = """You are the voice-command intent classifier for
 
 Respond with STRICT JSON ONLY (no markdown fences, no commentary) matching exactly this shape:
 {
-  "intent": one of "next", "previous", "stop", "resume", "seek_forward", "seek_backward", "like", "unlike", "open_current_song", "play_song", "play_mood", "play_random", "navigate", "unknown",
+  "intent": one of "next", "previous", "stop", "resume", "seek_forward", "seek_backward", "like", "unlike", "open_current_song", "play_song", "play_mood", "play_lyrics", "play_random", "navigate", "unknown",
   "song_query": the song title/name mentioned (for play_song), or null,
   "mood": one of "ROMANTIC", "SAD_HEARTBREAK", "ENERGETIC_UPBEAT", "MOTIVATIONAL_HOPEFUL", "CHILL_RELAXING", "NOSTALGIC", "CONFIDENT_PLAYFUL" (for play_mood), or null,
+  "lyrics_query": the lyrics phrase mentioned (for play_lyrics), or null,
   "page": one of __PAGES__ (for navigate), or null
 }
 
@@ -436,6 +471,7 @@ Guidance:
 - open_current_song means "open the page for whatever song is playing right now" - never pick this for a request naming a specific different song/album/person.
 - play_song is for "play <specific song name>" - extract just the title into song_query.
 - play_mood is for a request to play something matching a mood/feeling, not a specific title.
+- play_lyrics is for a request to play a song containing specific lyrics/words (e.g. "كلمات فيها حب"/"غنية بتيقول يا حبيبي"/"song that says love") - extract the lyrics phrase into lyrics_query.
 - play_random is for a request to just play *something* with no specific song or mood given at all (e.g. "اقترح أغنية"/"suggest a song"/"شغل حاجة على ذوق"/"surprise me").
 - navigate is ONLY for going to one of the fixed site sections listed above (never a specific song/album/person's own page - there is no intent for that; if the user asks for a specific item's page other than the current song, use "unknown").
 - Use "unknown" whenever the command doesn't clearly and confidently fit one of the above.
@@ -477,6 +513,7 @@ def voice_intent(request):
             'intent': known.intent,
             'song_query': known.song_query or None,
             'mood': known.mood or None,
+            'lyrics_query': known.lyrics_query or None,
             'page': known.page or None,
         }
     else:
@@ -487,6 +524,9 @@ def voice_intent(request):
 
     mood = data.get('mood')
     mood = mood if mood in Song.Mood.values else None
+
+    lyrics_query = data.get('lyrics_query')
+    lyrics_query = lyrics_query.strip() if isinstance(lyrics_query, str) and lyrics_query.strip() else None
 
     page_key = data.get('page')
     page_path = VOICE_NAV_PAGES.get(page_key)
@@ -500,11 +540,14 @@ def voice_intent(request):
         intent = 'unknown'
     if intent == 'play_song' and not song_query:
         intent = 'unknown'
+    if intent == 'play_lyrics' and not lyrics_query:
+        intent = 'unknown'
 
     return JsonResponse({
         'intent': intent,
         'song_query': song_query,
         'mood': mood,
+        'lyrics_query': lyrics_query,
         'page': page_path,
     })
 
