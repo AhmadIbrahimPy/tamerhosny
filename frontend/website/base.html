@@ -3170,7 +3170,11 @@
       } catch (e) {}
     }
 
-    var COMMAND_WINDOW_MS = 5000;
+    // Was 5000 - too tight for someone actually singing a line of lyrics
+    // at the assistant (a real use case: "قول TH" then sing a phrase so
+    // it finds the song) rather than just speaking a short command; a
+    // sung line routinely runs past 5s and got cut off mid-phrase.
+    var COMMAND_WINDOW_MS = 10000;
     // Android/iOS Chrome and Safari don't really support continuous
     // listening - they tear the whole recognition session down right
     // after each utterance and restart it, so the wake word almost
@@ -3319,7 +3323,12 @@
         listeningForCommand = false;
         wakeResultIndex = -1;
         cancelPendingResume();
-        hideAvatar();
+        // Previously just hideAvatar() with no message - the window
+        // closing silently read as the assistant ignoring the command
+        // entirely, with nothing telling the user it actually gave up.
+        logVoiceEvent('COMMAND_WINDOW_TIMEOUT');
+        setStatus('{% translate "أووبس، مسمعتش حاجة - قول TH تاني" %}');
+        setTimeout(hideAvatar, 2500);
       }, COMMAND_WINDOW_MS);
     }
 
@@ -3579,6 +3588,15 @@
         case 'play_song':
           if (!data.song_query) return false;
           playSongByName(data.song_query);
+          return true;
+        case 'play_lyrics':
+          // playSongByName already routes a 3+ word phrase to the
+          // lyrics search itself (see its own word-count check) - the
+          // AI-classified lyrics_query is virtually always that long, so
+          // reusing it here instead of a separate call keeps this to one
+          // path instead of two doing the same thing.
+          if (!data.lyrics_query) return false;
+          playSongByName(data.lyrics_query);
           return true;
         case 'play_mood':
           if (!data.mood) return false;
@@ -4108,7 +4126,13 @@
           var text = pttTranscriptParts.join(' ').trim();
           pttTranscriptParts = [];
           if (!text) {
-            hideAvatar();
+            // Previously just hideAvatar() with no message - a session
+            // ending with nothing captured (common mid-song: singing
+            // doesn't always resolve to a final result before the
+            // browser's own engine decides to stop) read as the tap
+            // being silently ignored.
+            setStatus('{% translate "أووبس، مسمعتش حاجة - جرب تاني" %}');
+            setTimeout(hideAvatar, 2500);
             return;
           }
           setStatus('{% translate "بفكر..." %}');
@@ -4166,9 +4190,12 @@
         }
         pttStart();
         clearTimeout(pttSilenceTimer);
+        // Was 5000 - too tight for singing a lyric line, which routinely
+        // takes longer than that to produce a first final chunk (see
+        // COMMAND_WINDOW_MS above, same reasoning).
         pttSilenceTimer = setTimeout(function () {
           if (pttActive && pttTranscriptParts.length === 0) pttStop();
-        }, 5000);
+        }, 9000);
       }
 
       window.thCarModeListen = pttTapToggle;

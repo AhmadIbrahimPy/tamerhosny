@@ -505,7 +505,7 @@ Guidance:
 - open_current_song means "open the page for whatever song is playing right now" - never pick this for a request naming a specific different song/album/person.
 - play_song is for "play <specific song name>" - extract just the title into song_query.
 - play_mood is for a request to play something matching a mood/feeling, not a specific title.
-- play_lyrics is for a request to play a song containing specific lyrics/words (e.g. "كلمات فيها حب"/"غنية بتيقول يا حبيبي"/"song that says love") - extract the lyrics phrase into lyrics_query.
+- play_lyrics is for a request to play a song containing specific lyrics/words - either explicitly framed (e.g. "كلمات فيها حب"/"غنية بتيقول يا حبيبي"/"song that says love") OR the user just singing/quoting an actual line from a song with no framing at all (e.g. "عايزك تعيديني يا حبيبتي"/"رزق من السنين وتملي تقولي لي") - a multi-word phrase (3+ words) that reads like a sung lyric rather than a command or a request phrased as one of the other intents should also be classified play_lyrics, with the full phrase as lyrics_query.
 - play_random is for a request to just play *something* with no specific song or mood given at all (e.g. "اقترح أغنية"/"suggest a song"/"شغل حاجة على ذوق"/"surprise me").
 - navigate is ONLY for going to one of the fixed site sections listed above (never a specific song/album/person's own page - there is no intent for that; if the user asks for a specific item's page other than the current song, use "unknown").
 - Use "unknown" whenever the command doesn't clearly and confidently fit one of the above.
