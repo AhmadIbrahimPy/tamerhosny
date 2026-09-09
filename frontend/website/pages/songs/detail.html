@@ -1331,10 +1331,6 @@
     transition: max-height 0.3s ease;
   }
 
-  .lyrics-text.expanded {
-    max-height: none;
-  }
-
   .lyrics-toggle-btn {
     display: block;
     margin: 16px auto 0;
@@ -2537,7 +2533,7 @@
         </div>
         <div class="lyrics-card">
           <p class="lyrics-text">{{ song.full_lyrics_text }}</p>
-          <button type="button" class="lyrics-toggle-btn">{% translate "عرض الكل" %}</button>
+          <button type="button" class="lyrics-toggle-btn" data-bs-toggle="modal" data-bs-target="#fullLyricsViewModal">{% translate "عرض الكل" %}</button>
         </div>
       </section>
     {% endif %}
@@ -2910,6 +2906,28 @@
     </div>
   </div>
 </div>
+
+<!-- Full Lyrics Text Modal - the plain, fully-rendered "الكلمات" block
+     (.lyrics-card below) only ever shows a short clamped preview; "عرض
+     الكل" opens this instead of growing that card open-ended, so a long
+     song doesn't shove the rest of the page down. Scrolls internally
+     (modal-body max-height) rather than the whole page for a very long
+     lyric. -->
+{% if song.full_lyrics_text %}
+<div class="modal fade" id="fullLyricsViewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title mb-0">{% translate "الكلمات" %} — {{ song|localized_field:'title' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'إغلاق' %}"></button>
+      </div>
+      <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+        <p class="lyrics-text" style="max-height:none;">{{ song.full_lyrics_text }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -2955,19 +2973,11 @@
     return response.json();
   }
 
-  // Lyrics toggle functionality
-  const lyricsToggleBtn = document.querySelector('.lyrics-toggle-btn');
-  const lyricsText = document.querySelector('.lyrics-text');
-  if (lyricsToggleBtn && lyricsText) {
-    lyricsToggleBtn.addEventListener('click', function () {
-      lyricsText.classList.toggle('expanded');
-      if (lyricsText.classList.contains('expanded')) {
-        lyricsToggleBtn.textContent = '{% translate "عرض أقل" %}';
-      } else {
-        lyricsToggleBtn.textContent = '{% translate "عرض الكل" %}';
-      }
-    });
-  }
+  // "عرض الكل" on .lyrics-card just opens #fullLyricsViewModal now
+  // (data-bs-toggle/data-bs-target on the button - see the modal itself
+  // for why: an unlimited inline expand pushed the rest of the page
+  // down for a long lyric, with no real close affordance once open).
+  // No custom JS needed - Bootstrap handles the open/close itself.
 
   // Persisted (not just per-page) since next/prev here are full page
   // navigations - without this, car mode would reset on every song.
