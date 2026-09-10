@@ -192,3 +192,21 @@
     </div>
   </div>
 </nav>
+
+<script>
+(function() {
+  'use strict';
+  var mobileSections = document.querySelectorAll('.th-mobile-section');
+  mobileSections.forEach(function(section) {
+    section.addEventListener('toggle', function() {
+      if (section.open) {
+        mobileSections.forEach(function(otherSection) {
+          if (otherSection !== section) {
+            otherSection.removeAttribute('open');
+          }
+        });
+      }
+    });
+  });
+})();
+</script>

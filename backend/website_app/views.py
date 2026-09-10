@@ -1311,7 +1311,6 @@ def remixes_list(request):
     queryset = RemixProject.objects.prefetch_related('sources__audio_source', 'outputs').order_by('-created_at')
 
     projects = _paginate(request, queryset)
-
     # إضافة مدة منسقة وأسماء الأغاني وصورها لكل مشروع
     for project in projects:
         output = project.outputs.first()
@@ -1322,7 +1321,6 @@ def remixes_list(request):
             project.formatted_duration = f"{minutes}:{seconds:02d}"
         else:
             project.formatted_duration = None
-
         # جمع أسماء الأغاني والبحث عن صورها من المصادر الصوتية
         song_names = []
         song_images = []
@@ -1380,9 +1378,7 @@ def increment_play_count(request):
     
     if not song_id:
         return JsonResponse({'status': 'error', 'message': 'Missing song_id'}, status=400)
-    
     try:
-        
         song = Song.objects.get(pk=song_id)
 
         # A duet play isn't a play of the official track - don't count it
