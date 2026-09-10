@@ -215,7 +215,7 @@
       <h2 class="th-section-title">{% translate "الأكثر استماعاً لها" %}</h2>
       {% if full_listens_total > full_listens|length %}
       <a href="{% url 'website_app:profile-most-listened' profile_user.username %}" class="th-see-all">
-        {% translate "عرض المزيد" %} <i class="bi bi-arrow-left"></i>
+        {% translate "عرض المزيد" %} <i class="bi bi-arrow-right"></i>
       </a>
       {% endif %}
     </div>
@@ -276,7 +276,7 @@
       <h2 class="th-section-title">{% translate "الأغاني المفضلة" %}</h2>
       {% if liked_songs_total > liked_songs|length %}
       <a href="{% url 'website_app:profile-favorites' profile_user.username %}" class="th-see-all">
-        {% translate "عرض المزيد" %} <i class="bi bi-arrow-left"></i>
+        {% translate "عرض المزيد" %} <i class="bi bi-arrow-right"></i>
       </a>
       {% endif %}
     </div>
