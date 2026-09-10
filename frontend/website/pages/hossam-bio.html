@@ -1,16 +1,15 @@
 {% extends "website/base.html" %}
 {% load static i18n %}
 
-{% block title %}{% translate "تامر حسني" %}{% endblock %}
+{% block title %}{% translate "حسام حسني" %}{% endblock %}
 
 {% block meta_description %}
-<meta name="description" content="{% translate 'قصة تامر حسني الفنية - من أول لحن كتبه وهو طفل إلى واحد من أكثر نجوم الوطن العربي تأثيراً في الغناء والتلحين والتمثيل.' %}">
+<meta name="description" content="{% translate 'قصة حسام حسني الفنية - الأخ الأكبر للفنان تامر حسني، رحلته في عالم الإدارة والإنتاج والغناء.' %}">
 {% endblock %}
 
 {% block og_type %}profile{% endblock %}
-{% block og_title %}{% translate "تامر حسني" %}{% endblock %}
-{% block og_description %}{% translate "قصة تامر حسني الفنية - من أول لحن كتبه وهو طفل إلى واحد من أكثر نجوم الوطن العربي تأثيراً في الغناء والتلحين والتمثيل." %}{% endblock %}
-{% block og_image %}{% if tamer.profile_image %}{{ request.scheme }}://{{ request.get_host }}{{ tamer.profile_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_title %}{% translate "حسام حسني" %}{% endblock %}
+{% block og_description %}{% translate "قصة حسام حسني الفنية - الأخ الأكبر للفنان تامر حسني، رحلته في عالم الإدارة والإنتاج والغناء." %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -109,11 +108,6 @@
   .bio-section-sub{ color:var(--muted); text-align:center; max-width:560px; margin:0 auto 44px; font-size:14.5px; }
 
   /* ===================== TIMELINE ===================== */
-  /* Built as a flex row per item (dot+line "rail" column, content column)
-     instead of absolutely-positioned offsets - those had to guess where
-     the padding gutter landed in RTL vs LTR and ended up drifting the
-     line into the text. A structural flex column can't drift: the rail
-     and the text are always separate boxes side by side. */
   .bio-timeline{ display:flex; flex-direction:column; }
   .bio-tl-item{
     display:flex; gap:18px; opacity:0; transform:translateX(-24px); transition:opacity .6s ease, transform .6s ease;
@@ -131,45 +125,6 @@
   .bio-tl-year{ color:var(--accent); font-weight:800; font-size:13px; letter-spacing:.05em; text-transform:uppercase; }
   .bio-tl-title{ font-size:19px; font-weight:800; margin:4px 0 8px; }
   .bio-tl-text{ color:var(--muted); font-size:14.5px; line-height:1.8; }
-
-  /* ===================== QUOTE / MARQUEE ===================== */
-  .bio-marquee-wrap{
-    margin:70px 0; padding:22px 0; border-block:1px solid var(--border); overflow:hidden; position:relative;
-  }
-  .bio-marquee{ display:flex; gap:40px; white-space:nowrap; width:max-content; animation:bioMarquee 22s linear infinite; }
-  .bio-marquee span{
-    font-size:22px; font-weight:800; color:var(--muted); display:inline-flex; align-items:center; gap:14px;
-  }
-  .bio-marquee span i{ color:var(--accent); font-size:14px; }
-  @keyframes bioMarquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
-
-  /* ===================== AWARDS ===================== */
-  .bio-awards-grid{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:32px;
-  }
-  .bio-award-card{
-    background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px;
-    transition:border-color .3s ease, transform .3s ease;
-  }
-  .bio-award-card:hover{ border-color:rgba(212,175,55,.4); transform:translateY(-4px); }
-  .bio-award-year{
-    display:inline-block; padding:4px 12px; border-radius:999px; background:linear-gradient(135deg, var(--accent), var(--accent-2));
-    color:#161616; font-weight:800; font-size:12px; margin-bottom:12px;
-  }
-  .bio-award-name{ font-size:16px; font-weight:700; margin-bottom:6px; color:var(--text); }
-  .bio-award-from{ font-size:13px; color:var(--muted); }
-
-  /* ===================== TITLES ===================== */
-  .bio-titles-grid{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px; margin-top:32px;
-  }
-  .bio-title-card{
-    background:linear-gradient(135deg, rgba(212,175,55,.1), rgba(212,175,55,.05)); border:1px solid rgba(212,175,55,.3);
-    border-radius:12px; padding:16px; text-align:center; transition:border-color .3s ease, transform .3s ease;
-  }
-  .bio-title-card:hover{ border-color:rgba(212,175,55,.6); transform:translateY(-4px); }
-  .bio-title-text{ font-size:15px; font-weight:700; color:var(--text); }
-  .bio-title-card i{ display:block; font-size:24px; color:var(--accent); margin-bottom:8px; }
 
   /* ===================== PERSONAL LIFE ===================== */
   .bio-personal-grid{
@@ -190,8 +145,6 @@
     .bio-stats{ grid-template-columns:repeat(2,1fr); margin-top:-24px; }
     .bio-hero{ min-height:66vh; padding:44px 16px; }
     .bio-hero-portrait{ width:140px; height:140px; }
-    .bio-awards-grid{ grid-template-columns:1fr; }
-    .bio-titles-grid{ grid-template-columns:repeat(2,1fr); }
     .bio-personal-grid{ grid-template-columns:1fr; }
   }
 </style>
@@ -208,24 +161,18 @@
     <div>
       <div class="bio-hero-portrait">
         <div class="bio-hero-portrait-inner">
-          {% if tamer.profile_image %}
-            <img src="{{ tamer.profile_image.url }}" alt="{% translate 'تامر حسني' %}">
-          {% else %}
-            <i class="bi bi-mic-fill"></i>
-          {% endif %}
+          <i class="bi bi-person-fill"></i>
         </div>
       </div>
 
-      <span class="bio-hero-kicker"><i class="bi bi-stars"></i> {% translate "قصة نجم" %}</span>
-      <h1>{% translate "تامر حسني" %}</h1>
-      <p class="bio-tagline">{% translate "من أول لحن كتبه وهو طفل، لأصبح واحداً من أكثر نجوم الوطن العربي تأثيراً في الغناء والتلحين والتمثيل." %}</p>
+      <span class="bio-hero-kicker"><i class="bi bi-stars"></i> {% translate "قصة فنية" %}</span>
+      <h1>{% translate "حسام حسني" %}</h1>
+      <p class="bio-tagline">{% translate "الأخ الأكبر للفنان تامر حسني، رحلته في عالم الإدارة والإنتاج والغناء." %}</p>
 
       <div class="bio-hero-actions">
-        {% if tamer %}
-        <a href="{% url 'website_app:person-detail' tamer.slug %}" class="bio-btn gold">
-          <i class="bi bi-collection-play-fill"></i> {% translate "شاهد كل الأعمال" %}
+        <a href="{% url 'website_app:tamer-bio' %}" class="bio-btn gold">
+          <i class="bi bi-arrow-left"></i> {% translate "عودة لتامر حسني" %}
         </a>
-        {% endif %}
         <a href="{% url 'website_app:songs' %}" class="bio-btn ghost">
           <i class="bi bi-music-note-beamed"></i> {% translate "استمع للأغاني" %}
         </a>
@@ -246,7 +193,7 @@
 
   <section class="bio-section">
     <h2 class="bio-section-title">{% translate "المسيرة" %} <span>{% translate "عبر الزمن" %}</span></h2>
-    <p class="bio-section-sub">{% translate "رحلة فنية بدأت من المنصورة ووصلت إلى قلوب الملايين حول العالم العربي وخارجه." %}</p>
+    <p class="bio-section-sub">{% translate "رحلة فنية بدأت من المنصورة ووصلت إلى عالم الإدارة والإنتاج والغناء." %}</p>
 
     <div class="bio-timeline" id="bioTimeline">
       {% for item in timeline %}
@@ -265,47 +212,9 @@
     </div>
   </section>
 
-  <div class="bio-marquee-wrap">
-    <div class="bio-marquee">
-      {% for i in "12" %}
-      <span><i class="bi bi-star-fill"></i> {% translate "الغناء" %}</span>
-      <span><i class="bi bi-star-fill"></i> {% translate "التلحين" %}</span>
-      <span><i class="bi bi-star-fill"></i> {% translate "التمثيل" %}</span>
-      <span><i class="bi bi-star-fill"></i> {% translate "الإنتاج" %}</span>
-      {% endfor %}
-    </div>
-  </div>
-
-  <section class="bio-section">
-    <h2 class="bio-section-title">{% translate "الجوائز" %} <span>{% translate "والتكريمات" %}</span></h2>
-    <p class="bio-section-sub">{% translate "حصل تامر حسني على أكثر من 50 جائزة وتكريم محلي وعربي وعالمي." %}</p>
-    <div class="bio-awards-grid">
-      {% for award in awards %}
-      <div class="bio-award-card">
-        <span class="bio-award-year">{{ award.year }}</span>
-        <div class="bio-award-name">{% if LANGUAGE_CODE == 'ar' %}{{ award.award_ar }}{% else %}{{ award.award_en }}{% endif %}</div>
-        <div class="bio-award-from">{% if LANGUAGE_CODE == 'ar' %}{{ award.from_ar }}{% else %}{{ award.from_en }}{% endif %}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="bio-section">
-    <h2 class="bio-section-title">{% translate "الألقاب" %} <span>{% translate "والشهادات" %}</span></h2>
-    <p class="bio-section-sub">{% translate "ألقاب ومسميات منحها له الجمهور والإعلام تقديراً لمسيرته الفنية." %}</p>
-    <div class="bio-titles-grid">
-      {% for title in titles %}
-      <div class="bio-title-card">
-        <i class="bi bi-award-fill"></i>
-        <div class="bio-title-text">{% if LANGUAGE_CODE == 'ar' %}{{ title.title_ar }}{% else %}{{ title.title_en }}{% endif %}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-
   <section class="bio-section">
     <h2 class="bio-section-title">{% translate "الحياة" %} <span>{% translate "الشخصية" %}</span></h2>
-    <p class="bio-section-sub">{% translate "معلومات عن حياة تامر حسني الشخصية والعائلية." %}</p>
+    <p class="bio-section-sub">{% translate "معلومات عن حياة حسام حسني الشخصية والعائلية." %}</p>
     <div class="bio-personal-grid">
       <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-geo-alt"></i> {% translate "مكان الميلاد" %}</div>
@@ -313,21 +222,16 @@
       </div>
       <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-people"></i> {% translate "الإخوة" %}</div>
-        <div class="bio-personal-value"><a href="{% url 'website_app:hossam-bio' %}">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.siblings_ar }}{% else %}{{ personal_life.siblings_en }}{% endif %}</a></div>
+        <div class="bio-personal-value"><a href="{% url 'website_app:tamer-bio' %}">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.siblings_ar }}{% else %}{{ personal_life.siblings_en }}{% endif %}</a></div>
       </div>
       <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-child"></i> {% translate "الأبناء" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.children_ar }}{% else %}{{ personal_life.children_en }}{% endif %}</div>
+        <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالد" %}</div>
+        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.father_ar }}{% else %}{{ personal_life.father_en }}{% endif %}</div>
       </div>
-    </div>
-  </section>
-
-  <section class="bio-section" style="text-align:center;">
-    <h2 class="bio-section-title">{% translate "اكتشف" %} <span>{% translate "الأرشيف الكامل" %}</span></h2>
-    <p class="bio-section-sub">{% translate "كل الأغاني، الألبومات، الأفلام والحفلات في مكان واحد." %}</p>
-    <div class="bio-hero-actions" style="margin-top:8px;">
-      <a href="{% url 'website_app:albums' %}" class="bio-btn gold"><i class="bi bi-disc-fill"></i> {% translate "الألبومات" %}</a>
-      <a href="{% url 'website_app:movies' %}" class="bio-btn ghost"><i class="bi bi-film"></i> {% translate "الأفلام" %}</a>
+      <div class="bio-personal-card">
+        <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالدة" %}</div>
+        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.mother_ar }}{% else %}{{ personal_life.mother_en }}{% endif %}</div>
+      </div>
     </div>
   </section>
 

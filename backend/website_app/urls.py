@@ -24,6 +24,7 @@ urlpatterns = [
     path('auth/google/callback/', auth_views.google_login_callback, name='auth-google-callback'),
 
     path('tamer-hosny/', views.tamer_bio, name='tamer-bio'),
+    path('hossam-hosny/', views.hossam_hosny_bio, name='hossam-bio'),
 
     path('player/', views.player_page, name='player'),
     path('player/song-data/', views.song_player_data, name='song-player-data'),

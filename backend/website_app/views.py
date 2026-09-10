@@ -167,7 +167,6 @@ def tamer_bio(request):
             'text_en': 'Tamer Hosny remains a driving force across music, composing and film — one of the biggest names in the Arab world.',
         },
     ]
-    
     awards = [
         {'year': '2023', 'award_ar': 'جائزة أفضل فنان عربي', 'award_en': 'Best Arab Artist', 'from_ar': 'المهرجان العربي للإذاعة والتلفزيون في تونس', 'from_en': 'Arab Festival for Radio and TV in Tunisia'},
         {'year': '2019', 'award_ar': 'جائزة نجم الغناء العربي', 'award_en': 'Arab Singing Star', 'from_ar': 'موريكس دور', 'from_en': 'Murex d\'Or'},
@@ -212,6 +211,71 @@ def tamer_bio(request):
         'timeline': timeline,
         'awards': awards,
         'titles': titles,
+        'personal_life': personal_life,
+    })
+
+
+def hossam_hosny_bio(request):
+    """Biography page for Hossam Hosny (Tamer Hosny's brother)."""
+    stats = [
+        {'value': '25+', 'label_ar': 'سنة في عالم الفن', 'label_en': 'Years in the arts'},
+        {'value': '10+', 'label_ar': 'ألبوم غنائي', 'label_en': 'Music albums'},
+        {'value': '5+', 'label_ar': 'فيلم سينمائي', 'label_en': 'Feature films'},
+        {'value': '20+', 'label_ar': 'أغنية منفردة', 'label_en': 'Singles'},
+    ]
+    timeline = [
+        {
+            'year': '1975',
+            'title_ar': 'البداية', 'title_en': 'The Beginning',
+            'text_ar': 'وُلد حسام حسني في مدينة المنصورة، وهو الأخ الأكبر للفنان تامر حسني. نشأ في عائلة فنية حيث كان والده المطرب حسني شريف.',
+            'text_en': 'Hossam Hosny was born in Mansoura, Egypt, as the older brother of artist Tamer Hosny. He grew up in an artistic family where his father was singer Hosni Sherif.',
+        },
+        {
+            'year': '1995',
+            'title_ar': 'أول خطوة', 'title_en': 'First Steps',
+            'text_ar': 'بدأ مشواره الفني مبكراً، حيث عمل كمدير أعمال شقيقه تامر حسني في بداياته، وساهم في تطوير مسيرته الفنية.',
+            'text_en': 'Started his artistic journey early, working as a business manager for his brother Tamer Hosny in his early days, contributing to developing his artistic career.',
+        },
+        {
+            'year': '2000',
+            'title_ar': 'الإدارة والإنتاج', 'title_en': 'Management & Production',
+            'text_ar': 'تخصص في إدارة الأعمال الفنية والإنتاج، حيث أشرف على إنتاج العديد من الأعمال الناجحة لشقيقه تامر حسني وغيره من الفنانين.',
+            'text_en': 'Specialized in artistic business management and production, overseeing the production of many successful works for his brother Tamer Hosny and other artists.',
+        },
+        {
+            'year': '2005',
+            'title_ar': 'الغناء', 'title_en': 'Singing',
+            'text_ar': 'خوض تجربة الغناء، حيث أطلق عدة أغنيات ناجحة لاقت إعجاب الجمهور، وشارك في بعض الحفلات الغنائية.',
+            'text_en': 'Ventured into singing, releasing several successful songs that were well-received by the audience, and participated in some musical concerts.',
+        },
+        {
+            'year': '2010',
+            'title_ar': 'التمثيل', 'title_en': 'Acting',
+            'text_ar': 'شارك في بعض الأعمال التمثيلية، حيث قدم أدواراً مساندة في عدة أفلام سينمائية ومسلسلات تلفزيونية.',
+            'text_en': 'Participated in some acting works, presenting supporting roles in several films and TV series.',
+        },
+        {
+            'year': 'اليوم', 'year_en': 'Today',
+            'title_ar': 'مسيرة مستمرة', 'title_en': 'An Ongoing Journey',
+            'text_ar': 'ما زال حسام حسني يعمل في مجال إدارة الأعمال الفنية والإنتاج، ويقدم دعماً مستمراً لشقيقه تامر حسني في مسيرته الفنية.',
+            'text_en': 'Hossam Hosny continues to work in artistic business management and production, providing ongoing support to his brother Tamer Hosny in his artistic career.',
+        },
+    ]
+    
+    personal_life = {
+        'birth_place_ar': 'المنصورة، مصر',
+        'birth_place_en': 'Mansoura, Egypt',
+        'siblings_ar': 'شقيق أصغر: تامر حسني',
+        'siblings_en': 'Younger brother: Tamer Hosny',
+        'father_ar': 'حسني شريف (مطرب مصري)',
+        'father_en': 'Hosni Sherif (Egyptian singer)',
+        'mother_ar': 'فاطمة الصباغ (سورية)',
+        'mother_en': 'Fatima Al-Sabbagh (Syrian)',
+    }
+    
+    return render(request, 'website/pages/hossam-bio.html', {
+        'stats': stats,
+        'timeline': timeline,
         'personal_life': personal_life,
     })
 
