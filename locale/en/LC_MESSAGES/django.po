@@ -4008,11 +4008,10 @@ msgid "غني مع تامر"
 msgstr "Sing With Tamer"
 
 #: frontend/website/pages/leaderboard.html:51
-msgid "نقط من كل نشاط في الموقع - خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
+msgid "نقط من كل نشاط في الموقع - الاستماع الكامل، خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
 msgstr ""
-"Points from every activity on the site - Guess the Song, likes, duets and "
-"morePoints from every activity on the site - Guess the Song, likes, duets "
-"and more"
+"Points from every activity on the site - full listens, Guess the Song, "
+"likes, duets and more"
 
 #: frontend/website/pages/leaderboard.html:63
 msgid "ترتيبك"

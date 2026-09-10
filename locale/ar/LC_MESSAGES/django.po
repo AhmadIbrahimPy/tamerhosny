@@ -3941,7 +3941,7 @@ msgid "غني مع تامر"
 msgstr ""
 
 #: frontend/website/pages/leaderboard.html:51
-msgid "نقط من كل نشاط في الموقع - خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
+msgid "نقط من كل نشاط في الموقع - الاستماع الكامل، خمّن الأغنية، الإعجابات، الدويتوهات وأكتر"
 msgstr ""
 
 #: frontend/website/pages/leaderboard.html:63
