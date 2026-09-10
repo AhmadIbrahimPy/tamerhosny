@@ -368,9 +368,7 @@
     display: flex;
     gap: 8px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
     overflow-x: auto;
-    padding-bottom: 2px;
   }
 
   .player-tab-btn {
@@ -1425,7 +1423,14 @@ function loadLyrics(songId) {
     .then(response => response.json())
     .then(data => {
       if (!data.results || data.results.length === 0) {
-        container.innerHTML = '<p class="th-empty">{% translate "لا توجد كلمات متاحة" %}</p>';
+        // No timed/synced lines for this song - fall back to the plain
+        // full-lyrics text (Song.lyrics / a FULL_SONG segment) rather
+        // than claiming there are no lyrics at all when there are, just
+        // not broken into clickable timed lines.
+        const fullLyrics = currentSongData.songId === songId ? (currentSongData.lyrics || '') : '';
+        container.innerHTML = fullLyrics.trim()
+          ? `<p class="th-empty" style="white-space:pre-line; text-align:start; opacity:1; color:var(--text);">${escapeHtml(fullLyrics)}</p>`
+          : '<p class="th-empty">{% translate "لا توجد كلمات متاحة" %}</p>';
         return;
       }
 

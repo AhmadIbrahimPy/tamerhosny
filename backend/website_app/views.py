@@ -237,6 +237,7 @@ def song_player_data(request):
             'image': song.display_cover_url or '',
             'songId': song.pk,
             'url': song.audio_file.url if song.audio_file else '',
+            'lyrics': song.full_lyrics_text,
             'currentSongId': int(current_song_id) if current_song_id else song.pk,
             'playCount': song.play_count,
             'likeCount': Like.objects.filter(content_type=song_ct, object_id=song.pk).count(),
