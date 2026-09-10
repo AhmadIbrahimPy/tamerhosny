@@ -4481,18 +4481,6 @@
       // means "tap to talk", same as car mode's button.
       window.thToggleVoiceAssistant = pttTapToggle;
 
-      // Floating mic (#thMicBtnMobile, .th-mic-fab): alternates which
-      // bottom corner it slides in from on each fresh page load, so it
-      // doesn't sit static in one spot forever - stored in localStorage
-      // (survives across page loads, not just this one).
-      var fab = document.getElementById('thMicBtnMobile');
-      if (fab) {
-        var lastFabSide = localStorage.getItem('thMicFabSide') === 'start' ? 'start' : 'end';
-        var nextFabSide = lastFabSide === 'end' ? 'start' : 'end';
-        localStorage.setItem('thMicFabSide', nextFabSide);
-        fab.classList.add('side-' + nextFabSide);
-      }
-
       if (localStorage.getItem(PROMO_STORAGE_KEY) !== '1') {
         setTimeout(showVoicePromoNow, 4000);
       }
@@ -4574,6 +4562,24 @@
       maybeShowVoicePromo();
     }
 
+    // Floating mic (#thMicBtnMobile, .th-mic-fab): alternates which
+    // bottom corner it slides in from on each fresh page load, so it
+    // doesn't sit static in one spot forever - stored in localStorage
+    // (survives across page loads, not just this one). Runs regardless
+    // of IS_MOBILE (UA sniffing) because whether the FAB is actually
+    // visible is a pure CSS width breakpoint (see @media(max-width:980px)
+    // above) - relying on IS_MOBILE here left it unpositioned (no
+    // inset-inline-start/end) on tablets whose UA doesn't match
+    // Android|iPhone|iPad|iPod (notably iPadOS Safari, which reports a
+    // desktop Mac UA by default) even though the CSS still showed it.
+    var fab = document.getElementById('thMicBtnMobile');
+    if (fab) {
+      var lastFabSide = localStorage.getItem('thMicFabSide') === 'start' ? 'start' : 'end';
+      var nextFabSide = lastFabSide === 'end' ? 'start' : 'end';
+      localStorage.setItem('thMicFabSide', nextFabSide);
+      fab.classList.add('side-' + nextFabSide);
+    }
+
     // Periodic feature-discovery tips (Messenger-bubble style, next to
     // whichever mic control is actually in play - the floating one on
     // mobile, the navbar one on desktop) - teaches one capability at a
@@ -4614,7 +4620,18 @@
 
     function nextMicTip() {
       var bubble = document.getElementById('thMicTipBubble');
-      var anchor = document.getElementById(IS_MOBILE ? 'thMicBtnMobile' : 'thMicBtn');
+      // Pick whichever mic control is actually rendered on screen right
+      // now, rather than trusting IS_MOBILE (UA sniffing) - the FAB vs.
+      // navbar button choice is really a CSS width breakpoint (see
+      // .th-mic-fab's @media(max-width:980px) above), and the two can
+      // disagree (e.g. iPadOS Safari's UA doesn't match Android|iPhone|
+      // iPad|iPod at all), which left the bubble anchored to a
+      // display:none element - offsetParent is null for anything
+      // display:none, so this always lands on the visible one.
+      var fabAnchor = document.getElementById('thMicBtnMobile');
+      var navAnchor = document.getElementById('thMicBtn');
+      var anchor = (fabAnchor && fabAnchor.offsetParent) ? fabAnchor :
+        ((navAnchor && navAnchor.offsetParent) ? navAnchor : null);
       if (!bubble || !anchor || document.hidden) return;
       // pttActive only ever gets assigned inside the IS_MOBILE branch
       // above, but var hoists it to this whole function's scope either
