@@ -3911,11 +3911,11 @@ msgid ""
 msgstr ""
 
 #: frontend/website/pages/home.html:122
-msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات"
+msgid "أغنية جديدة كل يوم - خمّن اسمها من 3 اختيارات"
 msgstr ""
 
 #: frontend/website/pages/home.html:131
-msgid "اكسب نقط من كل نشاطك في الموقع وشوف ترتيبك بين كل الجمهور"
+msgid "اكسب نقط وشوف ترتيبك بين الجمهور"
 msgstr ""
 
 #: frontend/website/pages/home.html:133

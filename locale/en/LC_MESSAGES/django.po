@@ -3978,18 +3978,12 @@ msgstr ""
 "commercials and concerts."
 
 #: frontend/website/pages/home.html:122
-msgid "أغنية جديدة كل يوم - اسمع مقطع صغير واختار الاسم الصح من بين 3 اختيارات"
-msgstr ""
-"A new song every day - listen to a short clip and pick the right name from 3 "
-"choicesA new song every day - listen to a short clip and pick the right name "
-"from 3 choices"
+msgid "أغنية جديدة كل يوم - خمّن اسمها من 3 اختيارات"
+msgstr "A new song every day - guess its name from 3 choices"
 
 #: frontend/website/pages/home.html:131
-msgid "اكسب نقط من كل نشاطك في الموقع وشوف ترتيبك بين كل الجمهور"
-msgstr ""
-"Earn points from everything you do on the site and see where you rank among "
-"all fansEarn points from everything you do on the site and see your rank "
-"among all fans"
+msgid "اكسب نقط وشوف ترتيبك بين الجمهور"
+msgstr "Earn points and see your rank among fans"
 
 #: frontend/website/pages/home.html:133
 msgid "شوف ترتيبك"
