@@ -133,128 +133,38 @@ def tamer_bio(request):
         {
             'year': '1977',
             'title_ar': 'البداية', 'title_en': 'The Beginning',
-            'text_ar': 'وُلد تامر حسني شريف عباس فرغلي في 16 أغسطس 1977 في مدينة المنصورة، من أب مصري (المطرب حسني شريف) وأم سورية (فاطمة الصباغ). انفصل والده عن والدته وهو في السابعة من عمره وعاش مع أمه وشقيقه الأكبر حسام.',
-            'text_en': 'Tamer Hosny Sherif Abbas Faragly was born on August 16, 1977 in Mansoura, Egypt, to an Egyptian father (singer Hosni Sherif) and Syrian mother (Fatima Al-Sabbagh). His parents separated when he was seven, and he lived with his mother and older brother Hossam.',
+            'text_ar': 'وُلد تامر حسني في مدينة المنصورة، وبدأ شغفه بالموسيقى والتلحين منذ الطفولة.',
+            'text_en': 'Tamer Hosny was born in Mansoura, Egypt, and his passion for music and composing began in early childhood.',
         },
         {
-            'year': '1999',
+            'year': '1990',
             'title_ar': 'أول خطوة', 'title_en': 'First Steps',
-            'text_ar': 'بدأ مسيرته الفنية عام 1999 مع شركة فري ميوزيك بأغنية "ولا إيه"، ثم عام 2000 أغنية "قولوا لا". التحق بكلية الإعلام جامعة 6 أكتوبر وبدأ مشواره الفني خلال دراسته الجامعية حيث غنى في حفلات الجامعة.',
-            'text_en': 'Started his artistic career in 1999 with Free Music with the song "Wala Eh", then in 2000 with "Qolo La". He joined the Faculty of Mass Communication at October 6 University and began his artistic journey during his university studies, singing at university events.',
+            'text_ar': 'دخل عالم الغناء والتلحين وهو لا يزال في سن مبكرة، ولحّن أغاني لفنانين كبار قبل أن يطرح ألبومه الخاص.',
+            'text_en': 'He entered the music scene at a young age, composing for established artists before releasing his own debut work.',
         },
         {
-            'year': '2002',
+            'year': '2000',
             'title_ar': 'الانطلاقة', 'title_en': 'Breakthrough',
-            'text_ar': 'أطلق أول ألبوم مشترك مع الفنانة شيرين عبد الوهاب بعنوان "فري ميكس 3" وحقق أرقاماً قياسية في المبيعات والانتشار، ومن ثم بزغ نجمه وتوالت ألبوماته الفنية.',
-            'text_en': 'Released his first collaborative album with Sherine Abdel Wahab titled "Free Mix 3", achieving record-breaking sales and popularity. His star rose, and his artistic albums followed one after another.',
+            'text_ar': 'حقق نجاحاً جماهيرياً واسعاً بألبوماته المتتالية وأغانيه التي سيطرت على الشارع العربي، ولُقّب بـ"نجم جيله".',
+            'text_en': 'A string of hit albums and chart-topping singles made him one of the most prominent voices of his generation.',
         },
         {
-            'year': '2003',
-            'title_ar': 'أول ألبوم منفرد', 'title_en': 'First Solo Album',
-            'text_ar': 'أطلق أول ألبوم منفرد له باسم "حب" وتم تصوير أغنية واحدة فقط من الألبوم فيديو كليب وهي أغنية "قرب حبيبي". دخل مجال التمثيل لأول مرة في فيلم "حالة حب".',
-            'text_en': 'Released his first solo album titled "Hob", with only one song filmed as a music video: "Qorab Habibi". He entered the acting field for the first time in the film "Halet Hob".',
-        },
-        {
-            'year': '2005',
-            'title_ar': 'سيد العاطفي', 'title_en': 'Sayyed El Atefi',
-            'text_ar': 'خاض تجربته الثانية في التمثيل في فيلم "سيد العاطفي" وأدى دور "سيد محمود الجمال" وحقق نجاحاً كبيراً. أطلق ألبوم "عينيا بتحبك".',
-            'text_en': 'Had his second acting experience in the film "Sayyed El Atefi", playing the role of "Sayyed Mahmoud El Gamal", achieving great success. Released the album "Einy Bethebik".',
-        },
-        {
-            'year': '2007',
-            'title_ar': 'عمر وسلمى', 'title_en': 'Omar & Salma',
-            'text_ar': 'عرض الجزء الأول من فيلمه "عمر وسلمى" الذي حقق نجاحاً كبيراً. أطلق ألبومين: "الجنة في بيوتنا" (أول ألبوم اجتماعي/ديني) و"يا بنت الإيه" الذي احتوى على ستة أغاني من ألحان وكلماته.',
-            'text_en': 'The first part of his film "Omar & Salma" was released, achieving great success. Released two albums: "El Janna Fi Byoutna" (his first social/religious album) and "Ya Bent Eh", which contained six songs composed and written by him.',
-        },
-        {
-            'year': '2009',
-            'title_ar': 'عالم الفن', 'title_en': 'Alam El Fan',
-            'text_ar': 'وقع عقداً مع شركة عالم الفن وأطلق ألبوم "هاعيش حياتي" الذي ضم أول أغنية باللغة الإنجليزية له باسم "Come Back To Me". عرض الجزء الثاني من فيلم "عمر وسلمى" وحقق إيرادات مرتفعة.',
-            'text_en': 'Signed a contract with Alam El Fan company and released the album "Haayesh Hayati", which included his first English song "Come Back To Me". The second part of "Omar & Salma" was released, achieving high revenues.',
+            'year': '2005 - 2015',
+            'title_ar': 'التمثيل والسينما', 'title_en': 'Acting & Cinema',
+            'text_ar': 'خاض تجربة التمثيل السينمائي بنجاح كبير عبر سلسلة أفلام حققت إيرادات مرتفعة وحضوراً جماهيرياً واسعاً في مصر والعالم العربي.',
+            'text_en': 'He built a highly successful film career, starring in a series of box-office hits across Egypt and the Arab world.',
         },
         {
             'year': '2010',
-            'title_ar': 'جائزة أفريقيا', 'title_en': 'Africa Award',
-            'text_ar': 'حصل على جائزة أفضل فنان أفريقي من حفل توزيع جوائز الموسيقى الأفريقية في لندن، وقدم جيرمين جاكسون الجائزة له. أطلق ألبوم "اخترت صح" الذي احتوى على ثاني أغانيه باللغة الإنجليزية "Sweet Melody".',
-            'text_en': 'Won the Best African Artist award at the African Music Awards in London, presented to him by Jermaine Jackson. Released the album "Ekhtart Sah" which included his second English song "Sweet Melody".',
-        },
-        {
-            'year': '2011',
-            'title_ar': 'آدم', 'title_en': 'Adam',
-            'text_ar': 'قدم أول مسلسل تلفزيوني له بعنوان "آدم" وشاركه البطولة مي عز الدين وأحمد زاهر ودرة. أعلن عن جزء ثالث لفيلم "عمر وسلمى" بعد النجاح الكبير الذي حققه الجزأين الأول والثاني.',
-            'text_en': 'Presented his first TV series titled "Adam", co-starring Mai Ezz El-Din, Ahmed Zaher, and Dorra. Announced a third part of "Omar & Salma" after the great success of the first two parts.',
-        },
-        {
-            'year': '2012',
-            'title_ar': 'الزواج', 'title_en': 'Marriage',
-            'text_ar': 'تزوج من متسابقة ستار أكاديمي المغنية المغربية بسمة بوسيل، وله منها ثلاثة أبناء (تاليا، وأمايا، وآدم). عرض الجزء الثالث من فيلم "عمر وسلمى" في دور السينما.',
-            'text_en': 'Married Star Academy contestant and Moroccan singer Boushra Bousil, and they have three children (Talia, Amaya, and Adam). The third part of "Omar & Salma" was released in cinemas.',
-        },
-        {
-            'year': '2013',
-            'title_ar': 'أسطورة القرن', 'title_en': 'Legend of the Century',
-            'text_ar': 'حصل على جائزة أسطورة القرن كأفضل فنان شامل من البيغ أبل ميوزك أورد. أطلق ألبوم "بحبك انت" مع شركة فري ميوزيك.',
-            'text_en': 'Won the Legend of the Century award as the best comprehensive artist from Big Apple Music Awards. Released the album "Bahebak Enta" with Free Music.',
-        },
-        {
-            'year': '2014',
-            'title_ar': '180 درجة', 'title_en': '180 Degrees',
-            'text_ar': 'أطلق ألبوم "180 درجة" وهو أول ألبوم له مع شركة روتانا. تم تصوير أغنيتان من الألبوم فيديو كليب: "Welcome To The Life" مع المغني العالمي إيكون، وأغنية "180 درجة". أطلق مسلسل "فرق توقيت".',
-            'text_en': 'Released the album "180 Degrees", his first with Rotana. Two songs from the album were filmed as music videos: "Welcome To The Life" with international singer Akon, and "180 Degrees". Released the series "Farq Tawqeet".',
-        },
-        {
-            'year': '2015',
-            'title_ar': 'أهواك', 'title_en': 'Ahwak',
-            'text_ar': 'شارك في فيلم "أهواك" من إنتاج محمد السبكي وحاز هذا الفيلم على جائزة أفضل فيلم في مصر لعام 2015. حصل على جائزة أفضل ممثل عربي وجائزة أفضل أغنية عن "إطمني".',
-            'text_en': 'Starred in the film "Ahwak" produced by Mohamed El Sobky, which won the Best Film in Egypt award for 2015. Won the Best Arab Actor award and Best Song award for "Etmenne".',
-        },
-        {
-            'year': '2016',
-            'title_ar': 'عمري ابتدا', 'title_en': 'Omri Ebtada',
-            'text_ar': 'أطلق ألبوم "عمري ابتدا" الذي احتوى على 14 أغنية من إنتاج شركة روتانا. رغم تسريبه حقق مبيعات كبيرة وبلغ عدد مشاهداته على يوتيوب 40 مليون مشاهدة في شهر واحد.',
-            'text_en': 'Released the album "Omri Ebtada" containing 14 songs produced by Rotana. Despite being leaked, it achieved high sales and reached 40 million views on YouTube in one month.',
-        },
-        {
-            'year': '2017',
-            'title_ar': 'تصبح على خير', 'title_en': 'Tesbah Ala Kheir',
-            'text_ar': 'أطلق فيلم "تصبح على خير" الذي عرض في موسم عيد الفطر وحقق نجاحاً كبيراً في الدول العربية.',
-            'text_en': 'Released the film "Tesbah Ala Kheir" which was shown during Eid al-Fitr and achieved great success in Arab countries.',
-        },
-        {
-            'year': '2018',
-            'title_ar': 'عيش بشوقك', 'title_en': 'Eish Beshoqak',
-            'text_ar': 'أطلق ألبوم "عيش بشوقك" الذي حقق نجاحاً كبيراً على يوتيوب بحوالي 260 مليون مشاهدة ومبيعات عالية. قدم فيلم "البدلة" وحقق أعلى إيرادات في عامه. حصل على 3 جوائز من الميما ميوزك أورد.',
-            'text_en': 'Released the album "Eish Beshoqak" which achieved great success on YouTube with approximately 260 million views and high sales. Presented the film "El Badla" which achieved the highest revenues in its year. Won 3 awards from Mema Music Awards.',
-        },
-        {
-            'year': '2019',
-            'title_ar': 'الفلوس', 'title_en': 'El Foloos',
-            'text_ar': 'قدم فيلم "الفلوس" ولكنه لم يحقق النجاح المطلوب. حصل على جائزة نجم الغناء العربي من موريكس دور.',
-            'text_en': 'Presented the film "El Foloos" but did not achieve the expected success. Won the Arab Singing Star award from Murex d\'Or.',
-        },
-        {
-            'year': '2020',
-            'title_ar': 'خليك فولاذي', 'title_en': 'Khalek Folazy',
-            'text_ar': 'أطلق ألبوم "خليك فولاذي" الذي احتوى على 10 أغاني من إنتاج شركة فري ميوزيك.',
-            'text_en': 'Released the album "Khalek Folazy" containing 10 songs produced by Free Music.',
-        },
-        {
-            'year': '2022',
-            'title_ar': 'بحبك شارك', 'title_en': 'Bahebak Sharik',
-            'text_ar': 'أطلق فيلم "بحبك" شارك في بطولته هنا الزاهد وحمدي المرغني وهدى المفتي وحقق نجاحاً باهراً. أطلق ألبوم "عشأنجي" الذي احتوى على 9 أغاني.',
-            'text_en': 'Released the film "Bahebak" starring Hana El Zahed, Hamdy El Merghany, and Huda El Mufti, achieving dazzling success. Released the album "Eshaanji" containing 9 songs.',
-        },
-        {
-            'year': '2023',
-            'title_ar': 'هرمون السعادة', 'title_en': 'Hormone El Saada',
-            'text_ar': 'أطلق ألبوم "هرمون السعادة" الذي احتوى على 9 أغاني من إنتاج شركة TH. حصل على جائزة أفضل فنان عربي من المهرجان العربي للإذاعة والتلفزيون في تونس.',
-            'text_en': 'Released the album "Hormone El Saada" containing 9 songs produced by TH. Won the Best Arab Artist award from the Arab Festival for Radio and Television in Tunisia.',
+            'title_ar': 'انتشار عالمي', 'title_en': 'Going Global',
+            'text_ar': 'قدّم تعاونات غنائية عالمية وشارك في حفلات دولية، ووصل صوته إلى جمهور أوسع خارج المنطقة العربية.',
+            'text_en': 'International collaborations and global performances carried his sound to audiences far beyond the Arab world.',
         },
         {
             'year': 'اليوم', 'year_en': 'Today',
             'title_ar': 'مسيرة مستمرة', 'title_en': 'An Ongoing Journey',
-            'text_ar': 'ما زال تامر حسني حاضراً بقوة في الساحة الفنية، بين الغناء والتلحين والتمثيل، محتفظاً بمكانته كأحد أهم نجوم الوطن العربي. يُلقب بـ"نجم الجيل" و"أسطورة القرن" و"صوت القدس" و"سفير الخير".',
-            'text_en': 'Tamer Hosny remains a driving force across music, composing and film — one of the biggest names in the Arab world. He is known as "Star of the Generation", "Legend of the Century", "Voice of Jerusalem", and "Ambassador of Goodwill".',
+            'text_ar': 'ما زال تامر حسني حاضراً بقوة في الساحة الفنية، بين الغناء والتلحين والتمثيل، محتفظاً بمكانته كأحد أهم نجوم الوطن العربي.',
+            'text_en': 'Tamer Hosny remains a driving force across music, composing and film — one of the biggest names in the Arab world.',
         },
     ]
     
@@ -289,18 +199,10 @@ def tamer_bio(request):
     ]
     
     personal_life = {
-        'birth_date_ar': '16 أغسطس 1977',
-        'birth_date_en': 'August 16, 1977',
         'birth_place_ar': 'المنصورة، مصر',
         'birth_place_en': 'Mansoura, Egypt',
-        'father_ar': 'حسني شريف (مطرب مصري)',
-        'father_en': 'Hosni Sherif (Egyptian singer)',
-        'mother_ar': 'فاطمة الصباغ (سورية)',
-        'mother_en': 'Fatima Al-Sabbagh (Syrian)',
         'siblings_ar': 'شقيق واحد: حسام',
         'siblings_en': 'One brother: Hossam',
-        'marriage_ar': 'تزوج من بسمة بوسيل (مغربية) عام 2012',
-        'marriage_en': 'Married Boushra Bousil (Moroccan) in 2012',
         'children_ar': 'ثلاثة أبناء: تاليا، أمايا، آدم',
         'children_en': 'Three children: Talia, Amaya, Adam',
     }
@@ -370,6 +272,12 @@ def song_player_data(request):
 
         song_ct = ContentType.objects.get_for_model(Song)
 
+        # Convert relative URLs to absolute URLs
+        def to_absolute(url):
+            if url and not url.startswith('http'):
+                return request.build_absolute_uri(url)
+            return url
+
         data = {
             'title': localized_field(song, 'title'),
             'title_en': song.title_en,
@@ -378,9 +286,9 @@ def song_player_data(request):
             'artistSlugs': [credit.person.slug for credit in singers],
             'album': localized_field(song.album, 'title') if song.album else '',
             'albumSlug': song.album.slug if song.album else '',
-            'image': song.display_cover_url or '',
+            'image': to_absolute(song.display_cover_url) or '',
             'songId': song.pk,
-            'url': song.audio_file.url if song.audio_file else '',
+            'url': to_absolute(song.audio_file.url) if song.audio_file else '',
             'lyrics': song.full_lyrics_text,
             'currentSongId': int(current_song_id) if current_song_id else song.pk,
             'playCount': song.play_count,
@@ -389,11 +297,11 @@ def song_player_data(request):
             'otherSongs': [
                 {
                     'title': localized_field(s, 'title'),
-                    'image': s.display_cover_url or '',
+                    'image': to_absolute(s.display_cover_url) or '',
                     'link': f'/songs/{s.slug}/',
                     'duration': f"{s.duration_seconds // 60}:{s.duration_seconds % 60:02d}" if s.duration_seconds else '',
                     'songId': s.pk,
-                    'url': s.audio_file.url if s.audio_file else '',
+                    'url': to_absolute(s.audio_file.url) if s.audio_file else '',
                     'artist': ', '.join([localized_field(credit.person, 'full_name') for credit in s.credits.select_related('person').all() if credit.role in vocal_roles]),
                     'album': localized_field(s.album, 'title') if s.album else ''
                 }
@@ -403,7 +311,7 @@ def song_player_data(request):
                 {
                     'personName': localized_field(credit.person, 'full_name'),
                     'personSlug': credit.person.slug,
-                    'personImage': credit.person.profile_image.url if credit.person.profile_image else '',
+                    'personImage': to_absolute(credit.person.profile_image.url) if credit.person.profile_image else '',
                     'role': credit.get_role_display()
                 }
                 for credit in crew_credits

@@ -306,28 +306,12 @@
     <p class="bio-section-sub">{% translate "معلومات عن حياة تامر حسني الشخصية والعائلية." %}</p>
     <div class="bio-personal-grid">
       <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-calendar-event"></i> {% translate "تاريخ الميلاد" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.birth_date_ar }}{% else %}{{ personal_life.birth_date_en }}{% endif %}</div>
-      </div>
-      <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-geo-alt"></i> {% translate "مكان الميلاد" %}</div>
         <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.birth_place_ar }}{% else %}{{ personal_life.birth_place_en }}{% endif %}</div>
       </div>
       <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالد" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.father_ar }}{% else %}{{ personal_life.father_en }}{% endif %}</div>
-      </div>
-      <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالدة" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.mother_ar }}{% else %}{{ personal_life.mother_en }}{% endif %}</div>
-      </div>
-      <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-people"></i> {% translate "الإخوة" %}</div>
         <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.siblings_ar }}{% else %}{{ personal_life.siblings_en }}{% endif %}</div>
-      </div>
-      <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-heart"></i> {% translate "الحالة الاجتماعية" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.marriage_ar }}{% else %}{{ personal_life.marriage_en }}{% endif %}</div>
       </div>
       <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-child"></i> {% translate "الأبناء" %}</div>
