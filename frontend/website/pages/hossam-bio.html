@@ -161,7 +161,7 @@
     <div>
       <div class="bio-hero-portrait">
         <div class="bio-hero-portrait-inner">
-          <i class="bi bi-person-fill"></i>
+          <img src="{% static 'images/hosamhosny.jpg' %}" alt="{% translate 'حسام حسني' %}">
         </div>
       </div>
 
@@ -227,10 +227,6 @@
       <div class="bio-personal-card">
         <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالد" %}</div>
         <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.father_ar }}{% else %}{{ personal_life.father_en }}{% endif %}</div>
-      </div>
-      <div class="bio-personal-card">
-        <div class="bio-personal-label"><i class="bi bi-person"></i> {% translate "الوالدة" %}</div>
-        <div class="bio-personal-value">{% if LANGUAGE_CODE == 'ar' %}{{ personal_life.mother_ar }}{% else %}{{ personal_life.mother_en }}{% endif %}</div>
       </div>
     </div>
   </section>

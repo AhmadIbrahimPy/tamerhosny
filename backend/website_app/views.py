@@ -219,9 +219,9 @@ def hossam_hosny_bio(request):
     """Biography page for Hossam Hosny (Tamer Hosny's brother)."""
     stats = [
         {'value': '25+', 'label_ar': 'سنة في عالم الفن', 'label_en': 'Years in the arts'},
-        {'value': '10+', 'label_ar': 'ألبوم غنائي', 'label_en': 'Music albums'},
-        {'value': '5+', 'label_ar': 'فيلم سينمائي', 'label_en': 'Feature films'},
-        {'value': '20+', 'label_ar': 'أغنية منفردة', 'label_en': 'Singles'},
+        {'value': '50+', 'label_ar': 'ألبوم تم إنتاجها', 'label_en': 'Albums produced'},
+        {'value': '100+', 'label_ar': 'أغنية تم إنتاجها', 'label_en': 'Songs produced'},
+        {'value': '20+', 'label_ar': 'فنان تم إدارتهم', 'label_en': 'Artists managed'},
     ]
     timeline = [
         {
@@ -231,34 +231,28 @@ def hossam_hosny_bio(request):
             'text_en': 'Hossam Hosny was born in Mansoura, Egypt, as the older brother of artist Tamer Hosny. He grew up in an artistic family where his father was singer Hosni Sherif.',
         },
         {
-            'year': '1995',
-            'title_ar': 'أول خطوة', 'title_en': 'First Steps',
-            'text_ar': 'بدأ مشواره الفني مبكراً، حيث عمل كمدير أعمال شقيقه تامر حسني في بداياته، وساهم في تطوير مسيرته الفنية.',
-            'text_en': 'Started his artistic journey early, working as a business manager for his brother Tamer Hosny in his early days, contributing to developing his artistic career.',
+            'year': '1998',
+            'title_ar': 'إدارة الأعمال', 'title_en': 'Business Management',
+            'text_ar': 'بدأ العمل كمدير أعمال لشقيقه تامر حسني في بدايات مسيرته الفنية، وساهم في تنظيم عقوده الفنية وإدارة علاقاته مع شركات الإنتاج.',
+            'text_en': 'Started working as a business manager for his brother Tamer Hosny in the early days of his artistic career, contributing to organizing his artistic contracts and managing his relationships with production companies.',
         },
         {
-            'year': '2000',
-            'title_ar': 'الإدارة والإنتاج', 'title_en': 'Management & Production',
-            'text_ar': 'تخصص في إدارة الأعمال الفنية والإنتاج، حيث أشرف على إنتاج العديد من الأعمال الناجحة لشقيقه تامر حسني وغيره من الفنانين.',
-            'text_en': 'Specialized in artistic business management and production, overseeing the production of many successful works for his brother Tamer Hosny and other artists.',
-        },
-        {
-            'year': '2005',
-            'title_ar': 'الغناء', 'title_en': 'Singing',
-            'text_ar': 'خوض تجربة الغناء، حيث أطلق عدة أغنيات ناجحة لاقت إعجاب الجمهور، وشارك في بعض الحفلات الغنائية.',
-            'text_en': 'Ventured into singing, releasing several successful songs that were well-received by the audience, and participated in some musical concerts.',
+            'year': '2002',
+            'title_ar': 'الإنتاج الفني', 'title_en': 'Artistic Production',
+            'text_ar': 'توسع في مجال الإنتاج الفني، حيث أسس شركة إنتاج خاصة وأشرف على إنتاج العديد من الألبومات والأغاني الناجحة لعدة فنانين مصريين وعرب.',
+            'text_en': 'Expanded into artistic production, establishing his own production company and overseeing the production of many successful albums and songs for several Egyptian and Arab artists.',
         },
         {
             'year': '2010',
-            'title_ar': 'التمثيل', 'title_en': 'Acting',
-            'text_ar': 'شارك في بعض الأعمال التمثيلية، حيث قدم أدواراً مساندة في عدة أفلام سينمائية ومسلسلات تلفزيونية.',
-            'text_en': 'Participated in some acting works, presenting supporting roles in several films and TV series.',
+            'title_ar': 'التوسع الإقليمي', 'title_en': 'Regional Expansion',
+            'text_ar': 'وسع نشاطه الإنتاجي ليشمل فنانين من مختلف الدول العربية، وأصبح واحداً من أبرز منتجي الموسيقى في المنطقة.',
+            'text_en': 'Expanded his production activities to include artists from various Arab countries, becoming one of the most prominent music producers in the region.',
         },
         {
             'year': 'اليوم', 'year_en': 'Today',
             'title_ar': 'مسيرة مستمرة', 'title_en': 'An Ongoing Journey',
-            'text_ar': 'ما زال حسام حسني يعمل في مجال إدارة الأعمال الفنية والإنتاج، ويقدم دعماً مستمراً لشقيقه تامر حسني في مسيرته الفنية.',
-            'text_en': 'Hossam Hosny continues to work in artistic business management and production, providing ongoing support to his brother Tamer Hosny in his artistic career.',
+            'text_ar': 'ما زال حسام حسني يعمل في مجال إدارة الأعمال الفنية والإنتاج، ويقدم دعماً مستمراً لشقيقه تامر حسني والعديد من الفنانين الآخرين.',
+            'text_en': 'Hossam Hosny continues to work in artistic business management and production, providing ongoing support to his brother Tamer Hosny and many other artists.',
         },
     ]
     
@@ -269,8 +263,6 @@ def hossam_hosny_bio(request):
         'siblings_en': 'Younger brother: Tamer Hosny',
         'father_ar': 'حسني شريف (مطرب مصري)',
         'father_en': 'Hosni Sherif (Egyptian singer)',
-        'mother_ar': 'فاطمة الصباغ (سورية)',
-        'mother_en': 'Fatima Al-Sabbagh (Syrian)',
     }
     
     return render(request, 'website/pages/hossam-bio.html', {
@@ -327,7 +319,8 @@ def song_player_data(request):
             # back to allowing a repeat once that pool is actually empty.
             unheard = remaining_catalog.exclude(pk__in=played_ids) if played_ids else remaining_catalog
             random_songs = list((unheard if unheard.exists() else remaining_catalog).order_by('?')[:19])
-            album_songs = [song] + random_songs
+            # Ensure the current song is not duplicated in the queue
+            album_songs = [song] + [s for s in random_songs if s.pk != song.pk]
         # Get credits
         all_credits = list(song.credits.select_related('person').all())
         vocal_roles = (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
