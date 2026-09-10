@@ -22,6 +22,15 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
+    /* Pinned while the lyrics/tracklist/etc. in .player-main scroll past
+       it - top offset clears the sticky navbar (base.html's .th-nav,
+       position:sticky top:0) so this doesn't slide underneath it.
+       align-self:flex-start is required for sticky to work at all on a
+       flex child - without it the item stretches to the row's height
+       and never has room to "stick". */
+    position: sticky;
+    top: 88px;
+    align-self: flex-start;
   }
 
   .player-main {
@@ -44,6 +53,9 @@
     .player-sidebar {
       flex: 0 0 auto;
       width: 100%;
+      /* Stacked above the tabs here rather than beside them - pinning it
+         while scrolling would just eat the small viewport's height. */
+      position: static;
     }
 
     .player-cover {
@@ -1322,9 +1334,12 @@ function fetchSongDataFromAPI(songId) {
 
     updatePlayerBar();
 
-    // Load the data
+    // Load the data - a random queue gets played-history tracks
+    // restored above the current song (see mergeQueueWithHistory);
+    // an album's tracklist is already stable/ordered, so it's left as-is.
     if (data.otherSongs && data.otherSongs.length > 0) {
-      loadOtherSongs(data.otherSongs, data.currentSongId);
+      const displayQueue = currentSongData.isRandomQueue ? mergeQueueWithHistory(data.otherSongs) : data.otherSongs;
+      loadOtherSongs(displayQueue, data.currentSongId);
     }
     if (data.credits && data.credits.length > 0) {
       loadCredits(data.credits);
@@ -1347,6 +1362,29 @@ function getCSRFToken() {
     .find(row => row.startsWith('csrftoken='))
     ?.split('=')[1];
   return cookieValue || '';
+}
+
+// A random queue is rebuilt from scratch server-side on every song
+// change (song_player_data just returns "current song + fresh random
+// picks" each time, stateless) - passing that straight to
+// loadOtherSongs wiped out whatever had already played from the
+// visible list and put the new current song back at the top, making it
+// look like the history had vanished. This prepends the real session
+// play history (base.html's getPlayHistory - already used for
+// playPrevious/shuffle) so already-played tracks stay listed above the
+// current one, in the order they actually played.
+function mergeQueueWithHistory(serverList) {
+  if (typeof getPlayHistory !== 'function') return serverList;
+  const history = getPlayHistory();
+  // Last entry is the current song (see base.html's songChanged
+  // listener) - everything before it already played.
+  const playedBefore = history.slice(0, -1).filter(function (h) { return h.songId != null; });
+  const playedIds = playedBefore.map(function (h) { return h.songId; });
+  const upcoming = serverList.filter(function (s) { return playedIds.indexOf(s.songId) === -1; });
+  const historyItems = playedBefore.map(function (h) {
+    return { songId: h.songId, title: h.title, image: h.image, url: h.url, link: h.link, artist: h.artist, album: h.album };
+  });
+  return historyItems.concat(upcoming);
 }
 
 function loadOtherSongs(songs, activeSongId = null) {
