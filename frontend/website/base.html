@@ -416,7 +416,7 @@
     .th-see-all{display:inline-flex; align-items:center; gap:4px; font-size:13.5px; font-weight:700; color:var(--accent);
       text-decoration:none; white-space:nowrap; flex-shrink:0;}
     .th-see-all:hover{color:#f4d47a;}
-    html[dir="rtl"] .th-see-all i{display:inline-block; transform:scaleX(-1);}
+    html[dir="ltr"] .th-see-all i{display:inline-block; transform:scaleX(-1);}
 
     /* Grid */
     .th-grid{display:grid; gap:20px; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));}
@@ -4649,10 +4649,13 @@
       bubble.textContent = text;
       bubble.style.display = 'block';
       var rect = anchor.getBoundingClientRect();
-      // Anchor in the lower half of the screen (mobile FAB) -> bubble
-      // sits above it, tail pointing down; upper half (desktop navbar)
-      // -> bubble sits below it, tail pointing up.
-      var pointsDown = rect.top > window.innerHeight / 2;
+      // The floating mobile/tablet FAB always gets the bubble below it
+      // (tail pointing up) regardless of where it sits on screen -
+      // requested explicitly since "above it" read as covering/crowding
+      // the round button. Desktop navbar button keeps the old
+      // screen-half heuristic (it's always in the top half anyway, so
+      // this is effectively the same outcome there).
+      var pointsDown = anchor === fabAnchor ? false : rect.top > window.innerHeight / 2;
       bubble.classList.toggle('point-down', pointsDown);
       bubble.classList.toggle('point-up', !pointsDown);
       if (pointsDown) {
