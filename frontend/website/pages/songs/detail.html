@@ -1086,6 +1086,153 @@
     }
   }
 
+  /* --- 3D Audio Visualizer --- */
+  .visualizer-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 24px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 750;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    transition: 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .visualizer-toggle-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
+  }
+
+  .visualizer-toggle-btn.active {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  }
+
+  .visualizer-toggle-btn.active:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(99, 102, 241, 0.5);
+  }
+
+  .audio-visualizer-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+    display: none;
+    background: rgba(11, 12, 18, 0.95);
+    backdrop-filter: blur(20px);
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .audio-visualizer-container.active {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .audio-visualizer-container {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      z-index: 99999 !important;
+    }
+  }
+
+  .visualizer-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .visualizer-close-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .visualizer-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  .visualizer-info {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    text-align: center;
+    color: var(--text);
+    pointer-events: none;
+  }
+
+  .visualizer-info h3 {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .visualizer-info p {
+    font-size: 14px;
+    color: var(--muted);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  @media (max-width: 768px) {
+    .visualizer-info h3 {
+      font-size: 16px;
+    }
+    
+    .visualizer-info p {
+      font-size: 10px;
+    }
+  }
+
   /* --- Stats Bar (Under Cover) --- */
   .song-hero-media .song-stat {
     display: flex;
@@ -2469,7 +2616,14 @@
                      where it flows inline among these other pill buttons
                      via display:contents. Narrow screens leave it on the
                      cover untouched. -->
-                <div class="song-actions"></div>
+                <div class="song-actions">
+                    {% if audio_url %}
+                    <button type="button" class="song-action song-action-secondary visualizer-toggle-btn" id="visualizerToggleBtn" onclick="toggle3DVisualizer()" aria-label="3D">
+                        <i class="bi bi-boxes"></i>
+                        <span>3D</span>
+                    </button>
+                    {% endif %}
+                </div>
 
                 <!-- Synchronized Lyrics Display -->
                 {% if song.lyric_segments.exists %}
@@ -2805,6 +2959,117 @@
   </div>
 </div>
 
+<!-- 3D Audio Visualizer Container - Moved outside song-detail-page to avoid constraints -->
+<div class="audio-visualizer-container" id="audioVisualizerContainer">
+  <canvas class="visualizer-canvas" id="visualizerCanvas"></canvas>
+  <button type="button" class="visualizer-close-btn" onclick="toggle3DVisualizer()" aria-label="{% translate 'إغلاق' %}">
+    <i class="bi bi-x-lg"></i>
+  </button>
+  <div class="visualizer-info">
+    <h3>{{ song|localized_field:'title' }}</h3>
+    <p id="visualizerLyricsText"></p>
+  </div>
+</div>
+
+<style>
+  /* Force visualizer container to be truly fullscreen */
+  .audio-visualizer-container.active {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    z-index: 99999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+  }
+
+  /* Force canvas to fill container */
+  .audio-visualizer-container.active .visualizer-canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: block !important;
+  }
+
+  /* Mobile specific overrides */
+  @media (max-width: 768px) {
+    .audio-visualizer-container.active {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      z-index: 99999 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      display: block !important;
+    }
+
+    .audio-visualizer-container.active .visualizer-canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      display: block !important;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 600px) {
+    .audio-visualizer-container.active {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      z-index: 99999 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      display: block !important;
+    }
+
+    .audio-visualizer-container.active .visualizer-canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      display: block !important;
+    }
+  }
+</style>
+
+<!-- Hidden image for 3D texture -->
+{% if song.display_cover_url %}
+<img id="songCoverTexture" src="{{ song.display_cover_url }}" style="display:none;" crossorigin="anonymous">
+{% endif %}
+
 <!-- Remix Modal -->
 <div class="modal fade remix-modal" id="remixModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -2965,6 +3230,1141 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- 3D Audio Visualizer - Professional Implementation -->
+<script>
+// --- Configuration ---
+if (typeof VISUALIZER_CONFIG === 'undefined') {
+  window.VISUALIZER_CONFIG = {
+    particleCount: { desktop: 15000, mobile: 8000 },
+    cameraZ: { desktop: 80, mobile: 100 },
+    flyThroughSpeed: 0.5,
+    stateTransitionDuration: 3000,
+    stateSwitchInterval: 20000,
+    bloomStrength: 2.0,
+    bloomRadius: 0.5,
+    bloomThreshold: 0.2
+  };
+}
+
+// --- State Variables ---
+let visualizerAudioContext = null;
+let visualizerAnalyser = null;
+let visualizerSource = null;
+let visualizerDataArray = null;
+let visualizerScene = null;
+let visualizerCamera = null;
+let visualizerRenderer = null;
+let visualizerComposer = null;
+let visualizerBloomPass = null;
+let visualizerBars = [];
+let visualizerParticles = null;
+let visualizerAnimationId = null;
+let isVisualizerActive = false;
+
+// Visual State Management
+let currentVisualState = 'vortex';
+let targetVisualState = 'vortex';
+let stateTransitionProgress = 1.0;
+let stateTransitionTimer = null;
+let stateTransitionDuration = 3000;
+let stateSwitchInterval = 20000;
+let particleStatePositions = {};
+const VISUAL_STATES = ['vortex', 'explosion', 'chaos', 'helix'];
+
+// Lyrics Management
+let lyricsData = [];
+let currentLyricIndex = 0;
+let lyricsUpdateInterval = null;
+
+// Dancing Figures Management
+let dancingFigures = {
+  male: null,
+  female: null,
+  styleA: { male: null, female: null },
+  styleB: { male: null, female: null },
+  currentStyle: 'A',
+  styleSwitchTimer: null,
+  morphProgress: 1.0,
+  isMorphing: false
+};
+
+// --- Utility Functions ---
+function isMobile() {
+  return window.innerWidth < 768;
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+// --- Procedural Dancing Figures ---
+function createProceduralFigure(isMale, style = 'A') {
+  const group = new THREE.Group();
+  
+  if (style === 'A') {
+    // Style A: Neon Wireframe
+    createWireframeFigure(group, isMale);
+  } else {
+    // Style B: Glowing Particle Silhouette
+    createParticleFigure(group, isMale);
+  }
+  
+  return group;
+}
+
+function createWireframeFigure(group, isMale) {
+  const wireframeMaterial = new THREE.MeshBasicMaterial({
+    color: isMale ? 0x00d4ff : 0xff6b9d,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.8
+  });
+
+  // Head
+  const headGeometry = new THREE.SphereGeometry(1.5, 16, 16);
+  const head = new THREE.Mesh(headGeometry, wireframeMaterial);
+  head.position.y = isMale ? 6 : 5.5;
+  group.add(head);
+
+  // Torso
+  const torsoGeometry = new THREE.CylinderGeometry(isMale ? 1.5 : 1.2, isMale ? 1.2 : 0.8, isMale ? 4 : 3.5, 16);
+  const torso = new THREE.Mesh(torsoGeometry, wireframeMaterial);
+  torso.position.y = isMale ? 3 : 2.5;
+  group.add(torso);
+
+  // Arms
+  const armGeometry = new THREE.CylinderGeometry(0.3, 0.3, isMale ? 3 : 2.5, 8);
+  
+  const leftArm = new THREE.Mesh(armGeometry, wireframeMaterial);
+  leftArm.position.set(isMale ? -2 : -1.8, isMale ? 4 : 3.5, 0);
+  leftArm.rotation.z = 0.3;
+  group.add(leftArm);
+
+  const rightArm = new THREE.Mesh(armGeometry, wireframeMaterial);
+  rightArm.position.set(isMale ? 2 : 1.8, isMale ? 4 : 3.5, 0);
+  rightArm.rotation.z = -0.3;
+  group.add(rightArm);
+
+  // Legs
+  const legGeometry = new THREE.CylinderGeometry(isMale ? 0.5 : 0.4, isMale ? 0.4 : 0.3, isMale ? 4 : 3.5, 8);
+  
+  const leftLeg = new THREE.Mesh(legGeometry, wireframeMaterial);
+  leftLeg.position.set(isMale ? -0.8 : -0.6, isMale ? -1 : -0.5, 0);
+  group.add(leftLeg);
+
+  const rightLeg = new THREE.Mesh(legGeometry, wireframeMaterial);
+  rightLeg.position.set(isMale ? 0.8 : 0.6, isMale ? -1 : -0.5, 0);
+  group.add(rightLeg);
+
+  // Store references for animation
+  group.userData = {
+    head, torso, leftArm, rightArm, leftLeg, rightLeg,
+    type: 'wireframe'
+  };
+}
+
+function createParticleFigure(group, isMale) {
+  const particleCount = 200;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  // Human silhouette shape points
+  const silhouettePoints = generateSilhouettePoints(isMale, particleCount);
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = silhouettePoints[i].x;
+    positions[i * 3 + 1] = silhouettePoints[i].y;
+    positions[i * 3 + 2] = silhouettePoints[i].z;
+
+    const color = new THREE.Color(isMale ? 0x00d4ff : 0xff6b9d);
+    colors[i * 3] = color.r;
+    colors[i * 3 + 1] = color.g;
+    colors[i * 3 + 2] = color.b;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const material = new THREE.PointsMaterial({
+    size: 0.3,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending
+  });
+
+  const particles = new THREE.Points(geometry, material);
+  group.add(particles);
+
+  group.userData = {
+    particles,
+    type: 'particle',
+    originalPositions: positions.slice()
+  };
+}
+
+function generateSilhouettePoints(isMale, count) {
+  const points = [];
+  const height = isMale ? 8 : 7;
+  const width = isMale ? 3 : 2.5;
+
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    const y = (t - 0.5) * height;
+    
+    // Body width varies by height
+    let bodyWidth = width * (1 - Math.abs(y) / height * 0.5);
+    
+    // Add some randomness for organic feel
+    const x = (Math.random() - 0.5) * bodyWidth;
+    const z = (Math.random() - 0.5) * bodyWidth * 0.3;
+
+    points.push({ x, y, z });
+  }
+
+  return points;
+}
+
+function createDancingFigures() {
+  console.log('Creating dancing figures...');
+  
+  // Create Style A figures (Neon Wireframe)
+  dancingFigures.styleA.male = createProceduralFigure(true, 'A');
+  dancingFigures.styleA.female = createProceduralFigure(false, 'A');
+
+  // Create Style B figures (Glowing Particles)
+  dancingFigures.styleB.male = createProceduralFigure(true, 'B');
+  dancingFigures.styleB.female = createProceduralFigure(false, 'B');
+
+  // Position figures
+  dancingFigures.styleA.male.position.set(-15, 0, 0);
+  dancingFigures.styleA.female.position.set(15, 0, 0);
+  dancingFigures.styleB.male.position.set(-15, 0, 0);
+  dancingFigures.styleB.female.position.set(15, 0, 0);
+
+  // Initially hide Style B
+  dancingFigures.styleB.male.visible = false;
+  dancingFigures.styleB.female.visible = false;
+
+  // Add to scene
+  visualizerScene.add(dancingFigures.styleA.male);
+  visualizerScene.add(dancingFigures.styleA.female);
+  visualizerScene.add(dancingFigures.styleB.male);
+  visualizerScene.add(dancingFigures.styleB.female);
+
+  // Set current active figures
+  dancingFigures.male = dancingFigures.styleA.male;
+  dancingFigures.female = dancingFigures.styleA.female;
+
+  console.log('Dancing figures created and added to scene');
+  
+  // Start style switching timer
+  startFigureStyleSwitching();
+}
+
+function startFigureStyleSwitching() {
+  if (dancingFigures.styleSwitchTimer) {
+    clearInterval(dancingFigures.styleSwitchTimer);
+  }
+
+  dancingFigures.styleSwitchTimer = setInterval(() => {
+    if (isVisualizerActive) {
+      triggerFigureStyleSwitch();
+    }
+  }, 30000); // Switch every 30 seconds
+}
+
+function triggerFigureStyleSwitch() {
+  dancingFigures.isMorphing = true;
+  dancingFigures.morphProgress = 0;
+  
+  const newStyle = dancingFigures.currentStyle === 'A' ? 'B' : 'A';
+  dancingFigures.currentStyle = newStyle;
+}
+
+function updateFigureMorphing(deltaTime) {
+  if (!dancingFigures.isMorphing) return;
+
+  const morphDuration = 2000; // 2 seconds to morph
+  dancingFigures.morphProgress += deltaTime / morphDuration;
+
+  if (dancingFigures.morphProgress >= 1.0) {
+    dancingFigures.morphProgress = 1.0;
+    dancingFigures.isMorphing = false;
+
+    // Complete the switch
+    const oldStyle = dancingFigures.currentStyle === 'A' ? 'B' : 'A';
+    dancingFigures[`style${oldStyle}`].male.visible = false;
+    dancingFigures[`style${oldStyle}`].female.visible = false;
+    dancingFigures[`style${dancingFigures.currentStyle}`].male.visible = true;
+    dancingFigures[`style${dancingFigures.currentStyle}`].female.visible = true;
+
+    dancingFigures.male = dancingFigures[`style${dancingFigures.currentStyle}`].male;
+    dancingFigures.female = dancingFigures[`style${dancingFigures.currentStyle}`].female;
+  }
+
+  // Smooth opacity transition
+  const progress = easeInOutCubic(dancingFigures.morphProgress);
+  const oldStyle = dancingFigures.currentStyle === 'A' ? 'B' : 'A';
+
+  // Fade out old style
+  if (dancingFigures[`style${oldStyle}`].male) {
+    setFigureOpacity(dancingFigures[`style${oldStyle}`].male, 1 - progress);
+    setFigureOpacity(dancingFigures[`style${oldStyle}`].female, 1 - progress);
+  }
+
+  // Fade in new style
+  if (dancingFigures[`style${dancingFigures.currentStyle}`].male) {
+    setFigureOpacity(dancingFigures[`style${dancingFigures.currentStyle}`].male, progress);
+    setFigureOpacity(dancingFigures[`style${dancingFigures.currentStyle}`].female, progress);
+  }
+}
+
+function setFigureOpacity(group, opacity) {
+  group.traverse((child) => {
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach(m => m.opacity = opacity);
+      } else {
+        child.material.opacity = opacity;
+      }
+    }
+  });
+}
+
+function animateDancingFigures(bassNorm, midsNorm, treblesNorm) {
+  if (!dancingFigures.male || !dancingFigures.female) {
+    console.log('Dancing figures not initialized');
+    return;
+  }
+
+  const time = Date.now() * 0.001;
+  const danceSpeed = 1 + bassNorm * 3;
+  const danceIntensity = 0.1 + midsNorm * 0.3;
+
+  // Animate male figure
+  animateFigureDance(dancingFigures.male, time, danceSpeed, danceIntensity, bassNorm, true);
+
+  // Animate female figure
+  animateFigureDance(dancingFigures.female, time, danceSpeed, danceIntensity, bassNorm, false);
+}
+
+function animateFigureDance(group, time, speed, intensity, bassNorm, isMale) {
+  if (group.userData.type === 'wireframe') {
+    animateWireframeDance(group, time, speed, intensity, bassNorm, isMale);
+  } else {
+    animateParticleDance(group, time, speed, intensity, bassNorm, isMale);
+  }
+}
+
+function animateWireframeDance(group, time, speed, intensity, bassNorm, isMale) {
+  const { head, torso, leftArm, rightArm, leftLeg, rightLeg } = group.userData;
+
+  // Balanced speed - not too fast, not too slow
+  const minSpeed = 2;
+  const minIntensity = 0.2;
+  const actualSpeed = Math.max(speed, minSpeed);
+  const actualIntensity = Math.max(intensity, minIntensity);
+
+  // Gradual audio reactivity - smooth transitions
+  const bassFactor = THREE.MathUtils.lerp(0.1, 0.6, bassNorm);
+  const intensityFactor = THREE.MathUtils.lerp(0.3, 0.8, actualIntensity);
+
+  // Body bounce on bass - moderate
+  const bounce = Math.sin(time * actualSpeed * 3) * bassFactor;
+  group.position.y = bounce;
+
+  // Whole body rotation - subtle
+  group.rotation.y = Math.sin(time * actualSpeed * 1.5) * 0.15;
+
+  // Head bob - gentle
+  if (head) {
+    head.rotation.x = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.4;
+    head.rotation.z = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.3;
+  }
+
+  // Torso sway - smooth
+  if (torso) {
+    torso.rotation.y = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.3;
+    torso.rotation.x = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.2;
+  }
+
+  // Arms wave - natural movement
+  if (leftArm) {
+    leftArm.rotation.z = 0.3 + Math.sin(time * actualSpeed * 3) * intensityFactor * 0.6;
+    leftArm.rotation.x = Math.cos(time * actualSpeed * 2.5) * intensityFactor * 0.3;
+  }
+  if (rightArm) {
+    rightArm.rotation.z = -0.3 + Math.cos(time * actualSpeed * 3) * intensityFactor * 0.6;
+    rightArm.rotation.x = Math.sin(time * actualSpeed * 2.5) * intensityFactor * 0.3;
+  }
+
+  // Legs move - moderate
+  if (leftLeg) {
+    leftLeg.rotation.x = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.3;
+    leftLeg.rotation.z = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.15;
+  }
+  if (rightLeg) {
+    rightLeg.rotation.x = Math.cos(time * actualSpeed * 2) * intensityFactor * 0.3;
+    rightLeg.rotation.z = Math.sin(time * actualSpeed * 1.5) * intensityFactor * 0.15;
+  }
+}
+
+function animateParticleDance(group, time, speed, intensity, bassNorm, isMale) {
+  const { particles, originalPositions } = group.userData;
+  const positions = particles.geometry.attributes.position.array;
+
+  // Balanced speed - not too fast, not too slow
+  const minSpeed = 2;
+  const minIntensity = 0.2;
+  const actualSpeed = Math.max(speed, minSpeed);
+  const actualIntensity = Math.max(intensity, minIntensity);
+
+  // Gradual audio reactivity - smooth transitions
+  const bassFactor = THREE.MathUtils.lerp(0.1, 0.5, bassNorm);
+  const intensityFactor = THREE.MathUtils.lerp(0.3, 0.6, actualIntensity);
+
+  for (let i = 0; i < originalPositions.length / 3; i++) {
+    const idx = i * 3;
+    const ox = originalPositions[idx];
+    const oy = originalPositions[idx + 1];
+    const oz = originalPositions[idx + 2];
+
+    // Smooth wave motion
+    positions[idx] = ox + 
+      Math.sin(time * actualSpeed * 2 + oy * 0.5) * intensityFactor * 0.4 +
+      Math.cos(time * actualSpeed * 1.5 + ox * 0.3) * intensityFactor * 0.2;
+    
+    positions[idx + 1] = oy + 
+      Math.cos(time * actualSpeed * 2 + ox * 0.5) * intensityFactor * 0.3 +
+      Math.sin(time * actualSpeed * 1.5 + oy * 0.3) * intensityFactor * 0.15;
+    
+    positions[idx + 2] = oz + 
+      Math.sin(time * actualSpeed * 2.5) * bassFactor +
+      Math.cos(time * actualSpeed * 2) * intensityFactor * 0.15;
+  }
+
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  // Whole group bounce - moderate
+  group.position.y = Math.sin(time * actualSpeed * 3) * bassFactor;
+  
+  // Whole group rotation - subtle
+  group.rotation.y = Math.sin(time * actualSpeed * 1.5) * 0.15;
+}
+
+// --- Main Initialization ---
+function init3DVisualizer() {
+  const container = document.getElementById('audioVisualizerContainer');
+  const canvas = document.getElementById('visualizerCanvas');
+  
+  if (!container || !canvas) return;
+
+  // Force container to be fullscreen immediately
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.right = '0';
+  container.style.bottom = '0';
+  container.style.width = '100vw';
+  container.style.height = '100vh';
+  container.style.padding = '0';
+  container.style.margin = '0';
+  container.style.overflow = 'hidden';
+
+  // Force canvas to fill container immediately
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+
+  // Initialize Three.js scene
+  visualizerScene = new THREE.Scene();
+  visualizerCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  
+  // Adjust camera for mobile
+  visualizerCamera.position.z = isMobile() ? VISUALIZER_CONFIG.cameraZ.mobile : VISUALIZER_CONFIG.cameraZ.desktop;
+
+  visualizerRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  visualizerRenderer.setSize(window.innerWidth, window.innerHeight);
+  visualizerRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+  visualizerRenderer.toneMapping = THREE.ReinhardToneMapping;
+  visualizerRenderer.toneMappingExposure = 1.5;
+
+  // Create particle system
+  const particleCount = isMobile() ? VISUALIZER_CONFIG.particleCount.mobile : VISUALIZER_CONFIG.particleCount.desktop;
+  const particleGeometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  const sizes = new Float32Array(particleCount);
+  const velocities = new Float32Array(particleCount * 3);
+
+  // Initialize state positions for all 4 states
+  particleStatePositions = {
+    vortex: new Float32Array(particleCount * 3),
+    explosion: new Float32Array(particleCount * 3),
+    chaos: new Float32Array(particleCount * 3),
+    helix: new Float32Array(particleCount * 3)
+  };
+
+  for (let i = 0; i < particleCount; i++) {
+    // State A: Vortex/Tunnel (spiral pattern - optimized for fly-through)
+    const vortexRadius = Math.random() * 50 + 20;
+    const vortexAngle = Math.random() * Math.PI * 2;
+    const vortexHeight = (Math.random() - 0.5) * 60;
+    const vortexDepth = (Math.random() - 0.5) * 200; // Extended Z range for fly-through
+    
+    particleStatePositions.vortex[i * 3] = Math.cos(vortexAngle) * vortexRadius;
+    particleStatePositions.vortex[i * 3 + 1] = vortexHeight;
+    particleStatePositions.vortex[i * 3 + 2] = vortexDepth;
+
+    // State B: Explosion/Pulsing Sphere (radial outward)
+    const explosionRadius = Math.random() * 40 + 10;
+    const explosionTheta = Math.random() * Math.PI * 2;
+    const explosionPhi = Math.acos(2 * Math.random() - 1);
+    const explosionDepth = (Math.random() - 0.5) * 200;
+    
+    particleStatePositions.explosion[i * 3] = explosionRadius * Math.sin(explosionPhi) * Math.cos(explosionTheta);
+    particleStatePositions.explosion[i * 3 + 1] = explosionRadius * Math.sin(explosionPhi) * Math.sin(explosionTheta);
+    particleStatePositions.explosion[i * 3 + 2] = explosionDepth;
+
+    // State C: Chaotic Cloud/Nebula (random scattered with depth)
+    particleStatePositions.chaos[i * 3] = (Math.random() - 0.5) * 120;
+    particleStatePositions.chaos[i * 3 + 1] = (Math.random() - 0.5) * 120;
+    particleStatePositions.chaos[i * 3 + 2] = (Math.random() - 0.5) * 200;
+
+    // State D: DNA Helix / Waveform (double helix structure with depth)
+    const helixRadius = 30 + Math.random() * 15;
+    const helixAngle = (i / particleCount) * Math.PI * 10; // More rotations
+    const helixHeight = (i / particleCount) * 100 - 50;
+    const helixStrand = i % 2 === 0 ? 1 : -1;
+    const helixDepth = (Math.random() - 0.5) * 200;
+    
+    particleStatePositions.helix[i * 3] = Math.cos(helixAngle) * helixRadius * helixStrand;
+    particleStatePositions.helix[i * 3 + 1] = helixHeight;
+    particleStatePositions.helix[i * 3 + 2] = helixDepth;
+
+    // Initialize with vortex state
+    positions[i * 3] = particleStatePositions.vortex[i * 3];
+    positions[i * 3 + 1] = particleStatePositions.vortex[i * 3 + 1];
+    positions[i * 3 + 2] = particleStatePositions.vortex[i * 3 + 2];
+
+    // Random velocities for organic movement
+    velocities[i * 3] = (Math.random() - 0.5) * 0.1;
+    velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.1;
+    velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+
+    // Cinematic color palette (neon blue, purple, cyan, magenta)
+    const colorChoice = Math.random();
+    if (colorChoice < 0.25) {
+      // Neon blue
+      colors[i * 3] = 0.2; colors[i * 3 + 1] = 0.5; colors[i * 3 + 2] = 1.0;
+    } else if (colorChoice < 0.5) {
+      // Purple
+      colors[i * 3] = 0.6; colors[i * 3 + 1] = 0.2; colors[i * 3 + 2] = 1.0;
+    } else if (colorChoice < 0.75) {
+      // Cyan
+      colors[i * 3] = 0.0; colors[i * 3 + 1] = 1.0; colors[i * 3 + 2] = 1.0;
+    } else {
+      // Magenta
+      colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.0; colors[i * 3 + 2] = 1.0;
+    }
+
+    sizes[i] = Math.random() * 2 + 0.5;
+  }
+
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  // Custom shader material for glowing particles
+  const particleMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 },
+      bassIntensity: { value: 0 },
+      midIntensity: { value: 0 },
+      trebleIntensity: { value: 0 }
+    },
+    vertexShader: `
+      attribute float size;
+      attribute vec3 color;
+      varying vec3 vColor;
+      varying float vSize;
+      uniform float time;
+      uniform float bassIntensity;
+      uniform float midIntensity;
+      uniform float trebleIntensity;
+
+      void main() {
+        vColor = color;
+        vSize = size * (1.0 + bassIntensity * 0.5);
+        
+        vec3 pos = position;
+        
+        // Add organic movement based on audio
+        float audioInfluence = bassIntensity + midIntensity + trebleIntensity;
+        pos.x += sin(time * 2.0 + position.y * 0.1) * audioInfluence * 2.0;
+        pos.y += cos(time * 1.5 + position.x * 0.1) * audioInfluence * 2.0;
+        pos.z += sin(time * 1.8 + position.z * 0.1) * audioInfluence * 2.0;
+        
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = vSize * (300.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vSize;
+      uniform float time;
+      uniform float trebleIntensity;
+
+      void main() {
+        // Create circular particle with soft glow
+        vec2 center = gl_PointCoord - vec2(0.5);
+        float dist = length(center);
+        
+        if (dist > 0.5) discard;
+        
+        // Soft edge glow
+        float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+        
+        // Add pulsing glow based on treble
+        float glow = 1.0 + trebleIntensity * 0.5 * sin(time * 10.0);
+        
+        vec3 finalColor = vColor * glow;
+        gl_FragColor = vec4(finalColor, alpha * 0.8);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  visualizerParticles = new THREE.Points(particleGeometry, particleMaterial);
+  visualizerScene.add(visualizerParticles);
+
+  // Store particle data for animation
+  visualizerBars.push({
+    positions: positions,
+    velocities: velocities,
+    count: particleCount,
+    originalStatePositions: particleStatePositions
+  });
+
+  // Add central glowing sphere (song cover)
+  const coverImage = document.getElementById('songCoverTexture');
+  if (coverImage) {
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(coverImage.src, function(texture) {
+      const coverGeometry = new THREE.SphereGeometry(8, 64, 64);
+      const coverMaterial = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.9
+      });
+      const coverMesh = new THREE.Mesh(coverGeometry, coverMaterial);
+      coverMesh.position.set(0, 0, 0);
+      visualizerScene.add(coverMesh);
+      visualizerBars.push({ mesh: coverMesh, isCover: true });
+    });
+  }
+
+  // Add outer glow sphere
+  const glowGeometry = new THREE.SphereGeometry(15, 64, 64);
+  const glowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x8a5cff,
+    transparent: true,
+    opacity: 0.1,
+    side: THREE.BackSide
+  });
+  const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+  visualizerScene.add(glowMesh);
+  visualizerBars.push({ mesh: glowMesh, isGlow: true });
+
+  // Setup post-processing with bloom
+  visualizerComposer = new THREE.EffectComposer(visualizerRenderer);
+  const renderPass = new THREE.RenderPass(visualizerScene, visualizerCamera);
+  visualizerComposer.addPass(renderPass);
+
+  const bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    VISUALIZER_CONFIG.bloomStrength,
+    VISUALIZER_CONFIG.bloomRadius,
+    VISUALIZER_CONFIG.bloomThreshold
+  );
+  visualizerComposer.addPass(bloomPass);
+  visualizerBloomPass = bloomPass;
+
+  // Handle window resize
+  window.addEventListener('resize', onVisualizerWindowResize);
+
+  // Handle mobile orientation change
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      onVisualizerWindowResize();
+    }, 100);
+  });
+
+  // Start features
+  startStateTransitionTimer();
+  initLyrics();
+  createDancingFigures();
+}
+
+function initLyrics() {
+  const checkLyricsLoaded = setInterval(() => {
+    const lyricSegments = window.lyricsSegments || (typeof lyricsSegments !== 'undefined' ? lyricsSegments : []);
+    
+    if (lyricSegments.length > 0) {
+      clearInterval(checkLyricsLoaded);
+      
+      lyricSegments.forEach((segment, index) => {
+        if (segment.text && segment.text.trim() && segment.segment_type === 'LYRICS') {
+          lyricsData.push({ 
+            text: segment.text.trim(), 
+            startTime: segment.start_seconds || index * 4, 
+            index 
+          });
+        }
+      });
+
+      if (lyricsData.length === 0) {
+        return;
+      }
+      startLyricsSync();
+    }
+  }, 500);
+
+  setTimeout(() => {
+    clearInterval(checkLyricsLoaded);
+    if (lyricsData.length === 0) {
+    }
+  }, 10000);
+}
+
+function startLyricsSync() {
+  if (lyricsUpdateInterval) {
+    clearInterval(lyricsUpdateInterval);
+  }
+
+  lyricsUpdateInterval = setInterval(() => {
+    if (!isVisualizerActive || !globalAudio) return;
+
+    const currentTime = globalAudio.currentTime;
+    let newLyricIndex = 0;
+    
+    for (let i = lyricsData.length - 1; i >= 0; i--) {
+      if (currentTime >= lyricsData[i].startTime) {
+        newLyricIndex = i;
+        break;
+      }
+    }
+
+    if (newLyricIndex !== currentLyricIndex) {
+      currentLyricIndex = newLyricIndex;
+      const infoText = document.getElementById('visualizerLyricsText');
+      if (infoText) {
+        infoText.textContent = lyricsData[currentLyricIndex].text;
+      }
+    }
+  }, 100);
+}
+
+function startStateTransitionTimer() {
+  if (stateTransitionTimer) {
+    clearInterval(stateTransitionTimer);
+  }
+  
+  stateTransitionTimer = setInterval(() => {
+    if (isVisualizerActive) {
+      triggerStateTransition();
+    }
+  }, stateSwitchInterval);
+}
+
+function triggerStateTransition() {
+  const availableStates = VISUAL_STATES.filter(state => state !== currentVisualState);
+  const randomIndex = Math.floor(Math.random() * availableStates.length);
+  targetVisualState = availableStates[randomIndex];
+  stateTransitionProgress = 0;
+  stateSwitchInterval = 15000 + Math.random() * 15000;
+  startStateTransitionTimer();
+}
+
+function updateStateTransition(deltaTime) {
+  if (stateTransitionProgress < 1.0) {
+    stateTransitionProgress += deltaTime / stateTransitionDuration;
+    
+    if (stateTransitionProgress >= 1.0) {
+      stateTransitionProgress = 1.0;
+      currentVisualState = targetVisualState;
+    }
+    
+    const easedProgress = easeInOutCubic(stateTransitionProgress);
+    
+    if (visualizerBars.length > 0 && visualizerBars[0].positions) {
+      const positions = visualizerBars[0].positions;
+      const count = visualizerBars[0].count;
+      const currentPositions = particleStatePositions[currentVisualState];
+      const targetPositions = particleStatePositions[targetVisualState];
+      
+      for (let i = 0; i < count * 3; i++) {
+        positions[i] = THREE.MathUtils.lerp(currentPositions[i], targetPositions[i], easedProgress);
+      }
+      
+      visualizerParticles.geometry.attributes.position.needsUpdate = true;
+    }
+  }
+}
+
+function initVisualizerAudioContext() {
+  if (visualizerAudioContext) return;
+
+  visualizerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  visualizerAnalyser = visualizerAudioContext.createAnalyser();
+  visualizerAnalyser.fftSize = 256;
+  visualizerAnalyser.smoothingTimeConstant = 0.8;
+
+  const bufferLength = visualizerAnalyser.frequencyBinCount;
+  visualizerDataArray = new Uint8Array(bufferLength);
+
+  // Connect to global audio element
+  if (typeof globalAudio !== 'undefined' && globalAudio) {
+    visualizerSource = visualizerAudioContext.createMediaElementSource(globalAudio);
+    visualizerSource.connect(visualizerAnalyser);
+    visualizerAnalyser.connect(visualizerAudioContext.destination);
+  }
+}
+
+function toggle3DVisualizer() {
+  const container = document.getElementById('audioVisualizerContainer');
+  const toggleBtn = document.getElementById('visualizerToggleBtn');
+  
+  if (!container) {
+    console.error('Visualizer container not found');
+    return;
+  }
+
+  isVisualizerActive = !isVisualizerActive;
+
+  if (isVisualizerActive) {
+    // Move container to body
+    if (container.parentElement !== document.body) {
+      document.body.appendChild(container);
+    }
+    
+    // Force fullscreen
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.right = '0';
+    container.style.bottom = '0';
+    container.style.width = '100vw';
+    container.style.height = '100vh';
+    container.style.zIndex = '99999';
+    container.style.padding = '0';
+    container.style.margin = '0';
+    container.style.overflow = 'hidden';
+    container.style.display = 'block';
+    
+    // Force canvas
+    const canvas = document.getElementById('visualizerCanvas');
+    if (canvas) {
+      canvas.style.position = 'absolute';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.display = 'block';
+    }
+    
+    container.classList.add('active');
+    if (toggleBtn) toggleBtn.classList.add('active');
+    
+    initVisualizerAudioContext();
+    
+    if (!visualizerScene) {
+      init3DVisualizer();
+    }
+    
+    if (visualizerAudioContext && visualizerAudioContext.state === 'suspended') {
+      visualizerAudioContext.resume();
+    }
+    
+    animateVisualizer();
+  } else {
+    container.classList.remove('active');
+    if (toggleBtn) toggleBtn.classList.remove('active');
+    cleanup3DVisualizer();
+  }
+}
+
+function animateVisualizer() {
+  if (!isVisualizerActive) return;
+
+  const currentTime = Date.now();
+  const deltaTime = currentTime - (animateVisualizer.lastTime || currentTime);
+  animateVisualizer.lastTime = currentTime;
+
+  visualizerAnimationId = requestAnimationFrame(animateVisualizer);
+  updateStateTransition(deltaTime);
+  updateFigureMorphing(deltaTime);
+
+  if (visualizerAnalyser && visualizerDataArray) {
+    visualizerAnalyser.getByteFrequencyData(visualizerDataArray);
+
+    const bass = getVisualizerAverageFrequency(visualizerDataArray, 0, 10);
+    const mids = getVisualizerAverageFrequency(visualizerDataArray, 10, 50);
+    const trebles = getVisualizerAverageFrequency(visualizerDataArray, 50, 128);
+
+    const bassNorm = bass / 255;
+    const midsNorm = mids / 255;
+    const treblesNorm = trebles / 255;
+
+    // Update shader uniforms
+    if (visualizerParticles && visualizerParticles.material.uniforms) {
+      visualizerParticles.material.uniforms.time.value = Date.now() * 0.001;
+      visualizerParticles.material.uniforms.bassIntensity.value = bassNorm;
+      visualizerParticles.material.uniforms.midIntensity.value = midsNorm;
+      visualizerParticles.material.uniforms.trebleIntensity.value = treblesNorm;
+    }
+
+    // Animate particles
+    if (visualizerParticles) {
+      const time = Date.now() * 0.001;
+      let rotationSpeedY = 0.001;
+      let rotationSpeedX = 0.0005;
+      
+      switch(currentVisualState) {
+        case 'vortex':
+          rotationSpeedY = 0.002 + bassNorm * 0.01;
+          rotationSpeedX = 0.001 + midsNorm * 0.005;
+          break;
+        case 'explosion':
+          rotationSpeedY = 0.003 + bassNorm * 0.015;
+          rotationSpeedX = 0.002 + midsNorm * 0.008;
+          break;
+        case 'chaos':
+          rotationSpeedY = 0.0005 + bassNorm * 0.005;
+          rotationSpeedX = 0.0003 + midsNorm * 0.003;
+          break;
+        case 'helix':
+          rotationSpeedY = 0.004 + bassNorm * 0.02;
+          rotationSpeedX = 0.001 + midsNorm * 0.005;
+          break;
+      }
+      
+      visualizerParticles.rotation.y += rotationSpeedY;
+      visualizerParticles.rotation.x += rotationSpeedX;
+      visualizerParticles.scale.setScalar(THREE.MathUtils.lerp(visualizerParticles.scale.x, 1 + bassNorm * 0.3, 0.1));
+
+      // Fly-through effect
+      if (visualizerBars.length > 0 && visualizerBars[0].positions) {
+        const positions = visualizerBars[0].positions;
+        const count = visualizerBars[0].count;
+        const speed = VISUALIZER_CONFIG.flyThroughSpeed * (1 + bassNorm * 3);
+        
+        for (let i = 0; i < count; i++) {
+          const idx = i * 3;
+          positions[idx + 2] -= speed;
+          
+          if (positions[idx + 2] < -100) {
+            positions[idx + 2] = 100;
+            const statePositions = particleStatePositions[currentVisualState];
+            if (statePositions) {
+              positions[idx] = statePositions[idx];
+              positions[idx + 1] = statePositions[idx + 1];
+            }
+          }
+        }
+        
+        visualizerParticles.geometry.attributes.position.needsUpdate = true;
+      }
+    }
+
+    // Update bloom
+    if (visualizerBloomPass) {
+      const energy = (bass + mids + trebles) / 3 / 255;
+      visualizerBloomPass.strength = THREE.MathUtils.lerp(visualizerBloomPass.strength, 2.0 + energy * 1.5, 0.05);
+      visualizerBloomPass.radius = THREE.MathUtils.lerp(visualizerBloomPass.radius, treblesNorm > 0.7 ? 0.8 : 0.5, 0.02);
+    }
+
+    // Animate meshes
+    visualizerBars.forEach((item) => {
+      if (item.isCover && item.mesh) {
+        item.mesh.scale.setScalar(THREE.MathUtils.lerp(item.mesh.scale.x, 1 + bassNorm * 0.2, 0.1));
+        item.mesh.rotation.y += 0.005 + midsNorm * 0.01;
+        item.mesh.rotation.x += 0.003 + treblesNorm * 0.005;
+      }
+      
+      if (item.isGlow && item.mesh) {
+        item.mesh.material.opacity = THREE.MathUtils.lerp(item.mesh.material.opacity, 0.1 + bassNorm * 0.2, 0.1);
+        item.mesh.scale.setScalar(THREE.MathUtils.lerp(item.mesh.scale.x, 1 + bassNorm * 0.15, 0.1));
+      }
+    });
+
+    // Animate lyrics overlay
+    const infoText = document.getElementById('visualizerLyricsText');
+    if (infoText) {
+      infoText.style.transform = `scale(${1 + bassNorm * 0.3})`;
+      const glowIntensity = 0.8 + treblesNorm * 0.4;
+      infoText.style.textShadow = `0 0 ${15 + treblesNorm * 20}px rgba(138, 92, 255, ${glowIntensity}), 0 0 ${30 + treblesNorm * 30}px rgba(212, 175, 55, ${glowIntensity * 0.7})`;
+    }
+
+    // Animate dancing figures
+    if (dancingFigures.male && dancingFigures.female) {
+      animateDancingFigures(bassNorm, midsNorm, treblesNorm);
+    }
+
+    // Camera movement
+    const time = Date.now() * 0.001;
+    const cameraRadius = 80;
+    visualizerCamera.position.x = Math.sin(time * 0.2) * cameraRadius * 0.3 + (bassNorm * 10);
+    visualizerCamera.position.y = Math.cos(time * 0.15) * cameraRadius * 0.2 + (midsNorm * 8);
+    visualizerCamera.position.z = cameraRadius + Math.sin(time * 0.1) * 20 + (treblesNorm * 15);
+    
+    if (bassNorm > 0.8) {
+      visualizerCamera.position.x += (Math.random() - 0.5) * 2;
+      visualizerCamera.position.y += (Math.random() - 0.5) * 2;
+    }
+    
+    visualizerCamera.lookAt(0, 0, 0);
+  }
+
+  if (visualizerComposer) {
+    visualizerComposer.render();
+  } else {
+    visualizerRenderer.render(visualizerScene, visualizerCamera);
+  }
+}
+
+function getVisualizerAverageFrequency(dataArray, startIndex, endIndex) {
+  let sum = 0;
+  for (let i = startIndex; i < endIndex && i < dataArray.length; i++) {
+    sum += dataArray[i];
+  }
+  return sum / (endIndex - startIndex);
+}
+
+function onVisualizerWindowResize() {
+  if (visualizerCamera && visualizerRenderer) {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    visualizerCamera.aspect = width / height;
+    visualizerCamera.updateProjectionMatrix();
+    visualizerRenderer.setSize(width, height);
+    
+    if (visualizerComposer) {
+      visualizerComposer.setSize(width, height);
+    }
+    
+    // Force container to be fullscreen
+    const container = document.getElementById('audioVisualizerContainer');
+    if (container) {
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.right = '0';
+      container.style.bottom = '0';
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+      container.style.padding = '0';
+      container.style.margin = '0';
+      container.style.overflow = 'hidden';
+    }
+    
+    // Force canvas to fill container
+    const canvas = document.getElementById('visualizerCanvas');
+    if (canvas) {
+      canvas.style.position = 'absolute';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+    }
+  }
+}
+
+function cleanup3DVisualizer() {
+  isVisualizerActive = false;
+  
+  if (visualizerAnimationId) {
+    cancelAnimationFrame(visualizerAnimationId);
+    visualizerAnimationId = null;
+  }
+
+  if (stateTransitionTimer) {
+    clearInterval(stateTransitionTimer);
+    stateTransitionTimer = null;
+  }
+
+  if (lyricsUpdateInterval) {
+    clearInterval(lyricsUpdateInterval);
+    lyricsUpdateInterval = null;
+  }
+
+  if (dancingFigures.styleSwitchTimer) {
+    clearInterval(dancingFigures.styleSwitchTimer);
+    dancingFigures.styleSwitchTimer = null;
+  }
+
+  if (visualizerComposer) {
+    if (typeof visualizerComposer.dispose === 'function') {
+      visualizerComposer.dispose();
+    }
+    visualizerComposer = null;
+  }
+
+  if (visualizerRenderer) {
+    visualizerRenderer.dispose();
+    visualizerRenderer = null;
+  }
+
+  if (visualizerScene) {
+    visualizerScene = null;
+  }
+
+  if (visualizerCamera) {
+    visualizerCamera = null;
+  }
+
+  if (visualizerBloomPass) {
+    visualizerBloomPass = null;
+  }
+
+  // Reset state
+  currentVisualState = 'vortex';
+  targetVisualState = 'vortex';
+  stateTransitionProgress = 1.0;
+  particleStatePositions = {};
+  lyricsData = [];
+  currentLyricIndex = 0;
+  visualizerBars = [];
+  visualizerParticles = null;
+
+  // Reset dancing figures
+  dancingFigures.male = null;
+  dancingFigures.female = null;
+  dancingFigures.styleA = { male: null, female: null };
+  dancingFigures.styleB = { male: null, female: null };
+  dancingFigures.currentStyle = 'A';
+  dancingFigures.isMorphing = false;
+  dancingFigures.morphProgress = 1.0;
+
+  window.removeEventListener('resize', onVisualizerWindowResize);
+  
+  // Hide container
+  const container = document.getElementById('audioVisualizerContainer');
+  if (container) {
+    container.classList.remove('active');
+    container.style.display = 'none';
+  }
+}
+</script>
+
 <script>
 (function () {
   'use strict';
@@ -3232,6 +4632,9 @@
           }))
           .sort((a, b) => a.start_seconds - b.start_seconds);
 
+        // Make lyricsSegments globally accessible for the 3D visualizer
+        window.lyricsSegments = lyricsSegments;
+
         // Hide synced lyrics on mobile after loading
         const syncedLyrics = document.getElementById('syncedLyrics');
         if (syncedLyrics && window.innerWidth < 577) {
@@ -3297,10 +4700,7 @@
         // Update content with animation
         if (lyricElement) {
           const textElement = lyricElement.querySelector('.lyric-text');
-          if (textElement) {
-            console.log('Segment data:', currentSegment);
-            console.log('vocal_doubling:', currentSegment.vocal_doubling);
-            console.log('double_tracking:', currentSegment.double_tracking);
+          if (textElement) {ء
             
             // Clear any existing repeat animation interval when segment changes
             if (repeatAnimationInterval) {
@@ -3466,17 +4866,8 @@
     // Check for special segment types (correct field names from model)
     const isVocalDoubling = segmentData && (segmentData.vocal_doubling === true || segmentData.vocal_doubling === 'true' || segmentData.vocal_doubling === 1);
     const isDoubleTracking = segmentData && (segmentData.double_tracking === true || segmentData.double_tracking === 'true' || segmentData.double_tracking === 1);
-    
-    console.log('Animation check:', {
-      segmentIndex,
-      vocal_doubling: segmentData?.vocal_doubling,
-      double_tracking: segmentData?.double_tracking,
-      isVocalDoubling,
-      isDoubleTracking
-    });
-    
+
     if (isVocalDoubling || isDoubleTracking) {
-      console.log('Using special animation for segment', segmentIndex);
       
       // Clear any existing repeat interval
       if (repeatAnimationInterval) {
@@ -3557,8 +4948,6 @@
   }
   
   function pulseText(element, text) {
-    console.log('pulseText called with:', { element, text });
-    console.log('Element exists:', !!element);
     
     // Force display inline-block for animations to work
     element.style.display = 'inline-block';
@@ -3567,12 +4956,6 @@
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'pulse 1.2s ease-in-out';
-    
-    console.log('CSS pulse animation applied');
-    console.log('Element styles:', {
-      display: element.style.display,
-      animation: element.style.animation
-    });
   }
   
   // Add CSS animations for special effects
@@ -3620,48 +5003,38 @@
   document.head.appendChild(animationsStyle);
   
   function glowText(element, text) {
-    console.log('glowText called');
     element.textContent = text;
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'glow 1s ease-in-out';
-    console.log('CSS glow animation applied');
   }
   
   function shakeText(element, text) {
-    console.log('shakeText called');
     element.textContent = text;
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'shake 0.6s ease-in-out';
-    console.log('CSS shake animation applied');
   }
   
   function rotateText(element, text) {
-    console.log('rotateText called');
     element.textContent = text;
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'rotate 0.8s ease-in-out';
-    console.log('CSS rotate animation applied');
   }
   
   function colorCycleText(element, text) {
-    console.log('colorCycleText called');
     element.textContent = text;
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'colorCycle 2s ease-in-out';
-    console.log('CSS colorCycle animation applied');
   }
   
   function waveText(element, text) {
-    console.log('waveText called');
     element.textContent = text;
     element.style.animation = 'none';
     element.offsetHeight; // Trigger reflow
     element.style.animation = 'wave 1s ease-in-out';
-    console.log('CSS wave animation applied');
   }
 
   function searchSongs(query) {
@@ -4707,6 +6080,8 @@
       }
     }
     {% endif %}
+
+    // --- 3D Audio Visualizer Implementation ---
 
     // Sliders scroll controls
     document.querySelectorAll('.slider-wrap').forEach(function (wrapper) {
