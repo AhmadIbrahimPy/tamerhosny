@@ -2012,10 +2012,7 @@ def toggle_favorite(request):
     try:
         # الحصول على ContentType
         ct = ContentType.objects.get(model=content_type.lower())
-        
-        # الحصول على الكائن
-        obj = ct.get_object_for_this_type(pk=object_id)
-        
+
         if check_only:
             # فقط التحقق من حالة الإعجاب
             like = Like.objects.filter(
@@ -2059,8 +2056,6 @@ def toggle_favorite(request):
 def likes_list(request):
     """عرض قائمة الإعجاب للمستخدم"""
     likes = Like.objects.filter(user=request.user).select_related('content_type').prefetch_related('content_object')
-    
-    # فصل المحتوى حسب النوع
     songs = []
     media_items = []
     concerts = []

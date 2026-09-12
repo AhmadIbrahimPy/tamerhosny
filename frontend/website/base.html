@@ -2276,7 +2276,16 @@
         },
         body: 'content_type=song&object_id=' + songId + '&check_only=true'
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP error: ' + response.status);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return response.json();
+      })
       .then(data => {
         if (requestId !== likeStatusRequestId) return;
         if (data.status === 'success') {
@@ -4620,6 +4629,13 @@
       if (bubble) bubble.classList.remove('show');
       var highlighted = document.querySelectorAll('.th-mic-btn.tip-highlight');
       for (var i = 0; i < highlighted.length; i++) highlighted[i].classList.remove('tip-highlight');
+
+      // Gradually fade out cover controls
+      var coverControls = document.querySelectorAll('.cover-controls');
+      for (var i = 0; i < coverControls.length; i++) {
+        coverControls[i].style.transition = 'opacity 0.8s ease';
+        coverControls[i].style.opacity = '0';
+      }
     };
 
     function nextMicTip() {
