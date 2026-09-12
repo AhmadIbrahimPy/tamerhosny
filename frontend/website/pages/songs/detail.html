@@ -3895,6 +3895,7 @@ function init3DVisualizer() {
   const coverImage = document.getElementById('songCoverTexture');
   if (coverImage) {
     const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin('anonymous');
     textureLoader.load(coverImage.src, function(texture) {
       const coverGeometry = new THREE.SphereGeometry(8, 64, 64);
       const coverMaterial = new THREE.MeshBasicMaterial({
