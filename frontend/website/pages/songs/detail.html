@@ -1125,6 +1125,13 @@
     box-shadow: 0 12px 35px rgba(99, 102, 241, 0.5);
   }
 
+  /* Hide standalone 3D button on mobile - it's in the menu instead */
+  @media (max-width: 768px) {
+    .song-actions .visualizer-toggle-btn {
+      display: none;
+    }
+  }
+
   .audio-visualizer-container {
     position: fixed;
     top: 0;
@@ -2422,6 +2429,14 @@
                                 <i class="bi bi-file-text"></i>
                                 <span>{% translate "الكلمات" %}</span>
                             </button>
+                            {% endif %}
+
+                            {% if audio_url %}
+                            <button type="button" class="song-actions-menu-item" onclick="toggle3DVisualizer()">
+                                <i class="bi bi-boxes"></i>
+                                <span>3D</span>
+                            </button>
+                            {% endif %}
 
                             {% if not duet %}
                             <button type="button" class="song-actions-menu-item" onclick="showRemixModal()">
@@ -2433,7 +2448,6 @@
                                 <i class="bi bi-mic-fill"></i>
                                 <span>{% translate "غني مع تامر" %}</span>
                             </a>
-                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
