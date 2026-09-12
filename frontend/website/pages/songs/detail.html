@@ -1130,6 +1130,40 @@
     .song-actions .visualizer-toggle-btn {
       display: none;
     }
+    
+    /* Also hide 3D button in menu on mobile */
+    .song-actions-menu-item[onclick*="toggle3DVisualizer"] {
+      display: none;
+    }
+  }
+
+  /* Force fullscreen on mobile - override everything */
+  @media (max-width: 768px) {
+    .audio-visualizer-container.active {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      max-width: none !important;
+      max-height: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      z-index: 999999 !important;
+      overflow: hidden !important;
+    }
+
+    .audio-visualizer-container.active .visualizer-canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      height: 100dvh !important;
+    }
   }
 
   .audio-visualizer-container {
@@ -3554,8 +3588,10 @@ function animateDancingFigures(bassNorm, midsNorm, treblesNorm) {
   }
 
   const time = Date.now() * 0.001;
-  const danceSpeed = 1 + bassNorm * 3;
-  const danceIntensity = 0.1 + midsNorm * 0.3;
+  
+  // Increase audio reactivity - more dramatic speed changes
+  const danceSpeed = 2 + bassNorm * 5; // Base speed 2, up to 7 with bass
+  const danceIntensity = 0.3 + midsNorm * 0.7; // Base intensity 0.3, up to 1.0 with mids
 
   // Animate male figure
   animateFigureDance(dancingFigures.male, time, danceSpeed, danceIntensity, bassNorm, true);
@@ -3575,53 +3611,47 @@ function animateFigureDance(group, time, speed, intensity, bassNorm, isMale) {
 function animateWireframeDance(group, time, speed, intensity, bassNorm, isMale) {
   const { head, torso, leftArm, rightArm, leftLeg, rightLeg } = group.userData;
 
-  // Balanced speed - not too fast, not too slow
-  const minSpeed = 2;
-  const minIntensity = 0.2;
-  const actualSpeed = Math.max(speed, minSpeed);
-  const actualIntensity = Math.max(intensity, minIntensity);
+  // Direct audio reactivity - use values as-is for more dramatic effect
+  const actualSpeed = speed;
+  const actualIntensity = intensity;
 
-  // Gradual audio reactivity - smooth transitions
-  const bassFactor = THREE.MathUtils.lerp(0.1, 0.6, bassNorm);
-  const intensityFactor = THREE.MathUtils.lerp(0.3, 0.8, actualIntensity);
-
-  // Body bounce on bass - moderate
-  const bounce = Math.sin(time * actualSpeed * 3) * bassFactor;
+  // Body bounce on bass - direct bassNorm usage
+  const bounce = Math.sin(time * actualSpeed * 3) * (bassNorm * 0.8 + 0.2);
   group.position.y = bounce;
 
-  // Whole body rotation - subtle
+  // Whole body rotation
   group.rotation.y = Math.sin(time * actualSpeed * 1.5) * 0.15;
 
-  // Head bob - gentle
+  // Head bob
   if (head) {
-    head.rotation.x = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.4;
-    head.rotation.z = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.3;
+    head.rotation.x = Math.sin(time * actualSpeed * 2) * actualIntensity * 0.5;
+    head.rotation.z = Math.cos(time * actualSpeed * 1.5) * actualIntensity * 0.4;
   }
 
-  // Torso sway - smooth
+  // Torso sway
   if (torso) {
-    torso.rotation.y = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.3;
-    torso.rotation.x = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.2;
+    torso.rotation.y = Math.sin(time * actualSpeed * 2) * actualIntensity * 0.4;
+    torso.rotation.x = Math.cos(time * actualSpeed * 1.5) * actualIntensity * 0.3;
   }
 
-  // Arms wave - natural movement
+  // Arms wave
   if (leftArm) {
-    leftArm.rotation.z = 0.3 + Math.sin(time * actualSpeed * 3) * intensityFactor * 0.6;
-    leftArm.rotation.x = Math.cos(time * actualSpeed * 2.5) * intensityFactor * 0.3;
+    leftArm.rotation.z = 0.3 + Math.sin(time * actualSpeed * 3) * actualIntensity * 0.8;
+    leftArm.rotation.x = Math.cos(time * actualSpeed * 2.5) * actualIntensity * 0.4;
   }
   if (rightArm) {
-    rightArm.rotation.z = -0.3 + Math.cos(time * actualSpeed * 3) * intensityFactor * 0.6;
-    rightArm.rotation.x = Math.sin(time * actualSpeed * 2.5) * intensityFactor * 0.3;
+    rightArm.rotation.z = -0.3 + Math.cos(time * actualSpeed * 3) * actualIntensity * 0.8;
+    rightArm.rotation.x = Math.sin(time * actualSpeed * 2.5) * actualIntensity * 0.4;
   }
 
-  // Legs move - moderate
+  // Legs move
   if (leftLeg) {
-    leftLeg.rotation.x = Math.sin(time * actualSpeed * 2) * intensityFactor * 0.3;
-    leftLeg.rotation.z = Math.cos(time * actualSpeed * 1.5) * intensityFactor * 0.15;
+    leftLeg.rotation.x = Math.sin(time * actualSpeed * 2) * actualIntensity * 0.4;
+    leftLeg.rotation.z = Math.cos(time * actualSpeed * 1.5) * actualIntensity * 0.2;
   }
   if (rightLeg) {
-    rightLeg.rotation.x = Math.cos(time * actualSpeed * 2) * intensityFactor * 0.3;
-    rightLeg.rotation.z = Math.sin(time * actualSpeed * 1.5) * intensityFactor * 0.15;
+    rightLeg.rotation.x = Math.cos(time * actualSpeed * 2) * actualIntensity * 0.4;
+    rightLeg.rotation.z = Math.sin(time * actualSpeed * 1.5) * actualIntensity * 0.2;
   }
 }
 
@@ -3629,15 +3659,9 @@ function animateParticleDance(group, time, speed, intensity, bassNorm, isMale) {
   const { particles, originalPositions } = group.userData;
   const positions = particles.geometry.attributes.position.array;
 
-  // Balanced speed - not too fast, not too slow
-  const minSpeed = 2;
-  const minIntensity = 0.2;
-  const actualSpeed = Math.max(speed, minSpeed);
-  const actualIntensity = Math.max(intensity, minIntensity);
-
-  // Gradual audio reactivity - smooth transitions
-  const bassFactor = THREE.MathUtils.lerp(0.1, 0.5, bassNorm);
-  const intensityFactor = THREE.MathUtils.lerp(0.3, 0.6, actualIntensity);
+  // Direct audio reactivity - use values as-is for more dramatic effect
+  const actualSpeed = speed;
+  const actualIntensity = intensity;
 
   for (let i = 0; i < originalPositions.length / 3; i++) {
     const idx = i * 3;
@@ -3645,26 +3669,26 @@ function animateParticleDance(group, time, speed, intensity, bassNorm, isMale) {
     const oy = originalPositions[idx + 1];
     const oz = originalPositions[idx + 2];
 
-    // Smooth wave motion
+    // Wave motion with direct audio values
     positions[idx] = ox + 
-      Math.sin(time * actualSpeed * 2 + oy * 0.5) * intensityFactor * 0.4 +
-      Math.cos(time * actualSpeed * 1.5 + ox * 0.3) * intensityFactor * 0.2;
+      Math.sin(time * actualSpeed * 2 + oy * 0.5) * actualIntensity * 0.5 +
+      Math.cos(time * actualSpeed * 1.5 + ox * 0.3) * actualIntensity * 0.3;
     
     positions[idx + 1] = oy + 
-      Math.cos(time * actualSpeed * 2 + ox * 0.5) * intensityFactor * 0.3 +
-      Math.sin(time * actualSpeed * 1.5 + oy * 0.3) * intensityFactor * 0.15;
+      Math.cos(time * actualSpeed * 2 + ox * 0.5) * actualIntensity * 0.4 +
+      Math.sin(time * actualSpeed * 1.5 + oy * 0.3) * actualIntensity * 0.2;
     
     positions[idx + 2] = oz + 
-      Math.sin(time * actualSpeed * 2.5) * bassFactor +
-      Math.cos(time * actualSpeed * 2) * intensityFactor * 0.15;
+      Math.sin(time * actualSpeed * 2.5) * (bassNorm * 0.6 + 0.2) +
+      Math.cos(time * actualSpeed * 2) * actualIntensity * 0.2;
   }
 
   particles.geometry.attributes.position.needsUpdate = true;
 
-  // Whole group bounce - moderate
-  group.position.y = Math.sin(time * actualSpeed * 3) * bassFactor;
+  // Whole group bounce
+  group.position.y = Math.sin(time * actualSpeed * 3) * (bassNorm * 0.6 + 0.2);
   
-  // Whole group rotation - subtle
+  // Whole group rotation
   group.rotation.y = Math.sin(time * actualSpeed * 1.5) * 0.15;
 }
 
@@ -4064,34 +4088,58 @@ function toggle3DVisualizer() {
   isVisualizerActive = !isVisualizerActive;
 
   if (isVisualizerActive) {
+    console.log('Activating visualizer...');
+    
+    // Get th-page-root dimensions
+    const pageRoot = document.getElementById('th-page-root');
+    let rootWidth = '100vw';
+    let rootHeight = '100vh';
+    let rootTop = '0';
+    let rootLeft = '0';
+    
+    if (pageRoot) {
+      const rect = pageRoot.getBoundingClientRect();
+      rootWidth = rect.width + 'px';
+      rootHeight = rect.height + 'px';
+      rootTop = rect.top + 'px';
+      rootLeft = rect.left + 'px';
+      console.log('th-page-root dimensions:', rect);
+    }
+    
     // Move container to body
     if (container.parentElement !== document.body) {
       document.body.appendChild(container);
     }
     
-    // Force fullscreen
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.right = '0';
-    container.style.bottom = '0';
-    container.style.width = '100vw';
-    container.style.height = '100vh';
-    container.style.zIndex = '99999';
-    container.style.padding = '0';
-    container.style.margin = '0';
-    container.style.overflow = 'hidden';
-    container.style.display = 'block';
+    // Apply th-page-root dimensions
+    container.style.cssText = `
+      position: fixed !important;
+      top: ${rootTop} !important;
+      left: ${rootLeft} !important;
+      width: ${rootWidth} !important;
+      height: ${rootHeight} !important;
+      max-width: ${rootWidth} !important;
+      max-height: ${rootHeight} !important;
+      z-index: 999999 !important;
+      background: rgba(11, 12, 18, 0.95) !important;
+      backdrop-filter: blur(20px) !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      display: block !important;
+    `;
     
     // Force canvas
     const canvas = document.getElementById('visualizerCanvas');
     if (canvas) {
-      canvas.style.position = 'absolute';
-      canvas.style.top = '0';
-      canvas.style.left = '0';
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.display = 'block';
+      canvas.style.cssText = `
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: block !important;
+      `;
     }
     
     container.classList.add('active');
@@ -4100,6 +4148,7 @@ function toggle3DVisualizer() {
     initVisualizerAudioContext();
     
     if (!visualizerScene) {
+      console.log('Initializing 3D visualizer...');
       init3DVisualizer();
     }
     
@@ -4109,6 +4158,8 @@ function toggle3DVisualizer() {
     
     animateVisualizer();
   } else {
+    console.log('Deactivating visualizer...');
+    
     container.classList.remove('active');
     if (toggleBtn) toggleBtn.classList.remove('active');
     cleanup3DVisualizer();
