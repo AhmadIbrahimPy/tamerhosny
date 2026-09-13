@@ -1,0 +1,372 @@
+/* ==========================================
+   3D Audio Visualizer - Ultimate Cinematic Edition
+   ========================================== */
+
+/* Toggle Button */
+.visualizer-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 24px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transition: 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.visualizer-toggle-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
+}
+
+.visualizer-toggle-btn.active {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+.visualizer-toggle-btn.active:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(99, 102, 241, 0.5);
+}
+
+/* Hide standalone 3D button on mobile - it's in the menu instead */
+@media (max-width: 768px) {
+  .song-actions .visualizer-toggle-btn {
+    display: none;
+  }
+}
+
+/* Main Container - Fullscreen Layer */
+.audio-visualizer-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: none;
+  background: rgba(11, 12, 18, 0.95);
+  backdrop-filter: blur(20px);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/*
+ * Sized purely from `inset: 0` on the base rule above -
+ * NOT 100vw/100vh. Those units are unreliable on mobile:
+ * they don't account for the address-bar/toolbar showing
+ * or hiding, can end up wider than the visible area on RTL
+ * pages, and read the layout viewport rather than what's
+ * actually on screen - all of which showed up as a gap on
+ * the side/bottom with the page behind bleeding through.
+ * `inset: 0` on a `position: fixed` element always fills
+ * exactly what's visible, with no unit ambiguity.
+ */
+.audio-visualizer-container.active {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 999999 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* Canvas Fullscreen */
+.visualizer-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  max-width: none;
+  max-height: none;
+  touch-action: none;
+}
+
+/* Close Button */
+.visualizer-close-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000000;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.visualizer-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Info Overlay & Lyrics */
+.visualizer-info {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000000;
+  text-align: center;
+  color: var(--text);
+  pointer-events: none;
+  width: 90%;
+  max-width: 700px;
+  padding: 0 15px;
+}
+
+.visualizer-info h3 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.visualizer-info p {
+  font-size: 14px;
+  color: var(--muted);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* Progress bar under the title */
+.visualizer-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  pointer-events: auto;
+}
+
+.visualizer-progress-time {
+  flex-shrink: 0;
+  min-width: 34px;
+  font-size: 11px;
+  color: var(--muted);
+  direction: ltr;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.visualizer-progress {
+  flex: 1;
+  min-width: 0;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  position: relative;
+  touch-action: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.visualizer-progress-fill {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #16cfff, #9a6bff, #ff4f93);
+  box-shadow: 0 0 12px rgba(154, 107, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+  .visualizer-progress-row {
+    margin: 6px 0;
+  }
+}
+
+/* ==========================================
+   Brand flash - "Tamer Hosny" appears
+   periodically during the show, a different
+   animation style picked each time, holds,
+   then fades away again.
+   ========================================== */
+.visualizer-brand {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1000000;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: clamp(30px, 7vw, 74px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 24px rgba(255, 255, 255, 0.55),
+    0 4px 34px rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+
+.visualizer-brand.show.anim-fade {
+  animation: brandFade 3.4s ease forwards;
+}
+
+@keyframes brandFade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.86); }
+  16% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+.visualizer-brand.show.anim-slide {
+  animation: brandSlide 3.4s ease forwards;
+}
+
+@keyframes brandSlide {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateY(46px); }
+  16% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+  78% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translateY(-46px); }
+}
+
+.visualizer-brand.show.anim-zoom {
+  animation: brandZoom 3.2s ease forwards;
+}
+
+@keyframes brandZoom {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.6); filter: blur(8px); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); filter: blur(5px); }
+}
+
+.visualizer-brand.show.anim-spin {
+  animation: brandSpin 3.6s ease forwards;
+}
+
+@keyframes brandSpin {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-22deg) scale(0.6); }
+  22% { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(14deg) scale(0.82); }
+}
+
+.visualizer-brand.show.anim-letters {
+  animation: brandLetters 3.4s ease forwards;
+}
+
+@keyframes brandLetters {
+  0% { opacity: 0; letter-spacing: 0.7em; }
+  26% { opacity: 1; letter-spacing: 0.08em; }
+  78% { opacity: 1; letter-spacing: 0.08em; }
+  100% { opacity: 0; letter-spacing: 0.34em; }
+}
+
+.visualizer-brand.show.anim-glitch {
+  animation: brandGlitch 2.9s steps(1, end) forwards;
+}
+
+@keyframes brandGlitch {
+  0% { opacity: 0; transform: translate(-50%, -50%); text-shadow: 0 0 24px rgba(255, 255, 255, 0.55); }
+  6% { opacity: 1; transform: translate(calc(-50% - 6px), -50%); text-shadow: -3px 0 #16cfff, 3px 0 #ff4f93; }
+  10% { transform: translate(calc(-50% + 4px), -50%); text-shadow: 3px 0 #16cfff, -3px 0 #ff4f93; }
+  14% { transform: translate(-50%, -50%); text-shadow: 0 0 24px rgba(255, 255, 255, 0.55); }
+  46% { transform: translate(-50%, -50%); text-shadow: 0 0 24px rgba(255, 255, 255, 0.55); }
+  50% { transform: translate(calc(-50% + 5px), -50%); text-shadow: -3px 0 #9a6bff, 3px 0 #5cf2a1; }
+  54% { transform: translate(-50%, -50%); text-shadow: 0 0 24px rgba(255, 255, 255, 0.55); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%); }
+}
+
+@media (max-width: 768px) {
+  .visualizer-brand {
+    font-size: clamp(22px, 8vw, 40px);
+    letter-spacing: 0.06em;
+  }
+}
+
+/* Mobile & Tablet Adjustments */
+@media (max-width: 768px) {
+  .visualizer-close-btn {
+    top: calc(15px + env(safe-area-inset-top, 0px));
+    right: calc(15px + env(safe-area-inset-right, 0px));
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .visualizer-info {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    width: calc(100% - 24px);
+    padding: 0 12px;
+  }
+
+  .visualizer-info h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .visualizer-info p {
+    font-size: 11px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .visualizer-close-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .visualizer-info h3 {
+    font-size: 14px;
+  }
+
+  .visualizer-info p {
+    font-size: 10px;
+  }
+}
+
+/* Short / landscape phones - keep the close button and
+   lyrics from crowding a very short viewport. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .visualizer-close-btn {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    right: calc(8px + env(safe-area-inset-right, 0px));
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .visualizer-info {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .visualizer-info h3 {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .visualizer-info p {
+    display: none;
+  }
+}
