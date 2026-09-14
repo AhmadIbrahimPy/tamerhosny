@@ -54,6 +54,17 @@
   <link rel="icon" type="image/jpeg" href="{% static 'images/logos/icon.jpeg' %}">
   <link rel="apple-touch-icon" href="{% static 'images/logos/icon.jpeg' %}">
 
+  <!-- Makes the site installable as an app on mobile (Android "Add to
+       Home Screen" / iOS Safari share-sheet) - manifest.json declares
+       the icons/name/colors, the meta tags below cover iOS Safari
+       specifically (it ignores the manifest's display mode). -->
+  <link rel="manifest" href="{% static 'website/manifest.json' %}">
+  <meta name="theme-color" content="#0b0c12">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{% translate 'تامر حسني' %}">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -382,6 +393,27 @@
     }
     .th-push-toast.show{transform:translateY(0); opacity:1;}
     .th-push-toast i{color:var(--accent); font-size:18px;}
+    .th-install-banner{
+      position:fixed; inset-inline:12px; bottom:12px; z-index:2000;
+      display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:16px;
+      background:var(--card); border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:600;
+      box-shadow:0 16px 44px rgba(0,0,0,.45); transform:translateY(130%); opacity:0;
+      transition:transform .3s ease, opacity .3s ease;
+    }
+    .th-install-banner.show{transform:translateY(0); opacity:1;}
+    .th-install-banner > i.bi-phone{color:var(--accent); font-size:22px; flex-shrink:0;}
+    .th-install-banner > span{flex:1; min-width:0; line-height:1.4;}
+    .th-install-btn{
+      flex-shrink:0; background:var(--accent); color:#111; border:none; border-radius:10px;
+      padding:8px 16px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap;
+    }
+    .th-install-close{
+      flex-shrink:0; width:26px; height:26px; border-radius:50%; border:none;
+      background:rgba(255,255,255,.06); color:var(--muted); cursor:pointer; font-size:14px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .th-install-close:hover{background:rgba(255,255,255,.12); color:var(--text);}
+    @media (min-width:769px){ .th-install-banner{ display:none !important; } }
     .th-login-btn{
       display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:999px; flex-shrink:0;
       border:1px solid var(--accent); background:rgba(212,175,55,.1); color:var(--accent); font-size:13px; font-weight:700; cursor:pointer;
@@ -552,14 +584,24 @@
     }
     .th-slider > p.th-empty{flex:1 0 auto;}
     .th-slider-arrow{
-      position:absolute; top:16px; bottom:40px; width:44px; z-index:10;
+      position:absolute; top:50%; width:40px; height:40px; z-index:10;
       display:flex; align-items:center; justify-content:center;
-      background:linear-gradient(90deg, var(--bg) 15%, transparent); border:none; color:var(--text); font-size:20px; cursor:pointer;
-      opacity:0; transition:opacity .2s ease;
+      background:var(--card); border:1px solid var(--border); border-radius:50%;
+      color:var(--text); font-size:15px; cursor:pointer;
+      box-shadow:0 6px 18px rgba(0,0,0,.35);
+      opacity:0; transform:translateY(-50%) scale(.85); pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease, background .2s ease, border-color .2s ease;
     }
-    .th-slider-row:hover .th-slider-arrow{opacity:1;}
-    .th-slider-arrow.next{inset-inline-end:0; background:linear-gradient(270deg, var(--bg) 15%, transparent);}
-    .th-slider-arrow.prev{inset-inline-start:0;}
+    .th-slider-row:hover .th-slider-arrow{opacity:1; transform:translateY(-50%) scale(1); pointer-events:auto;}
+    .th-slider-arrow:hover{background:var(--accent); border-color:var(--accent); color:#111;}
+    .th-slider-arrow.next{inset-inline-end:6px;}
+    .th-slider-arrow.prev{inset-inline-start:6px;}
+    /* The UA stylesheet's [hidden]{display:none} loses to this block's
+       own display:flex above (an author rule always beats the UA
+       default) - restate it explicitly here so setting the attribute
+       from JS (updateSliderArrowVisibility) actually hides the button,
+       not just leaves it invisible-but-still-clickable via opacity. */
+    .th-slider-arrow[hidden]{display:none;}
     /* Markup always uses the universal chevron-left=back / chevron-right
        =forward pair - inset-inline-start/end already puts "prev" on
        whichever side is first for the page's own direction, but the
@@ -1575,6 +1617,43 @@
       slider.scrollBy({ left: delta, behavior: 'smooth' });
     });
 
+    // Hides "next" once there's nothing left to scroll to, and "prev"
+    // until the user has actually moved forward - it starts pointless
+    // (nowhere to go back to), then appears once there's somewhere to
+    // return. abs() on scrollLeft handles both RTL scrollLeft
+    // conventions browsers actually ship (0 → negative as you scroll,
+    // Chrome/Firefox) uniformly with the LTR one; Safari's own inverted
+    // RTL convention (starts positive, counts down) isn't - a known gap,
+    // not worth the complexity for one engine on an edge case this minor.
+    function updateSliderArrowVisibility(slider) {
+      var row = slider.closest('.th-slider-row');
+      if (!row) return;
+      var prevBtn = row.querySelector('.th-slider-arrow.prev');
+      var nextBtn = row.querySelector('.th-slider-arrow.next');
+      var scrollLeft = Math.abs(slider.scrollLeft);
+      var maxScroll = slider.scrollWidth - slider.clientWidth;
+      var atStart = scrollLeft <= 2;
+      var atEnd = scrollLeft >= maxScroll - 2;
+      var noOverflow = maxScroll <= 2;
+      if (prevBtn) prevBtn.hidden = atStart;
+      if (nextBtn) nextBtn.hidden = atEnd || noOverflow;
+    }
+
+    function initSliderArrows() {
+      document.querySelectorAll('.th-slider').forEach(function (slider) {
+        updateSliderArrowVisibility(slider);
+        if (slider.dataset.arrowsBound) return;
+        slider.dataset.arrowsBound = '1';
+        slider.addEventListener('scroll', function () {
+          updateSliderArrowVisibility(slider);
+        }, { passive: true });
+      });
+    }
+
+    window.addEventListener('resize', function () {
+      document.querySelectorAll('.th-slider').forEach(updateSliderArrowVisibility);
+    });
+
     // Wires up each hero video's poster-fade-out and unmute button. Has
     // to re-run after every boosted navigation, not just the real page
     // load - #th-page-root's content (a movie/album/concert page's own
@@ -1617,6 +1696,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       initHeroVideos();
+      initSliderArrows();
 
       // Close dropdown when clicking outside
       document.addEventListener('click', function (e) {
@@ -3292,6 +3372,7 @@
       // A freshly-swapped-in .th-hero-video (movie/album/concert page)
       // needs its own poster-fade/unmute wiring - see initHeroVideos().
       initHeroVideos();
+      initSliderArrows();
     });
 
     // Fires for every element htmx is about to discard - #th-page-root's
@@ -4455,6 +4536,86 @@
     // down) - the mic is only ever active while a button is physically
     // held, so it never runs in the background at all.
     var IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // "Add to Home Screen" - makes the site installable like an app.
+    // Chrome/Android fires 'beforeinstallprompt' when it decides the
+    // site qualifies (manifest.json + service worker + served over
+    // HTTPS) and gives a real native install prompt via .prompt().
+    // iOS Safari never fires that event at all - there's no
+    // programmatic install API there, only the manual "Share > Add to
+    // Home Screen" flow, so that branch just shows the steps instead.
+    (function () {
+      if (!IS_MOBILE) return;
+
+      var STORAGE_KEY = 'thInstallPromptDismissedAt';
+      var COOLDOWN_DAYS = 14;
+      var deferredPrompt = null;
+
+      function isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+      }
+
+      function recentlyDismissed() {
+        var ts = localStorage.getItem(STORAGE_KEY);
+        if (!ts) return false;
+        return (Date.now() - Number(ts)) / 86400000 < COOLDOWN_DAYS;
+      }
+
+      function dismiss(banner) {
+        localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        banner.classList.remove('show');
+        setTimeout(function () { banner.remove(); }, 300);
+      }
+
+      function showBanner(mode) {
+        if (isStandalone() || recentlyDismissed() || document.getElementById('thInstallBanner')) return;
+
+        var banner = document.createElement('div');
+        banner.id = 'thInstallBanner';
+        banner.className = 'th-install-banner';
+        banner.innerHTML =
+          '<i class="bi bi-phone"></i>' +
+          '<span>' + (mode === 'ios'
+            ? '{% translate "ثبّت التطبيق: من زر المشاركة، اختر \'إضافة إلى الشاشة الرئيسية\'" %}'
+            : '{% translate "ثبّت الموقع كتطبيق على شاشتك الرئيسية" %}') +
+          '</span>' +
+          (mode === 'ios' ? '' : '<button type="button" class="th-install-btn">{% translate "تثبيت" %}</button>') +
+          '<button type="button" class="th-install-close" aria-label="{% translate "إغلاق" %}"><i class="bi bi-x"></i></button>';
+        document.body.appendChild(banner);
+        requestAnimationFrame(function () { banner.classList.add('show'); });
+
+        banner.querySelector('.th-install-close').addEventListener('click', function () { dismiss(banner); });
+
+        var installBtn = banner.querySelector('.th-install-btn');
+        if (installBtn) {
+          installBtn.addEventListener('click', function () {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.finally(function () {
+              deferredPrompt = null;
+              dismiss(banner);
+            });
+          });
+        }
+      }
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showBanner('android');
+      });
+
+      window.addEventListener('appinstalled', function () {
+        localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        var banner = document.getElementById('thInstallBanner');
+        if (banner) banner.remove();
+      });
+
+      var isIos = /iphone|ipod|ipad/i.test(navigator.userAgent) && !window.MSStream;
+      if (isIos) {
+        setTimeout(function () { showBanner('ios'); }, 4000);
+      }
+    })();
 
     // One-time discovery toast so people who've never touched the mic
     // button actually learn the feature exists and how to use it -
