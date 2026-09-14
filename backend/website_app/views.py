@@ -82,6 +82,9 @@ def robots_txt(request):
 
 
 def home(request):
+    from backend.main_app.shared_utils.trending import get_trending
+
+    trending_ranks = get_trending(limit=12)
     songs = Song.visible_queryset(Song.objects.select_related('album'))[:7]
     sing_with_tamer_songs = Song.visible_queryset(
         Song.objects.select_related('album')
@@ -101,6 +104,7 @@ def home(request):
     ).exists()
     return render(request, 'website/pages/home.html', {
         'guess_played_today': guess_played_today,
+        'trending_ranks': trending_ranks,
         'songs': songs,
         'sing_with_tamer_songs': sing_with_tamer_songs,
         'movies': movies,
@@ -1116,6 +1120,14 @@ def songs_list(request):
         'songs': songs,
         'top_ad': top_ad,
         'bottom_ad': bottom_ad,
+    })
+
+
+def trending_songs(request):
+    from backend.main_app.shared_utils.trending import get_trending
+
+    return render(request, 'website/pages/songs/trending.html', {
+        'trending_ranks': get_trending(),
     })
 
 

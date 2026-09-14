@@ -38,6 +38,7 @@ urlpatterns = [
     path('search/', views.search_view, name='search'),
 
     path('songs/', views.songs_list, name='songs'),
+    path('songs/trending/', views.trending_songs, name='trending-songs'),
     path('songs/increment-play/', views.increment_play_count, name='increment-play-count'),
     path('songs/full-listen/', views.record_full_listen, name='record-full-listen'),
     path('songs/<str:slug>/', views.song_detail, name='song-detail'),

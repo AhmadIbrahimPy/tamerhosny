@@ -300,6 +300,42 @@ class SongLeaderboardRank(models.Model):
         return f'{self.song} - #{self.rank} {self.user.username}'
 
 
+class SongTrendingRank(models.Model):
+    """The last-computed site-wide "Trending Now" chart (see
+    `backend.main_app.shared_utils.trending`) - one row per charting
+    song, ranked by recency-weighted play volume so a song surging
+    *right now* outranks one with more total plays spread out over
+    months (the same idea real streaming charts use, not just a raw
+    play-count leaderboard). Persisted so a page load doesn't have to
+    recompute the whole chart, and so the next refresh has a baseline
+    to diff against for the up/down/same/new trend arrows.
+    """
+
+    class Trend(models.TextChoices):
+        UP = 'UP', _('صاعد')
+        DOWN = 'DOWN', _('هابط')
+        SAME = 'SAME', _('ثابت')
+        NEW = 'NEW', _('جديد')
+
+    song = models.OneToOneField(
+        'music_app.Song', on_delete=models.CASCADE, related_name='trending_rank',
+    )
+    rank = models.PositiveSmallIntegerField()
+    previous_rank = models.PositiveSmallIntegerField(null=True, blank=True)
+    score = models.FloatField(default=0.0)
+    trend = models.CharField(max_length=4, choices=Trend.choices, default=Trend.NEW)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['rank']
+        indexes = [
+            models.Index(fields=['rank']),
+        ]
+
+    def __str__(self):
+        return f'#{self.rank} {self.song} ({self.get_trend_display()})'
+
+
 class SongSimilarity(models.Model):
     """Precomputed "songs similar to this one" (see
     `backend.main_app.shared_utils.song_recommendations`) - collaborative

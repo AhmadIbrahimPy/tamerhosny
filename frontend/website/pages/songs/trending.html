@@ -1,0 +1,120 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "ترند دلوقتي" %}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{% translate 'الأغاني الأكثر تشغيلاً دلوقتي على أرشيف تامر حسني.' %}">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .trending-page { padding: 24px; max-width: 820px; margin: 0 auto; }
+
+  .trending-header { margin-bottom: 22px; }
+  .trending-header h1 { font-size: 22px; font-weight: 800; }
+  .trending-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .trending-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .trending-row {
+    display: flex; align-items: center; gap: 14px; padding: 10px 12px;
+    border-radius: 14px; text-decoration: none; color: inherit;
+    transition: background 0.2s ease;
+  }
+  .trending-row:hover { background: rgba(255, 255, 255, 0.04); }
+
+  .trending-rank {
+    width: 30px; flex-shrink: 0; text-align: center;
+    font-size: 16px; font-weight: 800; color: var(--muted);
+  }
+  .trending-row:nth-child(1) .trending-rank { color: #ffd54f; }
+  .trending-row:nth-child(2) .trending-rank { color: #cfd8dc; }
+  .trending-row:nth-child(3) .trending-rank { color: #d7a271; }
+
+  .trending-thumb-wrap { position: relative; flex-shrink: 0; }
+  .trending-thumb {
+    width: 54px; height: 54px; border-radius: 12px; object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .trending-thumb-fallback {
+    width: 54px; height: 54px; border-radius: 12px; background: rgba(255, 255, 255, 0.06);
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 20px;
+  }
+
+  .trending-info { flex: 1; min-width: 0; }
+  .trending-title {
+    font-weight: 700; font-size: 14.5px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .trending-meta { color: var(--muted); font-size: 12px; }
+
+  .trending-trend {
+    flex-shrink: 0; display: flex; align-items: center; gap: 5px;
+    font-size: 12.5px; font-weight: 700; min-width: 54px; justify-content: flex-end;
+  }
+  .trending-trend.up { color: #4fd486; }
+  .trending-trend.down { color: #ff6b5f; }
+  .trending-trend.same { color: var(--muted); }
+  .trending-trend.new-entry {
+    color: var(--accent); background: rgba(212, 175, 55, 0.15);
+    padding: 3px 9px; border-radius: 999px; font-size: 10.5px;
+  }
+
+  .trending-play {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06); color: var(--text);
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+
+  .trending-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+  .trending-empty i { font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trending-page">
+  <div class="trending-header">
+    <h1>🔥 {% translate "ترند دلوقتي" %}</h1>
+    <p>{% translate "الأغاني الأكثر تشغيلاً في الأيام الأخيرة، بترتيب بيتحدث تلقائي" %}</p>
+  </div>
+
+  {% if trending_ranks %}
+  <div class="trending-list">
+    {% for entry in trending_ranks %}
+    <a href="{% url 'website_app:song-detail' entry.song.slug %}" class="trending-row"
+      {% if entry.song.audio_file %}data-song-id="{{ entry.song.pk }}" data-audio-url="{{ entry.song.audio_file.url }}"{% endif %}>
+      <span class="trending-rank">{{ entry.rank }}</span>
+      <span class="trending-thumb-wrap">
+        {% if entry.song.display_cover_url %}
+          <img class="trending-thumb" src="{{ entry.song.display_cover_url }}" alt="{{ entry.song|localized_field:'title' }}">
+        {% else %}
+          <span class="trending-thumb-fallback"><i class="bi bi-music-note-beamed"></i></span>
+        {% endif %}
+      </span>
+      <span class="trending-info">
+        <div class="trending-title">{{ entry.song|localized_field:'title' }}</div>
+        <div class="trending-meta">{{ entry.song.get_song_type_display }}</div>
+      </span>
+      <span class="trending-trend {% if entry.trend == 'UP' %}up{% elif entry.trend == 'DOWN' %}down{% elif entry.trend == 'NEW' %}new-entry{% else %}same{% endif %}">
+        {% if entry.trend == 'UP' %}
+          <i class="bi bi-caret-up-fill"></i>
+        {% elif entry.trend == 'DOWN' %}
+          <i class="bi bi-caret-down-fill"></i>
+        {% elif entry.trend == 'NEW' %}
+          {% translate "جديد" %}
+        {% else %}
+          <i class="bi bi-caret-right-fill"></i>
+        {% endif %}
+      </span>
+      <span class="trending-play th-play-icon-static"><i class="bi bi-play-fill"></i></span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="trending-empty">
+    <i class="bi bi-graph-up"></i>
+    <p>{% translate "لسه معندناش بيانات كفاية لحساب الترند - ارجع بعد شوية" %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

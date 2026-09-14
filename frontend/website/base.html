@@ -190,6 +190,17 @@
     }
     .th-push-btn-mobile.is-on{border-color:var(--accent); color:var(--accent);}
     .th-push-btn-mobile:disabled{opacity:.4; cursor:not-allowed;}
+    /* Same look as .th-push-btn-mobile, but its own class - it must NOT
+       match the broad .th-push-btn selector the notification-permission
+       sync script (updateButtonUI, further down) queries, or it gets
+       swept up and turned into a second bell icon along with the real
+       one. */
+    .th-search-btn-mobile{
+      display:none; align-items:center; justify-content:center; width:36px; height:36px; padding:0;
+      border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:16px; cursor:pointer; transition:all .2s ease; margin-inline-end:6px;
+    }
+    @media (max-width:768px){ .th-search-btn-mobile{ display:inline-flex; } }
     .th-nav-links > .th-mic-btn{
       display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0;
       border-radius:50%; flex-shrink:0; border:1px solid var(--border); background:transparent;
