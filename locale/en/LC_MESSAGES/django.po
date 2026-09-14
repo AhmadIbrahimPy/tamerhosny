@@ -4887,3 +4887,77 @@ msgstr "Browse"
 #: frontend/website/partials/header.html:185
 msgid "تسجيل دخول / إنشاء حساب"
 msgstr "Sign in / Create account"
+
+#: frontend/website/partials/header.html
+msgid "قصدك"
+msgstr "You might mean"
+
+#: frontend/website/pages/home.html
+msgid "ترند دلوقتي"
+msgstr "Trending Now"
+
+#: frontend/website/pages/player/index.html
+msgid "ترتيب عشوائي"
+msgstr "Shuffle"
+
+#: frontend/website/pages/player/index.html
+msgid "تشغيل/إيقاف"
+msgstr "Play/Pause"
+
+#: frontend/website/pages/player/index.html
+msgid "تكرار"
+msgstr "Repeat"
+
+#: frontend/website/partials/header.html
+msgid "دوّر على أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان..."
+msgstr "Search for a song, album, movie, series, concert or artist..."
+
+#: frontend/website/partials/header.html
+msgid "اكتب اسم أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان"
+msgstr "Type a song, album, movie, series, concert or artist name"
+
+#: frontend/website/partials/header.html
+#: frontend/website/pages/search/results.html
+msgid "مفيش نتائج، جرب كلمة تانية"
+msgstr "No results, try another word"
+
+#: frontend/website/partials/header.html
+msgid "شوف كل النتائج"
+msgstr "See all results"
+
+#: frontend/website/pages/search/results.html
+#, python-format
+msgid "نتائج البحث عن \"%(query)s\""
+msgstr "Search results for \"%(query)s\""
+
+#: frontend/website/pages/search/results.html
+msgid "الكل"
+msgstr "All"
+
+#: frontend/website/pages/search/results.html
+msgid "أغاني"
+msgstr "Songs"
+
+#: frontend/website/pages/search/results.html
+msgid "ألبومات"
+msgstr "Albums"
+
+#: frontend/website/pages/search/results.html
+msgid "أفلام ومسلسلات"
+msgstr "Movies & Series"
+
+#: frontend/website/pages/search/results.html
+msgid "حفلات"
+msgstr "Concerts"
+
+#: frontend/website/pages/search/results.html
+msgid "أشخاص"
+msgstr "People"
+
+#: frontend/website/pages/songs/trending.html
+msgid "الأغاني الأكثر تشغيلاً في الأيام الأخيرة، بترتيب بيتحدث تلقائي"
+msgstr "The most played songs recently, ranked and updated automatically"
+
+#: frontend/website/pages/songs/trending.html
+msgid "لسه معندناش بيانات كفاية لحساب الترند - ارجع بعد شوية"
+msgstr "Not enough data yet to calculate trends - check back soon"
