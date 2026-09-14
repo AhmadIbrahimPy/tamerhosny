@@ -1145,7 +1145,9 @@
           detail: {
             songId: songId, previousSongId: previousSongId,
             url: url, link: link, title: title,
-            image: (image && image[0]) || null,
+            // Same string-vs-array footgun as currentSongData below -
+            // `image[0]` on a plain string is just its first character.
+            image: (Array.isArray(image) ? image[0] : image) || null,
             artist: artist, album: album, albumLink: albumLink
           }
         });
@@ -1361,7 +1363,7 @@
         icon,
         card.dataset.title || (titleEl ? titleEl.textContent.trim() : ''),
         null,
-        card.dataset.image || (imgEl ? imgEl.src : ''),
+        [card.dataset.image || (imgEl ? imgEl.src : '')],
         card.dataset.link || card.getAttribute('href') || '#',
         card.dataset.artist || '',
         card.dataset.album || '',
@@ -2440,6 +2442,17 @@
             coverIcon.classList.remove('bi-heart-fill');
             coverIcon.classList.add('bi-heart');
           }
+        }
+      }
+
+      // Also update the like stat on the /player/ page's sidebar if it exists
+      const playerPageLikeBtn = document.getElementById('playerPageLikeBtn');
+      if (playerPageLikeBtn) {
+        const pageIcon = playerPageLikeBtn.querySelector('i');
+        playerPageLikeBtn.classList.toggle('is-liked', isLiked);
+        if (pageIcon) {
+          pageIcon.classList.toggle('bi-heart-fill', isLiked);
+          pageIcon.classList.toggle('bi-heart', !isLiked);
         }
       }
     }

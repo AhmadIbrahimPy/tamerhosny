@@ -71,10 +71,25 @@
   .player-cover {
     width: 100%;
     aspect-ratio: 1;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
     background: var(--card);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    box-shadow:
+      0 24px 70px rgba(0, 0, 0, 0.38),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .player-cover::after {
+    /* A soft inner sheen instead of a flat card edge - reads less
+       like a plain <img> and more like an album-art tile. */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    pointer-events: none;
   }
 
   /* --- Stats Bar (play/like/listening-now counts), same as the song
@@ -83,18 +98,26 @@
   .song-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    padding: 12px 10px;
-    background: rgba(255, 255, 255, 0.04);
+    gap: 10px;
+    padding: 14px 10px;
+    background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
+    border-radius: 18px;
+    backdrop-filter: blur(6px);
   }
   .song-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 4px;
+    gap: 6px;
+    border-radius: 12px;
+    padding: 6px 2px;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .song-stat-clickable:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
   }
   .song-stat-icon {
     width: 32px;
@@ -102,11 +125,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--accent);
     background: rgba(255, 255, 255, 0.06);
     font-size: 14px;
     position: relative;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+  .song-stat-icon-like {
+    color: var(--muted);
+  }
+  #playerPageLikeBtn.is-liked .song-stat-icon-like {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
+  }
+  #playerPageLikeBtn:active .song-stat-icon-like {
+    transform: scale(0.88);
   }
   .song-stat-value {
     color: var(--text);
@@ -330,9 +364,11 @@
   }
 
   .player-info h1 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
   }
 
   .player-info h1 a {
@@ -346,24 +382,33 @@
   }
 
   .player-info .artist {
-    font-size: 18px;
-    color: var(--muted);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
     margin-bottom: 4px;
   }
 
   .player-info .artist a {
-    color: var(--muted);
+    color: inherit;
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: opacity 0.2s ease;
   }
 
   .player-info .artist a:hover {
-    color: var(--accent);
+    opacity: 0.8;
   }
 
   .player-info .album {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .player-info .album i {
+    font-size: 12px;
+    opacity: 0.7;
   }
 
   .player-info .album a {
@@ -714,13 +759,13 @@
           <div class="song-stat-label">{% translate "تشغيل" %}</div>
         </div>
       </div>
-      <div class="song-stat">
-        <div class="song-stat-icon"><i class="bi bi-heart"></i></div>
+      <button type="button" class="song-stat song-stat-clickable" id="playerPageLikeBtn" onclick="toggleLike()" aria-label="{% translate 'إعجاب' %}">
+        <div class="song-stat-icon song-stat-icon-like"><i class="bi bi-heart"></i></div>
         <div>
           <div class="song-stat-value" id="playerPageLikeCount">0</div>
           <div class="song-stat-label">{% translate "إعجاب" %}</div>
         </div>
-      </div>
+      </button>
       <button type="button" class="song-stat song-stat-clickable" onclick="openLeaderboardModal()" aria-label="{% translate 'يستمع الآن' %}">
         <div class="song-stat-icon song-stat-icon-pulse"><i class="bi bi-headphones"></i></div>
         <div>
@@ -1219,10 +1264,11 @@ function loadPlayerPageData() {
 
   if (currentSongData.album) {
     const albumDiv = document.getElementById('playerPageAlbum');
+    const albumIcon = '<i class="bi bi-disc"></i>';
     if (currentSongData.albumSlug) {
-      albumDiv.innerHTML = `<a href="/albums/${currentSongData.albumSlug}/">${currentSongData.album}</a>`;
+      albumDiv.innerHTML = `${albumIcon}<a href="/albums/${currentSongData.albumSlug}/">${currentSongData.album}</a>`;
     } else {
-      albumDiv.textContent = currentSongData.album;
+      albumDiv.innerHTML = `${albumIcon}<span>${currentSongData.album}</span>`;
     }
   }
 
@@ -1381,7 +1427,13 @@ function mergeQueueWithHistory(serverList) {
   const playedBefore = history.slice(0, -1).filter(function (h) { return h.songId != null; });
   const playedIds = playedBefore.map(function (h) { return h.songId; });
   const upcoming = serverList.filter(function (s) { return playedIds.indexOf(s.songId) === -1; });
-  const historyItems = playedBefore.map(function (h) {
+  // playedBefore is oldest-first and can hold up to 200 entries (see
+  // base.html) - showing it as-is pinned whatever song was played
+  // *first* in this whole session at the very top of the list forever,
+  // no matter how many songs played since. Show only the last few,
+  // most-recently-played first, like an actual "recently played" strip.
+  const recentlyPlayed = playedBefore.slice(-5).reverse();
+  const historyItems = recentlyPlayed.map(function (h) {
     return { songId: h.songId, title: h.title, image: h.image, url: h.url, link: h.link, artist: h.artist, album: h.album };
   });
   return historyItems.concat(upcoming);
