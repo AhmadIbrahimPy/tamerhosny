@@ -21,6 +21,10 @@
       <a href="{% url 'website_app:concerts' %}" class="{% if 'concert' in request.resolver_match.url_name %}active{% endif %}">{% translate "الحفلات" %}</a>
       <a href="{% url 'website_app:people' %}" class="{% if 'person' in request.resolver_match.url_name %}active{% endif %}">{% translate "الفنانون" %}</a>
 
+      <button type="button" class="th-mic-btn" id="thSearchBtn" onclick="thToggleSearch()" title="{% translate 'بحث' %}">
+        <i class="bi bi-search"></i>
+      </button>
+
       <button type="button" class="lang-btn" onclick="document.getElementById('langSwitchForm').submit();">
         <i class="bi bi-globe2"></i> {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
       </button>
@@ -95,6 +99,9 @@
       {% endif %}
     </div>
     <div class="th-mobile-toggles">
+      <button type="button" class="th-push-btn th-push-btn-mobile" id="thSearchBtnMobile" onclick="thToggleSearch()" aria-label="{% translate 'بحث' %}">
+        <i class="bi bi-search"></i>
+      </button>
       {% if VAPID_PUBLIC_KEY %}
       <button type="button" class="th-push-btn th-push-btn-mobile" onclick="thTogglePushNotifications()" title="{% translate 'فعّل الإشعارات' %}">
         <i class="bi bi-bell"></i>
@@ -191,6 +198,18 @@
       {% endif %}
     </div>
   </div>
+  <div class="th-search-overlay" id="thSearchOverlay">
+    <div class="th-search-overlay-inner">
+      <form class="th-search-input-row" onsubmit="thSubmitSearch(event)">
+        <i class="bi bi-search"></i>
+        <input type="text" id="thSearchInput" placeholder="{% translate 'دوّر على أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان...' %}" autocomplete="off">
+        <button type="button" class="th-search-close" onclick="thCloseSearch()" aria-label="{% translate 'إغلاق' %}">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </form>
+      <div class="th-search-results" id="thSearchResults"></div>
+    </div>
+  </div>
 </nav>
 
 <script>
@@ -208,5 +227,135 @@
       }
     });
   });
+})();
+
+(function () {
+  'use strict';
+
+  var overlay = document.getElementById('thSearchOverlay');
+  var input = document.getElementById('thSearchInput');
+  var resultsEl = document.getElementById('thSearchResults');
+  var debounceTimer = null;
+  var activeRequestId = 0;
+
+  var GROUP_LABELS = {
+    songs: '{% translate "أغاني" %}',
+    albums: '{% translate "ألبومات" %}',
+    media: '{% translate "أفلام ومسلسلات" %}',
+    concerts: '{% translate "حفلات" %}',
+    people: '{% translate "أشخاص" %}'
+  };
+
+  var GROUP_ICONS = {
+    songs: 'bi-music-note-beamed',
+    albums: 'bi-disc',
+    media: 'bi-film',
+    concerts: 'bi-mic',
+    people: 'bi-person-fill'
+  };
+
+  window.thToggleSearch = function () {
+    if (overlay.classList.contains('show')) {
+      window.thCloseSearch();
+    } else {
+      overlay.classList.add('show');
+      setTimeout(function () { input.focus(); }, 30);
+    }
+  };
+
+  window.thCloseSearch = function () {
+    overlay.classList.remove('show');
+  };
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) window.thCloseSearch();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('show')) {
+      window.thCloseSearch();
+    }
+  });
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function renderRow(item) {
+    var thumb = item.image
+      ? '<img class="th-search-row-thumb" src="' + escapeHtml(item.image) + '" alt="">'
+      : '<div class="th-search-row-thumb-fallback"><i class="bi ' + GROUP_ICONS[item.type] + '"></i></div>';
+    return (
+      '<a class="th-search-row" href="' + escapeHtml(item.url) + '">' +
+        thumb +
+        '<div>' +
+          '<div class="th-search-row-title">' + escapeHtml(item.title) + '</div>' +
+          (item.subtitle ? '<div class="th-search-row-subtitle">' + escapeHtml(item.subtitle) + '</div>' : '') +
+        '</div>' +
+      '</a>'
+    );
+  }
+
+  function renderResults(data, query) {
+    var order = ['songs', 'albums', 'media', 'concerts', 'people'];
+    var total = 0;
+    var html = '';
+
+    if (data.corrected_query) {
+      html += '<div class="th-search-corrected">{% translate "قصدك" %}: <b>' + escapeHtml(data.corrected_query) + '</b></div>';
+    }
+
+    order.forEach(function (type) {
+      var items = data.results[type] || [];
+      if (!items.length) return;
+      total += items.length;
+      html += '<div class="th-search-group">';
+      html += '<div class="th-search-group-label">' + GROUP_LABELS[type] + '</div>';
+      items.slice(0, 4).forEach(function (item) {
+        html += renderRow(item);
+      });
+      html += '</div>';
+    });
+
+    if (total === 0) {
+      html += '<div class="th-search-empty">{% translate "مفيش نتائج، جرب كلمة تانية" %}</div>';
+    } else {
+      html += '<a class="th-search-see-all" href="/search/?q=' + encodeURIComponent(query) + '">{% translate "شوف كل النتائج" %}</a>';
+    }
+
+    resultsEl.innerHTML = html;
+  }
+
+  function runSearch(query) {
+    var requestId = ++activeRequestId;
+    fetch('/search/?q=' + encodeURIComponent(query), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (requestId !== activeRequestId) return;
+        renderResults(data, query);
+      })
+      .catch(function () {});
+  }
+
+  input.addEventListener('input', function () {
+    var query = input.value.trim();
+    clearTimeout(debounceTimer);
+    if (!query) {
+      resultsEl.innerHTML = '<div class="th-search-hint">{% translate "اكتب اسم أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان" %}</div>';
+      return;
+    }
+    debounceTimer = setTimeout(function () { runSearch(query); }, 280);
+  });
+
+  window.thSubmitSearch = function (e) {
+    e.preventDefault();
+    var query = input.value.trim();
+    if (!query) return;
+    window.location.href = '/search/?q=' + encodeURIComponent(query);
+  };
 })();
 </script>

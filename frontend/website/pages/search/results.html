@@ -1,0 +1,313 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+
+{% block title %}{% blocktranslate %}نتائج البحث عن "{{ query }}"{% endblocktranslate %}{% endblock %}
+
+{% block meta_description %}
+<meta name="robots" content="noindex, follow">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .search-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .search-header h1 {
+    font-size: 20px;
+    font-weight: 800;
+    word-break: break-word;
+  }
+
+  .search-corrected {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .search-corrected a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .search-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    margin: 18px 0 22px;
+    scrollbar-width: none;
+  }
+
+  .search-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-tab-btn {
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .search-tab-btn .count {
+    font-size: 10.5px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.07);
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+
+  .search-tab-btn:hover {
+    color: var(--text);
+    background: var(--card-hover);
+  }
+
+  .search-tab-btn.active {
+    color: var(--accent);
+    background: var(--card);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .search-tab-btn.active .count {
+    color: var(--accent);
+    background: rgba(99, 102, 241, 0.15);
+  }
+
+  .search-section {
+    margin-bottom: 34px;
+  }
+
+  .search-section-title {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .search-empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 70px 20px;
+  }
+
+  .search-empty i {
+    font-size: 42px;
+    display: block;
+    margin-bottom: 14px;
+    opacity: 0.5;
+  }
+
+  .search-person-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 16px 10px;
+    border-radius: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .search-person-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .search-person-avatar,
+  .search-person-avatar-fallback {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .search-person-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted);
+    font-size: 26px;
+  }
+
+  .search-person-name {
+    font-weight: 700;
+    font-size: 13.5px;
+  }
+
+  .search-person-role {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-page">
+  <div class="search-header">
+    <h1>{% blocktranslate %}نتائج البحث عن "{{ query }}"{% endblocktranslate %}</h1>
+    {% if corrected_query %}
+      <div class="search-corrected">
+        {% translate "قصدك" %}:
+        <a href="{% url 'website_app:search' %}?q={{ corrected_query|urlencode }}">{{ corrected_query }}</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="search-tabs" id="searchTabs">
+    <button type="button" class="search-tab-btn active" data-tab="all" onclick="switchSearchTab('all')">
+      {% translate "الكل" %} <span class="count">{{ total_count }}</span>
+    </button>
+    <button type="button" class="search-tab-btn" data-tab="songs" onclick="switchSearchTab('songs')">
+      {% translate "أغاني" %} <span class="count">{{ counts.songs }}</span>
+    </button>
+    <button type="button" class="search-tab-btn" data-tab="albums" onclick="switchSearchTab('albums')">
+      {% translate "ألبومات" %} <span class="count">{{ counts.albums }}</span>
+    </button>
+    <button type="button" class="search-tab-btn" data-tab="media" onclick="switchSearchTab('media')">
+      {% translate "أفلام ومسلسلات" %} <span class="count">{{ counts.media }}</span>
+    </button>
+    <button type="button" class="search-tab-btn" data-tab="concerts" onclick="switchSearchTab('concerts')">
+      {% translate "حفلات" %} <span class="count">{{ counts.concerts }}</span>
+    </button>
+    <button type="button" class="search-tab-btn" data-tab="people" onclick="switchSearchTab('people')">
+      {% translate "أشخاص" %} <span class="count">{{ counts.people }}</span>
+    </button>
+  </div>
+
+  {% if total_count == 0 %}
+    <div class="search-empty">
+      <i class="bi bi-search"></i>
+      <p>{% translate "مفيش نتائج، جرب كلمة تانية" %}</p>
+    </div>
+  {% else %}
+    {% if results.songs %}
+    <div class="search-tab-panel search-section" data-panel="songs">
+      <div class="search-section-title">{% translate "أغاني" %}</div>
+      <div class="th-grid cols-6">
+        {% for item in results.songs %}
+        <a href="{{ item.url }}" class="th-card aspect-square th-card-song plain"
+          {% if item.songId %}data-song-id="{{ item.songId }}" data-audio-url="{{ item.audioUrl }}"{% endif %}>
+          <div class="th-img-wrap">
+            {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}">
+            {% else %}<i class="bi bi-music-note-beamed icon-fallback"></i>{% endif %}
+            <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ item.title }}</div>
+            <div class="th-meta">{{ item.subtitle }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.albums %}
+    <div class="search-tab-panel search-section" data-panel="albums">
+      <div class="search-section-title">{% translate "ألبومات" %}</div>
+      <div class="th-grid cols-6">
+        {% for item in results.albums %}
+        <a href="{{ item.url }}" class="th-card aspect-square plain">
+          <div class="th-img-wrap">
+            {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}">
+            {% else %}<i class="bi bi-disc icon-fallback"></i>{% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ item.title }}</div>
+            <div class="th-meta">{{ item.subtitle }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.media %}
+    <div class="search-tab-panel search-section" data-panel="media">
+      <div class="search-section-title">{% translate "أفلام ومسلسلات" %}</div>
+      <div class="th-grid cols-6">
+        {% for item in results.media %}
+        <a href="{{ item.url }}" class="th-card plain">
+          <div class="th-img-wrap">
+            {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}">
+            {% else %}<i class="bi bi-film icon-fallback"></i>{% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ item.title }}</div>
+            <div class="th-meta">{{ item.subtitle }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.concerts %}
+    <div class="search-tab-panel search-section" data-panel="concerts">
+      <div class="search-section-title">{% translate "حفلات" %}</div>
+      <div class="th-grid cols-6">
+        {% for item in results.concerts %}
+        <a href="{{ item.url }}" class="th-card plain">
+          <div class="th-img-wrap">
+            {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}">
+            {% else %}<i class="bi bi-mic icon-fallback"></i>{% endif %}
+          </div>
+          <div class="th-body">
+            <div class="th-title">{{ item.title }}</div>
+            <div class="th-meta">{{ item.subtitle }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.people %}
+    <div class="search-tab-panel search-section" data-panel="people">
+      <div class="search-section-title">{% translate "أشخاص" %}</div>
+      <div class="th-grid cols-6">
+        {% for item in results.people %}
+        <a href="{{ item.url }}" class="search-person-card">
+          {% if item.image %}
+            <img class="search-person-avatar" src="{{ item.image }}" alt="{{ item.title }}">
+          {% else %}
+            <div class="search-person-avatar-fallback"><i class="bi bi-person-fill"></i></div>
+          {% endif %}
+          <div class="search-person-name">{{ item.title }}</div>
+          <div class="search-person-role">{{ item.subtitle }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+  function switchSearchTab(tab) {
+    document.querySelectorAll('.search-tab-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.search-tab-panel').forEach(function (panel) {
+      panel.hidden = !(tab === 'all' || panel.dataset.panel === tab);
+    });
+  }
+</script>
+{% endblock %}

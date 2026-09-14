@@ -35,6 +35,8 @@ urlpatterns = [
     path('people/', views.people_list, name='people'),
     path('people/<str:slug>/', views.person_detail, name='person-detail'),
 
+    path('search/', views.search_view, name='search'),
+
     path('songs/', views.songs_list, name='songs'),
     path('songs/increment-play/', views.increment_play_count, name='increment-play-count'),
     path('songs/full-listen/', views.record_full_listen, name='record-full-listen'),

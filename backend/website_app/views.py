@@ -709,6 +709,211 @@ Guidance:
 Every key must be present; use null for any that don't apply to the chosen intent."""
 
 
+# Minimum fuzzy score (see _title_match_score) for a result to surface at
+# all - below this it's almost certainly unrelated noise rather than a
+# typo/misspelling of the query.
+_SEARCH_MATCH_THRESHOLD = 0.45
+
+_SEARCH_RESULT_LIMIT_PER_TYPE = 12
+
+
+def _search_score(query_norm, title_norm):
+    """Best of: exact substring (either direction) scores 1.0, otherwise
+    a fuzzy ratio - the same forgiving-of-typos comparison the voice
+    assistant already relies on for song titles, reused here so text
+    search understands a misspelled/misheard word exactly the same way.
+    """
+    if not query_norm or not title_norm:
+        return 0.0
+    if query_norm in title_norm or title_norm in query_norm:
+        return 1.0
+    return SequenceMatcher(None, query_norm, title_norm).ratio()
+
+
+def _search_songs(query_norm, limit):
+    scored = []
+    for song in Song.visible_queryset(Song.objects.select_related('album')):
+        title_norm = _normalize_arabic(localized_field(song, 'title'))
+        score = _search_score(query_norm, title_norm)
+        if score >= _SEARCH_MATCH_THRESHOLD:
+            singers = [
+                localized_field(credit.person, 'full_name')
+                for credit in song.credits.select_related('person').all()
+                if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+            ]
+            scored.append((score, {
+                'type': 'songs',
+                'title': localized_field(song, 'title'),
+                'subtitle': ', '.join(singers),
+                'image': song.display_cover_url or '',
+                'url': f'/songs/{song.slug}/',
+                'songId': song.pk,
+                'audioUrl': song.audio_file.url if song.audio_file else '',
+            }))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:limit]
+
+
+def _search_albums(query_norm, limit):
+    scored = []
+    for album in Album.visible_queryset(Album.objects.all()):
+        title_norm = _normalize_arabic(localized_field(album, 'title'))
+        score = _search_score(query_norm, title_norm)
+        if score >= _SEARCH_MATCH_THRESHOLD:
+            image = album.cover_image.url if album.cover_image else album.cover_art_url
+            scored.append((score, {
+                'type': 'albums',
+                'title': localized_field(album, 'title'),
+                'subtitle': str(album.release_date.year) if album.release_date else '',
+                'image': image or '',
+                'url': f'/albums/{album.slug}/',
+            }))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:limit]
+
+
+def _search_media(query_norm, limit):
+    scored = []
+    for item in Media.visible_queryset(Media.objects.all()):
+        title_norm = _normalize_arabic(localized_field(item, 'title'))
+        score = _search_score(query_norm, title_norm)
+        if score >= _SEARCH_MATCH_THRESHOLD:
+            scored.append((score, {
+                'type': 'media',
+                'title': localized_field(item, 'title'),
+                'subtitle': item.get_media_type_display(),
+                'image': item.display_poster_url or '',
+                'url': f'/media/{item.slug}/',
+            }))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:limit]
+
+
+def _search_concerts(query_norm, limit):
+    scored = []
+    for concert in Concert.visible_queryset(Concert.objects.all()):
+        title_norm = _normalize_arabic(localized_field(concert, 'title'))
+        score = _search_score(query_norm, title_norm)
+        if score >= _SEARCH_MATCH_THRESHOLD:
+            scored.append((score, {
+                'type': 'concerts',
+                'title': localized_field(concert, 'title'),
+                'subtitle': concert.city or concert.venue_name or '',
+                'image': concert.display_poster_url or '',
+                'url': f'/concerts/{concert.slug}/',
+            }))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:limit]
+
+
+def _search_people(query_norm, limit):
+    scored = []
+    for person in Person.objects.all():
+        title_norm = _normalize_arabic(localized_field(person, 'full_name'))
+        score = _search_score(query_norm, title_norm)
+        if score >= _SEARCH_MATCH_THRESHOLD:
+            scored.append((score, {
+                'type': 'people',
+                'title': localized_field(person, 'full_name'),
+                'subtitle': person.get_primary_role_display(),
+                'image': person.profile_image.url if person.profile_image else '',
+                'url': f'/people/{person.slug}/',
+            }))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:limit]
+
+
+_SEARCH_CORRECTION_SYSTEM_PROMPT = """You fix likely Arabic typos/spelling mistakes or phonetic mis-transcriptions in a short search query for a Tamer Hosny (تامر حسني) fan archive site (songs, albums, movies, TV series, concerts, people - singers/actors/crew).
+Return strict JSON: {"corrected": "<best-guess corrected query, same language as input, or null if the input already looks fine or you have no confident guess>"}.
+Only ever return a short query phrase (a handful of words at most) - never a sentence, explanation, or anything else."""
+
+
+def _search_ai_correction(query):
+    """Zero results from fuzzy matching alone means the query is likely
+    garbled enough (wrong keyboard layout, phonetic misspelling, etc.)
+    that a plain edit-distance comparison can't recover it either - this
+    is the one place an LLM guess is worth the latency, as a fallback of
+    last resort rather than on every keystroke.
+    """
+    result = ask_json(
+        f'Search query: "{query}"',
+        _SEARCH_CORRECTION_SYSTEM_PROMPT,
+        required_keys=('corrected',),
+    )
+    if not result:
+        return None
+    corrected = (result.get('corrected') or '').strip()
+    if not corrected or corrected.lower() == query.strip().lower():
+        return None
+    return corrected
+
+
+def _run_search(query, limit_per_type=_SEARCH_RESULT_LIMIT_PER_TYPE, allow_ai_fallback=True):
+    query = (query or '').strip()
+    if not query:
+        return {'query': query, 'corrected_query': None, 'counts': {}, 'results': {}}
+
+    query_norm = _normalize_arabic(query)
+
+    finders = {
+        'songs': _search_songs,
+        'albums': _search_albums,
+        'media': _search_media,
+        'concerts': _search_concerts,
+        'people': _search_people,
+    }
+
+    results = {key: [item for _score, item in finder(query_norm, limit_per_type)] for key, finder in finders.items()}
+    total = sum(len(v) for v in results.values())
+
+    corrected_query = None
+    if total == 0 and allow_ai_fallback:
+        corrected_query = _search_ai_correction(query)
+        if corrected_query:
+            corrected_norm = _normalize_arabic(corrected_query)
+            results = {key: [item for _score, item in finder(corrected_norm, limit_per_type)] for key, finder in finders.items()}
+
+    counts = {key: len(value) for key, value in results.items()}
+    return {
+        'query': query,
+        'corrected_query': corrected_query,
+        'counts': counts,
+        'results': results,
+    }
+
+
+def search_view(request):
+    """Site-wide search across songs/albums/movies&series/concerts/people.
+
+    Typo tolerance reuses the exact same normalization + fuzzy matching
+    already proven out by the voice assistant's song-title search - this
+    is deliberately not a separate, unproven matching strategy. If that
+    still comes up empty (the query is garbled enough that even a fuzzy
+    ratio can't bridge it), one LLM call attempts a correction and the
+    search retries with that instead, so a bad keyboard-layout guess or
+    a phonetic misspelling still has a real shot at finding something.
+
+    A plain browser request renders the full results page; an
+    XMLHttpRequest (the navbar's live-as-you-type dropdown) gets JSON
+    back instead.
+    """
+    query = (request.GET.get('q') or '').strip()
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    data = _run_search(query, limit_per_type=6 if is_ajax else _SEARCH_RESULT_LIMIT_PER_TYPE)
+
+    if is_ajax:
+        return JsonResponse(data)
+
+    return render(request, 'website/pages/search/results.html', {
+        'query': query,
+        'corrected_query': data['corrected_query'],
+        'counts': data['counts'],
+        'results': data['results'],
+        'total_count': sum(data['counts'].values()),
+    })
+
+
 def voice_intent(request):
     """Open-ended fallback for the voice assistant: once none of its
     fixed regex patterns match a command, the frontend posts the raw
