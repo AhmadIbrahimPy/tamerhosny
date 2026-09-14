@@ -1107,7 +1107,7 @@
       // The /player/ page's own cover play button - its icon element is
       // targeted directly (not replaced) since it sits inside a button
       // that isn't currentPlayBtn/mainBtn.
-      var pageCoverIcon = document.getElementById('playerPageCoverPlayIcon');
+      var pageCoverIcon = document.getElementById('playerPageControlPlayIcon');
       if (pageCoverIcon) {
         pageCoverIcon.className = 'bi ' + iconClass;
       }
@@ -2473,11 +2473,11 @@
     }
 
     function syncToggleButtonStyles() {
-      ['playerRepeatBtn', 'mobilePlayerRepeatBtn'].forEach(function(id) {
+      ['playerRepeatBtn', 'mobilePlayerRepeatBtn', 'playerPageRepeatBtn'].forEach(function(id) {
         var btn = document.getElementById(id);
         if (btn) btn.style.color = isRepeat ? 'var(--accent)' : 'var(--muted)';
       });
-      ['playerShuffleBtn', 'mobilePlayerShuffleBtn'].forEach(function(id) {
+      ['playerShuffleBtn', 'mobilePlayerShuffleBtn', 'playerPageShuffleBtn'].forEach(function(id) {
         var btn = document.getElementById(id);
         if (btn) btn.style.color = isShuffle ? 'var(--accent)' : 'var(--muted)';
       });
