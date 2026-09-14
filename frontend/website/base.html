@@ -1042,6 +1042,14 @@
           if (mobileProgressBar) mobileProgressBar.style.width = progress + '%';
           if (mobileCurrentTime) mobileCurrentTime.textContent = currentTimeText;
           if (mobileDuration) mobileDuration.textContent = durationText;
+
+          // Same mirroring for the /player/ page's own sidebar progress bar.
+          var pagePlayerProgressBar = document.getElementById('playerPageProgressBar');
+          var pagePlayerCurrentTime = document.getElementById('playerPageCurrentTime');
+          var pagePlayerDuration = document.getElementById('playerPageDuration');
+          if (pagePlayerProgressBar) pagePlayerProgressBar.style.width = progress + '%';
+          if (pagePlayerCurrentTime) pagePlayerCurrentTime.textContent = currentTimeText;
+          if (pagePlayerDuration) pagePlayerDuration.textContent = durationText;
         }
       });
 
@@ -1095,6 +1103,13 @@
       }
       if (currentPlayBtn) {
         currentPlayBtn.innerHTML = '<i class="bi ' + iconClass + '"></i>';
+      }
+      // The /player/ page's own cover play button - its icon element is
+      // targeted directly (not replaced) since it sits inside a button
+      // that isn't currentPlayBtn/mainBtn.
+      var pageCoverIcon = document.getElementById('playerPageCoverPlayIcon');
+      if (pageCoverIcon) {
+        pageCoverIcon.className = 'bi ' + iconClass;
       }
     }
 
@@ -2557,7 +2572,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       var progressEl = document.getElementById('playerProgress');
       var mobileProgressEl = document.getElementById('mobilePlayerProgress');
-      
+      var pageProgressEl = document.getElementById('playerPageProgress');
+
       function handleSeek(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -2576,6 +2592,10 @@
       
       if (mobileProgressEl) {
         mobileProgressEl.addEventListener('click', handleSeek);
+      }
+
+      if (pageProgressEl) {
+        pageProgressEl.addEventListener('click', handleSeek);
       }
     });
   </script>
