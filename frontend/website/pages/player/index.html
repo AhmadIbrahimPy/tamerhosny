@@ -1546,8 +1546,17 @@ function mergeQueueWithHistory(serverList) {
   // no matter how many songs played since. Show only the last few,
   // most-recently-played first, like an actual "recently played" strip.
   const recentlyPlayed = playedBefore.slice(-5).reverse();
+  // A handful of sessionStorage entries from before the image[0]-on-a-
+  // string bug (base.html) was fixed still hold a single-character
+  // "image" like "h" - sanitize those back to null (falls back to the
+  // music-note icon) instead of surfacing the broken value again.
+  function sanitizeImage(image) {
+    if (!image || typeof image !== 'string') return null;
+    if (!image.startsWith('http') && !image.startsWith('/')) return null;
+    return image;
+  }
   const historyItems = recentlyPlayed.map(function (h) {
-    return { songId: h.songId, title: h.title, image: h.image, url: h.url, link: h.link, artist: h.artist, album: h.album };
+    return { songId: h.songId, title: h.title, image: sanitizeImage(h.image), url: h.url, link: h.link, artist: h.artist, album: h.album };
   });
   return historyItems.concat(upcoming);
 }
