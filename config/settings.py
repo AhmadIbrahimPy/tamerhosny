@@ -137,6 +137,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'backend.website_app.context_processors.vapid_public_key',
+                'backend.website_app.context_processors.maptiler_api_key',
             ],
         },
     },
@@ -317,6 +318,15 @@ GOOGLE_OAUTH_REDIRECT_URI = env(
 VAPID_PUBLIC_KEY = env('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY', '')
 VAPID_CLAIM_EMAIL = env('VAPID_CLAIM_EMAIL', DEFAULT_FROM_EMAIL)
+
+# MapTiler tile key for the concert location maps (dashboard picker +
+# public concert page) - free tier, no billing account, unlike Google
+# Maps, and unlike the free OSM/CARTO tile servers doesn't get blocked
+# under their production-use policy. Empty means those maps render a
+# plain fallback instead of a broken/watermarked tile layer - same
+# no-key-means-feature-off pattern as VAPID_PUBLIC_KEY above. Get one at
+# https://cloud.maptiler.com/account/keys/ (free signup, no card).
+MAPTILER_API_KEY = env('MAPTILER_API_KEY', '')
 
 
 # LLM access (backend.main_app.shared_utils.llm_providers) - used to

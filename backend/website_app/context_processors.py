@@ -8,3 +8,12 @@ def vapid_public_key(request):
     off" rather than an error.
     """
     return {'VAPID_PUBLIC_KEY': settings.VAPID_PUBLIC_KEY}
+
+
+def maptiler_api_key(request):
+    """Exposes the MapTiler tile key to every template (dashboard's
+    concert location picker + the public concert page's map) - empty
+    when unconfigured, which the {% if %} around each map treats as
+    "show the plain fallback" rather than a broken/watermarked map.
+    """
+    return {'MAPTILER_API_KEY': settings.MAPTILER_API_KEY}

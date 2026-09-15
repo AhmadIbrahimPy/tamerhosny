@@ -66,8 +66,26 @@
         {% if form.latitude %}
         <div class="mb-3">
           <label class="form-label">{% translate "حدد مكان الحفلة على الخريطة" %}</label>
-          <div id="concertMap" style="height:320px; border-radius:8px;"></div>
-          <div class="form-text">{% translate "دوس على أي مكان بالخريطة عشان تحدد الموقع." %}</div>
+          {% if MAPTILER_API_KEY %}
+            <div id="concertMap" style="height:320px; border-radius:8px;"></div>
+            <div class="form-text">{% translate "دوس على أي مكان بالخريطة عشان تحدد الموقع، أو دور عليه بالبحث فوق يمين الخريطة." %}</div>
+          {% else %}
+            {# No tile key configured yet - the hidden lat/lng fields above still submit fine,
+               this is just the interim way to set them without the visual picker. #}
+            <div class="alert alert-warning small mb-2">{% translate "الخريطة التفاعلية مش متاحة دلوقتي - تقدر تدخل الإحداثيات يدويًا تحت لحد ما تتظبط." %}</div>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="number" step="any" class="form-control" placeholder="{% translate 'خط العرض' %}"
+                       value="{{ form.latitude.value|default_if_none:'' }}"
+                       onchange="document.getElementById('id_latitude').value = this.value;">
+              </div>
+              <div class="col-6">
+                <input type="number" step="any" class="form-control" placeholder="{% translate 'خط الطول' %}"
+                       value="{{ form.longitude.value|default_if_none:'' }}"
+                       onchange="document.getElementById('id_longitude').value = this.value;">
+              </div>
+            </div>
+          {% endif %}
         </div>
         {% endif %}
 
@@ -148,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{% if form.latitude %}
+{% if form.latitude and MAPTILER_API_KEY %}
 {# unpkg intermittently 403s under its own bot-mitigation - jsdelivr mirrors
    the same npm package and is far more reliable for a page every editor
    loads. #}
@@ -168,14 +186,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const startLng = parseFloat(lngField.value) || defaultLng;
 
   const map = L.map('concertMap').setView([startLat, startLng], latField.value ? 12 : 6);
-  // tile.openstreetmap.org's own usage policy blocks production/bulk
-  // traffic outright (returns an "Access blocked" 403) - CARTO's free
-  // basemap tiles are the same OSM data, served from infra meant for
-  // exactly this kind of use, no API key required.
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 20,
+  // Both tile.openstreetmap.org (blocks production/bulk traffic under its
+  // own usage policy) and CARTO's "free" basemaps (now watermark tiles
+  // with "API KEY REQUIRED" outside their own platform) turned out not to
+  // be free-for-this-use in practice. MapTiler's free tier is the one
+  // that's actually meant for exactly this - a real key, no billing
+  // account, generous monthly quota.
+  L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={{ MAPTILER_API_KEY }}', {
+    attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
   }).addTo(map);
 
   let marker = null;
