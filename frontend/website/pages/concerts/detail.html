@@ -13,39 +13,77 @@
 
 {% block extra_css %}
 {% if concert.has_location %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{# unpkg intermittently 403s under its own bot-mitigation - jsdelivr mirrors
+   the same npm package and is far more reliable on a public page. #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 {% endif %}
 <style>
   .th-concert-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:var(--card);}
   .th-concert-header-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(45px) brightness(.4) saturate(1.3); transform:scale(1.2);}
   .th-concert-header-fallback{position:absolute; inset:0; background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);}
   .th-concert-header-shade{position:absolute; inset:0; background:linear-gradient(0deg, var(--bg) 8%, rgba(11,12,18,.6) 50%, rgba(11,12,18,.2) 100%);}
-  .th-concert-header-inner{position:relative; z-index:1; display:flex; gap:28px; align-items:center; padding:44px 28px; flex-wrap:wrap;}
-  .th-concert-poster{flex:0 0 200px; width:200px; aspect-ratio:3/4; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6); border:1px solid var(--border); background:#1e2130;}
+  .th-concert-header-inner{position:relative; z-index:1; display:flex; gap:36px; align-items:center; padding:56px 32px; flex-wrap:wrap;}
+  .th-concert-poster{
+    flex:0 0 260px; width:260px; aspect-ratio:3/4; border-radius:18px; overflow:hidden;
+    box-shadow:0 24px 70px rgba(0,0,0,.65); border:1px solid rgba(255,255,255,.14); background:#1e2130;
+  }
   .th-concert-poster img{width:100%; height:100%; object-fit:cover; display:block;}
-  .th-concert-poster .icon-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:56px;}
-  .th-ticket-stub{flex:0 0 110px; align-self:flex-start; margin-inline-start:auto; text-align:center; background:rgba(255,255,255,.06); backdrop-filter:blur(4px); border:2px dashed var(--accent); border-radius:14px; padding:16px 8px;}
-  .th-ticket-month{font-size:12.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px;}
-  .th-ticket-day{font-size:36px; font-weight:900; line-height:1; margin-block:4px; color:var(--text);}
-  .th-ticket-time{font-size:12.5px; color:var(--muted);}
-  .th-ticket-tba{font-size:13px; font-weight:700; color:var(--muted); padding-block:22px;}
+  .th-concert-poster .icon-fallback{
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:72px;
+    background:linear-gradient(135deg, var(--card) 0%, var(--bg-2) 100%);
+  }
+
+  /* Date card - a proper ticket-style panel (day/month badge + full date,
+     time and countdown) instead of a tiny dashed box that read as an
+     afterthought at 110px wide. Shared markup between both header
+     variants (video hero / poster hero) via the th-concert-date-card
+     partial below. */
+  .th-concert-date-card{
+    flex:0 0 auto; display:flex; align-items:stretch; gap:16px;
+    background:rgba(255,255,255,.07); backdrop-filter:blur(6px); border:1px solid var(--border);
+    border-radius:16px; padding:14px 22px;
+  }
+  .th-concert-date-badge{
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding-inline-end:16px; border-inline-end:1px solid var(--border);
+  }
+  .th-concert-date-month{font-size:11.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px;}
+  .th-concert-date-day{font-size:32px; font-weight:900; line-height:1.1; color:var(--text);}
+  .th-concert-date-info{display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0;}
+  .th-concert-date-main{font-size:15px; font-weight:800; color:var(--text); white-space:nowrap;}
+  .th-concert-date-sub{font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:6px; white-space:nowrap;}
+  .th-concert-date-tba{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--muted); padding-block:6px;}
+  /* Only when it's sitting directly in the poster header row (a direct
+     flex child alongside the poster and the meta column) does it pin
+     itself to the far end - nested next to the share buttons in the
+     video-hero variant, it should just sit inline with them instead. */
+  .th-concert-header-inner > .th-concert-date-card{align-self:flex-start; margin-inline-start:auto;}
+
   .th-concert-meta{flex:1; min-width:260px;}
   .th-concert-meta h1{font-size:36px; font-weight:900; margin-block:10px 6px;}
   @media (max-width: 768px){ .th-concert-meta h1{font-size:28px;} }
   @media (max-width: 576px){ .th-concert-meta h1{font-size:24px;} }
 
   /* Same problem as the movie/media header: a fixed-width poster plus a
-     ticket stub pinned to the far end via margin-inline-start:auto had
+     date card pinned to the far end via margin-inline-start:auto had
      nowhere sensible to go once wrapped on a narrow screen. Stack
-     everything into one centered column, ticket stub last. */
+     everything into one centered column, date card last, full-width. */
   @media (max-width:700px){
-    .th-concert-header-inner{flex-direction:column; align-items:center; text-align:center; padding:26px 18px 22px; gap:16px;}
-    .th-concert-poster{flex-basis:auto; width:150px;}
+    .th-concert-header-inner{flex-direction:column; align-items:center; text-align:center; padding:28px 18px 24px; gap:18px;}
+    .th-concert-poster{flex-basis:auto; width:200px;}
     .th-concert-meta{min-width:0; width:100%;}
     .th-concert-meta .th-meta-row{justify-content:center;}
     .th-concert-meta .d-flex.flex-wrap{justify-content:center;}
     .th-concert-meta p{margin-inline:auto;}
-    .th-ticket-stub{margin-inline-start:0; align-self:center;}
+    /* Matches the ">" selector above on specificity (both are two
+       simple selectors) so this actually wins inside the media query
+       instead of losing to it regardless of viewport width. */
+    .th-concert-header-inner > .th-concert-date-card,
+    .th-concert-date-card{
+      margin-inline-start:0; align-self:center; width:100%; max-width:340px; justify-content:center;
+    }
+    .th-concert-date-info{align-items:center; text-align:center;}
+    .th-concert-date-sub{justify-content:center;}
   }
 </style>
 {% endblock %}
@@ -69,19 +107,21 @@
     <h1>{{ concert|localized_field:'title' }}</h1>
 
     <div class="th-meta-row">
-      <span><i class="bi bi-calendar"></i> {% if concert.date %}{{ concert.date|date:"Y-m-d H:i" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</span>
       {% if concert.venue_name %}<span><i class="bi bi-geo-alt"></i> {{ concert.venue_name }}</span>{% endif %}
       {% if concert.city %}<span><i class="bi bi-pin-map"></i> {{ concert.city }}{% if concert.country %}، {{ concert.country }}{% endif %}</span>{% endif %}
     </div>
 
     {% if concert.description %}<p class="mt-2" style="max-width:640px;">{{ concert.description }}</p>{% endif %}
 
-    <div class="d-flex flex-wrap gap-2 mt-3">
-      <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-      <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-         onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-         onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+      {% include "website/partials/concert_date_card.html" %}
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
+           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+      </div>
     </div>
   </div>
 </div>
@@ -127,17 +167,7 @@
              onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
         </div>
       </div>
-      {% if concert.date %}
-      <div class="th-ticket-stub">
-        <div class="th-ticket-month">{{ concert.date|date:"M" }}</div>
-        <div class="th-ticket-day">{{ concert.date|date:"d" }}</div>
-        <div class="th-ticket-time">{{ concert.date|date:"H:i" }}</div>
-      </div>
-      {% else %}
-      <div class="th-ticket-stub">
-        <div class="th-ticket-tba"><i class="bi bi-hourglass-split"></i><br>{% translate "قريباً" %}</div>
-      </div>
-      {% endif %}
+      {% include "website/partials/concert_date_card.html" %}
     </div>
   </div>
 {% endif %}
@@ -148,7 +178,7 @@
     <div class="d-flex flex-wrap gap-2">
       {% for link in links %}
         <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
-           onclick="thTrack('EXTERNAL_CLICK', 'concert', {{ concert.pk }}, {platform: '{{ link.platform.platform_name }}', external_link_id: {{ link.pk }}});">
+           onclick="return window.thPlatformLinkClick(event, this, 'concert', {{ concert.pk }}, '{{ link.platform.platform_name|escapejs }}', {{ link.pk }}, '{% translate "سجل دخولك الأول عشان تقدر تحجز تذكرتك" %}');">
           {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
         </a>
       {% endfor %}
@@ -219,7 +249,7 @@
 {% block extra_js %}
 <script>thTrack('VIEW', 'concert', {{ concert.pk }});</script>
 {% if concert.has_location %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 thOnReady(function() {
   if (typeof L === 'undefined') return;

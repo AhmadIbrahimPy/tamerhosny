@@ -149,8 +149,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {% if form.latitude %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{# unpkg intermittently 403s under its own bot-mitigation - jsdelivr mirrors
+   the same npm package and is far more reliable for a page every editor
+   loads. #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const mapEl = document.getElementById('concertMap');

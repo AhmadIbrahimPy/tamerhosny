@@ -740,6 +740,26 @@
     .th-ticket-mini .month{font-size:9px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:.5px;}
     .th-ticket-mini .day{font-size:16px; font-weight:900; color:var(--text);}
 
+    /* Concert card - same bare-poster treatment as the movie/series/
+       commercial cards: no boxed background/border, the image itself
+       lifts with a shadow + subtle zoom on hover, title sits tight
+       underneath instead of centered in a padded box. */
+    .th-card.aspect-wide{background:transparent; border:none;}
+    .th-card.aspect-wide:hover{background:transparent; border-color:transparent;}
+    .th-card.aspect-wide .th-img-wrap{
+      border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.35);
+      transition:box-shadow .25s ease, border-color .18s ease;
+    }
+    .th-card.aspect-wide .th-img-wrap img{transition:transform .35s ease;}
+    .th-card.aspect-wide .th-body{padding:10px 2px 0; text-align:start;}
+    .th-card.aspect-wide .th-title,
+    .th-card.aspect-wide .th-meta{text-align:start;}
+    .th-card.aspect-wide .th-title{-webkit-line-clamp:1;}
+    @media (hover:hover) and (pointer:fine){
+      .th-card.aspect-wide:hover .th-img-wrap{box-shadow:0 20px 40px rgba(0,0,0,.55);}
+      .th-card.aspect-wide:hover .th-img-wrap img{transform:scale(1.06);}
+    }
+
     /* Badges */
     .th-badge{display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700;}
     .th-badge.gold{background:rgba(212,175,55,.15); color:var(--accent);}
@@ -3214,6 +3234,24 @@
       window.pendingAuthAction = retry || null;
       openAuthModal('login', message);
       return true;
+    };
+
+    // Booking/ticketing platform links (concert "مواقع الحجز" etc.) open
+    // in a new tab on click - a guest still needs to log in first, but
+    // by the time they do, the click that would've opened the tab is
+    // long gone, so the retry callback has to open it itself instead of
+    // just re-firing a click.
+    window.thPlatformLinkClick = function (event, anchor, entityType, entityId, platformName, linkId, message) {
+      if (window.isAuthenticated) {
+        thTrack('EXTERNAL_CLICK', entityType, entityId, { platform: platformName, external_link_id: linkId });
+        return true;
+      }
+      event.preventDefault();
+      window.requireAuth(function () {
+        thTrack('EXTERNAL_CLICK', entityType, entityId, { platform: platformName, external_link_id: linkId });
+        window.open(anchor.href, '_blank', 'noopener');
+      }, message);
+      return false;
     };
 
     window.openAuthModal = function (view, message) {

@@ -1371,11 +1371,32 @@ def media_detail(request, slug):
 # ---------------------------------------------------------------------------
 
 def concerts_list(request):
-    queryset = Concert.visible_queryset(Concert.objects.select_related('organizer')).order_by('-date')
+    base_qs = Concert.visible_queryset(Concert.objects.select_related('organizer'))
+    upcoming_count = base_qs.filter(status=Concert.Status.UPCOMING).count()
+    past_count = base_qs.exclude(status=Concert.Status.UPCOMING).count()
+
+    tab = request.GET.get('tab')
+    if tab not in ('upcoming', 'past'):
+        tab = 'upcoming' if upcoming_count else 'past'
+
+    if tab == 'upcoming':
+        # Soonest first (TBA-dated concerts, sorted last, keep showing up
+        # even without a date to count down to).
+        queryset = base_qs.filter(status=Concert.Status.UPCOMING).order_by(
+            models.Case(models.When(date__isnull=True, then=1), default=0), 'date',
+        )
+    else:
+        queryset = base_qs.exclude(status=Concert.Status.UPCOMING).order_by('-date')
+
     concerts = _paginate(request, queryset)
     top_ad, bottom_ad = _ad_slots(Advertisement.Placement.CONCERTS)
     return render(request, 'website/pages/concerts/list.html', {
         'concerts': concerts,
+        'tab': tab,
+        'upcoming_count': upcoming_count,
+        'past_count': past_count,
+        'querystring': f'tab={tab}&',
+        'now': timezone.now(),
         'top_ad': top_ad,
         'bottom_ad': bottom_ad,
     })
@@ -1391,6 +1412,7 @@ def concert_detail(request, slug):
         'concert': concert,
         'links': concert.links.select_related('platform').all(),
         'related_concerts': related_concerts,
+        'now': timezone.now(),
         'top_ad': top_ad,
         'bottom_ad': bottom_ad,
     })

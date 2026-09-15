@@ -27,8 +27,8 @@
           <tr>
             <td>
               <a href="{% url 'dashboard_app:concert-view' concert.pk %}" class="d-flex align-items-center gap-2 text-inherit text-decoration-none">
-                {% if concert.poster_url %}
-                  <img src="{{ concert.poster_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
+                {% if concert.display_poster_url %}
+                  <img src="{{ concert.display_poster_url }}" alt="" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;object-fit:cover;">
                 {% else %}
                   <span class="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary flex-shrink-0" style="width:36px;height:36px;font-size:14px;font-weight:700;">{{ concert.title_ar|slice:":1" }}</span>
                 {% endif %}

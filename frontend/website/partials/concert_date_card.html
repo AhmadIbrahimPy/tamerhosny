@@ -1,0 +1,20 @@
+{% load i18n %}
+{% if concert.date %}
+<div class="th-concert-date-card">
+  <div class="th-concert-date-badge">
+    <span class="th-concert-date-month">{{ concert.date|date:"M" }}</span>
+    <span class="th-concert-date-day">{{ concert.date|date:"d" }}</span>
+  </div>
+  <div class="th-concert-date-info">
+    <div class="th-concert-date-main">{{ concert.date|date:"l، j F Y" }}</div>
+    <div class="th-concert-date-sub">
+      <i class="bi bi-clock"></i> {{ concert.date|date:"H:i" }}
+      {% if concert.date > now %} · {% blocktranslate with left=concert.date|timeuntil %}بعد {{ left }}{% endblocktranslate %}{% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="th-concert-date-card">
+  <div class="th-concert-date-tba"><i class="bi bi-hourglass-split"></i> {% translate "الموعد سيتم الإعلان عنه لاحقاً" %}</div>
+</div>
+{% endif %}

@@ -8,9 +8,39 @@
 {% block og_title %}{% translate "الحفلات" %} - {% translate "تامر حسني" %}{% endblock %}
 {% block og_description %}{% translate "جميع حفلات تامر حسني - القادمة والسابقة، المواعيد والمواقع على أرشيف تامر حسني." %}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .th-concert-tabs{display:flex; gap:8px; margin-block:18px 26px; overflow-x:auto; scrollbar-width:none;}
+  .th-concert-tabs::-webkit-scrollbar{display:none;}
+  .th-concert-tab{
+    display:inline-flex; align-items:center; gap:8px; flex:0 0 auto;
+    padding:10px 20px; border-radius:999px; border:1px solid var(--border); background:var(--card);
+    color:var(--muted); font-weight:700; font-size:14px; text-decoration:none; white-space:nowrap;
+    transition:border-color .18s ease, color .18s ease, background .18s ease;
+  }
+  .th-concert-tab:hover{border-color:rgba(212,175,55,.4); color:var(--text);}
+  .th-concert-tab.active{background:var(--accent); border-color:var(--accent); color:#171a26;}
+  .th-concert-tab .count{
+    font-size:11.5px; font-weight:800; padding:1px 7px; border-radius:999px;
+    background:rgba(255,255,255,.1); color:inherit;
+  }
+  .th-concert-tab.active .count{background:rgba(23,26,38,.18);}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-xl th-section">
   <h1 class="th-section-title">{% translate "الحفلات" %}</h1>
+
+  <div class="th-concert-tabs">
+    <a href="?tab=upcoming" class="th-concert-tab {% if tab == 'upcoming' %}active{% endif %}">
+      <i class="bi bi-calendar-event"></i> {% translate "القادمة" %} <span class="count">{{ upcoming_count }}</span>
+    </a>
+    <a href="?tab=past" class="th-concert-tab {% if tab == 'past' %}active{% endif %}">
+      <i class="bi bi-calendar-check"></i> {% translate "السابقة" %} <span class="count">{{ past_count }}</span>
+    </a>
+  </div>
+
   {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
 
   <div class="th-grid cols-3">
@@ -18,7 +48,8 @@
     <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
       <div class="th-img-wrap">
         {% if concert.display_poster_url %}
-          <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
+          <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}"
+            {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
         {% else %}
           <i class="bi bi-calendar-event icon-fallback"></i>
         {% endif %}
@@ -35,11 +66,17 @@
         </span>
         <div class="th-title">{{ concert|localized_field:'title' }}</div>
         <div class="th-meta">{{ concert.venue_name }}{% if concert.venue_name and concert.city %}، {% endif %}{{ concert.city }}</div>
-        <div class="th-meta">{% if concert.date %}{{ concert.date|date:"Y-m-d" }}{% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}</div>
+        <div class="th-meta">
+          {% if concert.date %}{{ concert.date|date:"Y-m-d" }}{% if tab == 'upcoming' and concert.date > now %} · {% blocktranslate with left=concert.date|timeuntil %}بعد {{ left }}{% endblocktranslate %}{% endif %}
+          {% else %}{% translate "سيتم الإعلان لاحقاً" %}{% endif %}
+        </div>
       </div>
     </a>
     {% empty %}
-    <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+    <div class="th-empty-block">
+      <i class="bi bi-calendar-event"></i>
+      <span>{% if tab == 'upcoming' %}{% translate "مفيش حفلات قادمة دلوقتي" %}{% else %}{% translate "مفيش حفلات سابقة" %}{% endif %}</span>
+    </div>
     {% endfor %}
   </div>
   <div class="mt-4">
