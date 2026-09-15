@@ -734,11 +734,27 @@ def _search_score(query_norm, title_norm):
     return SequenceMatcher(None, query_norm, title_norm).ratio()
 
 
+def _best_match_score(query_norm, obj, field_prefix):
+    """Matches against BOTH the Arabic and English variant of a field
+    (title_ar/title_en, full_name_ar/full_name_en), independent of
+    whichever one localized_field would pick for the *current site
+    language* - a search should find "بنت مين" whether the visitor is
+    browsing the Arabic or the English version of the site, and same
+    for an English title typed while browsing in Arabic. Matching only
+    the currently-active language's field (the original bug here) made
+    the other language invisible to search entirely.
+    """
+    ar_value = getattr(obj, f'{field_prefix}_ar', '') or ''
+    en_value = getattr(obj, f'{field_prefix}_en', '') or ''
+    score_ar = _search_score(query_norm, _normalize_arabic(ar_value)) if ar_value else 0.0
+    score_en = _search_score(query_norm, _normalize_arabic(en_value)) if en_value else 0.0
+    return max(score_ar, score_en)
+
+
 def _search_songs(query_norm, limit):
     scored = []
     for song in Song.visible_queryset(Song.objects.select_related('album')):
-        title_norm = _normalize_arabic(localized_field(song, 'title'))
-        score = _search_score(query_norm, title_norm)
+        score = _best_match_score(query_norm, song, 'title')
         if score >= _SEARCH_MATCH_THRESHOLD:
             singers = [
                 localized_field(credit.person, 'full_name')
@@ -761,8 +777,7 @@ def _search_songs(query_norm, limit):
 def _search_albums(query_norm, limit):
     scored = []
     for album in Album.visible_queryset(Album.objects.all()):
-        title_norm = _normalize_arabic(localized_field(album, 'title'))
-        score = _search_score(query_norm, title_norm)
+        score = _best_match_score(query_norm, album, 'title')
         if score >= _SEARCH_MATCH_THRESHOLD:
             image = album.cover_image.url if album.cover_image else album.cover_art_url
             scored.append((score, {
@@ -779,8 +794,7 @@ def _search_albums(query_norm, limit):
 def _search_media(query_norm, limit):
     scored = []
     for item in Media.visible_queryset(Media.objects.all()):
-        title_norm = _normalize_arabic(localized_field(item, 'title'))
-        score = _search_score(query_norm, title_norm)
+        score = _best_match_score(query_norm, item, 'title')
         if score >= _SEARCH_MATCH_THRESHOLD:
             scored.append((score, {
                 'type': 'media',
@@ -796,8 +810,7 @@ def _search_media(query_norm, limit):
 def _search_concerts(query_norm, limit):
     scored = []
     for concert in Concert.visible_queryset(Concert.objects.all()):
-        title_norm = _normalize_arabic(localized_field(concert, 'title'))
-        score = _search_score(query_norm, title_norm)
+        score = _best_match_score(query_norm, concert, 'title')
         if score >= _SEARCH_MATCH_THRESHOLD:
             scored.append((score, {
                 'type': 'concerts',
@@ -813,8 +826,7 @@ def _search_concerts(query_norm, limit):
 def _search_people(query_norm, limit):
     scored = []
     for person in Person.objects.all():
-        title_norm = _normalize_arabic(localized_field(person, 'full_name'))
-        score = _search_score(query_norm, title_norm)
+        score = _best_match_score(query_norm, person, 'full_name')
         if score >= _SEARCH_MATCH_THRESHOLD:
             scored.append((score, {
                 'type': 'people',

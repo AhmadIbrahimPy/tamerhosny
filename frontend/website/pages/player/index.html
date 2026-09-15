@@ -1381,6 +1381,17 @@ function handleAudioPause() {
 }
 
 function loadPlayerPageData() {
+  // This page's own play icon (#playerPageControlPlayIcon) is freshly
+  // server-rendered to a hardcoded "paused" glyph on every navigation
+  // here (htmx boost) - if playback is already running from before,
+  // nothing else fires a state-change event to correct it (the audio
+  // just keeps playing, nothing actually changed), so it sits wrong
+  // until the next real play/pause. Sync it to the real state right
+  // away instead of waiting for that.
+  if (typeof globalAudio !== 'undefined' && globalAudio && typeof setPlayButtonsIcon === 'function') {
+    setPlayButtonsIcon(globalAudio.paused ? 'bi-play-fill' : 'bi-pause-fill');
+  }
+
   if (currentSongData.title) {
     const titleLink = document.getElementById('playerPageTitleLink');
     titleLink.textContent = currentSongData.title;

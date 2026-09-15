@@ -4664,6 +4664,30 @@
         coverProgress.addEventListener('pointercancel', function () { isDraggingCoverProgress = false; });
       }
 
+      // Navigating here (htmx boost) while this exact song is already
+      // playing from an earlier page never fires a fresh 'play' event -
+      // the audio just keeps going, nothing changed. Without this, the
+      // icon sat wrong (server-rendered default: paused) until the next
+      // real state change, which needed one "wasted" click to produce
+      // (toggling the real, already-correct audio state without moving
+      // the already-wrong icon) before a second click looked right.
+      // Fixed at once, synchronously - only the icon/hero class, not the
+      // listener-count/lyrics-sync side effects below, which still wait
+      // for the delayed reconcile so they don't double-fire against
+      // restorePlayerState's own async restore-from-refresh flow.
+      if (
+        typeof globalAudio !== 'undefined' && globalAudio &&
+        !globalAudio.paused && Number(currentSongId) === songId
+      ) {
+        const icon = document.getElementById('playIcon');
+        if (icon) {
+          icon.classList.remove('bi-play-fill');
+          icon.classList.add('bi-pause-fill');
+        }
+        const hero = document.getElementById('songHero');
+        if (hero) hero.classList.add('is-playing');
+      }
+
       // A page refresh restores playback from localStorage (see
       // restorePlayerState in base.html) on a ~300ms delay, after this
       // song's own audioPlayPause listener above is already registered -

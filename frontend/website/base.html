@@ -950,16 +950,75 @@
   {% include "website/partials/footer.html" %}
 
   <script>
-    function thTrack(eventType, kind, objectId, extra) {
-      var payload = Object.assign({
-        event_type: eventType, content_type: kind, object_id: objectId, referrer: document.referrer,
-      }, extra || {});
+    // One persistent connection per page load instead of a fresh HTTP
+    // request (its own TLS/connection setup) for every single tracked
+    // view/play/share/click - same idea as SongListenerConsumer's
+    // socket for "who's listening now", just for analytics events.
+    // Queues anything fired before the handshake finishes and flushes
+    // it on 'open'; falls back to the original POST endpoint if the
+    // socket fails outright or this browser doesn't support it, so an
+    // event is never silently dropped either way.
+    var thAnalyticsSocket = null;
+    var thAnalyticsSocketFailed = false;
+    var thAnalyticsQueue = [];
+
+    function thPostTrackFallback(payload) {
       fetch('/v1/analytics/track/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ver': '1.0.0', 'plat': 'WEBSITE' },
         body: JSON.stringify(payload),
         keepalive: true,
       }).catch(function () {});
+    }
+
+    function thConnectAnalyticsSocket() {
+      if (thAnalyticsSocketFailed || !('WebSocket' in window)) {
+        thAnalyticsSocketFailed = true;
+        return;
+      }
+      try {
+        var scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        thAnalyticsSocket = new WebSocket(scheme + '//' + window.location.host + '/ws/analytics/track/');
+
+        thAnalyticsSocket.addEventListener('open', function () {
+          thAnalyticsQueue.forEach(function (payload) {
+            thAnalyticsSocket.send(JSON.stringify(payload));
+          });
+          thAnalyticsQueue = [];
+        });
+
+        // Closed (server restart, network blip, proxy timeout) - just
+        // stop using it. thTrack() falls through to the plain POST for
+        // anything after this; no reconnect/backoff logic, analytics
+        // events don't need that guarantee and it's not worth the
+        // complexity here.
+        thAnalyticsSocket.addEventListener('close', function () {
+          thAnalyticsSocket = null;
+        });
+        thAnalyticsSocket.addEventListener('error', function () {
+          thAnalyticsSocketFailed = true;
+          thAnalyticsSocket = null;
+        });
+      } catch (e) {
+        thAnalyticsSocketFailed = true;
+      }
+    }
+    thConnectAnalyticsSocket();
+
+    function thTrack(eventType, kind, objectId, extra) {
+      var payload = Object.assign({
+        event_type: eventType, content_type: kind, object_id: objectId, referrer: document.referrer,
+      }, extra || {});
+
+      if (thAnalyticsSocket && thAnalyticsSocket.readyState === WebSocket.OPEN) {
+        thAnalyticsSocket.send(JSON.stringify(payload));
+        return;
+      }
+      if (thAnalyticsSocket && thAnalyticsSocket.readyState === WebSocket.CONNECTING) {
+        thAnalyticsQueue.push(payload);
+        return;
+      }
+      thPostTrackFallback(payload);
     }
 
     function toggleUserMenu() {
@@ -4576,7 +4635,7 @@
         banner.innerHTML =
           '<i class="bi bi-phone"></i>' +
           '<span>' + (mode === 'ios'
-            ? '{% translate "ثبّت التطبيق: من زر المشاركة، اختر \'إضافة إلى الشاشة الرئيسية\'" %}'
+            ? '{% translate "ثبّت التطبيق: من زر المشاركة، اختر «إضافة إلى الشاشة الرئيسية»" %}'
             : '{% translate "ثبّت الموقع كتطبيق على شاشتك الرئيسية" %}') +
           '</span>' +
           (mode === 'ios' ? '' : '<button type="button" class="th-install-btn">{% translate "تثبيت" %}</button>') +

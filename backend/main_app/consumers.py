@@ -237,3 +237,114 @@ class DuetProjectStatusConsumer(WebsocketConsumer):
             'error': event.get('error', ''),
             'redirect_url': event.get('redirect_url'),
         }))
+
+
+def _ws_headers(scope):
+    return {
+        key.decode('latin1').lower(): value.decode('latin1')
+        for key, value in scope.get('headers', [])
+    }
+
+
+def _ws_client_ip(scope):
+    forwarded = _ws_headers(scope).get('x-forwarded-for')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    client = scope.get('client')
+    return client[0] if client else None
+
+
+class AnalyticsTrackConsumer(WebsocketConsumer):
+    """Replaces a plain POST per view/play/share/external-click
+    (thTrack() in base.html, formerly `fetch('/v1/analytics/track/')`
+    on every single call) with one persistent connection per page that
+    every tracked event gets sent over instead - the same tab-lifetime
+    connection SongListenerConsumer already opens for "who's listening
+    now", just carrying a different kind of message. Cuts the
+    request-per-event overhead (a full HTTP request, including its own
+    TLS/connection setup on a cold keep-alive) down to one handshake for
+    the whole page visit.
+
+    Deliberately NOT tied to any one song/page like the other consumers
+    here - a single connection covers every event type on every page,
+    so the frontend only ever needs to open it once per page load. No
+    group_add - nothing broadcasts back out from this one, it's a
+    write-only pipe from the browser to a server-side create() per
+    message, mirroring TrackHandle.create() (backend.analytics_app.core.
+    track) field-for-field so the two stay equivalent. The plain POST
+    endpoint stays in place as a fallback for when the socket can't
+    connect at all (or a browser too old to support it), not removed.
+    """
+
+    def connect(self):
+        self.accept()
+
+    def disconnect(self, close_code):
+        pass
+
+    def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except (TypeError, ValueError):
+            return
+
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict):
+                    self._record_event(item)
+        elif isinstance(data, dict):
+            self._record_event(data)
+
+    def _record_event(self, data):
+        from backend.analytics_app.models import AnalyticsEvent
+        from backend.analytics_app.shared_utils.content_types import content_type_for_kind
+        from backend.links_app.models import ExternalLink, Platform
+
+        event_type = data.get('event_type')
+        kind = data.get('content_type')
+        object_id = data.get('object_id')
+
+        if event_type not in AnalyticsEvent.EventType.values:
+            return
+        content_type = content_type_for_kind(kind)
+        if not content_type or not object_id:
+            return
+
+        model_class = content_type.model_class()
+        if not model_class.objects.filter(pk=object_id).exists():
+            return
+
+        platform = None
+        external_link = None
+        if event_type == AnalyticsEvent.EventType.EXTERNAL_CLICK:
+            platform_name = data.get('platform')
+            platform = Platform.objects.filter(platform_name=platform_name).first()
+            link_id = data.get('external_link_id')
+            if link_id:
+                external_link = ExternalLink.objects.filter(pk=link_id).first()
+
+        share_channel = ''
+        if event_type == AnalyticsEvent.EventType.SHARE:
+            share_channel = data.get('share_channel', '')
+            if share_channel not in AnalyticsEvent.ShareChannel.values:
+                share_channel = AnalyticsEvent.ShareChannel.OTHER
+
+        session = self.scope.get('session')
+        session_key = ''
+        if session is not None:
+            if not session.session_key:
+                session.save()
+            session_key = session.session_key or ''
+
+        AnalyticsEvent.objects.create(
+            event_type=event_type,
+            content_type=content_type,
+            object_id=object_id,
+            platform=platform,
+            external_link=external_link,
+            share_channel=share_channel,
+            session_key=session_key,
+            referrer=(data.get('referrer') or '')[:500],
+            user_agent=_ws_headers(self.scope).get('user-agent', '')[:255],
+            ip_address=_ws_client_ip(self.scope),
+        )
