@@ -254,8 +254,14 @@
 thOnReady(function() {
   if (typeof L === 'undefined') return;
   var map = L.map('concertLocationMap', { scrollWheelZoom: false }).setView([{{ concert.latitude|unlocalize }}, {{ concert.longitude|unlocalize }}], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
+  // tile.openstreetmap.org's own usage policy blocks production/bulk
+  // traffic outright (returns an "Access blocked" 403) - CARTO's free
+  // basemap tiles are the same OSM data, served from infra meant for
+  // exactly this kind of use, no API key required.
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20,
   }).addTo(map);
   L.marker([{{ concert.latitude|unlocalize }}, {{ concert.longitude|unlocalize }}]).addTo(map);
 });
