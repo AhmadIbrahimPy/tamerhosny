@@ -154,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
    loads. #}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const mapEl = document.getElementById('concertMap');
@@ -181,16 +183,36 @@ document.addEventListener('DOMContentLoaded', function() {
     marker = L.marker([startLat, startLng]).addTo(map);
   }
 
-  map.on('click', function(e) {
-    const { lat, lng } = e.latlng;
-    latField.value = lat.toFixed(6);
-    lngField.value = lng.toFixed(6);
+  function placeMarker(latlng) {
+    latField.value = latlng.lat.toFixed(6);
+    lngField.value = latlng.lng.toFixed(6);
     if (marker) {
-      marker.setLatLng(e.latlng);
+      marker.setLatLng(latlng);
     } else {
-      marker = L.marker(e.latlng).addTo(map);
+      marker = L.marker(latlng).addTo(map);
     }
-  });
+  }
+
+  map.on('click', function(e) { placeMarker(e.latlng); });
+
+  // Search box (top-left) - finding "مسرح كذا، المدينة" by scrolling/
+  // zooming a blank world map by hand wasn't realistic. Geocoding goes
+  // through Nominatim (OpenStreetMap's own search API, separate infra
+  // from the tile servers that were blocking this site) - light,
+  // occasional admin lookups, well within its usage limits.
+  if (typeof L.Control.Geocoder === 'function') {
+    L.Control.geocoder({
+      defaultMarkGeocode: false,
+      placeholder: '{% translate "دور على مكان..." %}',
+      errorMessage: '{% translate "مفيش نتائج" %}',
+    })
+      .on('markgeocode', function (e) {
+        const bbox = e.geocode.bbox;
+        map.fitBounds(bbox);
+        placeMarker(e.geocode.center);
+      })
+      .addTo(map);
+  }
 });
 </script>
 {% endif %}
