@@ -184,11 +184,6 @@
   {% if concert.has_location %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الموقع" %}</h2>
-    {# Google's keyless embed mode ("output=embed") - a real pannable/
-       zoomable Google Maps view with a pin at the coordinates, no API
-       key or billing account, unlike the JS Maps SDK. Not an officially
-       documented endpoint, but the same trick has worked on countless
-       sites for years and needs nothing from our side to keep working. #}
     <iframe
       src="https://www.google.com/maps?q={{ concert.latitude|unlocalize }},{{ concert.longitude|unlocalize }}&z=15&output=embed"
       style="width:100%; height:320px; border:0; border-radius:16px;"
