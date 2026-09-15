@@ -12,11 +12,6 @@
 {% block og_image %}{% if concert.display_poster_url %}{% if 'http' in concert.display_poster_url %}{{ concert.display_poster_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ concert.display_poster_url }}{% endif %}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
-{% if concert.has_location and MAPTILER_API_KEY %}
-{# unpkg intermittently 403s under its own bot-mitigation - jsdelivr mirrors
-   the same npm package and is far more reliable on a public page. #}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-{% endif %}
 <style>
   .th-concert-header{position:relative; overflow:hidden; border-radius:24px; margin-block:24px; background:var(--card);}
   .th-concert-header-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(45px) brightness(.4) saturate(1.3); transform:scale(1.2);}
@@ -189,9 +184,17 @@
   {% if concert.has_location %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الموقع" %}</h2>
-    {% if MAPTILER_API_KEY %}
-      <div id="concertLocationMap" style="height:320px; border-radius:16px; overflow:hidden;"></div>
-    {% endif %}
+    {# Google's keyless embed mode ("output=embed") - a real pannable/
+       zoomable Google Maps view with a pin at the coordinates, no API
+       key or billing account, unlike the JS Maps SDK. Not an officially
+       documented endpoint, but the same trick has worked on countless
+       sites for years and needs nothing from our side to keep working. #}
+    <iframe
+      src="https://www.google.com/maps?q={{ concert.latitude|unlocalize }},{{ concert.longitude|unlocalize }}&z=15&output=embed"
+      style="width:100%; height:320px; border:0; border-radius:16px;"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="{% translate 'موقع الحفلة على الخريطة' %}"></iframe>
     <a href="https://www.google.com/maps?q={{ concert.latitude|unlocalize }},{{ concert.longitude|unlocalize }}" target="_blank" rel="noopener" class="th-platform-btn mt-3">
       <i class="bi bi-geo-alt-fill"></i> {% translate "فتح في خرائط جوجل" %}
     </a>
@@ -250,24 +253,4 @@
 
 {% block extra_js %}
 <script>thTrack('VIEW', 'concert', {{ concert.pk }});</script>
-{% if concert.has_location and MAPTILER_API_KEY %}
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-thOnReady(function() {
-  if (typeof L === 'undefined') return;
-  var map = L.map('concertLocationMap', { scrollWheelZoom: false }).setView([{{ concert.latitude|unlocalize }}, {{ concert.longitude|unlocalize }}], 14);
-  // Both tile.openstreetmap.org (blocks production/bulk traffic under its
-  // own usage policy) and CARTO's "free" basemaps (now watermark tiles
-  // with "API KEY REQUIRED" outside their own platform) turned out not to
-  // be free-for-this-use in practice. MapTiler's free tier is the one
-  // that's actually meant for exactly this - a real key, no billing
-  // account, generous monthly quota.
-  L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={{ MAPTILER_API_KEY }}', {
-    attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  }).addTo(map);
-  L.marker([{{ concert.latitude|unlocalize }}, {{ concert.longitude|unlocalize }}]).addTo(map);
-});
-</script>
-{% endif %}
 {% endblock %}
