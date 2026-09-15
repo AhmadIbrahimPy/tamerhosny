@@ -555,7 +555,13 @@
     .th-slider-row{position:relative;}
     .th-slider{
       display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity;
-      padding:16px 4px 40px; scrollbar-width:none; -ms-overflow-style:none;
+      /* overflow-x:auto forces overflow-y to also compute to 'auto'
+         (a scroll container can't leave one axis truly 'visible') -
+         so the pop-out hover scale below needs enough room reserved
+         in this padding to fully fit, top and sides, or auto-clips it
+         mid-transform instead of letting it float free like a real
+         Netflix/Shahid row. */
+      padding:34px 22px 44px; scrollbar-width:none; -ms-overflow-style:none;
       /* overscroll-behavior-x is what actually stops a horizontal swipe
          near the screen edge from being grabbed by the browser's own
          edge-swipe back/forward gesture. touch-action is explicitly
@@ -579,8 +585,15 @@
        navigating, and it took a second tap to actually open the movie. */
     @media (hover:hover) and (pointer:fine){
       .th-slider > .th-card.aspect-poster:hover{
-        transform:scale(1.12); z-index:5; box-shadow:0 18px 34px rgba(0,0,0,.5); border-color:rgba(212,175,55,.5);
+        transform:scale(1.12); z-index:5;
       }
+      /* .th-img-wrap already gets its accent-colored ring from the
+         shared ".th-card:hover .th-img-wrap" border rule above - just
+         add the bigger drop shadow and a subtle Ken Burns zoom on the
+         image itself so the poster visibly lifts off the row, the way
+         a Netflix/Shahid/WatchIt hover card does. */
+      .th-card.aspect-poster:hover .th-img-wrap{box-shadow:0 20px 40px rgba(0,0,0,.55);}
+      .th-card.aspect-poster:hover .th-img-wrap img{transform:scale(1.06);}
     }
     .th-slider > p.th-empty{flex:1 0 auto;}
     .th-slider-arrow{
@@ -684,6 +697,41 @@
       border:1px solid rgba(255,255,255,.12);
     }
 
+    /* Movie/series/commercial poster card, Shahid/WatchIt-style: the
+       poster is the card - no boxed background/border behind it - with
+       the title sitting tight underneath, and a play affordance over a
+       bottom gradient that appears on the poster on hover. */
+    .th-card.aspect-poster{background:transparent; border:none;}
+    .th-card.aspect-poster:hover{background:transparent; border-color:transparent;}
+    .th-card.aspect-poster .th-img-wrap{
+      border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.35);
+      transition:box-shadow .25s ease, border-color .18s ease;
+    }
+    .th-card.aspect-poster .th-img-wrap img{transition:transform .35s ease;}
+    .th-card.aspect-poster .th-body{padding:10px 2px 0;}
+    .th-card.aspect-poster .th-title,
+    .th-card.aspect-poster .th-meta{text-align:start;}
+    .th-card.aspect-poster .th-title{-webkit-line-clamp:1;}
+
+    .th-media-overlay{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg, rgba(11,12,18,0) 40%, rgba(11,12,18,.88) 100%);
+      opacity:0; transition:opacity .22s ease;
+    }
+    .th-media-play-icon{
+      width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.14);
+      backdrop-filter:blur(6px); border:1.5px solid rgba(255,255,255,.55);
+      display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;
+      transform:scale(.8);
+      transition:transform .22s ease, background .22s ease, border-color .22s ease, color .22s ease;
+    }
+    @media (hover:hover) and (pointer:fine){
+      .th-card.aspect-poster:hover .th-media-overlay{opacity:1;}
+      .th-card.aspect-poster:hover .th-media-play-icon{
+        transform:scale(1); background:var(--accent); border-color:var(--accent); color:#171a26;
+      }
+    }
+
     /* Concert card — mini ticket-stub badge */
     .th-ticket-mini{
       position:absolute; top:8px; inset-inline-start:8px; background:rgba(11,12,18,.65); backdrop-filter:blur(4px);
@@ -732,6 +780,12 @@
     .th-meta-row span{display:flex; align-items:center; gap:6px;}
 
     .th-empty{color:var(--muted); padding:30px 0; text-align:center;}
+    .th-empty-block{
+      flex:1 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:10px; width:100%; padding:36px 16px; color:var(--muted); text-align:center;
+    }
+    .th-empty-block i{font-size:28px; color:#3a3d52;}
+    .th-empty-block span{font-size:13.5px;}
 
     /* Full-width cinematic hero banner (song/album/movie/concert detail
        pages): an uploaded video, a YouTube background, or a static image,
@@ -864,7 +918,15 @@
        per line. Scoped to .th-grid so slider cards elsewhere
        (.th-slider .th-card-*) keep their original square/poster look. */
     @media (max-width: 576px){
-      .th-grid{grid-template-columns:1fr; gap:10px;}
+      /* .cols-4/.cols-3/.cols-6 (movies, series, commercials, albums
+         lists) each carry an extra class, so their own unconditional
+         grid-template-columns rule above (two classes) outranks a
+         plain ".th-grid" rule in here (one class) regardless of media
+         query - restated per variant so mobile actually wins. */
+      .th-grid,
+      .th-grid.cols-6,
+      .th-grid.cols-4,
+      .th-grid.cols-3{grid-template-columns:1fr; gap:10px;}
       .th-grid .th-card{
         display:flex; flex-direction:row; align-items:center; gap:12px; padding:8px;
       }
@@ -878,11 +940,30 @@
       }
       .th-grid .th-card .th-meta{text-align:start;}
 
-      /* Poster cards (movies/series/commercials) - narrower thumbnail at
-         their own 2:3 ratio instead of forcing a square crop. */
-      .th-grid .th-card.aspect-poster .th-img-wrap{
-        width:48px; flex:0 0 48px; aspect-ratio:2/3 !important;
+      /* Poster cards (movies/series/commercials) opt out of the row
+         layout above entirely - a tall 2:3 thumbnail cramped into a
+         64px-tall row read as a squashed rectangle, not a poster. A
+         2-column grid of square cards (image on top, title centered
+         below, same shape as the song cards) reads much better at
+         this width. :has() scopes the column change to whichever grid
+         actually holds poster cards, regardless of which .cols-N class
+         it was given (cols-4 is shared with the non-poster playlists
+         grid, so this can't just key off .cols-4 itself). */
+      .th-grid:has(.th-card.aspect-poster){grid-template-columns:repeat(2, 1fr); gap:14px;}
+      .th-grid .th-card.aspect-poster{
+        display:block; padding:0;
       }
+      .th-grid .th-card.aspect-poster .th-img-wrap{
+        width:100%; flex:none; aspect-ratio:1/1 !important; border-radius:13px;
+      }
+      .th-grid .th-card.aspect-poster .th-body{
+        flex:none; padding:10px 4px 0; text-align:center;
+      }
+      .th-grid .th-card.aspect-poster .th-title{
+        text-align:center; white-space:normal; overflow:hidden; text-overflow:ellipsis;
+        display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+      }
+      .th-grid .th-card.aspect-poster .th-meta{text-align:center;}
 
       /* Concerts - wider thumbnail at their own 16:9 ratio. */
       .th-grid .th-card.aspect-wide .th-img-wrap{

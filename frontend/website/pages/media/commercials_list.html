@@ -13,11 +13,12 @@
     <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
       <div class="th-img-wrap">
         {% if item.display_poster_url %}
-          <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
+          <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}" loading="lazy" decoding="async">
         {% else %}
           <i class="bi bi-film icon-fallback"></i>
         {% endif %}
         <span class="th-poster-type-badge"><i class="bi bi-megaphone"></i></span>
+        <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
       </div>
       <div class="th-body">
         <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -25,7 +26,7 @@
       </div>
     </a>
     {% empty %}
-    <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+    <div class="th-empty-block"><i class="bi bi-megaphone"></i><span>{% translate "لا توجد إعلانات متاحة حالياً" %}</span></div>
     {% endfor %}
   </div>
   <div class="mt-4">

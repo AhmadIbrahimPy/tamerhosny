@@ -103,7 +103,6 @@
   .th-trend-rank-num { min-width: 12px; text-align: center; }
   .th-trend-up { color: #4fd486; }
   .th-trend-down { color: #ff6b5f; }
-  .th-trend-same { color: var(--muted); font-size: 10px; }
   .th-trend-new {
     font-size: 9px; font-weight: 800; color: var(--accent);
     background: rgba(212, 175, 55, 0.18); padding: 1px 6px; border-radius: 999px;
@@ -112,6 +111,38 @@
 {% endblock %}
 
 {% block content %}
+
+{% comment %}Structured data (schema.org) so search engines can render this as a MusicGroup with its latest tracks instead of a plain blue link.{% endcomment %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "MusicGroup",
+      "name": "{% translate 'تامر حسني' %}",
+      "url": "{{ request.build_absolute_uri }}",
+      "genre": "Arabic pop"
+    },
+    {
+      "@type": "ItemList",
+      "name": "{% translate 'أحدث الأغاني' %}",
+      "itemListElement": [
+        {% for song in songs %}
+        {
+          "@type": "ListItem",
+          "position": {{ forloop.counter }},
+          "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'website_app:song-detail' song.slug %}",
+          "item": {
+            "@type": "MusicRecording",
+            "name": "{{ song|localized_field:'title'|escapejs }}"
+          }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }
+  ]
+}
+</script>
 
 {% if home_ads %}
 <div class="container-xl">
@@ -169,11 +200,12 @@
             {% if entry.trend == 'UP' %}<i class="bi bi-caret-up-fill th-trend-up"></i>
             {% elif entry.trend == 'DOWN' %}<i class="bi bi-caret-down-fill th-trend-down"></i>
             {% elif entry.trend == 'NEW' %}<span class="th-trend-new">{% translate "جديد" %}</span>
-            {% else %}<i class="bi bi-dash-lg th-trend-same"></i>{% endif %}
+            {% endif %}
           </div>
           <div class="th-img-wrap">
             {% if entry.song.display_cover_url %}
-              <img src="{{ entry.song.display_cover_url }}" alt="{{ entry.song|localized_field:'title' }}">
+              <img src="{{ entry.song.display_cover_url }}" alt="{{ entry.song|localized_field:'title' }}"
+                {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
@@ -204,7 +236,7 @@
           {% if song.audio_file %}data-song-id="{{ song.pk }}" data-audio-url="{{ song.audio_file.url }}"{% endif %}>
           <div class="th-img-wrap">
             {% if song.display_cover_url %}
-              <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}">
+              <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-music-note-beamed icon-fallback"></i>
             {% endif %}
@@ -216,7 +248,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-music-note-beamed"></i><span>{% translate "لا توجد أغاني متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -235,12 +267,13 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
             <span class="th-poster-type-badge"><i class="bi bi-film"></i></span>
             {% if item.rating %}<span class="th-poster-rating-badge"><i class="bi bi-star-fill"></i> {{ item.rating }}</span>{% endif %}
+            <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -248,7 +281,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-film"></i><span>{% translate "لا توجد أفلام متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -267,9 +300,9 @@
         <a href="{% url 'website_app:album-detail' album.slug %}" class="th-card th-card-album plain">
           <div class="th-img-wrap">
             {% if album.cover_image %}
-              <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}">
+              <img src="{{ album.cover_image.url }}" alt="{{ album|localized_field:'title' }}" loading="lazy" decoding="async">
             {% elif album.cover_art_url %}
-              <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}">
+              <img src="{{ album.cover_art_url }}" alt="{{ album|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-disc icon-fallback"></i>
             {% endif %}
@@ -280,7 +313,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-disc"></i><span>{% translate "لا توجد ألبومات متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -299,12 +332,13 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
             <span class="th-poster-type-badge"><i class="bi bi-tv"></i></span>
             {% if item.rating %}<span class="th-poster-rating-badge"><i class="bi bi-star-fill"></i> {{ item.rating }}</span>{% endif %}
+            <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -312,7 +346,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-tv"></i><span>{% translate "لا توجد مسلسلات متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -331,11 +365,12 @@
         <a href="{% url 'website_app:media-detail' item.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if item.display_poster_url %}
-              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}">
+              <img src="{{ item.display_poster_url }}" alt="{{ item|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
             <span class="th-poster-type-badge"><i class="bi bi-megaphone"></i></span>
+            <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ item|localized_field:'title' }}</div>
@@ -343,7 +378,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-megaphone"></i><span>{% translate "لا توجد إعلانات متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -364,7 +399,7 @@
         <a href="{% url 'website_app:sing-with-tamer' song.slug %}" class="th-card aspect-square th-card-song plain">
           <div class="th-img-wrap">
             {% if song.display_cover_url %}
-              <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}">
+              <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-mic-fill icon-fallback"></i>
             {% endif %}
@@ -394,7 +429,7 @@
         <a href="{% url 'website_app:concert-detail' concert.slug %}" class="th-card aspect-wide plain">
           <div class="th-img-wrap">
             {% if concert.display_poster_url %}
-              <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}">
+              <img src="{{ concert.display_poster_url }}" alt="{{ concert|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-calendar-event icon-fallback"></i>
             {% endif %}
@@ -414,7 +449,7 @@
           </div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-calendar-event"></i><span>{% translate "لا توجد حفلات متاحة حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -432,7 +467,7 @@
         {% for person in people %}
         <a href="{% url 'website_app:person-detail' person.slug %}" class="th-card th-person-card plain">
           {% if person.profile_image %}
-            <img src="{{ person.profile_image.url }}" alt="{{ person|localized_field:'full_name' }}">
+            <img src="{{ person.profile_image.url }}" alt="{{ person|localized_field:'full_name' }}" loading="lazy" decoding="async">
           {% else %}
             <div class="avatar-fallback">{{ person|localized_field:'full_name'|slice:":1" }}</div>
           {% endif %}
@@ -440,7 +475,7 @@
           <div class="th-meta">{{ person.get_primary_role_display }}</div>
         </a>
         {% empty %}
-        <p class="th-empty">{% translate "لا توجد بيانات متاحة حالياً" %}</p>
+        <div class="th-empty-block"><i class="bi bi-people"></i><span>{% translate "لا يوجد فنانون متاحون حالياً" %}</span></div>
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>

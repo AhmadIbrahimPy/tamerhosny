@@ -25,8 +25,8 @@
   .th-media-meta h1{font-size:36px; font-weight:900; margin-block:10px 6px;}
   @media (max-width: 768px){ .th-media-meta h1{font-size:28px;} }
   @media (max-width: 576px){ .th-media-meta h1{font-size:24px;} }
-  .th-cast-row{display:flex; gap:20px; overflow-x:auto; padding-block:6px 10px;}
-  .th-cast-item{flex:0 0 96px; text-align:center; text-decoration:none; color:var(--text);}
+  .th-cast-row{gap:20px; padding-block:6px 10px;}
+  .th-cast-item{flex:0 0 96px; scroll-snap-align:start; text-align:center; text-decoration:none; color:var(--text);}
   .th-cast-avatar{width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--border); margin-inline:auto; display:block;}
   .th-cast-avatar-fallback{width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#22263a; color:var(--accent); font-weight:800; font-size:24px; margin-inline:auto;}
   .th-cast-name{font-size:12.5px; font-weight:700; margin-top:8px;}
@@ -242,18 +242,22 @@
   {% if credits %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "الفنانون" %}</h2>
-    <div class="th-cast-row">
-      {% for entry in credits %}
-        <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-cast-item">
-          {% if entry.person.profile_image %}
-            <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="th-cast-avatar">
-          {% else %}
-            <span class="th-cast-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
-          {% endif %}
-          <div class="th-cast-name">{{ entry.person|localized_field:'full_name' }}</div>
-          <div class="th-cast-role">{{ entry.roles|join:"، " }}</div>
-        </a>
-      {% endfor %}
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
+      <div class="th-slider th-cast-row">
+        {% for entry in credits %}
+          <a href="{% url 'website_app:person-detail' entry.person.slug %}" class="th-cast-item">
+            {% if entry.person.profile_image %}
+              <img src="{{ entry.person.profile_image.url }}" alt="{{ entry.person|localized_field:'full_name' }}" class="th-cast-avatar" loading="lazy" decoding="async">
+            {% else %}
+              <span class="th-cast-avatar-fallback">{{ entry.person|localized_field:'full_name'|slice:":1" }}</span>
+            {% endif %}
+            <div class="th-cast-name">{{ entry.person|localized_field:'full_name' }}</div>
+            <div class="th-cast-role">{{ entry.roles|join:"، " }}</div>
+          </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
     </div>
   </div>
   {% endif %}
@@ -294,11 +298,12 @@
         <a href="{% url 'website_app:media-detail' other.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if other.display_poster_url %}
-              <img src="{{ other.display_poster_url }}" alt="{{ other|localized_field:'title' }}">
+              <img src="{{ other.display_poster_url }}" alt="{{ other|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
             <span class="th-poster-type-badge"><i class="bi {% if other.media_type == 'TV_SERIES' %}bi-tv{% elif other.media_type == 'COMMERCIAL' %}bi-megaphone{% else %}bi-film{% endif %}"></i></span>
+            <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ other|localized_field:'title' }}</div>

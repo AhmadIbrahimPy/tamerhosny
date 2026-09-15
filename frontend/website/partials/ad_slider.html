@@ -6,7 +6,8 @@
     <div class="th-ad-slide {% if forloop.first %}active{% endif %}">
       <a {% if ad.get_target_url %}href="{{ ad.get_target_url }}" {% if ad.is_linked_externally %}target="_blank" rel="noopener sponsored"{% endif %}{% endif %}
          class="th-ad-banner plain" onclick="thTrack('EXTERNAL_CLICK', 'ad', {{ ad.pk }}, {});">
-        <img src="{{ ad.image.url }}" alt="{{ ad.title }}">
+        <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+          {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
         <span class="th-ad-tag">{% translate "إعلان" %}</span>
       </a>
       <script>document.addEventListener('DOMContentLoaded', function(){ thTrack('VIEW', 'ad', {{ ad.pk }}); });</script>

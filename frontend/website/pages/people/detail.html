@@ -101,10 +101,11 @@
         <a href="{% url 'website_app:media-detail' entry.media.slug %}" class="th-card aspect-poster plain">
           <div class="th-img-wrap">
             {% if entry.media.display_poster_url %}
-              <img src="{{ entry.media.display_poster_url }}" alt="{{ entry.media|localized_field:'title' }}">
+              <img src="{{ entry.media.display_poster_url }}" alt="{{ entry.media|localized_field:'title' }}" loading="lazy" decoding="async">
             {% else %}
               <i class="bi bi-film icon-fallback"></i>
             {% endif %}
+            <div class="th-media-overlay"><span class="th-media-play-icon"><i class="bi bi-play-fill"></i></span></div>
           </div>
           <div class="th-body">
             <div class="th-title">{{ entry.media|localized_field:'title' }}</div>
