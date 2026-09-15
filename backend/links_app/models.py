@@ -97,6 +97,7 @@ class Platform(models.Model):
         DISNEY_PLUS = 'DISNEY_PLUS', _('Disney+')
         TAZKARTI = 'TAZKARTI', _('Tazkarti')
         TICKETMASTER = 'TICKETMASTER', _('Ticketmaster')
+        TICKETSMARCHE = 'TICKETSMARCHE', _('Ticketsmarche')
         FACEBOOK = 'FACEBOOK', _('Facebook')
         INSTAGRAM = 'INSTAGRAM', _('Instagram')
         TIKTOK = 'TIKTOK', _('TikTok')
