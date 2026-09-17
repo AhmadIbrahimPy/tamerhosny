@@ -1170,10 +1170,15 @@
         .catch(function () {});
     }
 
-    // Same idea for a "غنى فلان مع تامر" card's own play icon - drives the
-    // "أعلى استماع" sort on a song's duets list (see song_duets_list). No
-    // per-card UI update needed here (unlike thIncrementPlayCount above);
-    // the count only ever shows on a fresh page load of the duets list.
+    // Same idea for a duet's own mix - drives the "أعلى استماع" sort on
+    // a song's duets list, and the play count shown on the duet's own
+    // detail page. Called from the global 'play' listener below via
+    // currentDuetId, same as thIncrementPlayCount, so it fires no
+    // matter which route actually started the audio (card icon, the
+    // song/duet detail page's own play button, resuming after a
+    // pause...) instead of only the one card-icon click path. No
+    // per-card UI update needed here (unlike thIncrementPlayCount
+    // above); the count only ever shows on a fresh page load.
     function thIncrementDuetPlayCount(duetId) {
       fetch('/duets/' + encodeURIComponent(duetId) + '/track-play/', {
         method: 'POST',
@@ -1232,6 +1237,12 @@
           // never incremented play_count at all, so the "plays" stat
           // barely moved and only really tracked from that one button.
           thIncrementPlayCount(currentSongId);
+        }
+        // The audio actually playing right now is a duet's own mix, not
+        // the song's original - bump the duet's own play_count too (see
+        // currentDuetId's own comment above).
+        if (currentDuetId !== null) {
+          thIncrementDuetPlayCount(currentDuetId);
         }
       });
 
@@ -1417,7 +1428,8 @@
       playerBar.style.display = onOwnSongPage ? 'none' : 'block';
     }
 
-    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue) {
+    function playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId) {
+      currentDuetId = duetId || null;
       // Check if this is the same song - don't reset position
       let isSameSong = false;
       if (globalAudio.src) {
@@ -1616,7 +1628,7 @@
       });
     }
 
-    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue) {
+    function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId) {
       if (globalAudio && globalAudio.src) {
         // Check if current audio is the same song (compare URLs more loosely)
         const currentUrl = globalAudio.src;
@@ -1637,7 +1649,7 @@
         }
       }
       // Different song or no audio - play new song
-      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue);
+      playAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId);
     }
 
     // Play-on-hover affordance for every song thumbnail grid (.th-card-song)
@@ -1660,9 +1672,6 @@
       if (!card || !card.dataset.audioUrl) return;
       e.preventDefault();
       e.stopPropagation();
-      if (card.dataset.duetId) {
-        thIncrementDuetPlayCount(card.dataset.duetId);
-      }
       // Title/image/link fall back to what's already rendered in the
       // card itself, so every song-card template only needs to add
       // data-song-id/data-audio-url (plus data-album* where relevant)
@@ -1691,7 +1700,8 @@
         // without this flag they'd inherit an unrelated album's
         // tracklist just because the song they clicked happens to
         // belong to one.
-        !card.dataset.albumContext
+        !card.dataset.albumContext,
+        card.dataset.duetId || null
       );
     }, true);
 
@@ -2226,6 +2236,13 @@
     let isMuted = false;
     let previousVolume = 1;
     let currentSongId = null;
+    // Set (via playAudio's own duetId argument) whenever the audio
+    // that's actually playing right now is a duet's mix, not the
+    // song's original - lets the global 'play' listener below bump the
+    // right play_count (see thIncrementDuetPlayCount) instead of only
+    // ever counting the underlying song, which used to leave every
+    // duet stuck at "0 استماع" no matter how many times it was played.
+    let currentDuetId = null;
     let isLiked = false;
     let likeStatusRequestId = 0;
 
