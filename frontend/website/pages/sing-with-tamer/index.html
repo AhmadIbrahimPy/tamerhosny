@@ -707,6 +707,25 @@
     border-color: var(--accent);
   }
 
+  .recording-rerecord {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .recording-rerecord:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+  }
+
 
   /* =========================================================
      COMPLETE
@@ -1671,6 +1690,12 @@ let recordingStartTime = null;
 let recordingInterval = null;
 let recordingAutoStopTimer = null;
 let countdownInterval = null;
+
+// Set only while re-recording an already-saved line (see
+// reRecordSegment) - holds the lyric index the user was actually up to,
+// so confirmRecording() can put them back there afterwards instead of
+// leaving them stranded wherever the redone line happened to be.
+let reRecordSavedIndex = null;
 
 let recordings = [];
 
@@ -4298,7 +4323,7 @@ async function confirmRecording() {
     };
 
 
-    recordings.push({
+    const newRecordingEntry = {
 
       url:
         result.data?.audio_file ||
@@ -4318,14 +4343,50 @@ async function confirmRecording() {
         result.data?.pk ||
         null
 
-    });
+    };
+
+    // The backend's own recordings endpoint already overwrites the
+    // existing row for this (project, segment) pair - update this
+    // array the same way instead of pushing a duplicate that would
+    // show the same line twice in the list.
+    const existingRecordingIndex =
+      recordings.findIndex(
+        r => r.segmentPk === segment.pk
+      );
+
+    if (existingRecordingIndex !== -1) {
+
+      recordings[
+        existingRecordingIndex
+      ] = newRecordingEntry;
+
+    } else {
+
+      recordings.push(
+        newRecordingEntry
+      );
+
+    }
 
 
     /*
-     * Move exactly one step.
+     * A fresh line moves one step forward; re-recording an already-
+     * saved one returns to wherever the user actually was.
      */
 
-    currentLyricIndex++;
+    if (reRecordSavedIndex !== null) {
+
+      currentLyricIndex =
+        reRecordSavedIndex;
+
+      reRecordSavedIndex =
+        null;
+
+    } else {
+
+      currentLyricIndex++;
+
+    }
 
 
     pendingRecording =
@@ -4603,6 +4664,22 @@ function cancelRecording() {
   ).textContent =
     'اضغط للبدء في التسجيل';
 
+
+  // Backed out of a re-record without confirming it - go back to
+  // wherever the user actually was instead of leaving them stuck on
+  // the line they were just redoing.
+  if (reRecordSavedIndex !== null) {
+
+    currentLyricIndex =
+      reRecordSavedIndex;
+
+    reRecordSavedIndex =
+      null;
+
+    displayCurrentLyric();
+
+  }
+
 }
 
 
@@ -4702,12 +4779,71 @@ function updateRecordingsList() {
 
             </button>
 
+            <button
+              type="button"
+              class="recording-rerecord"
+              onclick="reRecordSegment(${index})"
+              title="إعادة التسجيل"
+            >
+
+              <i class="bi bi-arrow-counterclockwise"></i>
+
+            </button>
+
           </div>
 
         `;
 
       }
     ).join('');
+
+}
+
+
+/* =========================================================
+   RE-RECORD A SAVED LINE
+   Jumps back to that line's own spot in the lyrics, then runs it
+   through the exact same countdown + record + confirm flow as a
+   brand-new line - confirmRecording() below detects reRecordSavedIndex
+   and overwrites the existing entry (both server-side, via the
+   recordings endpoint's own update_or_create, and in the local
+   `recordings` array) instead of appending a duplicate.
+========================================================= */
+
+function reRecordSegment(index) {
+
+  const recording =
+    recordings[index];
+
+  if (!recording) {
+    return;
+  }
+
+  if (isRecording) {
+    return;
+  }
+
+
+  const targetIndex =
+    lyricsSegments.findIndex(
+      segment =>
+        segment.pk ===
+        recording.segmentPk
+    );
+
+  if (targetIndex === -1) {
+    return;
+  }
+
+
+  reRecordSavedIndex =
+    currentLyricIndex;
+
+  currentLyricIndex =
+    targetIndex;
+
+  displayCurrentLyric();
+  beginRecordingCountdown();
 
 }
 

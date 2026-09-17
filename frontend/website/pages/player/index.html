@@ -204,6 +204,17 @@
     transform: scale(1.08);
   }
 
+  /* bi-skip-start-fill/bi-skip-end-fill are drawn for LTR ("start" =
+     left, "end" = right) - under RTL that reads backwards (previous
+     pointing right, next pointing left), so mirror them to match the
+     page's real reading direction. Scoped to this page only - the
+     global mini-player bar (base.html) forces dir="ltr" on its own
+     transport row deliberately, so it never has this problem. */
+  html[dir="rtl"] .transport-skip i {
+    display: inline-block;
+    transform: scaleX(-1);
+  }
+
   .transport-play {
     width: 62px;
     height: 62px;
