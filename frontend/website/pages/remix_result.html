@@ -170,7 +170,7 @@
               {{ output.format|upper }}
             </div>
           </div>
-          <a href="{{ output.output_file.url }}" download class="th-download-btn">
+          <a href="{{ output.output_file.url }}" download class="th-download-btn" hx-boost="false">
             <i class="bi bi-download"></i> {% trans "تحميل" %}
           </a>
         </div>

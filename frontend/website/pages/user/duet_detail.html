@@ -128,7 +128,7 @@
         <span id="videoProgressPercent">{{ duet.video_progress_percent }}%</span>
       </span>
       <a id="videoDownloadBtn" href="{% if duet.video_file %}{{ duet.video_file.url }}{% endif %}" download
-         class="th-platform-btn"
+         class="th-platform-btn" hx-boost="false"
          style="{% if duet.video_status != 'COMPLETED' or not duet.video_file %}display:none;{% endif %}">
         <i class="bi bi-download"></i> {% translate "تحميل الفيديو" %}
       </a>
