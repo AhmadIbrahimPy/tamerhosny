@@ -2291,10 +2291,12 @@
                                 <span>{% translate "ريمكس" %}</span>
                             </button>
 
+                            {% if can_sing_with_tamer %}
                             <a href="/sing-with-tamer/{{ song.slug }}/" class="song-actions-menu-item">
                                 <i class="bi bi-mic-fill"></i>
                                 <span>{% translate "غني مع تامر" %}</span>
                             </a>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
