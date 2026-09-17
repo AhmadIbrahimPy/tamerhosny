@@ -255,6 +255,7 @@
                 <th>{% translate "مكتمل" %}</th>
                 <th>{% translate "الظهور" %}</th>
                 <th>{% translate "تاريخ الإنشاء" %}</th>
+                <th class="text-end">{% translate "التفاصيل" %}</th>
               </tr></thead>
               <tbody>
                 {% for duet in duets_page %}
@@ -272,13 +273,19 @@
                     {% else %}<span class="badge bg-secondary-subtle text-secondary">{% translate "خاص" %}</span>{% endif %}
                   </td>
                   <td class="text-nowrap">{{ duet.created_at }}</td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary duet-view-btn" data-duet-id="{{ duet.pk }}">
+                      <i class="ti ti-eye"></i> {% translate "عرض" %}
+                    </button>
+                  </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
+                <tr><td colspan="6" class="text-center py-5 text-muted">{% translate "لا توجد بيانات متاحة حالياً" %}</td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
+          {{ duets_data|json_script:"duetsData" }}
           {% include "dashboard/partials/pagination_named.html" with page_obj=duets_page param="duets_page" prefix="tab=duets&" %}
 
           {% elif active_tab == 'guesses' %}
@@ -391,6 +398,47 @@
       </div>
     </div>
   </div>
+
+  <!-- Duet detail modal - one shared instance, filled in from duetsData
+       (see json_script above) whichever row's "عرض" button gets clicked.
+       Shows the final mixed duet when it's ready, and/or every individual
+       line recording so far when it isn't - the recordings are useful on
+       their own even once the final mix exists (e.g. to spot which line
+       needs a redo), so both sections render whenever they have data. -->
+  <div class="modal fade" id="duetDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="duetModalTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table detail-fields-table mb-3">
+            <tbody>
+              <tr><th class="text-muted" style="width:180px;">{% translate "تقسيم الغناء" %}</th><td id="duetModalDivision"></td></tr>
+              <tr><th class="text-muted">{% translate "حالة المعالجة" %}</th><td id="duetModalStatus"></td></tr>
+              <tr><th class="text-muted">{% translate "الظهور" %}</th><td id="duetModalVisibility"></td></tr>
+              <tr><th class="text-muted">{% translate "تاريخ الإنشاء" %}</th><td id="duetModalCreatedAt"></td></tr>
+            </tbody>
+          </table>
+
+          <div id="duetModalFinalSection" class="mb-3 d-none">
+            <h6 class="mb-2">{% translate "الدويتو النهائي" %}</h6>
+            <audio id="duetModalFinalAudio" controls class="w-100"></audio>
+          </div>
+
+          <div id="duetModalRecordingsSection" class="d-none">
+            <h6 class="mb-2">{% translate "التسجيلات الفردية لكل سطر" %}</h6>
+            <div id="duetModalRecordingsList" class="d-flex flex-column gap-2"></div>
+          </div>
+
+          <p id="duetModalEmpty" class="text-muted text-center py-4 d-none">
+            {% translate "لسه مفيش أي تسجيلات لهذا الدويتو." %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -407,5 +455,82 @@
     real.classList.toggle('d-none', revealed);
     btn.querySelector('i').className = revealed ? 'ti ti-eye' : 'ti ti-eye-off';
   });
+
+  // Duet detail modal (see the json_script'd duetsData + the modal markup
+  // above) - everything needed is already on the page, no extra request.
+  (function () {
+    var dataEl = document.getElementById('duetsData');
+    var modalEl = document.getElementById('duetDetailModal');
+    if (!dataEl || !modalEl) return;
+    var duetsData = JSON.parse(dataEl.textContent);
+    var modal = new bootstrap.Modal(modalEl);
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    function formatTimestamp(seconds) {
+      var m = Math.floor(seconds / 60);
+      var s = Math.round(seconds % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.duet-view-btn');
+      if (!btn) return;
+      var duet = duetsData[btn.dataset.duetId];
+      if (!duet) return;
+
+      document.getElementById('duetModalTitle').textContent = duet.song_title;
+      document.getElementById('duetModalDivision').textContent = duet.division_type;
+      document.getElementById('duetModalStatus').textContent = duet.processing_status;
+      document.getElementById('duetModalVisibility').textContent =
+        duet.is_public ? '{% translate "عام" %}' : '{% translate "خاص" %}';
+      document.getElementById('duetModalCreatedAt').textContent =
+        new Date(duet.created_at).toLocaleString();
+
+      var finalSection = document.getElementById('duetModalFinalSection');
+      var finalAudio = document.getElementById('duetModalFinalAudio');
+      if (duet.final_audio_url) {
+        finalAudio.src = duet.final_audio_url;
+        finalSection.classList.remove('d-none');
+      } else {
+        finalAudio.removeAttribute('src');
+        finalSection.classList.add('d-none');
+      }
+
+      var recSection = document.getElementById('duetModalRecordingsSection');
+      var recList = document.getElementById('duetModalRecordingsList');
+      recList.innerHTML = '';
+      if (duet.recordings && duet.recordings.length) {
+        duet.recordings.forEach(function (rec) {
+          var row = document.createElement('div');
+          row.className = 'border rounded p-2';
+          row.innerHTML =
+            '<div class="small text-muted mb-1">' + formatTimestamp(rec.start_seconds) + ' — ' +
+            escapeHtml(rec.text) + '</div>' +
+            '<audio controls class="w-100" src="' + escapeHtml(rec.audio_url) + '"></audio>';
+          recList.appendChild(row);
+        });
+        recSection.classList.remove('d-none');
+      } else {
+        recSection.classList.add('d-none');
+      }
+
+      document.getElementById('duetModalEmpty').classList.toggle(
+        'd-none', !!(duet.final_audio_url || (duet.recordings && duet.recordings.length))
+      );
+
+      modal.show();
+    });
+
+    // Stop every player in the modal once it closes - otherwise a track
+    // left playing keeps going in the background after the modal is gone.
+    modalEl.addEventListener('hidden.bs.modal', function () {
+      modalEl.querySelectorAll('audio').forEach(function (a) { a.pause(); });
+    });
+  })();
 </script>
 {% endblock %}

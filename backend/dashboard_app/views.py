@@ -1938,8 +1938,34 @@ def user_view(request, pk):
     playlists_qs = Playlist.objects.filter(user=account).annotate(items_count=Count('items')).order_by('-created_at')
     playlists_page = _paginate_named(request, playlists_qs, 'playlists_page')
 
-    duets_qs = SingWithTamerProject.objects.filter(user=account).select_related('song').order_by('-created_at')
+    duets_qs = SingWithTamerProject.objects.filter(user=account).select_related('song').prefetch_related(
+        'lyric_recordings__lyric_segment',
+    ).order_by('-created_at')
     duets_page = _paginate_named(request, duets_qs, 'duets_page')
+    # One JSON blob for the whole tab (keyed by duet pk) instead of a
+    # per-row json_script - the "view details" button just looks itself up
+    # by id when clicked, so the modal needs no extra request to fill in
+    # the final mix / individual line recordings.
+    duets_data = {
+        duet.pk: {
+            'song_title': duet.song.title_ar,
+            'division_type': duet.get_division_type_display(),
+            'processing_status': duet.get_processing_status_display(),
+            'is_completed': duet.is_completed,
+            'is_public': duet.is_public,
+            'created_at': duet.created_at,
+            'final_audio_url': duet.final_audio_file.url if duet.final_audio_file else None,
+            'recordings': [
+                {
+                    'text': rec.lyric_segment.text,
+                    'start_seconds': float(rec.lyric_segment.start_seconds),
+                    'audio_url': rec.audio_file.url,
+                }
+                for rec in duet.lyric_recordings.all()
+            ],
+        }
+        for duet in duets_page
+    }
 
     guesses_qs = DailyGuessAttempt.objects.filter(user=account).select_related(
         'challenge', 'challenge__song', 'guessed_song',
@@ -1970,6 +1996,7 @@ def user_view(request, pk):
         'liked_items': liked_items,
         'playlists_page': playlists_page,
         'duets_page': duets_page,
+        'duets_data': duets_data,
         'guesses_page': guesses_page,
         'sessions_page': sessions_page,
         'voice_logs_page': voice_logs_page,
