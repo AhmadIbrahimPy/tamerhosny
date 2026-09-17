@@ -263,7 +263,8 @@ class CreateSongAPIView(APIView):
 
         project.processing_status = SingWithTamerProject.ProcessingStatus.PROCESSING
         project.processing_error = ''
-        project.save(update_fields=['processing_status', 'processing_error'])
+        project.progress_percent = 0
+        project.save(update_fields=['processing_status', 'processing_error', 'progress_percent'])
 
         create_duet_song.delay(project.pk)
 

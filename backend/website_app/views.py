@@ -2388,9 +2388,18 @@ def my_duets_list(request):
         processing_status=SingWithTamerProject.ProcessingStatus.PROCESSING,
     ).select_related('song').order_by('-updated_at')
 
+    # Ran out of automatic retries (see create_duet_song) - the
+    # recordings are still on the project (only cleared on success), so
+    # a manual retry just re-hits create-song/ with the same project_id.
+    failed_duets = SingWithTamerProject.objects.filter(
+        user=request.user,
+        processing_status=SingWithTamerProject.ProcessingStatus.FAILED,
+    ).select_related('song').order_by('-updated_at')
+
     return render(request, 'website/pages/user/duets.html', {
         'duets': duets,
         'processing_duets': processing_duets,
+        'failed_duets': failed_duets,
     })
 
 

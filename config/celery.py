@@ -29,4 +29,15 @@ app.conf.beat_schedule = {
         'task': 'backend.main_app.tasks.refresh_song_recommendations',
         'schedule': crontab(hour=3, minute=0),
     },
+    # Catches a "Sing With Tamer" duet stranded in PROCESSING by a
+    # worker that died mid-task (OOM, deploy, host reboot) instead of
+    # ever reaching create_duet_song's own except block - see
+    # requeue_stuck_duet_projects. Runs often since it's a cheap query
+    # (an index scan on processing_status + updated_at, no rows most
+    # of the time) and a stuck duet should recover within minutes, not
+    # sit there until someone notices.
+    'requeue-stuck-duet-projects': {
+        'task': 'backend.music_app.tasks.requeue_stuck_duet_projects',
+        'schedule': 300.0,
+    },
 }

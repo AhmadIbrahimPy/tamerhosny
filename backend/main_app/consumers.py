@@ -222,6 +222,7 @@ class DuetProjectStatusConsumer(WebsocketConsumer):
             'status': project.processing_status,
             'error': project.processing_error,
             'redirect_url': '/my-duets/' if project.is_completed else None,
+            'progress': project.progress_percent,
         }))
 
     def disconnect(self, close_code):
@@ -236,6 +237,7 @@ class DuetProjectStatusConsumer(WebsocketConsumer):
             'status': event['status'],
             'error': event.get('error', ''),
             'redirect_url': event.get('redirect_url'),
+            'progress': event.get('progress'),
         }))
 
 

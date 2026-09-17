@@ -4,21 +4,186 @@
 
 {% block extra_css %}
 <style>
+  /* Professional, borderless card - poster/cover fills the tile, title
+     and status sit tight underneath, hover lifts it with a shadow
+     (same visual language as the site's other media cards). Scoped to
+     this page only. */
+  .duet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 20px;
+  }
+
+  .duet-card {
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .duet-card-cover {
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #1e2130;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .35);
+    transition: box-shadow .25s ease, transform .2s ease;
+  }
+
+  .duet-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .35s ease;
+  }
+
+  .duet-card-cover .icon-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: #3a3d52;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .duet-card:hover .duet-card-cover {
+      box-shadow: 0 16px 34px rgba(0, 0, 0, .55);
+    }
+    .duet-card:hover .duet-card-cover img {
+      transform: scale(1.06);
+    }
+  }
+
+  .duet-card .th-play-badge {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(11, 12, 18, .35);
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .duet-card:hover .th-play-badge { opacity: 1; }
+  }
+
+  .duet-card .th-play-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #171a26;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+  }
+
   .duet-privacy-toggle {
+    position: absolute;
+    top: 8px;
+    inset-inline-start: 8px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(11, 12, 18, .65);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: #fff;
     appearance: none;
     padding: 0;
     font: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    z-index: 2;
   }
-  .duet-privacy-toggle:hover { border-color: var(--accent); color: var(--text); }
 
-  .duet-processing-card { position: relative; opacity: 0.75; pointer-events: none; }
-  .duet-processing-overlay {
-    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; background: rgba(11,12,18,.55); color: var(--text); font-size: 13px; font-weight: 700; text-align: center;
+  .duet-privacy-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .duet-card-body { padding: 10px 2px 0; }
+  .duet-card-title {
+    font-weight: 700;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .duet-processing-overlay .spinner-border { width: 1.5rem; height: 1.5rem; }
+  .duet-card-meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+  /* --- Still processing: a live progress ring over the cover --- */
+  .duet-card-processing .duet-card-cover img { filter: brightness(.5) saturate(.7); }
+  .duet-progress-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(11, 12, 18, .35);
+  }
+  .duet-progress-ring { width: 56px; height: 56px; transform: rotate(-90deg); }
+  .duet-progress-ring-bg, .duet-progress-ring-fill {
+    fill: none;
+    stroke-width: 5;
+  }
+  .duet-progress-ring-bg { stroke: rgba(255, 255, 255, .2); }
+  .duet-progress-ring-fill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-dasharray: 175.93;
+    stroke-dashoffset: 175.93;
+    transition: stroke-dashoffset .5s ease;
+  }
+  .duet-progress-percent {
+    position: absolute;
+    font-size: 13px;
+    font-weight: 900;
+    color: #fff;
+  }
+  .duet-card-processing .duet-card-meta { display: flex; align-items: center; gap: 5px; }
+
+  /* --- Failed: needs a nudge to retry, not a silent disappearance --- */
+  .duet-card-failed .duet-card-cover img { filter: brightness(.4) grayscale(.4); }
+  .duet-failed-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(11, 12, 18, .45);
+    padding: 10px;
+    text-align: center;
+  }
+  .duet-failed-overlay i { font-size: 22px; color: #ff6b5f; }
+  .duet-retry-btn {
+    border: 1px solid rgba(255, 255, 255, .3);
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .duet-retry-btn:hover { background: var(--accent); color: #171a26; border-color: var(--accent); }
+  .duet-retry-btn:disabled { opacity: .6; cursor: default; }
+
+  .duet-section-title { font-size: 15px; font-weight: 800; color: var(--muted); margin: 0 0 14px; }
 </style>
 {% endblock %}
 
@@ -27,57 +192,93 @@
   <h1 class="th-section-title">{% translate "غنيت إيه مع تامر" %}</h1>
 
   {% if processing_duets %}
-  <div class="th-grid" style="margin-bottom: 24px;">
-    {% for duet in processing_duets %}
-    <div class="th-card th-card-song duet-processing-card">
-      <div class="th-img-wrap aspect-square">
-        {% if duet.song.display_cover_url %}
-          <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
-        {% else %}
-          <i class="bi bi-mic-fill icon-fallback"></i>
-        {% endif %}
-        <div class="duet-processing-overlay">
-          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-          {% translate "جاري الإنشاء..." %}
+  <div style="margin-bottom: 32px;">
+    <h2 class="duet-section-title">{% translate "لسه بتتعمل" %}</h2>
+    <div class="duet-grid">
+      {% for duet in processing_duets %}
+      <div class="duet-card duet-card-processing" data-project-id="{{ duet.pk }}">
+        <div class="duet-card-cover">
+          {% if duet.song.display_cover_url %}
+            <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}" loading="lazy" decoding="async">
+          {% else %}
+            <i class="bi bi-mic-fill icon-fallback"></i>
+          {% endif %}
+          <div class="duet-progress-overlay">
+            <svg class="duet-progress-ring" viewBox="0 0 64 64">
+              <circle class="duet-progress-ring-bg" cx="32" cy="32" r="28"></circle>
+              <circle class="duet-progress-ring-fill" cx="32" cy="32" r="28" data-progress-ring></circle>
+            </svg>
+            <span class="duet-progress-percent" data-progress-percent>{{ duet.progress_percent }}%</span>
+          </div>
+        </div>
+        <div class="duet-card-body">
+          <div class="duet-card-title">{{ duet.song|localized_field:'title' }}</div>
+          <div class="duet-card-meta">
+            <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" aria-hidden="true"></span>
+            {% translate "بيتعمل دلوقتي..." %}
+          </div>
         </div>
       </div>
-      <div class="th-body">
-        <div class="th-title">{{ duet.song|localized_field:'title' }} ({% translate "غناءك" %})</div>
-        <div class="th-meta">{{ duet.get_division_type_display }}</div>
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if failed_duets %}
+  <div style="margin-bottom: 32px;">
+    <h2 class="duet-section-title">{% translate "محتاجة إعادة محاولة" %}</h2>
+    <div class="duet-grid">
+      {% for duet in failed_duets %}
+      <div class="duet-card duet-card-failed">
+        <div class="duet-card-cover">
+          {% if duet.song.display_cover_url %}
+            <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}" loading="lazy" decoding="async">
+          {% else %}
+            <i class="bi bi-mic-fill icon-fallback"></i>
+          {% endif %}
+          <div class="duet-failed-overlay">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <button type="button" class="duet-retry-btn" data-project-id="{{ duet.pk }}" onclick="retryFailedDuet(this)">
+              <i class="bi bi-arrow-counterclockwise"></i> {% translate "أعد المحاولة" %}
+            </button>
+          </div>
+        </div>
+        <div class="duet-card-body">
+          <div class="duet-card-title">{{ duet.song|localized_field:'title' }}</div>
+          <div class="duet-card-meta">{% translate "فشلت المعالجة" %}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
   {% endif %}
 
   {% if duets %}
-  <div class="th-grid">
+  <div class="duet-grid">
     {% for duet in duets %}
-    <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-card th-card-song"
+    <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="duet-card th-card-song"
       {% if duet.final_audio_file %}data-song-id="{{ duet.song.pk }}" data-audio-url="{{ duet.final_audio_file.url }}"{% endif %}>
-      <div class="th-img-wrap aspect-square">
+      <div class="duet-card-cover">
         {% if duet.song.display_cover_url %}
-          <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
+          <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}" loading="lazy" decoding="async">
         {% else %}
           <i class="bi bi-mic-fill icon-fallback"></i>
         {% endif %}
-        <div class="th-play-badge">
-          <div class="th-play-icon"><i class="bi bi-play-fill"></i></div>
-        </div>
-        <button type="button" class="th-poster-type-badge duet-privacy-toggle" data-pk="{{ duet.pk }}"
+        <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+        <button type="button" class="duet-privacy-toggle" data-pk="{{ duet.pk }}"
                 title="{% if duet.is_public %}{% translate 'خليها خاصة' %}{% else %}{% translate 'خليها عامة' %}{% endif %}"
                 onclick="event.preventDefault(); event.stopPropagation(); toggleDuetPrivacyInline(this);">
           <i class="bi bi-{% if duet.is_public %}globe{% else %}lock-fill{% endif %}"></i>
         </button>
       </div>
-      <div class="th-body">
-        <div class="th-title">{{ duet.song|localized_field:'title' }} ({% translate "غناءك" %})</div>
-        <div class="th-meta">{{ duet.get_division_type_display }} &middot; {{ duet.updated_at|date:"Y-m-d" }}</div>
+      <div class="duet-card-body">
+        <div class="duet-card-title">{{ duet.song|localized_field:'title' }}</div>
+        <div class="duet-card-meta">{{ duet.get_division_type_display }} &middot; {{ duet.updated_at|date:"Y-m-d" }}</div>
       </div>
     </a>
     {% endfor %}
   </div>
-  {% elif not processing_duets %}
+  {% elif not processing_duets and not failed_duets %}
   <div class="th-empty">
     <i class="bi bi-mic" style="font-size: 48px; margin-bottom: 16px;"></i>
     <p>{% translate "لسه معملتش أي دويتو مع تامر" %}</p>
@@ -105,5 +306,79 @@ function toggleDuetPrivacyInline(button) {
     })
     .catch(function (error) { console.error('Error toggling duet privacy:', error); });
 }
+
+function retryFailedDuet(button) {
+  if (button.disabled) return;
+  button.disabled = true;
+  const projectId = button.dataset.projectId;
+  fetch('/v1/music/sing-with-tamer/create-song/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': getCSRFToken(),
+    },
+    credentials: 'same-origin',
+    body: 'project_id=' + encodeURIComponent(projectId),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+      if (result.status !== 'success') {
+        button.disabled = false;
+        return;
+      }
+      // Simplest reliable way to move this card from "failed" into
+      // "still being made" (with its own live progress ring) - a
+      // boosted reload of this exact page.
+      thBoostedNavigate(window.location.pathname);
+    })
+    .catch(function () { button.disabled = false; });
+}
+
+// Live progress for every duet still processing when this page loaded -
+// one WebSocket per card (the same endpoint the creation page itself
+// uses), so the percentage moves and the card promotes itself into the
+// finished grid the moment the mix is actually done, no manual refresh.
+(function () {
+  const RING_CIRCUMFERENCE = 175.93; // 2 * PI * r(=28)
+
+  document.querySelectorAll('.duet-card-processing').forEach(function (card) {
+    const projectId = card.dataset.projectId;
+    if (!projectId) return;
+
+    const ring = card.querySelector('[data-progress-ring]');
+    const percentEl = card.querySelector('[data-progress-percent]');
+
+    function setPercent(percent) {
+      if (typeof percent !== 'number') return;
+      const clamped = Math.max(0, Math.min(100, percent));
+      if (ring) ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - clamped / 100));
+      if (percentEl) percentEl.textContent = clamped + '%';
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${protocol}//${window.location.host}/ws/duets/${projectId}/status/`);
+
+    socket.addEventListener('message', function (event) {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        return;
+      }
+      if (data.type !== 'status') return;
+
+      if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+        socket.close();
+        // Reload once, wherever it landed - moves the card into the
+        // finished (or "needs retry") section with its real data
+        // instead of trying to hand-build that markup here.
+        thBoostedNavigate(window.location.pathname);
+        return;
+      }
+
+      setPercent(data.progress);
+    });
+  });
+})();
 </script>
 {% endblock %}

@@ -346,6 +346,12 @@ class SingWithTamerProject(models.Model):
         max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NOT_STARTED,
     )
     processing_error = models.TextField(blank=True, default='')
+    # Coarse stage-based progress while processing_status is PROCESSING
+    # (see create_duet_song's set_progress) - not a smooth continuous
+    # value, just a rough "how far along" for the "my-duets" page's
+    # progress bar. Always 0 once COMPLETED/FAILED (final_audio_file /
+    # processing_error are the sources of truth for those).
+    progress_percent = models.PositiveSmallIntegerField(default=0)
     # How many times this duet's final mix has been played from the public
     # site (a "غنى X مع تامر" slider card, or its own page) - drives the
     # "أعلى استماع" sort on the song's duets list. Bumped client-side on
