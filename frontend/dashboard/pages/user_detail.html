@@ -465,10 +465,13 @@
     var duetsData = JSON.parse(dataEl.textContent);
     var modal = new bootstrap.Modal(modalEl);
 
+    // Escapes for both a text-node position and a double-quoted attribute
+    // value (the audio src= below needs the latter) - textContent alone
+    // only covers the former.
     function escapeHtml(str) {
       var div = document.createElement('div');
       div.textContent = str == null ? '' : String(str);
-      return div.innerHTML;
+      return div.innerHTML.replace(/"/g, '&quot;');
     }
 
     function formatTimestamp(seconds) {

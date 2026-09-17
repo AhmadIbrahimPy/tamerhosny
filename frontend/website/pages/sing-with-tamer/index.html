@@ -469,6 +469,60 @@
     border-radius: 18px;
     padding: 24px 18px;
     text-align: center;
+    position: relative;
+  }
+
+  /* Pre-record countdown - covers the recording box for the 3 seconds
+     before the mic actually opens, so there's no surprise "recording
+     already started before I was ready" moment. */
+  .countdown-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(11, 12, 18, .86);
+    backdrop-filter: blur(3px);
+    border-radius: 18px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+
+  .countdown-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .countdown-circle {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ff6b6b, #ef4444);
+    color: #fff;
+    font-size: 46px;
+    font-weight: 900;
+    box-shadow: 0 10px 32px rgba(239, 68, 68, .45);
+  }
+
+  .countdown-circle.go {
+    font-size: 20px;
+    background: linear-gradient(135deg, #34d399, #059669);
+    box-shadow: 0 10px 32px rgba(5, 150, 105, .45);
+  }
+
+  .countdown-circle.tick {
+    animation: countdownTick .85s ease-out;
+  }
+
+  @keyframes countdownTick {
+    0% { transform: scale(1.6); opacity: 0; }
+    35% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
   }
 
   .record-hint {
@@ -1275,7 +1329,7 @@
         style="margin-top:18px;"
       >
         <i class="bi bi-play-fill"></i>
-        {% translate "اسمع الجزء ده" %}
+        <span class="listen-btn-label">{% translate "اسمع الجزء ده" %}</span>
       </button>
 
       <audio
@@ -1309,6 +1363,10 @@
     <div class="recording-area">
 
       <div class="recording-box">
+
+        <div class="countdown-overlay" id="countdownOverlay">
+          <div class="countdown-circle" id="countdownCircle">3</div>
+        </div>
 
         <div class="record-hint">
           اسمع الجملة الأول ثم اضغط وسجل صوتك
@@ -1611,6 +1669,8 @@ let isRecording = false;
 
 let recordingStartTime = null;
 let recordingInterval = null;
+let recordingAutoStopTimer = null;
+let countdownInterval = null;
 
 let recordings = [];
 
@@ -2901,6 +2961,27 @@ function prepareSegment(
 
 async function playCurrentSegment() {
 
+  const audio =
+    document.getElementById(
+      'originalSongAudio'
+    );
+
+  // Already playing this exact segment - a second tap means "stop",
+  // not "restart from the beginning".
+  if (
+    audio &&
+    audio.dataset.segmentActive ===
+      'true' &&
+    !audio.paused
+  ) {
+
+    audio.pause();
+
+    return;
+
+  }
+
+
   if (
     !lyricsSegments.length ||
     currentLyricIndex >=
@@ -2924,6 +3005,86 @@ async function playCurrentSegment() {
   );
 
 }
+
+
+/* =========================================================
+   "LISTEN TO LINE" BUTTON STATE
+   Mirrors originalSongAudio's own play/pause - covers every way it
+   can stop (manual toggle, reaching the segment's own end, or being
+   cut off by a recording starting) with one listener each, instead
+   of resetting the button by hand at every call site.
+========================================================= */
+
+function setListenButtonPlaying(isPlaying) {
+
+  const btn =
+    document.getElementById(
+      'listenToLineBtn'
+    );
+
+  if (!btn) {
+    return;
+  }
+
+  const icon =
+    btn.querySelector('i');
+
+  if (icon) {
+
+    icon.className =
+      isPlaying
+        ? 'bi bi-stop-fill'
+        : 'bi bi-play-fill';
+
+  }
+
+
+  const label =
+    btn.querySelector(
+      '.listen-btn-label'
+    );
+
+  if (label) {
+
+    label.textContent =
+      isPlaying
+        ? 'إيقاف'
+        : 'اسمع الجزء ده';
+
+  }
+
+}
+
+
+document.addEventListener(
+  'DOMContentLoaded',
+  function () {
+
+    const audio =
+      document.getElementById(
+        'originalSongAudio'
+      );
+
+    if (!audio) {
+      return;
+    }
+
+    audio.addEventListener(
+      'play',
+      function () {
+        setListenButtonPlaying(true);
+      }
+    );
+
+    audio.addEventListener(
+      'pause',
+      function () {
+        setListenButtonPlaying(false);
+      }
+    );
+
+  }
+);
 
 
 /* =========================================================
@@ -3472,9 +3633,130 @@ async function toggleRecording() {
 
   } else {
 
-    await startRecording();
+    beginRecordingCountdown();
 
   }
+
+}
+
+
+/* =========================================================
+   PRE-RECORD COUNTDOWN
+   3 - 2 - 1 over the recording box, mic only opens once it
+   finishes - so the user always gets a heads-up instead of the
+   mic just cutting in the instant they tap the button.
+========================================================= */
+
+function beginRecordingCountdown() {
+
+  if (!currentProject) {
+
+    alert(
+      'ابدأ المشروع أولاً.'
+    );
+
+    return;
+
+  }
+
+
+  if (
+    currentLyricIndex >=
+    lyricsSegments.length
+  ) {
+
+    return;
+
+  }
+
+
+  const overlay =
+    document.getElementById(
+      'countdownOverlay'
+    );
+
+  const circle =
+    document.getElementById(
+      'countdownCircle'
+    );
+
+  const recordBtn =
+    document.getElementById(
+      'recordBtn'
+    );
+
+
+  if (!overlay || !circle) {
+
+    // No overlay in the DOM for some reason - fall back to starting
+    // immediately rather than silently doing nothing.
+    startRecording();
+
+    return;
+
+  }
+
+
+  if (recordBtn) {
+    recordBtn.disabled = true;
+  }
+
+  clearInterval(countdownInterval);
+
+  let count = 3;
+
+  const pulse = () => {
+
+    // Restart the pulse animation on every tick (removing then
+    // re-adding the class in the same frame wouldn't retrigger it).
+    circle.classList.remove('tick');
+    void circle.offsetWidth;
+    circle.classList.add('tick');
+
+  };
+
+  overlay.classList.add('show');
+  circle.textContent = String(count);
+  pulse();
+
+  countdownInterval =
+    setInterval(() => {
+
+      count -= 1;
+
+      if (count <= 0) {
+
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+
+        // A quick "سجّل!" flash instead of a full extra second, so the
+        // mic still opens right around the promised 3 seconds instead
+        // of 4.
+        circle.textContent = 'سجّل!';
+        circle.classList.add('go');
+        pulse();
+
+        setTimeout(() => {
+
+          overlay.classList.remove('show');
+          circle.classList.remove('go');
+
+          if (recordBtn) {
+            recordBtn.disabled = false;
+          }
+
+          startRecording();
+
+        }, 350);
+
+        return;
+
+      }
+
+      circle.textContent = String(count);
+      pulse();
+
+    }, 1000);
 
 }
 
@@ -3724,6 +4006,31 @@ async function startRecording() {
       );
 
 
+    /*
+     * Auto-stop once this segment's own duration has elapsed - the
+     * user shouldn't have to watch the timer and tap stop by hand.
+     * stopRecording() already no-ops if it's already been stopped
+     * (manually, or by this same timer racing a manual click).
+     */
+
+    const segmentDuration =
+      Math.max(
+        1,
+        Number(currentSegment.end_seconds) -
+          Number(currentSegment.start_seconds)
+      );
+
+    clearTimeout(
+      recordingAutoStopTimer
+    );
+
+    recordingAutoStopTimer =
+      setTimeout(
+        stopRecording,
+        segmentDuration * 1000
+      );
+
+
   } catch (error) {
 
     console.error(
@@ -3764,6 +4071,13 @@ function stopRecording() {
   clearInterval(
     recordingInterval
   );
+
+  clearTimeout(
+    recordingAutoStopTimer
+  );
+
+  recordingAutoStopTimer =
+    null;
 
 
   recordingInterval =
