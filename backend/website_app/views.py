@@ -1172,6 +1172,13 @@ def song_detail(request, slug, duet_id=None):
     duets_count = SingWithTamerProject.objects.filter(
         song=song, is_completed=True, is_public=True,
     ).exclude(final_audio_file='').count()
+    # "Sing with Tamer" needs an actual vocal track to remove and timed
+    # lyric lines to record over - without both, the slider/CTA would
+    # just send people to a recording page with nothing to sing along to.
+    from backend.music_app.models import SongLyricSegment
+    can_sing_with_tamer = bool(song.audio_file) and song.lyric_segments.filter(
+        segment_type=SongLyricSegment.SegmentType.LYRICS,
+    ).exists()
 
     user_other_duets = []
     discover_duets = []
@@ -1280,6 +1287,7 @@ def song_detail(request, slug, duet_id=None):
         'is_duet_owner': is_duet_owner,
         'duets': duets,
         'duets_count': duets_count,
+        'can_sing_with_tamer': can_sing_with_tamer,
         'user_other_duets': user_other_duets,
         'discover_duets': discover_duets,
         'audio_url': audio_url,
@@ -1296,9 +1304,14 @@ def song_duets_list(request, slug):
         song=song, is_completed=True, is_public=True,
     ).exclude(final_audio_file='').select_related('user').order_by('-play_count', '-updated_at')
     duets = _paginate(request, queryset)
+    from backend.music_app.models import SongLyricSegment
+    can_sing_with_tamer = bool(song.audio_file) and song.lyric_segments.filter(
+        segment_type=SongLyricSegment.SegmentType.LYRICS,
+    ).exists()
     return render(request, 'website/pages/songs/duets_list.html', {
         'song': song,
         'duets': duets,
+        'can_sing_with_tamer': can_sing_with_tamer,
     })
 
 

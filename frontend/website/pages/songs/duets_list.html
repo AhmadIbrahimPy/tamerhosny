@@ -24,11 +24,13 @@
       <h1><a href="{% url 'website_app:song-detail' song.slug %}" class="plain">{{ song|localized_field:'title' }}</a></h1>
       <p class="th-meta">{{ song.get_song_type_display }}</p>
 
+      {% if can_sing_with_tamer %}
       <div class="d-flex flex-wrap gap-2 mt-4">
         <a href="{% url 'website_app:sing-with-tamer' song.slug %}" class="th-platform-btn">
           <i class="bi bi-mic-fill"></i> {% translate "اعمل دويتو بصوتك" %}
         </a>
       </div>
+      {% endif %}
     </div>
   </div>
 
