@@ -2696,7 +2696,7 @@
           <div class="slider-track">
             {% for other_duet in duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}" data-tamer-image="{{ TAMER_PHOTO_URL }}" data-user-image="{% if other_duet.user.profile_image %}{{ other_duet.user.profile_image.url }}{% endif %}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2748,7 +2748,7 @@
           <div class="slider-track">
             {% for other_duet in user_other_duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}" data-tamer-image="{{ TAMER_PHOTO_URL }}" data-user-image="{% if duet.user.profile_image %}{{ duet.user.profile_image.url }}{% endif %}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2777,7 +2777,7 @@
           <div class="slider-track">
             {% for other_duet in discover_duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}" data-tamer-image="{{ TAMER_PHOTO_URL }}" data-user-image="{% if other_duet.user.profile_image %}{{ other_duet.user.profile_image.url }}{% endif %}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -3983,6 +3983,10 @@
     const songUrl = '{{ audio_url|escapejs }}';
     const songTitle = '{{ player_title|escapejs }}';
     const songImage = '{% if song.display_cover_url %}{{ song.display_cover_url }}{% endif %}';
+    // A duet's mini-player thumbnail shows both singers (Tamer's own
+    // photo + whoever recorded it with him) instead of just the song
+    // cover - see playAudio's own duetId grid branch in base.html.
+    const heroPlayImages = {% if duet %}['{{ TAMER_PHOTO_URL|escapejs }}', '{% if duet.user.profile_image %}{{ duet.user.profile_image.url|escapejs }}{% endif %}']{% else %}[songImage]{% endif %};
     const songLink = window.location.href;
     const songArtist = '{% for singer in singers %}{{ singer.person.name }}{% if not forloop.last %}، {% endif %}{% endfor %}'.trim();
     const songAlbum = '{% if song.album %}{{ song.album|localized_field:"title" }}{% endif %}';
@@ -4065,7 +4069,7 @@
       // (the two contexts /player/'s queue is allowed to walk the whole
       // album for) - so next/prev from here should be history+random,
       // not a silent detour through the rest of the album.
-      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, true, {% if duet %}{{ duet.pk }}{% else %}null{% endif %});
+      toggleAudio(songUrl, button, songTitle, '', heroPlayImages, songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, true, {% if duet %}{{ duet.pk }}{% else %}null{% endif %});
     } else {
       console.error('Global audio player not available');
     }

@@ -46,6 +46,7 @@
       {% for other_duet in duets %}
       <a href="{% url 'website_app:song-detail-duet' song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain"
         data-song-id="{{ song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"
+        data-tamer-image="{{ TAMER_PHOTO_URL }}" data-user-image="{% if other_duet.user.profile_image %}{{ other_duet.user.profile_image.url }}{% endif %}"
         data-title="{{ other_duet.user.get_full_name|default:other_duet.user.username }}">
         <div class="th-img-wrap">
           {% if song.display_cover_url %}

@@ -1546,10 +1546,14 @@
       
       checkLikeStatus(songId);
       
-      // Handle image - single image for normal songs, grid for mix
+      // Handle image - single image for normal songs, grid for a mix
+      // or a duet (Tamer's own photo + whoever sang it with him).
       if (image) {
-        if (isMix && Array.isArray(image) && image.length > 0) {
-          // Mix with multiple images - show grid
+        if (
+          (isMix && Array.isArray(image) && image.length > 0) ||
+          (duetId && Array.isArray(image) && image.length > 1)
+        ) {
+          // Multiple images - show grid
           var imageHTML = '';
           for (var i = 0; i < Math.min(image.length, 4); i++) {
             if (image[i]) {
@@ -1678,12 +1682,19 @@
       // instead of repeating data the markup already has.
       var titleEl = card.querySelector('.th-title');
       var imgEl = card.querySelector('.th-img-wrap img');
+      // A duet card carries both avatars (data-user-image/data-tamer-
+      // image) so the mini-player can show the actual two singers
+      // instead of just the song cover - see playAudio's own duetId
+      // grid branch above.
+      var cardImage = card.dataset.duetId
+        ? [card.dataset.tamerImage || '', card.dataset.userImage || '']
+        : [card.dataset.image || (imgEl ? imgEl.src : '')];
       toggleAudio(
         card.dataset.audioUrl,
         icon,
         card.dataset.title || (titleEl ? titleEl.textContent.trim() : ''),
         null,
-        [card.dataset.image || (imgEl ? imgEl.src : '')],
+        cardImage,
         card.dataset.link || card.getAttribute('href') || '#',
         card.dataset.artist || '',
         card.dataset.album || '',

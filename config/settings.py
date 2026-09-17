@@ -138,6 +138,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'backend.website_app.context_processors.vapid_public_key',
                 'backend.website_app.context_processors.maptiler_api_key',
+                'backend.website_app.context_processors.tamer_photo_url',
             ],
         },
     },
