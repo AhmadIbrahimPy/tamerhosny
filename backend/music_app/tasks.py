@@ -144,7 +144,20 @@ def _claim_or_wait_for_instrumental(song):
         return instrumental, True
 
 
-@shared_task(bind=True, ignore_result=True, max_retries=DUET_TASK_MAX_RETRIES)
+@shared_task(
+    bind=True, ignore_result=True, max_retries=DUET_TASK_MAX_RETRIES,
+    # A deploy restarting this worker mid-task (see .github/workflows -
+    # every push does an unconditional `systemctl restart`) used to just
+    # silently lose whatever was running: the default early-ack means
+    # the broker already considers the message done the moment it was
+    # *handed to* this worker, long before the mix/render actually
+    # finishes, so a SIGTERM kill here never gets a chance to redeliver
+    # it - only the 20-minute requeue_stuck_duet_projects sweep above
+    # would eventually catch it. acks_late + reject_on_worker_lost make
+    # Redis redeliver the task immediately once the worker dies, so the
+    # freshly-restarted worker just picks it back up and reruns it.
+    acks_late=True, reject_on_worker_lost=True,
+)
 def create_duet_song(self, project_id):
     from backend.music_app.models import InstrumentalVersion, SingWithTamerProject
 
@@ -247,12 +260,12 @@ def create_duet_song(self, project_id):
 
 @shared_task(ignore_result=True)
 def requeue_stuck_duet_projects():
-    """Safety net for a duet that got stranded in PROCESSING with no
-    task actually running anymore - a worker that got SIGKILLed (OOM,
-    deploy, host reboot) mid-task never reaches create_duet_song's own
-    except block, so nothing else would ever retry it. Runs periodically
-    (see config/celery.py's beat schedule) and re-enqueues anything that
-    hasn't reported progress in a while.
+    """Safety net for a duet (or its video) that got stranded in
+    PROCESSING with no task actually running anymore - a worker that
+    got SIGKILLed (OOM, deploy restart, host reboot) mid-task never
+    reaches its own except block, so nothing else would ever retry it.
+    Runs periodically (see config/celery.py's beat schedule) and
+    re-enqueues anything that hasn't reported progress in a while.
     """
     from datetime import timedelta
 
@@ -261,6 +274,7 @@ def requeue_stuck_duet_projects():
     from backend.music_app.models import SingWithTamerProject
 
     stale_before = timezone.now() - timedelta(minutes=INSTRUMENTAL_STALE_MINUTES)
+
     stuck = SingWithTamerProject.objects.filter(
         processing_status=SingWithTamerProject.ProcessingStatus.PROCESSING,
         updated_at__lt=stale_before,
@@ -268,6 +282,14 @@ def requeue_stuck_duet_projects():
     for project in stuck:
         logger.warning('Re-queuing stuck duet project %s (stale since %s)', project.pk, project.updated_at)
         create_duet_song.delay(project.pk)
+
+    stuck_videos = SingWithTamerProject.objects.filter(
+        video_status=SingWithTamerProject.ProcessingStatus.PROCESSING,
+        updated_at__lt=stale_before,
+    )
+    for project in stuck_videos:
+        logger.warning('Re-queuing stuck duet video %s (stale since %s)', project.pk, project.updated_at)
+        create_duet_video.delay(project.pk)
 
 
 VIDEO_TASK_MAX_RETRIES = 2
@@ -295,17 +317,31 @@ def _set_duet_video_progress(project_id, percent):
     """Mirrors _set_duet_progress above, for the video render's own
     ffmpeg-reported percentage (see DuetVideoMaker._run_with_progress) -
     update() so it never fights the `project` object the task is still
-    holding.
+    holding. Also touches updated_at (not automatic on a plain
+    .update()) so requeue_stuck_duet_projects' staleness check below
+    can tell "still actively rendering" apart from "worker got killed
+    mid-task and nothing is coming".
     """
+    from django.utils import timezone
+
     from backend.music_app.models import SingWithTamerProject
 
-    SingWithTamerProject.objects.filter(pk=project_id).update(video_progress_percent=percent)
+    SingWithTamerProject.objects.filter(pk=project_id).update(
+        video_progress_percent=percent, updated_at=timezone.now(),
+    )
     _broadcast_duet_video_status(
         project_id, SingWithTamerProject.ProcessingStatus.PROCESSING, progress=percent,
     )
 
 
-@shared_task(bind=True, ignore_result=True, max_retries=VIDEO_TASK_MAX_RETRIES)
+@shared_task(
+    bind=True, ignore_result=True, max_retries=VIDEO_TASK_MAX_RETRIES,
+    # See create_duet_song's own acks_late comment above - the exact
+    # same failure mode (a deploy's unconditional worker restart killing
+    # an in-flight render) is what left duet #21's video stuck at
+    # PROCESSING/0% for 10 days with nothing ever retrying it.
+    acks_late=True, reject_on_worker_lost=True,
+)
 def create_duet_video(self, project_id):
     """Renders the optional shareable vertical video for an already-
     completed duet (backend.music_app.core.duet_video_maker) - separate

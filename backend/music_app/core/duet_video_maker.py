@@ -496,7 +496,18 @@ class DuetVideoMaker:
             '-progress', 'pipe:1', '-nostats',
         ]
 
-        self._run_with_progress(cmd, duration, progress_callback)
+        # A flat 600s used to be plenty for a simple bg+avatars encode,
+        # but the sting overlay's extra filter passes (split/tpad/
+        # drawbox/overlay on top of zoompan+vignette) made this real-
+        # time factor highly host-dependent - on a single-vCPU box this
+        # measured ~4-5x realtime, so a 3.5-minute duet alone can take
+        # 15+ minutes. Scale with the video's own duration (generous
+        # 8x margin) instead of a fixed number that a longer duet, or a
+        # slower host, would blow straight through - a spurious kill
+        # here just means a wasted retry, not a wrong result, but it
+        # was guaranteed to happen for anything but the shortest duets.
+        timeout = max(600, int(duration * 8))
+        self._run_with_progress(cmd, duration, progress_callback, timeout=timeout)
 
         if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
             raise RuntimeError('Duet video render produced an empty file.')
