@@ -1814,13 +1814,16 @@ def increment_play_count(request):
 
 @require_POST
 def increment_duet_play_count(request, pk):
-    """Bumps a public duet's play_count - drives the "أعلى استماع" sort on
-    a song's duets list. No per-user dedupe (unlike increment_play_count):
-    a duet card's play icon is the only place this fires from, so a click
-    there already means "someone chose to listen", and slight over-count
-    from a quick pause/replay doesn't matter for a popularity ranking.
+    """Bumps a duet's play_count - drives the "أعلى استماع" sort on a
+    song's public duets list, and the play count shown on the duet's
+    own detail page (including to its owner, while it's still private -
+    that page has to show *something* other than a permanent "0"). No
+    per-user dedupe (unlike increment_play_count): this only ever fires
+    from an actual play starting (see currentDuetId in base.html), so
+    slight over-count from a quick pause/replay doesn't matter for a
+    popularity ranking.
     """
-    duet = get_object_or_404(SingWithTamerProject, pk=pk, is_completed=True, is_public=True)
+    duet = get_object_or_404(SingWithTamerProject, pk=pk, is_completed=True)
     SingWithTamerProject.objects.filter(pk=duet.pk).update(play_count=F('play_count') + 1)
     duet.refresh_from_db(fields=['play_count'])
     return JsonResponse({'status': 'success', 'play_count': duet.play_count})

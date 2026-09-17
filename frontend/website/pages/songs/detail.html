@@ -4065,7 +4065,7 @@
       // (the two contexts /player/'s queue is allowed to walk the whole
       // album for) - so next/prev from here should be history+random,
       // not a silent detour through the rest of the album.
-      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, true);
+      toggleAudio(songUrl, button, songTitle, '', [songImage], songLink, songArtist, songAlbum, false, {{ song.pk }}, songAlbumLink, true, {% if duet %}{{ duet.pk }}{% else %}null{% endif %});
     } else {
       console.error('Global audio player not available');
     }
