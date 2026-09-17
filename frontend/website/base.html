@@ -1170,6 +1170,18 @@
         .catch(function () {});
     }
 
+    // Same idea for a "غنى فلان مع تامر" card's own play icon - drives the
+    // "أعلى استماع" sort on a song's duets list (see song_duets_list). No
+    // per-card UI update needed here (unlike thIncrementPlayCount above);
+    // the count only ever shows on a fresh page load of the duets list.
+    function thIncrementDuetPlayCount(duetId) {
+      fetch('/duets/' + encodeURIComponent(duetId) + '/track-play/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() },
+      })
+        .catch(function () {});
+    }
+
     // Global Audio Player
     var globalAudio = null;
     var currentPlayBtn = null;
@@ -1648,6 +1660,9 @@
       if (!card || !card.dataset.audioUrl) return;
       e.preventDefault();
       e.stopPropagation();
+      if (card.dataset.duetId) {
+        thIncrementDuetPlayCount(card.dataset.duetId);
+      }
       // Title/image/link fall back to what's already rendered in the
       // card itself, so every song-card template only needs to add
       // data-song-id/data-audio-url (plus data-album* where relevant)

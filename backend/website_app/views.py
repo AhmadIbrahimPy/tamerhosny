@@ -1168,7 +1168,10 @@ def song_detail(request, slug, duet_id=None):
 
     duets = SingWithTamerProject.objects.filter(
         song=song, is_completed=True, is_public=True,
-    ).exclude(final_audio_file='').select_related('user').order_by('-updated_at')[:12]
+    ).exclude(final_audio_file='').select_related('user').order_by('-play_count', '-updated_at')[:12]
+    duets_count = SingWithTamerProject.objects.filter(
+        song=song, is_completed=True, is_public=True,
+    ).exclude(final_audio_file='').count()
 
     user_other_duets = []
     discover_duets = []
@@ -1276,10 +1279,26 @@ def song_detail(request, slug, duet_id=None):
         'duet': duet,
         'is_duet_owner': is_duet_owner,
         'duets': duets,
+        'duets_count': duets_count,
         'user_other_duets': user_other_duets,
         'discover_duets': discover_duets,
         'audio_url': audio_url,
         'player_title': player_title,
+    })
+
+
+def song_duets_list(request, slug):
+    """Every public "غنى مع تامر" duet for one song, sorted by highest
+    listens first - the song-detail page's duets slider's "عرض الكل".
+    """
+    song = get_object_or_404(Song, slug=slug)
+    queryset = SingWithTamerProject.objects.filter(
+        song=song, is_completed=True, is_public=True,
+    ).exclude(final_audio_file='').select_related('user').order_by('-play_count', '-updated_at')
+    duets = _paginate(request, queryset)
+    return render(request, 'website/pages/songs/duets_list.html', {
+        'song': song,
+        'duets': duets,
     })
 
 
@@ -1778,6 +1797,20 @@ def increment_play_count(request):
         return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@require_POST
+def increment_duet_play_count(request, pk):
+    """Bumps a public duet's play_count - drives the "أعلى استماع" sort on
+    a song's duets list. No per-user dedupe (unlike increment_play_count):
+    a duet card's play icon is the only place this fires from, so a click
+    there already means "someone chose to listen", and slight over-count
+    from a quick pause/replay doesn't matter for a popularity ranking.
+    """
+    duet = get_object_or_404(SingWithTamerProject, pk=pk, is_completed=True, is_public=True)
+    SingWithTamerProject.objects.filter(pk=duet.pk).update(play_count=F('play_count') + 1)
+    duet.refresh_from_db(fields=['play_count'])
+    return JsonResponse({'status': 'success', 'play_count': duet.play_count})
 
 
 SING_WITH_TAMER_COOLDOWN = timedelta(hours=24)

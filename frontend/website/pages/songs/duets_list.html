@@ -1,0 +1,78 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% blocktranslate with title=song|localized_field:'title' %}دويتوهات {{ title }}{% endblocktranslate %}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{% blocktranslate with title=song|localized_field:'title' %}كل الدويتوهات العامة اللي الجمهور عملها مع تامر حسني في أغنية {{ title }}.{% endblocktranslate %}">
+{% endblock %}
+{% block og_title %}{% blocktranslate with title=song|localized_field:'title' %}دويتوهات {{ title }}{% endblocktranslate %} - {% translate "تامر حسني" %}{% endblock %}
+{% block og_image %}{% if song.display_cover_url %}{{ request.scheme }}://{{ request.get_host }}{{ song.display_cover_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+
+  <div class="th-detail-hero">
+    {% if song.display_cover_url %}
+      <div class="th-detail-img"><img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}" loading="eager"></div>
+    {% else %}
+      <div class="th-detail-img d-flex align-items-center justify-content-center" style="aspect-ratio:1/1; background:#1e2130;">
+        <i class="bi bi-music-note-beamed" style="font-size:56px; color:#3a3d52;"></i>
+      </div>
+    {% endif %}
+    <div class="th-detail-body">
+      <span class="th-badge gold">{% translate "غنّوا معاه" %}</span>
+      <h1><a href="{% url 'website_app:song-detail' song.slug %}" class="plain">{{ song|localized_field:'title' }}</a></h1>
+      <p class="th-meta">{{ song.get_song_type_display }}</p>
+
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <a href="{% url 'website_app:sing-with-tamer' song.slug %}" class="th-platform-btn">
+          <i class="bi bi-mic-fill"></i> {% translate "اعمل دويتو بصوتك" %}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">
+        <i class="bi bi-bar-chart-fill"></i> {% translate "كل الدويتوهات" %}
+        <span class="th-see-all" style="pointer-events:none;">({{ duets.paginator.count }})</span>
+      </h2>
+    </div>
+
+    <div class="th-grid cols-4">
+      {% for other_duet in duets %}
+      <a href="{% url 'website_app:song-detail-duet' song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain"
+        data-song-id="{{ song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"
+        data-title="{{ other_duet.user.get_full_name|default:other_duet.user.username }}">
+        <div class="th-img-wrap">
+          {% if song.display_cover_url %}
+            <img src="{{ song.display_cover_url }}" alt="{{ song|localized_field:'title' }}" loading="lazy" decoding="async">
+          {% else %}
+            <i class="bi bi-mic-fill icon-fallback"></i>
+          {% endif %}
+          {% if forloop.first and duets.number == 1 %}
+            <span class="th-poster-rating-badge"><i class="bi bi-trophy-fill"></i> {% translate "الأعلى استماعًا" %}</span>
+          {% endif %}
+          <div class="th-play-badge"><span class="th-play-icon"><i class="bi bi-play-fill"></i></span></div>
+        </div>
+        <div class="th-body">
+          <div class="th-title">{{ other_duet.user.get_full_name|default:other_duet.user.username }}</div>
+          <div class="th-meta"><i class="bi bi-headphones"></i> {{ other_duet.play_count }}</div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="th-empty-block">
+        <i class="bi bi-mic-fill"></i>
+        <span>{% translate "لسه محدش عمل دويتو للأغنية دي - يلا كن أول واحد!" %}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4">
+      {% include "dashboard/partials/pagination.html" with page_obj=duets %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

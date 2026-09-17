@@ -346,6 +346,12 @@ class SingWithTamerProject(models.Model):
         max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NOT_STARTED,
     )
     processing_error = models.TextField(blank=True, default='')
+    # How many times this duet's final mix has been played from the public
+    # site (a "غنى X مع تامر" slider card, or its own page) - drives the
+    # "أعلى استماع" sort on the song's duets list. Bumped client-side on
+    # every play-icon click (see thIncrementDuetPlayCount in base.html),
+    # same light-touch approach as Song.play_count.
+    play_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         unique_together = ('user', 'song', 'division_type')

@@ -2687,13 +2687,14 @@
       <section class="song-section">
         <div class="song-section-head">
           <h2 class="song-section-title"><i class="bi bi-mic-fill"></i> {% blocktranslate with title=song|localized_field:'title' %}مين غنى {{ title }} مع تامر{% endblocktranslate %}</h2>
+          <a href="{% url 'website_app:song-duets' song.slug %}" class="song-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="slider-wrap">
           <button type="button" class="slider-control slider-control-prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-right"></i></button>
           <div class="slider-track">
             {% for other_duet in duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2704,13 +2705,27 @@
                 </div>
                 <div class="th-body">
                   <div class="th-title">{{ other_duet.user.get_full_name|default:other_duet.user.username }}</div>
-                  <div class="th-meta">{{ other_duet.updated_at|date:"Y-m-d" }}</div>
+                  <div class="th-meta"><i class="bi bi-headphones"></i> {{ other_duet.play_count }}</div>
                 </div>
               </a>
             {% endfor %}
           </div>
           <button type="button" class="slider-control slider-control-next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-left"></i></button>
         </div>
+
+        <div class="text-center mt-3">
+          <a href="{% url 'website_app:sing-with-tamer' song.slug %}" class="th-platform-btn">
+            <i class="bi bi-mic-fill"></i> {% translate "غني مع تامر" %}
+          </a>
+        </div>
+      </section>
+    {% else %}
+      <section class="song-section text-center">
+        <h2 class="song-section-title justify-content-center"><i class="bi bi-mic-fill"></i> {% translate "محدش غنى الأغنية دي مع تامر لسه" %}</h2>
+        <p class="text-muted mb-3">{% translate "يلا كن أول واحد!" %}</p>
+        <a href="{% url 'website_app:sing-with-tamer' song.slug %}" class="th-platform-btn">
+          <i class="bi bi-mic-fill"></i> {% translate "غني مع تامر" %}
+        </a>
       </section>
     {% endif %}
 
@@ -2726,7 +2741,7 @@
           <div class="slider-track">
             {% for other_duet in user_other_duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">
@@ -2755,7 +2770,7 @@
           <div class="slider-track">
             {% for other_duet in discover_duets %}
               <a href="{% url 'website_app:song-detail-duet' other_duet.song.slug other_duet.pk %}" class="th-card aspect-square th-card-song plain slider-item"
-                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}"{% endif %}>
+                {% if other_duet.final_audio_file %}data-song-id="{{ other_duet.song.pk }}" data-audio-url="{{ other_duet.final_audio_file.url }}" data-duet-id="{{ other_duet.pk }}"{% endif %}>
                 <div class="th-img-wrap">
                   {% if other_duet.song.display_cover_url %}
                     <img src="{{ other_duet.song.display_cover_url }}" alt="{{ other_duet.song|localized_field:'title' }}">

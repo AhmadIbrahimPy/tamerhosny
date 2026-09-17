@@ -43,6 +43,8 @@ urlpatterns = [
     path('songs/full-listen/', views.record_full_listen, name='record-full-listen'),
     path('songs/<str:slug>/', views.song_detail, name='song-detail'),
     path('songs/<str:slug>/duet/<int:duet_id>/', views.song_detail, name='song-detail-duet'),
+    path('songs/<str:slug>/duets/', views.song_duets_list, name='song-duets'),
+    path('duets/<int:pk>/track-play/', views.increment_duet_play_count, name='increment-duet-play-count'),
     path('sing-with-tamer/<str:slug>/', views.sing_with_tamer, name='sing-with-tamer'),
 
     path('guess/', views.daily_guess_game, name='daily-guess'),
