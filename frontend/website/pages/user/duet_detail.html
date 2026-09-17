@@ -19,6 +19,11 @@
   @media (max-width: 576px) { .duet-detail-body h1 { font-size: 24px; } }
   .duet-detail-stats { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted); font-size: 14px; margin-block: 14px; }
   .duet-detail-stats span { display: flex; align-items: center; gap: 6px; }
+  .duet-detail-privacy-toggle {
+    display: flex; align-items: center; gap: 6px; font: inherit; color: var(--muted);
+    background: none; border: none; padding: 0; cursor: pointer;
+  }
+  .duet-detail-privacy-toggle:hover { color: var(--accent); }
   .duet-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 
   .couplets-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
@@ -75,14 +80,25 @@
       <div class="duet-detail-stats">
         <span><i class="bi bi-headphones"></i> {{ duet.play_count }} {% translate "استماع" %}</span>
         <span><i class="bi bi-calendar3"></i> {{ duet.updated_at|date:"Y-m-d" }}</span>
+        {% if is_owner %}
+        <button type="button" id="duetPrivacyToggle" class="duet-detail-privacy-toggle" data-pk="{{ duet.pk }}"
+                onclick="toggleDuetPrivacy(this);">
+          <i class="bi bi-{% if duet.is_public %}globe{% else %}lock-fill{% endif %}"></i>
+          <span id="duetPrivacyLabel">{% if duet.is_public %}{% translate "عام" %}{% else %}{% translate "خاص" %}{% endif %}</span>
+        </button>
+        {% else %}
         <span><i class="bi bi-{% if duet.is_public %}globe{% else %}lock-fill{% endif %}"></i> {% if duet.is_public %}{% translate "عام" %}{% else %}{% translate "خاص" %}{% endif %}</span>
+        {% endif %}
       </div>
 
       <div class="duet-detail-actions">
         <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-platform-btn">
           <i class="bi bi-play-fill"></i> {% translate "تشغيل الدويتو" %}
         </a>
-        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'duet', {{ duet.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+        <button type="button" id="duetShareBtn" class="th-share-btn" onclick="copyDuetLink();" title="{% translate 'نسخ الرابط' %}"
+                style="{% if not duet.is_public %}display:none;{% endif %}">
+          <i class="bi bi-link-45deg"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -151,6 +167,43 @@
 {% block extra_js %}
 {% if is_owner %}
 <script>
+function toggleDuetPrivacy(button) {
+  const pk = button.dataset.pk;
+  button.disabled = true;
+
+  fetch(`/my-duets/${pk}/toggle-privacy/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCSRFToken() },
+    credentials: 'same-origin',
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+      if (result.status !== 'success') throw new Error(result.message || 'error');
+
+      const isPublic = result.is_public;
+      const icon = button.querySelector('i');
+      const label = document.getElementById('duetPrivacyLabel');
+      const shareBtn = document.getElementById('duetShareBtn');
+
+      icon.className = `bi bi-${isPublic ? 'globe' : 'lock-fill'}`;
+      label.textContent = isPublic ? '{% translate "عام" %}' : '{% translate "خاص" %}';
+      shareBtn.style.display = isPublic ? '' : 'none';
+
+      window.showToast(
+        isPublic
+          ? '{% translate "تم تحويل الدويتو إلى عام" %}'
+          : '{% translate "تم تحويل الدويتو إلى خاص" %}',
+        'success',
+      );
+    })
+    .catch(function () {
+      window.showToast('{% translate "حصل خطأ، جرب تاني" %}', 'error');
+    })
+    .finally(function () {
+      button.disabled = false;
+    });
+}
+
 function generateDuetVideo() {
   const btn = document.getElementById('videoGenerateBtn');
   const label = document.getElementById('videoGenerateBtnLabel');
@@ -231,4 +284,17 @@ document.addEventListener('DOMContentLoaded', pollVideoStatus);
 {% endif %}
 </script>
 {% endif %}
+
+<script>
+function copyDuetLink() {
+  navigator.clipboard.writeText(window.location.href)
+    .then(function () {
+      thTrack('SHARE', 'duet', {{ duet.pk }}, { share_channel: 'COPY_LINK' });
+      window.showToast('{% translate "تم نسخ الرابط" %}', 'success');
+    })
+    .catch(function () {
+      window.showToast('{% translate "معرفنا ننسخ الرابط" %}', 'error');
+    });
+}
+</script>
 {% endblock %}
