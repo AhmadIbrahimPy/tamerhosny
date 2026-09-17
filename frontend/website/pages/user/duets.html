@@ -256,7 +256,7 @@
   {% if duets %}
   <div class="duet-grid">
     {% for duet in duets %}
-    <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="duet-card th-card-song"
+    <a href="{% url 'website_app:duet-detail' duet.pk %}" class="duet-card th-card-song"
       {% if duet.final_audio_file %}data-song-id="{{ duet.song.pk }}" data-audio-url="{{ duet.final_audio_file.url }}"{% endif %}>
       <div class="duet-card-cover">
         {% if duet.song.display_cover_url %}

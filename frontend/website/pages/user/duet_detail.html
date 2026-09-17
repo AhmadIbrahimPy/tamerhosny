@@ -1,0 +1,234 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% blocktranslate with title=duet.song|localized_field:'title' %}دويتو {{ title }}{% endblocktranslate %}{% endblock %}
+
+{% block og_title %}{% blocktranslate with title=duet.song|localized_field:'title' %}دويتو {{ title }} مع تامر حسني{% endblocktranslate %}{% endblock %}
+{% block og_image %}{% if duet.song.display_cover_url %}{{ request.scheme }}://{{ request.get_host }}{{ duet.song.display_cover_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .duet-detail-hero { display: flex; gap: 28px; padding-block: 32px 24px; flex-wrap: wrap; }
+  .duet-detail-cover {
+    flex: 0 0 220px; width: 220px; aspect-ratio: 1; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5); border: 1px solid var(--border); background: #1e2130;
+  }
+  .duet-detail-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .duet-detail-cover .icon-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 56px; color: #3a3d52; }
+  .duet-detail-body { flex: 1; min-width: 260px; }
+  .duet-detail-body h1 { font-size: 32px; font-weight: 900; margin-block: 10px 6px; }
+  @media (max-width: 576px) { .duet-detail-body h1 { font-size: 24px; } }
+  .duet-detail-stats { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted); font-size: 14px; margin-block: 14px; }
+  .duet-detail-stats span { display: flex; align-items: center; gap: 6px; }
+  .duet-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+  .couplets-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .couplet-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .couplet-row.is-user { border-color: rgba(212,175,55,.4); background: rgba(212,175,55,.06); }
+  .couplet-badge {
+    flex: 0 0 auto; font-size: 11.5px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,.08); color: var(--muted); white-space: nowrap;
+  }
+  .couplet-row.is-user .couplet-badge { background: rgba(212,175,55,.18); color: var(--accent); }
+  .couplet-text { flex: 1; min-width: 0; font-size: 14.5px; }
+  .couplet-time { flex: 0 0 auto; font-size: 12px; color: var(--muted); direction: ltr; }
+
+  .video-card {
+    margin-top: 12px; padding: 20px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between;
+  }
+  .video-card-info { display: flex; align-items: center; gap: 12px; }
+  .video-card-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(212,175,55,.12); color: var(--accent); font-size: 20px;
+  }
+  .video-card-title { font-weight: 800; font-size: 15px; }
+  .video-card-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  #videoProgressWrap { display: none; align-items: center; gap: 8px; }
+  #videoProgressBar { width: 120px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+  #videoProgressFill { height: 100%; width: 30%; background: var(--accent); animation: videoProgressPulse 1.2s ease-in-out infinite; }
+  @keyframes videoProgressPulse { 0%,100% { transform: translateX(-100%); } 50% { transform: translateX(220%); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+
+  <div class="duet-detail-hero">
+    <div class="duet-detail-cover">
+      {% if duet.song.display_cover_url %}
+        <img src="{{ duet.song.display_cover_url }}" alt="{{ duet.song|localized_field:'title' }}">
+      {% else %}
+        <i class="bi bi-mic-fill icon-fallback"></i>
+      {% endif %}
+    </div>
+    <div class="duet-detail-body">
+      <span class="th-badge gold"><i class="bi bi-mic-fill"></i> {% translate "دويتو مع تامر" %}</span>
+      <h1>{{ duet.song|localized_field:'title' }}</h1>
+      <p class="th-meta">
+        {% blocktranslate with name=duet.user.get_full_name|default:duet.user.username %}غناء {{ name }}{% endblocktranslate %}
+        &middot; {{ duet.get_division_type_display }}
+      </p>
+
+      <div class="duet-detail-stats">
+        <span><i class="bi bi-headphones"></i> {{ duet.play_count }} {% translate "استماع" %}</span>
+        <span><i class="bi bi-calendar3"></i> {{ duet.updated_at|date:"Y-m-d" }}</span>
+        <span><i class="bi bi-{% if duet.is_public %}globe{% else %}lock-fill{% endif %}"></i> {% if duet.is_public %}{% translate "عام" %}{% else %}{% translate "خاص" %}{% endif %}</span>
+      </div>
+
+      <div class="duet-detail-actions">
+        <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-platform-btn">
+          <i class="bi bi-play-fill"></i> {% translate "تشغيل الدويتو" %}
+        </a>
+        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'duet', {{ duet.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
+      </div>
+    </div>
+  </div>
+
+  {% if is_owner %}
+  <div class="video-card">
+    <div class="video-card-info">
+      <div class="video-card-icon"><i class="bi bi-camera-reels-fill"></i></div>
+      <div>
+        <div class="video-card-title">{% translate "فيديو للمشاركة" %}</div>
+        <div class="video-card-sub" id="videoCardSub">
+          {% if duet.video_status == 'COMPLETED' and duet.video_file %}
+            {% translate "جاهز - قابل للتحميل" %}
+          {% elif duet.video_status == 'PROCESSING' %}
+            {% translate "بيتعمل دلوقتي..." %}
+          {% elif duet.video_status == 'FAILED' %}
+            {% translate "حصل خطأ - جرب تاني" %}
+          {% else %}
+            {% translate "فيديو رأسي بصورتك وصورة تامر، جاهز للمشاركة على السوشيال ميديا" %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span id="videoProgressWrap"{% if duet.video_status == 'PROCESSING' %} style="display:flex;"{% endif %}>
+        <span id="videoProgressBar"><span id="videoProgressFill"></span></span>
+      </span>
+      <a id="videoDownloadBtn" href="{% if duet.video_file %}{{ duet.video_file.url }}{% endif %}" download
+         class="th-platform-btn"
+         style="{% if duet.video_status != 'COMPLETED' or not duet.video_file %}display:none;{% endif %}">
+        <i class="bi bi-download"></i> {% translate "تحميل الفيديو" %}
+      </a>
+      <button type="button" id="videoGenerateBtn" class="th-platform-btn"
+              onclick="generateDuetVideo()"
+              style="{% if duet.video_status == 'COMPLETED' and duet.video_file %}display:none;{% endif %}"
+              {% if duet.video_status == 'PROCESSING' %}disabled{% endif %}>
+        <i class="bi bi-magic"></i> <span id="videoGenerateBtnLabel">{% if duet.video_status == 'PROCESSING' %}{% translate "جاري الإنشاء..." %}{% else %}{% translate "اعمل فيديو" %}{% endif %}</span>
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="th-section">
+    <h2 class="th-section-title">{% translate "مين غنى إيه" %}</h2>
+    <div class="couplets-list">
+      {% for couplet in couplets %}
+      <div class="couplet-row {% if couplet.is_user_line %}is-user{% endif %}">
+        <span class="couplet-badge">
+          {% if couplet.is_user_line %}
+            {% blocktranslate with name=duet.user.get_full_name|default:duet.user.username %}{{ name }}{% endblocktranslate %}
+          {% else %}
+            {% translate "تامر حسني" %}
+          {% endif %}
+        </span>
+        <span class="couplet-text">{{ couplet.text }}</span>
+      </div>
+      {% empty %}
+      <div class="th-empty-block"><i class="bi bi-music-note-beamed"></i><span>{% translate "مفيش كلمات متاحة لهذه الأغنية." %}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if is_owner %}
+<script>
+function generateDuetVideo() {
+  const btn = document.getElementById('videoGenerateBtn');
+  const label = document.getElementById('videoGenerateBtnLabel');
+  const progressWrap = document.getElementById('videoProgressWrap');
+  const sub = document.getElementById('videoCardSub');
+
+  btn.disabled = true;
+  label.textContent = '{% translate "جاري الإنشاء..." %}';
+  progressWrap.style.display = 'flex';
+  sub.textContent = '{% translate "بيتعمل دلوقتي..." %}';
+
+  fetch("{% url 'website_app:duet-generate-video' duet.pk %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCSRFToken() },
+    credentials: 'same-origin',
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'error');
+      }
+      if (result.video_status === 'COMPLETED' && result.video_url) {
+        showVideoReady(result.video_url);
+        return;
+      }
+      pollVideoStatus();
+    })
+    .catch(function () {
+      btn.disabled = false;
+      label.textContent = '{% translate "اعمل فيديو" %}';
+      progressWrap.style.display = 'none';
+      sub.textContent = '{% translate "حصل خطأ - جرب تاني" %}';
+    });
+}
+
+function pollVideoStatus() {
+  const statusUrl = "{% url 'website_app:duet-video-status' duet.pk %}";
+  const sub = document.getElementById('videoCardSub');
+  const btn = document.getElementById('videoGenerateBtn');
+  const label = document.getElementById('videoGenerateBtnLabel');
+  const progressWrap = document.getElementById('videoProgressWrap');
+
+  const interval = setInterval(function () {
+    fetch(statusUrl, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (result) {
+        if (result.video_status === 'COMPLETED' && result.video_url) {
+          clearInterval(interval);
+          showVideoReady(result.video_url);
+        } else if (result.video_status === 'FAILED') {
+          clearInterval(interval);
+          btn.disabled = false;
+          label.textContent = '{% translate "اعمل فيديو" %}';
+          progressWrap.style.display = 'none';
+          sub.textContent = '{% translate "حصل خطأ - جرب تاني" %}';
+        }
+        // PROCESSING - keep polling.
+      })
+      .catch(function () {});
+  }, 3000);
+}
+
+function showVideoReady(videoUrl) {
+  const btn = document.getElementById('videoGenerateBtn');
+  const downloadBtn = document.getElementById('videoDownloadBtn');
+  const progressWrap = document.getElementById('videoProgressWrap');
+  const sub = document.getElementById('videoCardSub');
+
+  btn.style.display = 'none';
+  progressWrap.style.display = 'none';
+  downloadBtn.href = videoUrl;
+  downloadBtn.style.display = '';
+  sub.textContent = '{% translate "جاهز - قابل للتحميل" %}';
+}
+
+{% if duet.video_status == 'PROCESSING' %}
+document.addEventListener('DOMContentLoaded', pollVideoStatus);
+{% endif %}
+</script>
+{% endif %}
+{% endblock %}

@@ -352,6 +352,16 @@ class SingWithTamerProject(models.Model):
     # progress bar. Always 0 once COMPLETED/FAILED (final_audio_file /
     # processing_error are the sources of truth for those).
     progress_percent = models.PositiveSmallIntegerField(default=0)
+
+    # Optional shareable vertical video (cover art + the user's and
+    # Tamer's photos, set to the final mix) - generated on demand from
+    # the duet's own detail page, not automatically, since most people
+    # never ask for it and it's an extra render job either way.
+    video_file = models.FileField(upload_to='duet_videos/', null=True, blank=True, max_length=500)
+    video_status = models.CharField(
+        max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NOT_STARTED,
+    )
+    video_error = models.TextField(blank=True, default='')
     # How many times this duet's final mix has been played from the public
     # site (a "غنى X مع تامر" slider card, or its own page) - drives the
     # "أعلى استماع" sort on the song's duets list. Bumped client-side on

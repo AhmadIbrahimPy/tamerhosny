@@ -270,6 +270,55 @@ def requeue_stuck_duet_projects():
         create_duet_song.delay(project.pk)
 
 
+VIDEO_TASK_MAX_RETRIES = 2
+VIDEO_TASK_RETRY_COUNTDOWN = 20
+
+
+@shared_task(bind=True, ignore_result=True, max_retries=VIDEO_TASK_MAX_RETRIES)
+def create_duet_video(self, project_id):
+    """Renders the optional shareable vertical video for an already-
+    completed duet (backend.music_app.core.duet_video_maker) - separate
+    from create_duet_song above since most duets never have this asked
+    for, and it's cheap/fast enough (plain ffmpeg muxing, no AI model)
+    that it doesn't need the same elaborate concurrency guarding.
+    """
+    from backend.music_app.models import SingWithTamerProject
+
+    try:
+        project = SingWithTamerProject.objects.select_related('song', 'user').get(pk=project_id)
+    except SingWithTamerProject.DoesNotExist:
+        return
+
+    if not project.is_completed or not project.final_audio_file:
+        project.video_status = SingWithTamerProject.ProcessingStatus.FAILED
+        project.video_error = 'الدويتو نفسه لسه مش جاهز.'
+        project.save(update_fields=['video_status', 'video_error'])
+        return
+
+    try:
+        from backend.music_app.core.duet_video_maker import DuetVideoMaker
+
+        video_path = DuetVideoMaker().create_video(project)
+
+        project.video_file.name = video_path
+        project.video_status = SingWithTamerProject.ProcessingStatus.COMPLETED
+        project.video_error = ''
+        project.save(update_fields=['video_file', 'video_status', 'video_error'])
+
+    except Exception as e:
+        if self.request.retries < self.max_retries:
+            logger.warning(
+                'create_duet_video(%s) failed (attempt %s/%s), retrying: %s',
+                project_id, self.request.retries + 1, self.max_retries, e,
+            )
+            raise self.retry(exc=e, countdown=VIDEO_TASK_RETRY_COUNTDOWN)
+
+        logger.error('create_duet_video(%s) failed permanently: %s', project_id, e)
+        project.video_status = SingWithTamerProject.ProcessingStatus.FAILED
+        project.video_error = str(e)
+        project.save(update_fields=['video_status', 'video_error'])
+
+
 @shared_task(ignore_result=True)
 def classify_song_task(song_id):
     """Auto-fills a song's genre/mood via an LLM call (see

@@ -2578,6 +2578,93 @@ def toggle_duet_privacy(request, pk):
     return JsonResponse({'status': 'success', 'is_public': duet.is_public})
 
 
+def duet_detail(request, pk):
+    """An info page for one duet before actually playing it: the song,
+    who sang what line, and the optional shareable video - separate
+    from song-detail-duet (which is the real player). Owner-only unless
+    the duet is public, same rule song_detail's duet_id path already
+    applies.
+    """
+    from backend.music_app.models import SongLyricSegment
+
+    duet = get_object_or_404(SingWithTamerProject.objects.select_related('song', 'user'), pk=pk)
+    is_owner = request.user.is_authenticated and duet.user_id == request.user.id
+    if not duet.is_public and not is_owner:
+        raise Http404
+
+    # Which lines were whose - reconstructed from division_type the same
+    # way the recording page itself picks them (frontend's
+    # filterLyricsByDivision): EVEN ("Tamer starts") -> the user sang the
+    # odd-indexed lines; ODD ("You start") -> the even-indexed ones. The
+    # individual per-line recordings themselves are gone by COMPLETED
+    # (baked into final_audio_file and deleted), so this is the only way
+    # left to show who sang which couplet.
+    lyric_segments = list(
+        duet.song.lyric_segments.filter(segment_type=SongLyricSegment.SegmentType.LYRICS).order_by('start_seconds')
+    )
+    user_sings_even_index = duet.division_type == SingWithTamerProject.DivisionType.USER_STARTS
+    couplets = [
+        {
+            'text': segment.text,
+            'start_seconds': segment.start_seconds,
+            'is_user_line': (index % 2 == 0) == user_sings_even_index,
+        }
+        for index, segment in enumerate(lyric_segments)
+    ]
+
+    return render(request, 'website/pages/user/duet_detail.html', {
+        'duet': duet,
+        'is_owner': is_owner,
+        'couplets': couplets,
+    })
+
+
+@login_required
+@require_POST
+def duet_generate_video(request, pk):
+    """Kicks off the optional shareable video for an already-completed
+    duet (backend.music_app.tasks.create_duet_video) - on demand only,
+    from the duet's own detail page.
+    """
+    from backend.music_app.tasks import create_duet_video
+
+    duet = get_object_or_404(SingWithTamerProject, pk=pk, user=request.user)
+
+    if not duet.is_completed or not duet.final_audio_file:
+        return JsonResponse({'status': 'error', 'message': 'الدويتو نفسه لسه مش جاهز.'}, status=400)
+
+    if duet.video_status == SingWithTamerProject.ProcessingStatus.PROCESSING:
+        return JsonResponse({'status': 'success', 'message': 'Already processing', 'video_status': duet.video_status})
+
+    if duet.video_status == SingWithTamerProject.ProcessingStatus.COMPLETED and duet.video_file:
+        return JsonResponse({
+            'status': 'success', 'video_status': duet.video_status, 'video_url': duet.video_file.url,
+        })
+
+    duet.video_status = SingWithTamerProject.ProcessingStatus.PROCESSING
+    duet.video_error = ''
+    duet.save(update_fields=['video_status', 'video_error'])
+
+    create_duet_video.delay(duet.pk)
+
+    return JsonResponse({'status': 'success', 'video_status': duet.video_status})
+
+
+@login_required
+def duet_video_status(request, pk):
+    """Polled from the duet detail page while a video render is in
+    flight - the render is short enough (plain ffmpeg muxing, not an AI
+    model) that a WebSocket felt like overkill next to create_duet_song.
+    """
+    duet = get_object_or_404(SingWithTamerProject, pk=pk, user=request.user)
+    return JsonResponse({
+        'status': 'success',
+        'video_status': duet.video_status,
+        'video_error': duet.video_error,
+        'video_url': duet.video_file.url if duet.video_file else None,
+    })
+
+
 def recap(request, username):
     """ملخص شخصي وقابل للمشاركة لنشاط مستخدم على الأرشيف - بديل عن
     "Spotify Wrapped" لكن بدون تقييد بسنة معينة: UserSongPlay بيحتفظ
