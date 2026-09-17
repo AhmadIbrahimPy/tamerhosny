@@ -40,4 +40,11 @@ app.conf.beat_schedule = {
         'task': 'backend.music_app.tasks.requeue_stuck_duet_projects',
         'schedule': 300.0,
     },
+    # A duet's shareable video is a disk-hungry, on-demand extra (not
+    # the duet itself) - delete it DUET_VIDEO_RETENTION_HOURS after it
+    # finished rather than let every generated video accumulate forever.
+    'cleanup-expired-duet-videos': {
+        'task': 'backend.music_app.tasks.cleanup_expired_duet_videos',
+        'schedule': crontab(minute=30),
+    },
 }

@@ -396,6 +396,38 @@ def create_duet_video(self, project_id):
         _broadcast_duet_video_status(project_id, project.video_status, error=project.video_error)
 
 
+DUET_VIDEO_RETENTION_HOURS = 24
+
+
+@shared_task(ignore_result=True)
+def cleanup_expired_duet_videos():
+    """Deletes a duet's shareable video (and resets it back to
+    "not generated") DUET_VIDEO_RETENTION_HOURS after it finished - it's
+    an on-demand extra, not the duet itself (final_audio_file lives on
+    regardless), and disk isn't infinite; anyone who still wants it can
+    just re-generate it from the duet's own detail page. Runs
+    periodically (see config/celery.py's beat schedule).
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from backend.music_app.models import SingWithTamerProject
+
+    expired_before = timezone.now() - timedelta(hours=DUET_VIDEO_RETENTION_HOURS)
+    expired = SingWithTamerProject.objects.filter(
+        video_status=SingWithTamerProject.ProcessingStatus.COMPLETED,
+        updated_at__lt=expired_before,
+    ).exclude(video_file='')
+
+    for project in expired:
+        logger.info('Deleting expired duet video for project %s (completed %s)', project.pk, project.updated_at)
+        project.video_file.delete(save=False)
+        project.video_status = SingWithTamerProject.ProcessingStatus.NOT_STARTED
+        project.video_progress_percent = 0
+        project.save(update_fields=['video_file', 'video_status', 'video_progress_percent'])
+
+
 @shared_task(ignore_result=True)
 def classify_song_task(song_id):
     """Auto-fills a song's genre/mood via an LLM call (see

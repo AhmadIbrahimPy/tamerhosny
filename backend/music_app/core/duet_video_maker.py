@@ -416,7 +416,7 @@ class DuetVideoMaker:
         the filter_complex fragment (ending in output_label).
         """
         occurrences = self._sting_occurrences(duration)
-        flash_start, _ = self._sting_timing()
+        flash_start, sting_total = self._sting_timing()  # flash_end doubles as the sting's own total length
         reveal_t = flash_start + STING_FLASH_DURATION / 2  # mid-flash: the swap is hidden by the white
 
         parts = [
@@ -447,9 +447,19 @@ class DuetVideoMaker:
         parts.append(f"{cur}[wm]overlay=enable='gte(t,{reveal_t:.3f})'[vwm]")
         cur = '[vwm]'
 
-        for occ_index in range(len(occurrences)):
+        for occ_index, occ_start in enumerate(occurrences):
             nxt = f'[vst{occ_index}]'
-            parts.append(f"{cur}[stp{occ_index}]overlay{nxt}")
+            # Gated to the sting's own ~1.5s window - without `enable`,
+            # overlay actually blends every frame of the WHOLE video for
+            # every occurrence regardless of how much of it is
+            # transparent, so a longer duet (more occurrences) meant
+            # more full-length overlay passes chained back to back.
+            # That's what made a ~3.5-minute duet take 15+ minutes to
+            # render on a single-vCPU host - `enable=false` frames are a
+            # cheap passthrough instead of a real blend.
+            parts.append(
+                f"{cur}[stp{occ_index}]overlay=enable='between(t,{occ_start:.3f},{occ_start + sting_total:.3f})'{nxt}"
+            )
             cur = nxt
 
         parts[-1] = parts[-1][: -len(cur)] + output_label
