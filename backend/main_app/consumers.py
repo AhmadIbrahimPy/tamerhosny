@@ -241,6 +241,64 @@ class DuetProjectStatusConsumer(WebsocketConsumer):
         }))
 
 
+class DuetVideoStatusConsumer(WebsocketConsumer):
+    """Progress for one duet's optional shareable video (a Celery task -
+    backend.music_app.tasks.create_duet_video), pushed live instead of
+    the duet detail page polling /video/status/ on a timer - the render
+    can take a couple of minutes, which added up to hundreds of polls
+    per render for no benefit over a single open socket. Private to the
+    duet's own owner, same rule as DuetProjectStatusConsumer above.
+    """
+
+    def connect(self):
+        from backend.music_app.models import SingWithTamerProject
+
+        project_id = self.scope['url_route']['kwargs']['project_id']
+        user = self.scope.get('user')
+
+        try:
+            project = SingWithTamerProject.objects.get(pk=project_id)
+        except SingWithTamerProject.DoesNotExist:
+            self.close()
+            return
+
+        if not user or not user.is_authenticated or project.user_id != user.id:
+            self.close()
+            return
+
+        self.project_id = project_id
+        self.group_name = f'duet_video_{project_id}_status'
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name,
+        )
+        self.accept()
+
+        # In case it already finished (or failed) between the POST that
+        # kicked it off and this socket connecting.
+        self.send(text_data=json.dumps({
+            'type': 'status',
+            'status': project.video_status,
+            'error': project.video_error,
+            'video_url': project.video_file.url if project.video_file else None,
+            'progress': project.video_progress_percent,
+        }))
+
+    def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            async_to_sync(self.channel_layer.group_discard)(
+                self.group_name, self.channel_name,
+            )
+
+    def video_status(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'status',
+            'status': event['status'],
+            'error': event.get('error', ''),
+            'video_url': event.get('video_url'),
+            'progress': event.get('progress'),
+        }))
+
+
 def _ws_headers(scope):
     return {
         key.decode('latin1').lower(): value.decode('latin1')

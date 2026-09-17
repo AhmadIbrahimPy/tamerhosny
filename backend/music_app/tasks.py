@@ -274,13 +274,45 @@ VIDEO_TASK_MAX_RETRIES = 2
 VIDEO_TASK_RETRY_COUNTDOWN = 20
 
 
+def duet_video_status_group(project_id):
+    return f'duet_video_{project_id}_status'
+
+
+def _broadcast_duet_video_status(project_id, status, error='', video_url=None, progress=None):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+    async_to_sync(channel_layer.group_send)(duet_video_status_group(project_id), {
+        'type': 'video.status',
+        'status': status,
+        'error': error,
+        'video_url': video_url,
+        'progress': progress,
+    })
+
+
+def _set_duet_video_progress(project_id, percent):
+    """Mirrors _set_duet_progress above, for the video render's own
+    ffmpeg-reported percentage (see DuetVideoMaker._run_with_progress) -
+    update() so it never fights the `project` object the task is still
+    holding.
+    """
+    from backend.music_app.models import SingWithTamerProject
+
+    SingWithTamerProject.objects.filter(pk=project_id).update(video_progress_percent=percent)
+    _broadcast_duet_video_status(
+        project_id, SingWithTamerProject.ProcessingStatus.PROCESSING, progress=percent,
+    )
+
+
 @shared_task(bind=True, ignore_result=True, max_retries=VIDEO_TASK_MAX_RETRIES)
 def create_duet_video(self, project_id):
     """Renders the optional shareable vertical video for an already-
     completed duet (backend.music_app.core.duet_video_maker) - separate
     from create_duet_song above since most duets never have this asked
-    for, and it's cheap/fast enough (plain ffmpeg muxing, no AI model)
-    that it doesn't need the same elaborate concurrency guarding.
+    for. The frontend gets live progress and the final result over a
+    WebSocket (see backend.main_app.consumers.DuetVideoStatusConsumer)
+    instead of polling, same reasoning as create_duet_song's own socket.
     """
     from backend.music_app.models import SingWithTamerProject
 
@@ -293,17 +325,24 @@ def create_duet_video(self, project_id):
         project.video_status = SingWithTamerProject.ProcessingStatus.FAILED
         project.video_error = 'الدويتو نفسه لسه مش جاهز.'
         project.save(update_fields=['video_status', 'video_error'])
+        _broadcast_duet_video_status(project_id, project.video_status, error=project.video_error)
         return
+
+    _set_duet_video_progress(project_id, 0)
 
     try:
         from backend.music_app.core.duet_video_maker import DuetVideoMaker
 
-        video_path = DuetVideoMaker().create_video(project)
+        video_path = DuetVideoMaker().create_video(
+            project, progress_callback=lambda percent: _set_duet_video_progress(project_id, percent),
+        )
 
         project.video_file.name = video_path
         project.video_status = SingWithTamerProject.ProcessingStatus.COMPLETED
         project.video_error = ''
-        project.save(update_fields=['video_file', 'video_status', 'video_error'])
+        project.video_progress_percent = 0
+        project.save(update_fields=['video_file', 'video_status', 'video_error', 'video_progress_percent'])
+        _broadcast_duet_video_status(project_id, project.video_status, video_url=project.video_file.url)
 
     except Exception as e:
         if self.request.retries < self.max_retries:
@@ -316,7 +355,9 @@ def create_duet_video(self, project_id):
         logger.error('create_duet_video(%s) failed permanently: %s', project_id, e)
         project.video_status = SingWithTamerProject.ProcessingStatus.FAILED
         project.video_error = str(e)
-        project.save(update_fields=['video_status', 'video_error'])
+        project.video_progress_percent = 0
+        project.save(update_fields=['video_status', 'video_error', 'video_progress_percent'])
+        _broadcast_duet_video_status(project_id, project.video_status, error=project.video_error)
 
 
 @shared_task(ignore_result=True)

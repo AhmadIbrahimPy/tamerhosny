@@ -12,6 +12,7 @@ import math
 import os
 import subprocess
 import tempfile
+import threading
 import uuid
 
 from django.conf import settings
@@ -61,8 +62,12 @@ class DuetVideoMaker:
     # PUBLIC ENTRY POINT
     # =====================================================
 
-    def create_video(self, project) -> str:
-        """Returns the media-relative path to the finished mp4."""
+    def create_video(self, project, progress_callback=None) -> str:
+        """Returns the media-relative path to the finished mp4.
+        progress_callback(percent), if given, is called from this same
+        thread as ffmpeg's own encode progress comes in (0-99 - the
+        caller decides what "100" means, once this has actually returned).
+        """
         with tempfile.TemporaryDirectory(prefix='duet_video_') as tmp_dir:
             background_path = self._resolve_background(project, tmp_dir)
             user_avatar_path = self._build_avatar(
@@ -95,6 +100,7 @@ class DuetVideoMaker:
                 sting_frames_dir=sting_frames_dir,
                 watermark_path=watermark_path,
                 output_path=output_path,
+                progress_callback=progress_callback,
             )
 
             return output_path.replace(str(settings.MEDIA_ROOT) + '/', '')
@@ -452,7 +458,7 @@ class DuetVideoMaker:
     def _render(
         self, background_path, tamer_avatar_path, user_avatar_path,
         audio_path, duration, frame_count, sting_frames_dir,
-        watermark_path, output_path,
+        watermark_path, output_path, progress_callback=None,
     ):
         # Gentle continuous zoom-in on the cover, capped so it never
         # blows past a modest crop; each avatar pulses on its own
@@ -487,11 +493,44 @@ class DuetVideoMaker:
             '-t', f'{duration:.2f}',
             '-movflags', '+faststart',
             '-y', output_path,
+            '-progress', 'pipe:1', '-nostats',
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-        if result.returncode != 0:
-            raise RuntimeError(f'Duet video render failed: {result.stderr[-2000:]}')
+        self._run_with_progress(cmd, duration, progress_callback)
 
         if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
             raise RuntimeError('Duet video render produced an empty file.')
+
+    @staticmethod
+    def _run_with_progress(cmd, duration, progress_callback, timeout=600):
+        """Runs ffmpeg, reporting real encode progress (not a guess) by
+        reading its own `-progress pipe:1` output - each `out_time_ms=`
+        line is how far into the (known) output duration it's encoded
+        so far, so that's a genuine percentage rather than a spinner.
+        """
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
+        )
+        timer = threading.Timer(timeout, process.kill)
+        timer.start()
+        try:
+            last_percent = -1
+            for line in process.stdout:
+                if not progress_callback or not line.startswith('out_time_ms='):
+                    continue
+                try:
+                    out_time_ms = int(line.strip().split('=', 1)[1])
+                except (ValueError, IndexError):
+                    continue
+                percent = max(0, min(99, int((out_time_ms / 1_000_000) / duration * 100)))
+                if percent != last_percent:
+                    last_percent = percent
+                    progress_callback(percent)
+
+            stderr_output = process.stderr.read()
+            process.wait()
+        finally:
+            timer.cancel()
+
+        if process.returncode != 0:
+            raise RuntimeError(f'Duet video render failed: {stderr_output[-2000:]}')

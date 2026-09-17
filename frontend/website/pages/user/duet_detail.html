@@ -53,8 +53,8 @@
   .video-card-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
   #videoProgressWrap { display: none; align-items: center; gap: 8px; }
   #videoProgressBar { width: 120px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
-  #videoProgressFill { height: 100%; width: 30%; background: var(--accent); animation: videoProgressPulse 1.2s ease-in-out infinite; }
-  @keyframes videoProgressPulse { 0%,100% { transform: translateX(-100%); } 50% { transform: translateX(220%); } }
+  #videoProgressFill { height: 100%; width: 0%; background: var(--accent); transition: width .3s ease; }
+  #videoProgressPercent { font-size: 12.5px; color: var(--muted); min-width: 32px; }
 </style>
 {% endblock %}
 
@@ -124,7 +124,8 @@
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
       <span id="videoProgressWrap"{% if duet.video_status == 'PROCESSING' %} style="display:flex;"{% endif %}>
-        <span id="videoProgressBar"><span id="videoProgressFill"></span></span>
+        <span id="videoProgressBar"><span id="videoProgressFill" style="width:{{ duet.video_progress_percent }}%;"></span></span>
+        <span id="videoProgressPercent">{{ duet.video_progress_percent }}%</span>
       </span>
       <a id="videoDownloadBtn" href="{% if duet.video_file %}{{ duet.video_file.url }}{% endif %}" download
          class="th-platform-btn"
@@ -214,6 +215,7 @@ function generateDuetVideo() {
   label.textContent = '{% translate "جاري الإنشاء..." %}';
   progressWrap.style.display = 'flex';
   sub.textContent = '{% translate "بيتعمل دلوقتي..." %}';
+  setVideoProgress(0);
 
   fetch("{% url 'website_app:duet-generate-video' duet.pk %}", {
     method: 'POST',
@@ -226,10 +228,10 @@ function generateDuetVideo() {
         throw new Error(result.message || 'error');
       }
       if (result.video_status === 'COMPLETED' && result.video_url) {
-        showVideoReady(result.video_url);
+        showVideoReady(result.video_url, false);
         return;
       }
-      pollVideoStatus();
+      watchVideoStatus();
     })
     .catch(function () {
       btn.disabled = false;
@@ -239,34 +241,52 @@ function generateDuetVideo() {
     });
 }
 
-function pollVideoStatus() {
-  const statusUrl = "{% url 'website_app:duet-video-status' duet.pk %}";
+function setVideoProgress(percent) {
+  const fill = document.getElementById('videoProgressFill');
+  const percentLabel = document.getElementById('videoProgressPercent');
+  if (fill) fill.style.width = `${percent}%`;
+  if (percentLabel) percentLabel.textContent = `${percent}%`;
+}
+
+// One WebSocket connection instead of polling /video/status/ on a
+// timer - the render can take a couple of minutes, which used to mean
+// hundreds of HTTP requests for a single video with no extra benefit
+// over just being told the moment it changes.
+function watchVideoStatus() {
   const sub = document.getElementById('videoCardSub');
   const btn = document.getElementById('videoGenerateBtn');
   const label = document.getElementById('videoGenerateBtnLabel');
   const progressWrap = document.getElementById('videoProgressWrap');
 
-  const interval = setInterval(function () {
-    fetch(statusUrl, { credentials: 'same-origin' })
-      .then(function (r) { return r.json(); })
-      .then(function (result) {
-        if (result.video_status === 'COMPLETED' && result.video_url) {
-          clearInterval(interval);
-          showVideoReady(result.video_url);
-        } else if (result.video_status === 'FAILED') {
-          clearInterval(interval);
-          btn.disabled = false;
-          label.textContent = '{% translate "اعمل فيديو" %}';
-          progressWrap.style.display = 'none';
-          sub.textContent = '{% translate "حصل خطأ - جرب تاني" %}';
-        }
-        // PROCESSING - keep polling.
-      })
-      .catch(function () {});
-  }, 3000);
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/duets/{{ duet.pk }}/video/status/`);
+
+  socket.addEventListener('message', function (event) {
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (error) {
+      return;
+    }
+    if (data.type !== 'status') return;
+
+    if (data.status === 'COMPLETED' && data.video_url) {
+      socket.close();
+      showVideoReady(data.video_url, true);
+    } else if (data.status === 'FAILED') {
+      socket.close();
+      btn.disabled = false;
+      label.textContent = '{% translate "اعمل فيديو" %}';
+      progressWrap.style.display = 'none';
+      sub.textContent = '{% translate "حصل خطأ - جرب تاني" %}';
+      window.showToast(data.error || '{% translate "حصل خطأ في عمل الفيديو" %}', 'error');
+    } else if (typeof data.progress === 'number') {
+      setVideoProgress(data.progress);
+    }
+  });
 }
 
-function showVideoReady(videoUrl) {
+function showVideoReady(videoUrl, notify) {
   const btn = document.getElementById('videoGenerateBtn');
   const downloadBtn = document.getElementById('videoDownloadBtn');
   const progressWrap = document.getElementById('videoProgressWrap');
@@ -277,10 +297,14 @@ function showVideoReady(videoUrl) {
   downloadBtn.href = videoUrl;
   downloadBtn.style.display = '';
   sub.textContent = '{% translate "جاهز - قابل للتحميل" %}';
+
+  if (notify) {
+    window.showToast('{% translate "الفيديو خلص! جاهز للتحميل" %}', 'success');
+  }
 }
 
 {% if duet.video_status == 'PROCESSING' %}
-document.addEventListener('DOMContentLoaded', pollVideoStatus);
+document.addEventListener('DOMContentLoaded', watchVideoStatus);
 {% endif %}
 </script>
 {% endif %}

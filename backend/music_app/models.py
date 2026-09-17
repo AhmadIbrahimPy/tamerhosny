@@ -362,6 +362,11 @@ class SingWithTamerProject(models.Model):
         max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NOT_STARTED,
     )
     video_error = models.TextField(blank=True, default='')
+    # Real ffmpeg encode progress (0-100) while video_status is
+    # PROCESSING - parsed live from ffmpeg's own `-progress` output
+    # (DuetVideoMaker._render), not a guess, so the detail page can show
+    # an actual percentage instead of a bare spinner.
+    video_progress_percent = models.PositiveSmallIntegerField(default=0)
     # How many times this duet's final mix has been played from the public
     # site (a "غنى X مع تامر" slider card, or its own page) - drives the
     # "أعلى استماع" sort on the song's duets list. Bumped client-side on

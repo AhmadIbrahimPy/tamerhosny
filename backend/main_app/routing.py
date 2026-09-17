@@ -24,6 +24,10 @@ websocket_urlpatterns = [
         consumers.DuetProjectStatusConsumer.as_asgi(),
     ),
     re_path(
+        r'^ws/duets/(?P<project_id>\d+)/video/status/$',
+        consumers.DuetVideoStatusConsumer.as_asgi(),
+    ),
+    re_path(
         r'^ws/analytics/track/$',
         consumers.AnalyticsTrackConsumer.as_asgi(),
     ),

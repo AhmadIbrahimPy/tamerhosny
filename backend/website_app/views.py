@@ -2662,6 +2662,7 @@ def duet_video_status(request, pk):
         'video_status': duet.video_status,
         'video_error': duet.video_error,
         'video_url': duet.video_file.url if duet.video_file else None,
+        'progress': duet.video_progress_percent,
     })
 
 
