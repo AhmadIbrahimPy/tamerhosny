@@ -63,6 +63,12 @@ MIN_STRETCH_RATIO = 1.0 / MAX_STRETCH_RATIO
 # automatically shrinks this if either side is shorter.
 TRANSITION_CROSSFADE_SECONDS = 0.35
 
+# Extra gain on top of _auto_balance_levels' own instrumental gain,
+# specifically for the seconds the user is singing - per direct
+# feedback that the backing track still felt too quiet there even at
+# a near-1:1 vocal:music RMS ratio (see _build_duet_segment).
+DUET_MUSIC_BOOST = 2.0
+
 
 class SongMixer:
     """Builds the final duet track for a SingWithTamerProject."""
@@ -270,6 +276,13 @@ class SongMixer:
                 target_vocal_to_music=1.05,
             )
         )
+
+        # Even at a near-1:1 RMS ratio, a solo recorded voice still
+        # read as louder than the music underneath it (reported as the
+        # backing track feeling too quiet specifically while the user
+        # is singing) - a flat-out user request to make the music
+        # noticeably louder there, not just "balanced" on paper.
+        instrumental_gain *= DUET_MUSIC_BOOST
 
         mixed = (
             instrumental_segment * instrumental_gain
