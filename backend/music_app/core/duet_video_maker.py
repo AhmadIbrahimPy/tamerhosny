@@ -48,7 +48,7 @@ STING_FLASH_DURATION = 0.35
 STING_PERIOD_SECONDS = 20  # how often the sting repeats over the live video
 STING_MIN_TAIL_SECONDS = 1.0  # don't start a repeat too close to the very end
 
-WATERMARK_TEXT = 'TAMERHOSNY.COM'
+WATERMARK_TEXT = 'TH.LEXORA.VIP'
 WATERMARK_FONT_SIZE = 32
 
 
