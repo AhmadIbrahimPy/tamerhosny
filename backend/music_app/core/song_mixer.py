@@ -64,10 +64,17 @@ MIN_STRETCH_RATIO = 1.0 / MAX_STRETCH_RATIO
 TRANSITION_CROSSFADE_SECONDS = 0.35
 
 # Extra gain on top of _auto_balance_levels' own instrumental gain,
-# specifically for the seconds the user is singing - per direct
-# feedback that the backing track still felt too quiet there even at
-# a near-1:1 vocal:music RMS ratio (see _build_duet_segment).
-DUET_MUSIC_BOOST = 2.0
+# specifically for the seconds the user is singing (see
+# _build_duet_segment). Tuned twice from direct feedback, in opposite
+# directions:
+#   - at 1.0 (no boost, target_vocal_to_music=1.05 alone): music read
+#     as too quiet under the vocal.
+#   - at 2.0: overshot - now the user's own voice read as buried under
+#     the music instead, the opposite complaint.
+# 1.4 keeps the music clearly more present than a flat 1:1 balance
+# (a solo phone-mic voice still perceptually cuts through equal-RMS
+# music) without pushing the vocal itself below the music.
+DUET_MUSIC_BOOST = 1.4
 
 
 class SongMixer:
