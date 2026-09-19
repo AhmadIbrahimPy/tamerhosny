@@ -332,7 +332,12 @@ class SongMixer:
 
             1. Band-limit: cut rumble/handling noise below 80Hz and
                hiss above 15kHz.
-            2. Loudness: bring a too-quiet take up, tame a too-hot
+            2. Room reverb: a dry phone-mic take alone sounds
+               noticeably flatter/closer than a mixed studio vocal -
+               a light synthetic room tail (see _add_studio_reverb)
+               gives it some of that "recorded in a booth" space
+               without turning it into an obvious, distracting echo.
+            3. Loudness: bring a too-quiet take up, tame a too-hot
                one, before the instrumental/vocal balance pass runs.
 
         A per-segment pitch "correction" toward the song's key used to
@@ -356,9 +361,60 @@ class SongMixer:
 
         audio = self._band_limit(audio, sr)
 
+        audio = self._add_studio_reverb(audio, sr)
+
         audio = self._normalize_loudness(audio)
 
         return audio.astype(np.float32)
+
+    @staticmethod
+    def _add_studio_reverb(audio: np.ndarray, sr: int) -> np.ndarray:
+        """
+        A light synthetic room/plate reverb - not a real impulse
+        response recording (no such asset bundled with this app), a
+        short burst of band-limited noise shaped with an exponential
+        decay stands in for one well enough at this wet level to read
+        as "recorded in a space" rather than a distinct, audible echo.
+
+        Convolution naturally extends the signal by the tail's length;
+        that tail is deliberately dropped (the wet signal is trimmed
+        back to the original length) rather than left to bleed into
+        the next timeline piece - see _stitch_pieces, which joins
+        same-kind segments with a plain concatenation that assumes
+        each piece is already exactly its own duration.
+        """
+
+        from scipy import signal
+
+        if len(audio) == 0:
+            return audio
+
+        rng = np.random.default_rng(0)  # deterministic - not aiming for per-take variation
+
+        tail_seconds = 0.32
+        tail_len = max(1, int(tail_seconds * sr))
+
+        decay = np.exp(-np.linspace(0, 9.0, tail_len))
+        impulse = rng.standard_normal(tail_len) * decay
+
+        # Same band-limiting as the dry vocal, so the reverb tail
+        # doesn't reintroduce the rumble/hiss _band_limit just removed.
+        nyquist = sr / 2
+        b, a = signal.butter(2, [300 / nyquist, 6000 / nyquist], btype='band')
+        impulse = signal.filtfilt(b, a, impulse)
+
+        peak = float(np.max(np.abs(impulse)))
+        if peak > 1e-9:
+            impulse = impulse / peak
+
+        wet_level = 0.16  # subtle - a sense of space, not an obvious echo
+
+        wet = np.zeros_like(audio)
+        for channel in range(audio.shape[1]):
+            convolved = signal.fftconvolve(audio[:, channel], impulse, mode='full')
+            wet[:, channel] = convolved[:len(audio)]
+
+        return (audio + wet * wet_level).astype(np.float32)
 
     @staticmethod
     def _band_limit(audio: np.ndarray, sr: int) -> np.ndarray:
