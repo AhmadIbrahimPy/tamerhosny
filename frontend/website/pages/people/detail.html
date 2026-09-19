@@ -36,8 +36,6 @@
     </div>
   </div>
 
-  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
-
   {% if links %}
   <div class="th-section">
     <h2 class="th-section-title">{% translate "روابط المنصات" %}</h2>
@@ -52,8 +50,10 @@
   </div>
   {% endif %}
 
+  {% if top_ad %}{% include "website/partials/ad_banner.html" with ad=top_ad %}{% endif %}
+
   {% if song_credits %}
-  <div class="th-section">
+  <div class="th-section" style="margin-top:16px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 class="th-section-title" style="margin:0;">{% translate "الأغاني" %}</h2>
       <a href="{% url 'website_app:songs' %}" class="th-see-all">
