@@ -1691,6 +1691,16 @@ let recordingInterval = null;
 let recordingAutoStopTimer = null;
 let countdownInterval = null;
 
+// Extra room past a couplet's own timed duration before auto-stopping
+// the recording - cutting off at the exact millisecond the lyric ends
+// left no margin for starting a beat late or trailing the last word a
+// touch past it, both completely normal when singing along. The mixer
+// already fits whatever length actually comes in back to the
+// segment's real duration (trim or a mild time-stretch - see
+// SongMixer._fit_to_duration), so a few extra seconds of raw audio
+// here doesn't throw anything off, it just stops rushing the user.
+const RECORDING_AUTO_STOP_BUFFER_SECONDS = 2;
+
 // Set only while re-recording an already-saved line (see
 // reRecordSegment) - holds the lyric index the user was actually up to,
 // so confirmRecording() can put them back there afterwards instead of
@@ -4052,7 +4062,7 @@ async function startRecording() {
     recordingAutoStopTimer =
       setTimeout(
         stopRecording,
-        segmentDuration * 1000
+        (segmentDuration + RECORDING_AUTO_STOP_BUFFER_SECONDS) * 1000
       );
 
 
