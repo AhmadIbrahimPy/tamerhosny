@@ -933,6 +933,21 @@
       .th-detail-body h1{font-size:22px;}
     }
 
+    /* .th-detail-hero (a person's profile page, a song's "duets list"
+       header) was a plain flex row with no mobile override - on a
+       narrow phone the fixed-width avatar/cover and the body block
+       (badge, title, meta, share button) just wrapped onto their own
+       lines, each left/right-aligned from the row's start instead of
+       reading as one centered block. Stack and center it below ~700px,
+       same pattern already used for the media/album/concert heroes. */
+    @media (max-width: 700px){
+      .th-detail-hero{flex-direction:column; align-items:center; text-align:center; gap:20px; padding-block:28px;}
+      .th-detail-body{min-width:0; width:100%;}
+      .th-detail-body .th-meta-row{justify-content:center;}
+      .th-detail-body .d-flex.flex-wrap{justify-content:center;}
+      .th-detail-body p{margin-inline:auto;}
+    }
+
     /* Any grid listing on mobile (songs, albums, movies, series,
        commercials, concerts, people): a square/poster card per row
        wastes a lot of height for very little info - switch to a
