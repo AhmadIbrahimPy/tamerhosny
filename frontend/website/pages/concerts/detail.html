@@ -111,11 +111,9 @@
     <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
       {% include "website/partials/concert_date_card.html" %}
       <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-           onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+        <button type="button" class="th-share-btn" onclick="thShare('concert', {{ concert.pk }}, '{{ concert|localized_field:'title'|escapejs }}');">
+          <i class="bi bi-share-fill"></i> {% translate "مشاركة" %}
+        </button>
       </div>
     </div>
   </div>
@@ -155,11 +153,9 @@
         {% if concert.description %}<p class="mt-2" style="max-width:640px;">{{ concert.description }}</p>{% endif %}
 
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <button type="button" class="th-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}"><i class="bi bi-link-45deg"></i></button>
-          <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-             onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'WHATSAPP'});"><i class="bi bi-whatsapp"></i></a>
-          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="th-share-btn"
-             onclick="thTrack('SHARE', 'concert', {{ concert.pk }}, {share_channel: 'FACEBOOK'});"><i class="bi bi-facebook"></i></a>
+          <button type="button" class="th-share-btn" onclick="thShare('concert', {{ concert.pk }}, '{{ concert|localized_field:'title'|escapejs }}');">
+            <i class="bi bi-share-fill"></i> {% translate "مشاركة" %}
+          </button>
         </div>
       </div>
       {% include "website/partials/concert_date_card.html" %}
@@ -174,7 +170,7 @@
       {% for link in links %}
         <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="th-platform-btn"
            onclick="return window.thPlatformLinkClick(event, this, 'concert', {{ concert.pk }}, '{{ link.platform.platform_name|escapejs }}', {{ link.pk }}, '{% translate "سجل دخولك الأول عشان تقدر تحجز تذكرتك" %}');">
-          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi bi-box-arrow-up-right&#39;}));">{% else %}<i class="bi bi-box-arrow-up-right"></i>{% endif %} {{ link.platform.get_platform_name_display }}
+          {% if link.platform.logo_icon_url %}<img src="{{ link.platform.logo_icon_url }}" alt="" class="th-platform-icon" style="width:18px;height:18px;object-fit:contain;border-radius:4px;" onerror="this.replaceWith(Object.assign(document.createElement(&#39;i&#39;), {className:&#39;bi {{ link.platform.platform_name|platform_icon_class }}&#39;}));">{% else %}<i class="bi {{ link.platform.platform_name|platform_icon_class }}"></i>{% endif %} {{ link.platform.get_platform_name_display }}
         </a>
       {% endfor %}
     </div>

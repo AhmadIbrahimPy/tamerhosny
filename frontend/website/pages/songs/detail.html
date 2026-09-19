@@ -955,10 +955,6 @@
     gap: 8px;
     margin-inline-start: auto;
   }
-  .song-share-label {
-    color: var(--muted);
-    font-size: 12px;
-  }
   .song-share-btn {
     width: 36px;
     height: 36px;
@@ -971,6 +967,13 @@
     background: rgba(255, 255, 255, 0.05);
     transition: 0.2s;
     text-decoration: none;
+  }
+  .song-share-btn.labeled {
+    width: auto;
+    padding: 0 14px;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
   }
   .song-share-btn:hover {
     color: var(--text);
@@ -2242,16 +2245,9 @@
                                 </div>
                                 {% if not duet or duet.is_public %}
                                 <div class="song-actions-menu-info-row song-share">
-                                    <span class="song-share-label">{% translate "مشاركة" %}</span>
-                                    <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
-                                        <i class="bi bi-link-45deg"></i>
+                                    <button type="button" class="song-share-btn labeled" onclick="thShare('song', {{ song.pk }}, '{{ song|localized_field:'title'|escapejs }}');">
+                                        <i class="bi bi-share-fill"></i> {% translate "مشاركة" %}
                                     </button>
-                                    <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
-                                        <i class="bi bi-whatsapp"></i>
-                                    </a>
-                                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
-                                        <i class="bi bi-facebook"></i>
-                                    </a>
                                 </div>
                                 {% endif %}
                             </div>
@@ -2379,16 +2375,9 @@
 
                     {% if not duet or duet.is_public %}
                     <div class="song-share">
-                        <span class="song-share-label">{% translate "مشاركة" %}</span>
-                        <button type="button" class="song-share-btn" onclick="navigator.clipboard.writeText(window.location.href); thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'COPY_LINK'});" title="{% translate 'نسخ الرابط' %}">
-                            <i class="bi bi-link-45deg"></i>
+                        <button type="button" class="song-share-btn labeled" onclick="thShare('song', {{ song.pk }}, '{{ song|localized_field:'title'|escapejs }}');">
+                            <i class="bi bi-share-fill"></i> {% translate "مشاركة" %}
                         </button>
-                        <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'WHATSAPP'});" title="WhatsApp">
-                            <i class="bi bi-whatsapp"></i>
-                        </a>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="song-share-btn" onclick="thTrack('SHARE', 'song', {{ song.pk }}, {share_channel:'FACEBOOK'});" title="Facebook">
-                            <i class="bi bi-facebook"></i>
-                        </a>
                     </div>
                     {% endif %}
                 </div>
@@ -2513,9 +2502,9 @@
           {% for link in links %}
             <a href="{{ link.direct_url }}" target="_blank" rel="noopener" class="streaming-link" title="{{ link.platform.get_platform_name_display }}" onclick="thTrack('EXTERNAL_CLICK', 'song', {{ song.pk }}, {platform:'{{ link.platform.platform_name }}', external_link_id:{{ link.pk }}});">
               {% if link.platform.logo_icon_url %}
-                <img src="{{ link.platform.logo_icon_url }}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'bi bi-box-arrow-up-right'}));">
+                <img src="{{ link.platform.logo_icon_url }}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'bi {{ link.platform.platform_name|platform_icon_class }}'}));">
               {% else %}
-                <i class="bi bi-box-arrow-up-right"></i>
+                <i class="bi {{ link.platform.platform_name|platform_icon_class }}"></i>
               {% endif %}
               <span class="streaming-link-label">{{ link.platform.get_platform_name_display }}</span>
             </a>

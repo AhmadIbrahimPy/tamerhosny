@@ -423,6 +423,12 @@ class ExternalLinkForm(forms.ModelForm):
             'access_type': _('نوع الوصول'),
             'embed_code': _('كود التضمين (اختياري)'),
         }
+        help_texts = {
+            'direct_url': _(
+                'رابط عادي (https://...) لأي منصة - لمنصة "Email" اكتب '
+                'mailto: قبل الإيميل، زي mailto:name@example.com'
+            ),
+        }
         widgets = {
             'platform': forms.Select(attrs=SELECT_ATTRS),
             'direct_url': forms.URLInput(attrs=WIDGET_ATTRS),

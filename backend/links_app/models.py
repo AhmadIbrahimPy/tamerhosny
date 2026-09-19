@@ -1,10 +1,24 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.validators import URLValidator
+from django.core.validators import URLValidator, validate_email
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+
+def validate_external_link_url(value):
+    """An ExternalLink's direct_url is normally a plain http(s) link,
+    but the EMAIL platform needs a `mailto:` address instead - a
+    regular URLField (even with a widened validator) still runs
+    Django's own built-in URLValidator underneath and rejects that
+    scheme regardless, so this field uses a plain CharField with this
+    validator instead of URLField.
+    """
+    if value.startswith('mailto:'):
+        validate_email(value[len('mailto:'):])
+        return
+    URLValidator(schemes=['http', 'https'])(value)
 
 
 def _hero_video_upload_path(instance, filename):
@@ -101,6 +115,12 @@ class Platform(models.Model):
         FACEBOOK = 'FACEBOOK', _('Facebook')
         INSTAGRAM = 'INSTAGRAM', _('Instagram')
         TIKTOK = 'TIKTOK', _('TikTok')
+        TWITTER = 'TWITTER', _('X (Twitter)')
+        SNAPCHAT = 'SNAPCHAT', _('Snapchat')
+        LINKEDIN = 'LINKEDIN', _('LinkedIn')
+        THREADS = 'THREADS', _('Threads')
+        WEBSITE = 'WEBSITE', _('Website')
+        EMAIL = 'EMAIL', _('Email')
         OTHER = 'OTHER', _('Other')
 
     platform_name = models.CharField(max_length=20, choices=Name.choices, default=Name.OTHER, unique=True)
@@ -142,7 +162,7 @@ class ExternalLink(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    direct_url = models.URLField(validators=[URLValidator(schemes=['http', 'https'])])
+    direct_url = models.CharField(max_length=500, validators=[validate_external_link_url])
     embed_code = models.TextField(blank=True)
     access_type = models.CharField(max_length=15, choices=AccessType.choices, default=AccessType.FREE)
 

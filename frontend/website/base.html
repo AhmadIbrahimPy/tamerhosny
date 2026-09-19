@@ -782,10 +782,12 @@
     }
     .th-platform-btn:hover{border-color:var(--accent); color:var(--accent);}
 
-    /* Share buttons */
+    /* Share button - a single labeled pill (native share sheet on
+       whatever supports it, copy-link fallback otherwise), replacing
+       what used to be separate copy-link/WhatsApp/Facebook icons. */
     .th-share-btn{
-      width:38px; height:38px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
-      border:1px solid var(--border); background:var(--card); color:var(--text); font-size:15px; cursor:pointer;
+      width:auto; height:38px; padding:0 16px; border-radius:19px; display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13.5px; font-weight:700; cursor:pointer;
     }
     .th-share-btn:hover{border-color:var(--accent); color:var(--accent);}
 
@@ -1120,6 +1122,31 @@
         return;
       }
       thPostTrackFallback(payload);
+    }
+
+    // One "مشاركة" button everywhere instead of separate copy-link/
+    // WhatsApp/Facebook icons - the native share sheet (WhatsApp,
+    // Messenger, Telegram, Mail, Notes, any installed app, plus its
+    // own "copy link"...) covers all of those and more, so there's
+    // nothing left for the hardcoded per-platform buttons to add.
+    // Falls back to copy-to-clipboard + a toast wherever
+    // navigator.share isn't available (some desktop browsers).
+    function thShare(kind, objectId, title, url) {
+      url = url || window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: title || document.title, url: url })
+          .then(function () { thTrack('SHARE', kind, objectId, { share_channel: 'NATIVE' }); })
+          .catch(function () {}); // user cancelled the share sheet - not an error
+        return;
+      }
+      navigator.clipboard.writeText(url)
+        .then(function () {
+          thTrack('SHARE', kind, objectId, { share_channel: 'COPY_LINK' });
+          if (typeof window.showToast === 'function') {
+            window.showToast('{% translate "تم نسخ الرابط" %}', 'success');
+          }
+        })
+        .catch(function () {});
     }
 
     function toggleUserMenu() {

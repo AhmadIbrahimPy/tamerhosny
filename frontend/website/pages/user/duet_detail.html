@@ -95,9 +95,10 @@
         <a href="{% url 'website_app:song-detail-duet' duet.song.slug duet.pk %}" class="th-platform-btn">
           <i class="bi bi-play-fill"></i> {% translate "تشغيل الدويتو" %}
         </a>
-        <button type="button" id="duetShareBtn" class="th-share-btn" onclick="copyDuetLink();" title="{% translate 'نسخ الرابط' %}"
+        <button type="button" id="duetShareBtn" class="th-share-btn"
+                onclick="thShare('duet', {{ duet.pk }}, '{{ duet.song|localized_field:'title'|escapejs }}');"
                 style="{% if not duet.is_public %}display:none;{% endif %}">
-          <i class="bi bi-link-45deg"></i>
+          <i class="bi bi-share-fill"></i> {% translate "مشاركة" %}
         </button>
       </div>
     </div>
@@ -308,17 +309,4 @@ document.addEventListener('DOMContentLoaded', watchVideoStatus);
 {% endif %}
 </script>
 {% endif %}
-
-<script>
-function copyDuetLink() {
-  navigator.clipboard.writeText(window.location.href)
-    .then(function () {
-      thTrack('SHARE', 'duet', {{ duet.pk }}, { share_channel: 'COPY_LINK' });
-      window.showToast('{% translate "تم نسخ الرابط" %}', 'success');
-    })
-    .catch(function () {
-      window.showToast('{% translate "معرفنا ننسخ الرابط" %}', 'error');
-    });
-}
-</script>
 {% endblock %}
