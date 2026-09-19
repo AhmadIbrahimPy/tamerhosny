@@ -63,27 +63,27 @@ MIN_STRETCH_RATIO = 1.0 / MAX_STRETCH_RATIO
 # automatically shrinks this if either side is shorter.
 TRANSITION_CROSSFADE_SECONDS = 0.35
 
-# Extra gain on top of _auto_balance_levels' own instrumental gain,
-# specifically for the seconds the user is singing (see
-# _build_duet_segment). Tuned from direct feedback, in opposite
-# directions, before landing here:
-#   - at 1.0 (no boost, target_vocal_to_music=1.05 alone): music read
-#     as too quiet under the vocal.
-#   - at 2.0: overshot - the user's own voice read as buried under the
-#     music instead.
-# 1.4 is where the music itself was confirmed to sound right - DO NOT
-# raise this again to fix a "vocal too quiet" complaint; that's
-# DUET_VOCAL_BOOST's job below, not this one.
-DUET_MUSIC_BOOST = 1.4
+# How much louder the user's voice should be than the music underneath
+# it, in the seconds they're singing (RMS ratio - see
+# _auto_balance_levels' own target_vocal_to_music). Tuned through a
+# few rounds of direct, sometimes contradictory feedback:
+#   - 1.35 (the remix engine's own default): music ducked too
+#     noticeably under the vocal for a duet specifically.
+#   - 1.05 (near-1:1): the reverse complaint - music read as too quiet.
+#   - two flat "boost the music" multipliers on top of 1.05 (2.0, then
+#     1.4) each time widened the gap back in the music's favor with
+#     nothing raising the vocal to match, landing on "equal" instead of
+#     the vocal clearly leading - not what was actually asked for.
+# 1.4 puts the vocal clearly, audibly above the music rather than
+# level with it, which is the actual relationship that was asked for.
+DUET_VOCAL_TO_MUSIC_RATIO = 1.4
 
-# Extra gain on _auto_balance_levels' own vocal gain, on top of the
-# music boost above - both act on gains that are already clipped to a
-# conservative safety range (see _auto_balance_levels), and
-# DUET_MUSIC_BOOST alone widened the gap further in the music's favor
-# (nothing was boosting vocal_gain back up to match), which is exactly
-# what followup feedback confirmed: the music itself now sounds right,
-# but the user's own voice reads as too quiet next to it.
-DUET_VOCAL_BOOST = 1.35
+# Absolute level boost applied to BOTH gains together, on top of
+# _auto_balance_levels' own (deliberately conservative) output - the
+# music level this produces (vs DUET_VOCAL_TO_MUSIC_RATIO controlling
+# the *relative* vocal/music balance above) was confirmed to sound
+# right on its own.
+DUET_LEVEL_BOOST = 2.0
 
 
 class SongMixer:
@@ -282,24 +282,12 @@ class SongMixer:
             self.processor._auto_balance_levels(
                 instrumental_segment,
                 user_audio,
-                # The remix engine's default (1.35) noticeably ducks the
-                # music under the vocal - fine for a two-song remix, but
-                # inside a duet it made the backing track audibly drop
-                # in level for exactly the seconds the user sang,
-                # compared to the untouched original song everywhere
-                # else. A near-1:1 ratio keeps the music as present here
-                # as it is in the rest of the track.
-                target_vocal_to_music=1.05,
+                target_vocal_to_music=DUET_VOCAL_TO_MUSIC_RATIO,
             )
         )
 
-        # Even at a near-1:1 RMS ratio, a solo recorded voice still
-        # read as louder than the music underneath it (reported as the
-        # backing track feeling too quiet specifically while the user
-        # is singing) - a flat-out user request to make the music
-        # noticeably louder there, not just "balanced" on paper.
-        instrumental_gain *= DUET_MUSIC_BOOST
-        vocal_gain *= DUET_VOCAL_BOOST
+        instrumental_gain *= DUET_LEVEL_BOOST
+        vocal_gain *= DUET_LEVEL_BOOST
 
         mixed = (
             instrumental_segment * instrumental_gain
