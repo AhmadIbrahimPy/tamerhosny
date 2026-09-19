@@ -65,16 +65,25 @@ TRANSITION_CROSSFADE_SECONDS = 0.35
 
 # Extra gain on top of _auto_balance_levels' own instrumental gain,
 # specifically for the seconds the user is singing (see
-# _build_duet_segment). Tuned twice from direct feedback, in opposite
-# directions:
+# _build_duet_segment). Tuned from direct feedback, in opposite
+# directions, before landing here:
 #   - at 1.0 (no boost, target_vocal_to_music=1.05 alone): music read
 #     as too quiet under the vocal.
-#   - at 2.0: overshot - now the user's own voice read as buried under
-#     the music instead, the opposite complaint.
-# 1.4 keeps the music clearly more present than a flat 1:1 balance
-# (a solo phone-mic voice still perceptually cuts through equal-RMS
-# music) without pushing the vocal itself below the music.
+#   - at 2.0: overshot - the user's own voice read as buried under the
+#     music instead.
+# 1.4 is where the music itself was confirmed to sound right - DO NOT
+# raise this again to fix a "vocal too quiet" complaint; that's
+# DUET_VOCAL_BOOST's job below, not this one.
 DUET_MUSIC_BOOST = 1.4
+
+# Extra gain on _auto_balance_levels' own vocal gain, on top of the
+# music boost above - both act on gains that are already clipped to a
+# conservative safety range (see _auto_balance_levels), and
+# DUET_MUSIC_BOOST alone widened the gap further in the music's favor
+# (nothing was boosting vocal_gain back up to match), which is exactly
+# what followup feedback confirmed: the music itself now sounds right,
+# but the user's own voice reads as too quiet next to it.
+DUET_VOCAL_BOOST = 1.35
 
 
 class SongMixer:
@@ -290,6 +299,7 @@ class SongMixer:
         # is singing) - a flat-out user request to make the music
         # noticeably louder there, not just "balanced" on paper.
         instrumental_gain *= DUET_MUSIC_BOOST
+        vocal_gain *= DUET_VOCAL_BOOST
 
         mixed = (
             instrumental_segment * instrumental_gain
