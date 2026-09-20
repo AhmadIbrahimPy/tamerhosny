@@ -3344,19 +3344,23 @@
     // HOST ROLE - relay this browser's own playback out
     // ---------------------------------------------------------
 
-    function thSendListenTogetherState(playingOverride) {
+    function thSendListenTogetherState(playingOverride, songOverride) {
       if (!thHostSocket || thHostSocket.readyState !== WebSocket.OPEN) return;
       if (!currentSongId || !globalAudio || !globalAudio.src) return;
 
-      var titleEl = document.getElementById('playerTitle');
-      var artistEl = document.getElementById('playerArtist');
-      var albumEl = document.getElementById('playerAlbum');
-      var imageEl = document.getElementById('playerImageImg');
-      var linkEl = document.getElementById('playerLink');
-
-      thHostSocket.send(JSON.stringify({
-        action: 'state',
-        song: {
+      var song = songOverride;
+      if (!song) {
+        // Only reached from audioPlayPause (play/pause on the SAME song
+        // - no fresher source of truth than the bar's own current DOM
+        // state at that point). songChanged passes its own event detail
+        // instead (see below) - those values come straight from
+        // playAudio()'s own arguments, not read back off the DOM.
+        var titleEl = document.getElementById('playerTitle');
+        var artistEl = document.getElementById('playerArtist');
+        var albumEl = document.getElementById('playerAlbum');
+        var imageEl = document.getElementById('playerImageImg');
+        var linkEl = document.getElementById('playerLink');
+        song = {
           songId: currentSongId,
           title: titleEl ? titleEl.textContent : '',
           artist: artistEl ? artistEl.textContent : '',
@@ -3365,13 +3369,39 @@
           image: (imageEl && imageEl.style.display !== 'none') ? imageEl.src : '',
           url: globalAudio.src,
           link: linkEl ? linkEl.getAttribute('href') : '',
-        },
+        };
+      }
+
+      thHostSocket.send(JSON.stringify({
+        action: 'state',
+        song: song,
         playing: playingOverride !== undefined ? playingOverride : !globalAudio.paused,
         currentTime: globalAudio.currentTime,
       }));
     }
 
-    document.addEventListener('songChanged', function () { thSendListenTogetherState(); });
+    // playAudio() dispatches 'songChanged' BEFORE it updates #playerTitle/
+    // #playerArtist/#playerAlbum/#playerImageImg in the DOM (those come
+    // later in the same function) - reading them back out here read the
+    // PREVIOUS song's values every time, broadcasting stale title/
+    // artist/cover alongside the (correct, since currentSongId/
+    // globalAudio.src are set before the dispatch) new audio. The event's
+    // own detail already carries everything playAudio() was actually
+    // called with - use that directly instead of racing its own DOM
+    // writes.
+    document.addEventListener('songChanged', function (e) {
+      var d = e.detail || {};
+      thSendListenTogetherState(undefined, {
+        songId: d.songId,
+        title: d.title || '',
+        artist: d.artist || '',
+        album: d.album || '',
+        albumLink: d.albumLink || '',
+        image: d.image || '',
+        url: d.url || (globalAudio ? globalAudio.src : ''),
+        link: d.link || '',
+      });
+    });
     document.addEventListener('audioPlayPause', function (evt) {
       thSendListenTogetherState(evt.detail && evt.detail.playing);
     });
