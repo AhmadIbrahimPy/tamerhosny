@@ -1066,6 +1066,24 @@
       padding: 5px 14px; border-radius: 999px; background: var(--accent); color: #0b0c12;
       text-decoration: none; font-weight: 800; font-size: 12px;
     }
+
+    .th-play-choice-modal{
+      display: none; position: fixed; inset: 0; z-index: 2100;
+      background: rgba(0,0,0,.6); align-items: center; justify-content: center; padding: 20px;
+    }
+    .th-play-choice-modal.open{ display: flex; }
+    .th-play-choice-box{
+      width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .th-play-choice-title{ font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 6px; text-align: center; }
+    .th-play-choice-btn{
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: transparent;
+      color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    .th-play-choice-btn.primary{ background: var(--accent); color: #0b0c12; border-color: var(--accent); }
+    .th-play-choice-btn.cancel{ border-color: transparent; color: var(--muted); }
   </style>
 </head>
 
@@ -1391,6 +1409,17 @@
         // now" count) never heard about it - that count stayed stuck
         // inflated after every natural end-of-song. Tell them here.
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: false, songId: currentSongId } }));
+
+        // A host's queued-while-hosting pick (see toggleAudio's guard
+        // above) takes priority over the normal next/random advance -
+        // this only ever has anything in it while hosting, so nobody
+        // else's playback is affected.
+        if (window.thHostQueue && window.thHostQueue.length) {
+          var nextArgs = window.thHostQueue.shift();
+          playAudio.apply(null, nextArgs);
+          return;
+        }
+
         playAdjacentSong(1);
       });
 
@@ -1713,6 +1742,22 @@
     }
 
     function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId) {
+      // Hosting a room means people are actively listening to whatever's
+      // currently playing - switching them to a different song without
+      // asking is disruptive, so offer a choice instead of just doing
+      // it. Same-song pause/resume (handled below, this file's own
+      // playback) is left alone - only a genuinely different song is
+      // gated. window.thIsHostingRoom is set by thEnterHostingMode/
+      // thExitHostingMode (driven by room_opened/room_closed).
+      if (window.thIsHostingRoom && globalAudio && globalAudio.src) {
+        var hostingCurrentUrl = globalAudio.src;
+        var hostingIsSameSong = hostingCurrentUrl.includes(url) || url.includes(hostingCurrentUrl);
+        if (!hostingIsSameSong) {
+          thShowPlayChoiceModal([url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId]);
+          return;
+        }
+      }
+
       if (globalAudio && globalAudio.src) {
         // Check if current audio is the same song (compare URLs more loosely)
         const currentUrl = globalAudio.src;
@@ -2007,6 +2052,25 @@
     <button type="button" onclick="window.stopListeningWith();" style="background:rgba(11,12,18,.15); border:none; color:inherit; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
       <i class="bi bi-x-lg"></i>
     </button>
+  </div>
+
+  <!-- Play-choice modal - only ever shown while hosting (thIsHostingRoom)
+       and picking a genuinely different song than what's already
+       playing, since followers are actively listening to it - see
+       toggleAudio's own guard and thShowPlayChoiceModal. -->
+  <div id="thPlayChoiceModal" class="th-play-choice-modal">
+    <div class="th-play-choice-box">
+      <div class="th-play-choice-title">{% translate "الجروب بيسمع الأغنية دي دلوقتي" %}</div>
+      <button type="button" class="th-play-choice-btn primary" onclick="window.thConfirmPlayChoice('now')">
+        <i class="bi bi-play-fill"></i> {% translate "تشغيل الآن" %}
+      </button>
+      <button type="button" class="th-play-choice-btn" onclick="window.thConfirmPlayChoice('queue')">
+        <i class="bi bi-list-ol"></i> {% translate "إضافة للقائمة - تشغيل بعد اللي شغال دلوقتي" %}
+      </button>
+      <button type="button" class="th-play-choice-btn cancel" onclick="window.thConfirmPlayChoice('cancel')">
+        {% translate "إلغاء" %}
+      </button>
+    </div>
   </div>
 
   <!-- Global Audio Player Bar -->
@@ -2961,6 +3025,44 @@
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
         '<a href="{% url "website_app:songs" %}" class="th-hosting-browse-btn">{% translate "تصفح" %} <i class="bi bi-search"></i></a>';
     }
+
+    // ---------------------------------------------------------
+    // PLAY NOW vs. QUEUE (host role) - see toggleAudio's own guard.
+    // thHostQueue only ever gets pushed to from here, and is only ever
+    // consumed by the 'ended' listener below - every other visitor's
+    // playback behavior is completely unaffected since it stays empty.
+    // ---------------------------------------------------------
+
+    window.thHostQueue = [];
+    var thPendingPlayChoiceArgs = null;
+
+    function thShowPlayChoiceModal(args) {
+      thPendingPlayChoiceArgs = args;
+      var modal = document.getElementById('thPlayChoiceModal');
+      if (modal) modal.classList.add('open');
+    }
+
+    window.thConfirmPlayChoice = function (choice) {
+      var args = thPendingPlayChoiceArgs;
+      thPendingPlayChoiceArgs = null;
+
+      var modal = document.getElementById('thPlayChoiceModal');
+      if (modal) modal.classList.remove('open');
+
+      if (!args || choice === 'cancel') return;
+
+      if (choice === 'now') {
+        // Same different-song branch toggleAudio's own body would have
+        // taken - playAudio(...) directly, not toggleAudio(...) again,
+        // so this can't loop back into the hosting guard above.
+        playAudio.apply(null, args);
+      } else if (choice === 'queue') {
+        window.thHostQueue.push(args);
+        if (window.showToast) {
+          showToast('{% translate "هتشتغل بعد الأغنية الحالية" %}', 'success');
+        }
+      }
+    };
 
     // ---------------------------------------------------------
     // ROOM SETTINGS (host role) - name + public/private
