@@ -2087,10 +2087,10 @@
        consumers.py) for the server side. -->
   <div id="thListenTogetherFollowersChip" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
   <div id="thListenTogetherJoinRequests" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:120px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
-  <div id="thListenTogetherBanner" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);">
+  <div id="thListenTogetherBanner" class="th-lt-fixed-stack" onclick="window.thEnterFollowedRoom();" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;">
     <i class="bi bi-headphones"></i>
     <span class="th-lt-banner-text"></span>
-    <button type="button" onclick="window.stopListeningWith();" style="background:rgba(11,12,18,.15); border:none; color:inherit; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
+    <button type="button" onclick="event.stopPropagation(); window.stopListeningWith();" style="background:rgba(11,12,18,.15); border:none; color:inherit; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
       <i class="bi bi-x-lg"></i>
     </button>
   </div>
@@ -3060,11 +3060,22 @@
         bar.insertBefore(row, bar.firstChild);
       }
 
+      // Inside the room feed itself, offer to leave it and go find
+      // something else to play ("تصفح"); anywhere else on the site,
+      // that link would be pointless (you're already elsewhere) - offer
+      // to jump into the room feed instead ("عرض الروم"). Re-rendered on
+      // every boosted navigation (see htmx:afterSettle below), not just
+      // on join/tap events, since the path can change with neither.
+      var onRoomFeed = window.location.pathname.indexOf('/live-rooms/') === 0;
+      var browseHref = onRoomFeed ? '{% url "website_app:songs" %}' : '{% url "website_app:live-rooms" %}';
+      var browseLabel = onRoomFeed ? '{% translate "تصفح" %}' : '{% translate "عرض الروم" %}';
+      var browseIcon = onRoomFeed ? 'bi-search' : 'bi-broadcast';
+
       row.innerHTML =
         '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
-        '<a href="{% url "website_app:songs" %}" class="th-hosting-browse-btn">{% translate "تصفح" %} <i class="bi bi-search"></i></a>';
+        '<a href="' + browseHref + '" class="th-hosting-browse-btn">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></a>';
     }
 
     // ---------------------------------------------------------
@@ -3250,6 +3261,20 @@
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
     }
+
+    // The "بتسمع مع..." banner itself (not its own small x button, which
+    // stops propagation and calls stopListeningWith below instead) -
+    // takes you into that room's own feed slide rather than just
+    // sitting there as a passive status pill.
+    window.thEnterFollowedRoom = function () {
+      if (!thListeningWithHostUsername) return;
+      var url = '/live-rooms/' + thListeningWithHostUsername + '/';
+      if (window.thBoostedNavigate) {
+        window.thBoostedNavigate(url);
+      } else {
+        window.location.href = url;
+      }
+    };
 
     window.stopListeningWith = function () {
       if (thFollowSocket) {
@@ -4288,6 +4313,11 @@
     document.body.addEventListener('htmx:afterSettle', function (evt) {
       thSyncActiveNav();
       thSyncPlayIconCards();
+      // The hosting-stats row's "تصفح"/"عرض الروم" link depends on which
+      // page we're now on (see thRenderHostingStatsRow) - re-render on
+      // every boosted navigation, not just join/tap events, since the
+      // path can change with neither. No-ops when not hosting.
+      if (typeof thRenderHostingStatsRow === 'function') thRenderHostingStatsRow();
       window.scrollTo(0, 0);
       // #th-extra-js (the OOB swap carrying each page's extra_js, since
       // it can't live inside #th-page-root - see its own comment) sits
