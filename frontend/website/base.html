@@ -1040,7 +1040,29 @@
     .th-lt-follower{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);}
     .th-lt-follower button{background:transparent; border:none; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; padding:0;}
     .th-lt-follower button:hover{color:#e5484d;}
-    .th-room-settings-popover{display:none; position:absolute; bottom:calc(100% + 10px); inset-inline-end:0; width:240px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.4); z-index:1002;}
+    /* The three fixed-position "اسمع معاه" widgets (followers chip,
+       join-requests panel, "بتسمع مع..." banner) all anchor to a
+       viewport edge with no width cap of their own - fine on desktop,
+       but a long username or several stacked entries can otherwise run
+       past the opposite edge on a narrow phone. */
+    .th-lt-fixed-stack{max-width:calc(100vw - 32px);}
+    .th-lt-fixed-stack .th-lt-follower{max-width:100%;}
+    .th-lt-fixed-stack .th-lt-follower,
+    #thListenTogetherBanner{box-sizing:border-box;}
+    .th-lt-banner-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    @media (max-width:480px){
+      #thListenTogetherFollowersChip, #thListenTogetherJoinRequests{left:8px;}
+      #thListenTogetherBanner{right:8px;}
+    }
+    .th-room-settings-popover{display:none; position:absolute; bottom:calc(100% + 10px); inset-inline-end:0; width:240px; max-width:calc(100vw - 24px); background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.4); z-index:1002;}
+    /* Anchored (absolute, inset-inline-end:0) to a small wrapper that
+       sits wherever the gear button lands in the compact mobile player
+       bar - on a narrow phone that's rarely flush with the viewport
+       edge, so a 240px-wide popover can still run off one side. Pinning
+       it to the viewport itself on small screens guarantees it can't. */
+    @media (max-width:480px){
+      .th-room-settings-popover{position:fixed; inset-inline-end:12px; inset-inline-start:12px; bottom:76px; width:auto; max-width:none;}
+    }
     .th-room-settings-popover.open{display:block;}
     .th-room-settings-popover input[type="text"]{width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; margin-bottom:10px;}
     .th-room-settings-popover label{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); margin-bottom:8px; cursor:pointer;}
@@ -1055,16 +1077,25 @@
       box-shadow: 0 -4px 24px rgba(138,92,255,.35);
     }
     .th-hosting-stats-row{
-      display: flex; align-items: center; gap: 16px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
       padding-block: 6px 8px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08);
       font-size: 12px; font-weight: 700; color: var(--text);
     }
-    .th-hosting-stats-row span{ display: flex; align-items: center; gap: 5px; }
+    .th-hosting-stats-row span{ display: flex; align-items: center; gap: 5px; white-space: nowrap; }
     .th-hosting-stats-row span i{ color: var(--accent); }
     .th-hosting-browse-btn{
       margin-inline-start: auto; display: flex; align-items: center; gap: 6px;
       padding: 5px 14px; border-radius: 999px; background: var(--accent); color: #0b0c12;
-      text-decoration: none; font-weight: 800; font-size: 12px;
+      text-decoration: none; font-weight: 800; font-size: 12px; white-space: nowrap;
+    }
+    @media (max-width:480px){
+      /* Keep the icon, drop the label text - "بتستضيف جروب دلوقتي" is
+         the widest single piece here and isn't needed to understand the
+         bar once you already know it's yours (the whole bar just
+         changed color/shape), the counts and تصفح matter more at this
+         width. */
+      .th-hosting-stats-row .th-hosting-label-text{ display: none; }
+      .th-hosting-stats-row{ gap: 8px 12px; }
     }
 
     .th-play-choice-modal{
@@ -2044,9 +2075,9 @@
        stay synced too). See the JS block near connectGlobalListenerSocket
        for the logic, and ListenTogetherConsumer (backend/main_app/
        consumers.py) for the server side. -->
-  <div id="thListenTogetherFollowersChip" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
-  <div id="thListenTogetherJoinRequests" style="display:none; position:fixed; bottom:120px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
-  <div id="thListenTogetherBanner" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);">
+  <div id="thListenTogetherFollowersChip" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
+  <div id="thListenTogetherJoinRequests" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:120px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
+  <div id="thListenTogetherBanner" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);">
     <i class="bi bi-headphones"></i>
     <span class="th-lt-banner-text"></span>
     <button type="button" onclick="window.stopListeningWith();" style="background:rgba(11,12,18,.15); border:none; color:inherit; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
@@ -3020,7 +3051,7 @@
       }
 
       row.innerHTML =
-        '<span><i class="bi bi-broadcast"></i> {% translate "بتستضيف جروب دلوقتي" %}</span>' +
+        '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
         '<a href="{% url "website_app:songs" %}" class="th-hosting-browse-btn">{% translate "تصفح" %} <i class="bi bi-search"></i></a>';
