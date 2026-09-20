@@ -1,0 +1,126 @@
+{% extends "website/base.html" %}
+{% load static i18n bilingual %}
+{% block title %}{% translate "اسمع معاه" %}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{% translate 'جروبات سماع مباشرة - انضم لحد بيسمع دلوقتي واسمعوا مع بعض.' %}">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .th-rooms-hero { padding-block: 32px 8px; }
+  .th-rooms-hero h1 { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+  .th-rooms-hero p { color: var(--muted); margin: 0; font-size: 14px; }
+
+  .th-rooms-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px; padding-block: 24px 48px;
+  }
+
+  @keyframes thRoomGradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .th-room-card {
+    position: relative; display: block; text-decoration: none; color: #fff;
+    border-radius: 20px; padding: 22px; overflow: hidden; min-height: 168px;
+    background-size: 300% 300%;
+    animation: thRoomGradientShift 9s ease infinite;
+    box-shadow: 0 16px 40px -16px rgba(0,0,0,.55);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .th-room-card:hover { transform: translateY(-4px); color: #fff; }
+
+  .th-room-card-0 { background-image: linear-gradient(120deg, #8a5cff, #d4af37, #ff5c8a, #8a5cff); }
+  .th-room-card-1 { background-image: linear-gradient(120deg, #ff5c8a, #ff9d5c, #ffd45c, #ff5c8a); }
+  .th-room-card-2 { background-image: linear-gradient(120deg, #2fbfa0, #5c8aff, #2fd6c7, #2fbfa0); }
+  .th-room-card-3 { background-image: linear-gradient(120deg, #ff6a5c, #ffb35c, #ff5c9d, #ff6a5c); }
+  .th-room-card-4 { background-image: linear-gradient(120deg, #5c7dff, #8a5cff, #5cd6ff, #5c7dff); }
+  .th-room-card-5 { background-image: linear-gradient(120deg, #2fd68a, #d4af37, #5cffb3, #2fd68a); }
+
+  .th-room-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .th-room-avatar, .th-room-avatar-fallback {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.5);
+  }
+  .th-room-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.2); font-weight: 900;
+  }
+  .th-room-username { font-size: 12px; font-weight: 700; opacity: .9; }
+
+  .th-room-live-badge {
+    display: inline-flex; align-items: center; gap: 4px; margin-inline-start: auto;
+    background: rgba(0,0,0,.28); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800;
+  }
+  .th-room-live-badge .leaderboard-live-dot { background: #fff; margin-inline-start: 0; }
+
+  .th-room-lock { margin-inline-start: 6px; font-size: 12px; opacity: .9; }
+
+  .th-room-name { font-size: 19px; font-weight: 900; line-height: 1.3; margin: 0 0 10px; }
+
+  .th-room-song { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.22); border-radius: 12px; padding: 8px 10px; }
+  .th-room-song-cover { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,.15); }
+  .th-room-song-title { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-room-song-artist { font-size: 11px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .leaderboard-live-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #4fd486; animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes leaderboardLiveDotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .35; transform: scale(.65); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+  <div class="th-rooms-hero">
+    <h1>🎧 {% translate "اسمع معاه" %}</h1>
+    <p>{% translate "جروبات سماع مباشرة دلوقتي - ادخل تسمع مع حد تاني لحظة بلحظة." %}</p>
+  </div>
+
+  {% if rooms %}
+  <div class="th-rooms-grid">
+    {% for entry in rooms %}
+    <a href="{% url 'website_app:public-profile' entry.host.username %}" class="th-room-card th-room-card-{{ entry.gradient }}">
+      <div class="th-room-card-top">
+        {% if entry.host.profile_image %}
+          <img src="{{ entry.host.profile_image.url }}" alt="{{ entry.host.username }}" class="th-room-avatar">
+        {% else %}
+          <span class="th-room-avatar-fallback">{{ entry.host.username|slice:":1"|upper }}</span>
+        {% endif %}
+        <span class="th-room-username">{{ entry.host.username }}</span>
+        <span class="th-room-live-badge">
+          <span class="leaderboard-live-dot"></span> {% translate "مباشر" %}
+        </span>
+        {% if not entry.room.is_public %}
+        <i class="bi bi-lock-fill th-room-lock" title="{% translate 'جروب خاص' %}"></i>
+        {% endif %}
+      </div>
+      <div class="th-room-name">{{ entry.name }}</div>
+      <div class="th-room-song">
+        {% if entry.song.display_cover_url %}
+          <img src="{{ entry.song.display_cover_url }}" alt="" class="th-room-song-cover">
+        {% else %}
+          <div class="th-room-song-cover" style="display:flex;align-items:center;justify-content:center;"><i class="bi bi-music-note-beamed"></i></div>
+        {% endif %}
+        <div style="min-width:0;">
+          <div class="th-room-song-title">{{ entry.song|localized_field:'title' }}</div>
+          <div class="th-room-song-artist">{{ entry.song.album|localized_field:'title' }}</div>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-headphones" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "مفيش حد بيسمع دلوقتي - ارجع كمان شوية." %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

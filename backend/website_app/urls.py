@@ -79,6 +79,8 @@ urlpatterns = [
 
     path('blocked-listeners/', views.blocked_listeners_list, name='blocked-listeners'),
     path('blocked-listeners/<int:user_id>/unblock/', views.listen_together_unblock, name='listen-together-unblock'),
+    path('live-rooms/', views.live_rooms, name='live-rooms'),
+    path('live-rooms/settings/', views.update_room_settings, name='update-room-settings'),
     path('my-duets/', views.my_duets_list, name='my-duets'),
     path('my-duets/<int:pk>/toggle-privacy/', views.toggle_duet_privacy, name='toggle-duet-privacy'),
     path('my-duets/<int:pk>/', views.duet_detail, name='duet-detail'),

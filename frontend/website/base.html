@@ -1040,6 +1040,11 @@
     .th-lt-follower{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);}
     .th-lt-follower button{background:transparent; border:none; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; padding:0;}
     .th-lt-follower button:hover{color:#e5484d;}
+    .th-room-settings-popover{display:none; position:absolute; bottom:calc(100% + 10px); inset-inline-end:0; width:240px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.4); z-index:1002;}
+    .th-room-settings-popover.open{display:block;}
+    .th-room-settings-popover input[type="text"]{width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; margin-bottom:10px;}
+    .th-room-settings-popover label{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); margin-bottom:8px; cursor:pointer;}
+    .th-room-settings-popover button[type="button"]{width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#0b0c12; font-weight:700; font-size:13px; cursor:pointer;}
   </style>
 </head>
 
@@ -1974,6 +1979,7 @@
        for the logic, and ListenTogetherConsumer (backend/main_app/
        consumers.py) for the server side. -->
   <div id="thListenTogetherFollowersChip" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
+  <div id="thListenTogetherJoinRequests" style="display:none; position:fixed; bottom:120px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
   <div id="thListenTogetherBanner" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35);">
     <i class="bi bi-headphones"></i>
     <span class="th-lt-banner-text"></span>
@@ -2019,6 +2025,20 @@
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
           <i class="bi bi-heart"></i>
         </button>
+        {% if user.is_authenticated %}
+        <div style="position:relative;">
+          <button onclick="window.thToggleRoomSettings()" id="thRoomSettingsBtn" title="{% translate 'إعدادات جروب اسمع معاه' %}" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
+            <i class="bi bi-gear"></i>
+          </button>
+          <div id="thRoomSettingsPopover" class="th-room-settings-popover">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--muted);">{% translate "جروب اسمع معاه" %}</div>
+            <input type="text" id="thRoomNameInput" placeholder="{% translate 'اسم الجروب (اختياري)' %}" maxlength="60">
+            <label><input type="radio" name="thRoomVisibility" value="public" checked> {% translate "عام - أي حد يقدر ينضم" %}</label>
+            <label><input type="radio" name="thRoomVisibility" value="private"> {% translate "خاص - محتاج موافقتك" %}</label>
+            <button type="button" onclick="window.thSaveRoomSettings()">{% translate "حفظ" %}</button>
+          </div>
+        </div>
+        {% endif %}
       </div>
 
       <!-- Right Controls -->
@@ -2756,6 +2776,8 @@
         var data;
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'follower_joined') thHandleFollowerJoined(data);
+        else if (data.type === 'join_requested') thHandleJoinRequested(data);
+        else if (data.type === 'room_renamed') thHandleRoomRenamed(data);
       });
     }
 
@@ -2791,6 +2813,93 @@
           '<button type="button" title="{% translate "امنع" %}" onclick="window.thBlockListener(' + f.userId + ')"><i class="bi bi-slash-circle"></i></button></span>';
       }).join('');
     }
+
+    // ---------------------------------------------------------
+    // HOST ROLE - private-room join requests
+    // ---------------------------------------------------------
+
+    var thJoinRequests = []; // people asking to join a private room of mine
+
+    function thHandleJoinRequested(data) {
+      if (!thJoinRequests.some(function (r) { return r.userId === data.user_id; })) {
+        thJoinRequests.push({ userId: data.user_id, username: data.username });
+      }
+      if (window.showToast) {
+        showToast(data.username + ' {% translate "عايز ينضم لجروبك" %}', 'info');
+      }
+      thRenderJoinRequestsPanel();
+    }
+
+    window.thRespondJoin = function (userId, approve) {
+      if (thHostSocket && thHostSocket.readyState === WebSocket.OPEN) {
+        thHostSocket.send(JSON.stringify({ action: 'respond_join', user_id: userId, approve: approve }));
+      }
+      thJoinRequests = thJoinRequests.filter(function (r) { return r.userId !== userId; });
+      thRenderJoinRequestsPanel();
+    };
+
+    function thRenderJoinRequestsPanel() {
+      var panel = document.getElementById('thListenTogetherJoinRequests');
+      if (!panel) return;
+      if (!thJoinRequests.length) {
+        panel.style.display = 'none';
+        panel.innerHTML = '';
+        return;
+      }
+      panel.style.display = 'flex';
+      panel.innerHTML = thJoinRequests.map(function (r) {
+        return '<span class="th-lt-follower"><i class="bi bi-person-plus"></i> ' + r.username +
+          '<button type="button" title="{% translate "قبول" %}" onclick="window.thRespondJoin(' + r.userId + ', true)"><i class="bi bi-check-lg"></i></button>' +
+          '<button type="button" title="{% translate "رفض" %}" onclick="window.thRespondJoin(' + r.userId + ', false)"><i class="bi bi-x-lg"></i></button></span>';
+      }).join('');
+    }
+
+    function thHandleRoomRenamed(data) {
+      // Only meaningful if the host has the room-settings popover open
+      // right now - shows the freshly-generated AI name as a hint they
+      // can keep or type over, never overwrites something they've
+      // already typed.
+      var nameInput = document.getElementById('thRoomNameInput');
+      if (nameInput && !nameInput.value) {
+        nameInput.placeholder = data.name || nameInput.placeholder;
+      }
+    }
+
+    // ---------------------------------------------------------
+    // ROOM SETTINGS (host role) - name + public/private
+    // ---------------------------------------------------------
+
+    window.thToggleRoomSettings = function () {
+      var pop = document.getElementById('thRoomSettingsPopover');
+      if (pop) pop.classList.toggle('open');
+    };
+
+    window.thSaveRoomSettings = function () {
+      var nameInput = document.getElementById('thRoomNameInput');
+      var visibilityInput = document.querySelector('input[name="thRoomVisibility"]:checked');
+      var body = new URLSearchParams();
+      body.set('name', nameInput ? nameInput.value : '');
+      body.set('is_public', (visibilityInput && visibilityInput.value === 'private') ? '0' : '1');
+
+      fetch('/live-rooms/settings/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() },
+        body: body,
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.status === 'success') {
+            if (window.showToast) showToast('{% translate "تم الحفظ" %}', 'success');
+            var pop = document.getElementById('thRoomSettingsPopover');
+            if (pop) pop.classList.remove('open');
+          } else if (window.showToast) {
+            showToast(data.message || '{% translate "حصل خطأ" %}', 'error');
+          }
+        })
+        .catch(function () {
+          if (window.showToast) showToast('{% translate "حصل خطأ" %}', 'error');
+        });
+    };
 
     // ---------------------------------------------------------
     // FOLLOWER ROLE
@@ -2832,6 +2941,72 @@
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
     };
+
+    // A private room's button never starts playback directly - it opens
+    // the same follow socket but sends an explicit request_join instead
+    // of relying on connect() alone (see ListenTogetherConsumer's own
+    // comment on why that has to be explicit), and only actually starts
+    // mirroring once a join_approved message comes back - possibly much
+    // later, whenever the host gets around to it.
+    window.requestToJoinRoom = function (btn) {
+      var hostUserId = parseInt(btn.dataset.hostUserId, 10);
+      var hostUsername = btn.dataset.hostUsername;
+      if (!hostUserId) return;
+      if (window.requireAuth && window.requireAuth(null, null)) return;
+
+      thListeningWithHostId = hostUserId;
+      thListeningWithHostUsername = hostUsername;
+
+      var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      thFollowSocket = new WebSocket(protocol + '//' + window.location.host + '/ws/listen-together/' + hostUserId + '/');
+      thFollowSocket.addEventListener('open', function () {
+        thFollowSocket.send(JSON.stringify({ action: 'request_join' }));
+      });
+      thFollowSocket.addEventListener('close', function () { thFollowSocket = null; });
+      thFollowSocket.addEventListener('message', function (evt) {
+        var data;
+        try { data = JSON.parse(evt.data); } catch (e) { return; }
+        if (data.type === 'join_pending') {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="bi bi-hourglass-split"></i> {% translate "قيد الانتظار" %}';
+        } else if (data.type === 'join_approved') {
+          thHandleJoinApproved(btn, hostUsername);
+        } else if (data.type === 'join_rejected') {
+          if (window.showToast) showToast('{% translate "تم رفض طلب الانضمام" %}', 'error');
+          if (thFollowSocket) { var s = thFollowSocket; thFollowSocket = null; s.close(); }
+          thListeningWithHostId = null;
+          thListeningWithHostUsername = null;
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-lock-fill"></i> {% translate "اطلب الانضمام" %}';
+        } else if (data.type === 'state') {
+          thApplyRemoteState(data);
+        } else if (data.type === 'blocked') {
+          thHandleBlocked();
+        }
+      });
+    };
+
+    function thHandleJoinApproved(btn, hostUsername) {
+      var songDataEl = document.getElementById('thListenTogetherSong');
+      var song = songDataEl ? JSON.parse(songDataEl.textContent) : null;
+
+      if (song && song.url && typeof playAudio === 'function') {
+        playAudio(song.url, null, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, song.albumLink, false);
+      }
+
+      if (window.showToast) showToast('{% translate "اتقبلت في الجروب - يلا اسمع" %}', 'success');
+
+      btn.disabled = false;
+      btn.classList.add('active');
+      btn.innerHTML = '<i class="bi bi-headphones"></i> {% translate "إيقاف الاستماع المشترك" %}';
+      btn.onclick = function () { window.stopListeningWith(); };
+
+      var banner = document.getElementById('thListenTogetherBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
+      }
+    }
 
     window.stopListeningWith = function () {
       if (thFollowSocket) {

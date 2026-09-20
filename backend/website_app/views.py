@@ -2486,8 +2486,11 @@ def public_profile(request, username):
     # for its own JS (see 'data' dict a bit above this function).
     listen_together_song = None
     listen_together_blocked = False
+    listen_together_room_public = True
+    listen_together_room_name = ''
+    listen_together_join_status = 'none'  # none | pending | accepted | rejected
     if not is_own_profile:
-        from backend.main_app.models import ListenTogetherBlock
+        from backend.main_app.models import ListenTogetherBlock, ListenTogetherJoinRequest, ListenTogetherRoom
         from backend.main_app.shared_utils.listen_together import get_current_song_for_user
 
         song = get_current_song_for_user(profile_user)
@@ -2506,6 +2509,18 @@ def public_profile(request, username):
                 'url': song.audio_file.url if song.audio_file else '',
                 'link': reverse('website_app:song-detail', args=[song.slug]),
             }
+
+            room = ListenTogetherRoom.objects.filter(host=profile_user).first()
+            if room is not None:
+                listen_together_room_public = room.is_public
+                listen_together_room_name = room.display_name
+                if not room.is_public and request.user.is_authenticated:
+                    join_request = ListenTogetherJoinRequest.objects.filter(
+                        room=room, requester=request.user,
+                    ).first()
+                    if join_request is not None:
+                        listen_together_join_status = join_request.status
+
         if request.user.is_authenticated:
             listen_together_blocked = ListenTogetherBlock.objects.filter(
                 blocker=profile_user, blocked=request.user,
@@ -2525,6 +2540,9 @@ def public_profile(request, username):
         'game_rank_trend': game_rank_trend,
         'listen_together_song': listen_together_song,
         'listen_together_blocked': listen_together_blocked,
+        'listen_together_room_public': listen_together_room_public,
+        'listen_together_room_name': listen_together_room_name,
+        'listen_together_join_status': listen_together_join_status,
     })
 
 
@@ -2544,6 +2562,66 @@ def leaderboard(request):
         'top_profiles': top_profiles,
         'my_profile': my_profile,
         'my_rank': my_rank,
+    })
+
+
+# One of a small fixed set of accent-gradient pairs, picked by host id so
+# different rooms read as visually distinct on the grid without needing
+# per-room color data - see live_rooms.html's .th-room-card-N classes.
+LIVE_ROOM_GRADIENT_COUNT = 6
+
+
+def live_rooms(request):
+    """"اسمع معاه" - كل الجروبات العامة الشغالة دلوقتي. الصف نفسه (انظر
+    ListenTogetherRoom) موجود بس طول ما صاحبه بيسمع فعلاً - فمفيش داعي
+    لفلتر "لسه شغال ولا لأ"، الاستعلام ده بيرجع بس الجروبات اللايف."""
+    from backend.main_app.models import ListenTogetherRoom
+    from backend.main_app.shared_utils.listen_together import get_current_song_for_user
+
+    rooms_qs = ListenTogetherRoom.objects.filter(
+        is_public=True,
+    ).select_related('host').order_by('-created_at')
+
+    rooms = []
+    for room in rooms_qs:
+        song = get_current_song_for_user(room.host)
+        if song is None:
+            continue
+        rooms.append({
+            'room': room,
+            'host': room.host,
+            'name': room.display_name,
+            'song': song,
+            'gradient': room.host_id % LIVE_ROOM_GRADIENT_COUNT,
+        })
+
+    return render(request, 'website/pages/live_rooms.html', {
+        'rooms': rooms,
+    })
+
+
+@login_required
+@require_POST
+def update_room_settings(request):
+    """يعدّل صاحب الجروب اسمه و/أو خصوصيته - نفس أسلوب update_profile
+    (AJAX، JSON مش redirect). بيشتغل بس لو فعلاً في جروب شغال دلوقتي
+    (المستخدم بيسمع حالياً - انظر SongListenerConsumer._maybe_open_room)."""
+    from backend.main_app.models import ListenTogetherRoom
+
+    room = ListenTogetherRoom.objects.filter(host=request.user).first()
+    if room is None:
+        return JsonResponse({'status': 'error', 'message': str(_('لازم تكون بتسمع دلوقتي.'))}, status=400)
+
+    if 'name' in request.POST:
+        room.custom_name = (request.POST.get('name') or '').strip()[:60]
+    if 'is_public' in request.POST:
+        room.is_public = request.POST.get('is_public') == '1'
+    room.save(update_fields=['custom_name', 'is_public'])
+
+    return JsonResponse({
+        'status': 'success',
+        'name': room.display_name,
+        'is_public': room.is_public,
     })
 
 

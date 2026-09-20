@@ -96,6 +96,141 @@ class ListenTogetherBlock(models.Model):
         return f'{self.blocker.username} blocked {self.blocked.username}'
 
 
+class ListenTogetherRoom(models.Model):
+    """جروب "اسمع معاه" - موجود بس طول ما صاحبه فعلاً بيسمع دلوقتي
+    (بيتعمل create/delete مع CurrentSongListener بتاعه بالظبط - انظر
+    SongListenerConsumer._start_listening/_stop_listening). الأغنية اللي
+    بتتشغل دلوقتي متتخزنش هنا خالص، بتتقرا لايف من
+    get_current_song_for_user عشان متبقاش نسخة تانية ممكن تتقلب."""
+
+    host = models.OneToOneField(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_room',
+        verbose_name=_('صاحب الجروب')
+    )
+
+    # اسم اختاره صاحب الجروب بنفسه - لو موجود بياخد الأولوية دايماً على
+    # الاسم اللي اتولد بالذكاء الاصطناعي.
+    custom_name = models.CharField(max_length=60, blank=True, verbose_name=_('اسم الجروب'))
+
+    # اسم اتولد بالذكاء الاصطناعي بناءً على اللي بيتسمع وقت إنشاء
+    # الجروب (انظر generate_room_name_task) - فاضي لحد ما التاسك يخلص.
+    generated_name = models.CharField(max_length=60, blank=True, verbose_name=_('اسم مولّد'))
+
+    is_public = models.BooleanField(default=True, verbose_name=_('عام'))
+
+    # بيتزود واحد كل مرة أي حد (صاحب الجروب أو حد بيسمع معاه) يكبس على
+    # الشاشة - انظر ListenTogetherConsumer._tap. ده هو "الرانك": ترتيب
+    # /live-rooms/ بيعتمد عليه مباشرة، مفيش لوحة ترتيب منفصلة.
+    tap_score = models.PositiveIntegerField(default=0, verbose_name=_('نقاط التكبيس'))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإنشاء'))
+
+    class Meta:
+        verbose_name = _('جروب اسمع معاه')
+        verbose_name_plural = _('جروبات اسمع معاه')
+        indexes = [
+            models.Index(fields=['is_public']),
+        ]
+
+    @property
+    def display_name(self):
+        return self.custom_name or self.generated_name or _('جروب %(username)s') % {'username': self.host.username}
+
+    def __str__(self):
+        return f'{self.host.username} - {self.display_name}'
+
+
+class ListenTogetherJoinRequest(models.Model):
+    """طلب انضمام لجروب خاص - بيتشال مع الجروب نفسه (on_delete=CASCADE)
+    عشان كل جلسة استماع/جروب جديد يبدأ بصفحة فاضية، مفيش "موافقة دائمة"
+    بتفضل من جلسة لجلسة."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('قيد الانتظار')
+        ACCEPTED = 'accepted', _('مقبول')
+        REJECTED = 'rejected', _('مرفوض')
+
+    room = models.ForeignKey(
+        ListenTogetherRoom,
+        on_delete=models.CASCADE,
+        related_name='join_requests',
+        verbose_name=_('الجروب')
+    )
+
+    requester = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_join_requests',
+        verbose_name=_('الطالب')
+    )
+
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, verbose_name=_('الحالة'))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الطلب'))
+
+    class Meta:
+        verbose_name = _('طلب انضمام')
+        verbose_name_plural = _('طلبات الانضمام')
+        unique_together = ['room', 'requester']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['room', 'status']),
+        ]
+
+    def __str__(self):
+        return f'{self.requester.username} -> {self.room} ({self.status})'
+
+
+class ListenTogetherComment(models.Model):
+    """رسالة في شات جروب "اسمع معاه" - بتتشال مع الجروب نفسه
+    (on_delete=CASCADE) زي ListenTogetherJoinRequest بالظبط، فكل جلسة
+    استماع/جروب جديد يبدأ بشات فاضي. الرسائل من نوع SYSTEM بتتحط
+    تلقائي لحظة أي حد ينضم فعلاً (انظر
+    ListenTogetherConsumer._announce_follower_joined) - نفس المكان
+    الوحيد اللي الانضمام بيتأكد فيه أصلاً، عام كان الجروب أو خاص بعد
+    الموافقة، فمفيش مكان تاني محتاج يتزامن معاه."""
+
+    class Kind(models.TextChoices):
+        MESSAGE = 'message', _('رسالة')
+        SYSTEM = 'system', _('نظام')
+
+    room = models.ForeignKey(
+        ListenTogetherRoom,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name=_('الجروب')
+    )
+
+    # فاضي لرسالة SYSTEM (زي "فلان انضم") - مفيش صاحب حقيقي ليها.
+    author = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_comments',
+        null=True,
+        blank=True,
+        verbose_name=_('الكاتب')
+    )
+
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.MESSAGE, verbose_name=_('النوع'))
+
+    text = models.CharField(max_length=300, verbose_name=_('النص'))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإرسال'))
+
+    class Meta:
+        verbose_name = _('تعليق اسمع معاه')
+        verbose_name_plural = _('تعليقات اسمع معاه')
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['room', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.room} - {self.text[:30]}'
+
+
 class UserSongPlay(models.Model):
     """نموذج لتتبع تشغيل كل مستخدم لكل أغنية"""
 

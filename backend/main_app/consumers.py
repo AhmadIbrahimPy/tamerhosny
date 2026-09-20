@@ -105,6 +105,9 @@ class SongListenerConsumer(WebsocketConsumer):
         self._broadcast_count()
         self._broadcast_live_status()
 
+        if user is not None:
+            self._maybe_open_room(user)
+
     def _stop_listening(self):
         user, session_key = self._identity()
 
@@ -115,6 +118,38 @@ class SongListenerConsumer(WebsocketConsumer):
         self.is_listening = False
         self._broadcast_count()
         self._broadcast_live_status()
+
+        if user is not None:
+            self._maybe_close_room(user)
+
+    # =========================================================
+    # "اسمع معاه" ROOM LIFECYCLE
+    #
+    # A ListenTogetherRoom exists exactly as long as its host has at
+    # least one live CurrentSongListener row, anywhere - not tied to
+    # this one song/socket. Switching songs mid-listen briefly stops
+    # one CurrentSongListener and starts another (a new socket per song
+    # - see connectGlobalListenerSocket in base.html), which would
+    # otherwise tear the room down and rebuild it (losing its AI name,
+    # re-triggering generation) on every single track change; checking
+    # for any OTHER still-live row before closing avoids that churn.
+    # =========================================================
+
+    @staticmethod
+    def _maybe_open_room(user):
+        from backend.main_app.models import ListenTogetherRoom
+        from backend.main_app.tasks import generate_room_name_task
+
+        room, created = ListenTogetherRoom.objects.get_or_create(host=user)
+        if created:
+            generate_room_name_task.delay(user.id)
+
+    @staticmethod
+    def _maybe_close_room(user):
+        from backend.main_app.models import ListenTogetherRoom
+
+        if not CurrentSongListener.objects.filter(user=user).exists():
+            ListenTogetherRoom.objects.filter(host=user).delete()
 
     def _broadcast_live_status(self):
         # Presence changed but no score changed - just refresh the live
@@ -317,6 +352,16 @@ class ListenTogetherConsumer(WebsocketConsumer):
     sends a 'state' message, so a follower re-broadcasting it back
     upstream (and the feedback loop that would cause) is structurally
     impossible - no extra guarding needed beyond that.
+
+    Public vs. private (ListenTogetherRoom.is_public): a public room (or
+    no room row at all - the safe default) behaves exactly as above,
+    unchanged. A private room still lets anyone connect - so they can
+    receive a live accept/reject - but self.is_approved_follower stays
+    False until an ACCEPTED ListenTogetherJoinRequest exists; a pending/
+    unapproved connection never gets announced as a follower and never
+    receives playback_state. The client has to explicitly send
+    {action:'request_join'} - never implicit on connect - so just
+    opening the page never files a request on someone's behalf.
     """
 
     def connect(self):
@@ -336,9 +381,10 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.host_user_id = host_user_id
         self.is_host = (user.id == host_user_id)
         self.group_name = f'listen_together_{host_user_id}'
+        self.is_approved_follower = True
 
         if not self.is_host:
-            from backend.main_app.models import ListenTogetherBlock
+            from backend.main_app.models import ListenTogetherBlock, ListenTogetherJoinRequest, ListenTogetherRoom
 
             is_blocked = ListenTogetherBlock.objects.filter(
                 blocker_id=host_user_id, blocked=user,
@@ -348,13 +394,27 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 self.close()
                 return
 
+            room = ListenTogetherRoom.objects.filter(host_id=host_user_id).first()
+
+            if room is not None and not room.is_public:
+                self.is_approved_follower = ListenTogetherJoinRequest.objects.filter(
+                    room=room, requester=user,
+                    status=ListenTogetherJoinRequest.Status.ACCEPTED,
+                ).exists()
+
         async_to_sync(self.channel_layer.group_add)(
             self.group_name, self.channel_name,
         )
         self.accept()
 
-        if not self.is_host:
+        if not self.is_host and self.is_approved_follower:
             self._announce_follower_joined()
+
+        if self.is_host:
+            self._send_pending_join_requests()
+
+        if self.is_host or self.is_approved_follower:
+            self._send_comment_history()
 
     def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
@@ -368,15 +428,26 @@ class ListenTogetherConsumer(WebsocketConsumer):
         except ValueError:
             return
 
-        if not self.is_host:
-            return
-
         action = data.get('action')
 
-        if action == 'state':
-            self._broadcast_state(data)
-        elif action == 'block':
-            self._block(data.get('user_id'))
+        if self.is_host:
+            if action == 'state':
+                self._broadcast_state(data)
+            elif action == 'block':
+                self._block(data.get('user_id'))
+            elif action == 'respond_join':
+                self._respond_join(data.get('user_id'), bool(data.get('approve')))
+        elif action == 'request_join':
+            self._request_join()
+
+        # Comments and taps are open to any actual participant - the
+        # host or an already-approved follower - not gated to one role
+        # like the actions above.
+        if self.is_host or self.is_approved_follower:
+            if action == 'comment':
+                self._post_comment(data.get('text'))
+            elif action == 'tap':
+                self._tap()
 
     # =========================================================
     # HOST -> GROUP
@@ -431,12 +502,117 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'user_id': blocked_user_id,
         })
 
+    def _send_pending_join_requests(self):
+        """Requests filed while the host wasn't connected (or on a
+        previous page) aren't lost - same "resend current state on
+        connect" idea DuetProjectStatusConsumer already uses for a
+        render that might have finished before its socket opened.
+        """
+        from backend.main_app.models import ListenTogetherJoinRequest, ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None or room.is_public:
+            return
+
+        pending = ListenTogetherJoinRequest.objects.filter(
+            room=room, status=ListenTogetherJoinRequest.Status.PENDING,
+        ).select_related('requester')
+
+        for req in pending:
+            self.send(text_data=json.dumps({
+                'type': 'join_requested',
+                'username': req.requester.username,
+                'user_id': req.requester_id,
+            }))
+
+    # =========================================================
+    # FOLLOWER -> GROUP (private rooms only)
+    # =========================================================
+
+    def _request_join(self):
+        from backend.main_app.models import ListenTogetherJoinRequest, ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None or room.is_public:
+            return
+
+        req, created = ListenTogetherJoinRequest.objects.get_or_create(
+            room=room, requester=self.user,
+            defaults={'status': ListenTogetherJoinRequest.Status.PENDING},
+        )
+
+        if not created and req.status != ListenTogetherJoinRequest.Status.PENDING:
+            req.status = ListenTogetherJoinRequest.Status.PENDING
+            req.save(update_fields=['status'])
+
+        self.send(text_data=json.dumps({'type': 'join_pending'}))
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'join.requested',
+            'username': self.user.username,
+            'user_id': self.user.id,
+        })
+
+        from backend.main_app.models import UserAccount
+        from backend.main_app.shared_utils.push_notifications import send_push_to_user
+
+        host = UserAccount.objects.filter(pk=self.host_user_id).first()
+
+        if host:
+            send_push_to_user(
+                host,
+                'طلب انضمام',
+                f'{self.user.username} عايز ينضم لجروبك',
+            )
+
+    def _respond_join(self, requester_user_id, approve):
+        from backend.main_app.models import ListenTogetherJoinRequest, ListenTogetherRoom, UserAccount
+
+        try:
+            requester_user_id = int(requester_user_id)
+        except (TypeError, ValueError):
+            return
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None:
+            return
+
+        req = ListenTogetherJoinRequest.objects.filter(room=room, requester_id=requester_user_id).first()
+
+        if req is None:
+            return
+
+        req.status = (
+            ListenTogetherJoinRequest.Status.ACCEPTED if approve
+            else ListenTogetherJoinRequest.Status.REJECTED
+        )
+        req.save(update_fields=['status'])
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'join.approved' if approve else 'join.rejected',
+            'user_id': requester_user_id,
+        })
+
+        requester = UserAccount.objects.filter(pk=requester_user_id).first()
+
+        if requester:
+            from backend.main_app.shared_utils.push_notifications import send_push_to_user
+
+            send_push_to_user(
+                requester,
+                'اسمع معاه',
+                'اتقبلت في الجروب - يلا اسمع!' if approve else 'الطلب اتّرفض',
+            )
+
     # =========================================================
     # GROUP EVENT HANDLERS
     # =========================================================
 
     def playback_state(self, event):
-        if self.is_host:
+        if self.is_host or not self.is_approved_follower:
             return
 
         self.send(text_data=json.dumps({
@@ -454,6 +630,37 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'type': 'follower_joined',
             'username': event.get('username'),
             'user_id': event.get('user_id'),
+        }))
+
+    def join_requested(self, event):
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'join_requested',
+            'username': event.get('username'),
+            'user_id': event.get('user_id'),
+        }))
+
+    def join_approved(self, event):
+        if self.is_host or event.get('user_id') != self.user.id:
+            return
+
+        self.is_approved_follower = True
+        self.send(text_data=json.dumps({'type': 'join_approved'}))
+        self._announce_follower_joined()
+
+    def join_rejected(self, event):
+        if self.is_host or event.get('user_id') != self.user.id:
+            return
+
+        self.send(text_data=json.dumps({'type': 'join_rejected'}))
+        self.close()
+
+    def room_renamed(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'room_renamed',
+            'name': event.get('name'),
         }))
 
     def listener_blocked(self, event):
