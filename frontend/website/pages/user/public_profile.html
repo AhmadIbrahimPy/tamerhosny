@@ -52,6 +52,14 @@
     padding: 5px 10px; color: var(--text); font-size: 18px; font-weight: 800; min-width: 160px;
   }
   .profile-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .th-listen-together-btn {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent); font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background .15s ease, color .15s ease;
+  }
+  .th-listen-together-btn:hover { background: var(--accent); color: #0b0c12; }
+  .th-listen-together-btn.active { background: var(--accent); color: #0b0c12; }
   .profile-section { margin-bottom: 40px; }
 
   /* Rank trend arrow, stamped on the corner of the avatar - points only
@@ -177,6 +185,15 @@
         {% endif %}
       </div>
       <div class="profile-meta"><i class="bi bi-calendar3"></i> {% blocktranslate with date=profile_user.date_joined|date:"Y-m-d" %}عضو منذ {{ date }}{% endblocktranslate %}</div>
+      {% if listen_together_song and not listen_together_blocked %}
+      <button type="button" class="th-listen-together-btn" id="thListenTogetherBtn"
+        data-host-user-id="{{ profile_user.id }}"
+        data-host-username="{{ profile_user.username }}"
+        onclick="window.startListeningWith(this);">
+        <i class="bi bi-headphones"></i> {% translate "اسمع معاه" %}
+      </button>
+      {{ listen_together_song|json_script:"thListenTogetherSong" }}
+      {% endif %}
     </div>
     <a href="{% url 'website_app:recap' profile_user.username %}" class="th-see-all" style="margin-inline-start:auto;">
       <i class="bi bi-stars"></i> {% translate "الملخص" %}

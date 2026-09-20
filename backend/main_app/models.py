@@ -63,6 +63,39 @@ class Like(models.Model):
         return f'{self.user.username} - {self.content_object}'
 
 
+class ListenTogetherBlock(models.Model):
+    """يمنع مستخدم مستخدماً تانياً من إنه ينضم لجلسة "اسمع معاه" بتاعته
+    تاني - قرار دائم لحد ما صاحبه يشيله بنفسه من قائمة الممنوعين."""
+
+    blocker = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_blocks_made',
+        verbose_name=_('المانع')
+    )
+
+    blocked = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_blocks_received',
+        verbose_name=_('الممنوع')
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ المنع'))
+
+    class Meta:
+        verbose_name = _('منع اسمع معاه')
+        verbose_name_plural = _('ممنوعو اسمع معاه')
+        unique_together = ['blocker', 'blocked']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['blocker', 'blocked']),
+        ]
+
+    def __str__(self):
+        return f'{self.blocker.username} blocked {self.blocked.username}'
+
+
 class UserSongPlay(models.Model):
     """نموذج لتتبع تشغيل كل مستخدم لكل أغنية"""
 

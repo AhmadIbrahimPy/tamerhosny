@@ -31,4 +31,8 @@ websocket_urlpatterns = [
         r'^ws/analytics/track/$',
         consumers.AnalyticsTrackConsumer.as_asgi(),
     ),
+    re_path(
+        r'^ws/listen-together/(?P<host_user_id>\d+)/$',
+        consumers.ListenTogetherConsumer.as_asgi(),
+    ),
 ]

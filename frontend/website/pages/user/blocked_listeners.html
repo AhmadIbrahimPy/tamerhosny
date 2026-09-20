@@ -1,0 +1,69 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "المستخدمون الممنوعون" %}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-block: 40px;">
+  <h1 class="th-section-title">{% translate "المستخدمون الممنوعون من \"اسمع معاه\"" %}</h1>
+
+  {% if blocks %}
+  <div class="th-blocked-list" id="thBlockedList">
+    {% for block in blocks %}
+    <div class="th-blocked-row" id="thBlockedRow{{ block.blocked.pk }}">
+      {% if block.blocked.profile_image %}
+        <img src="{{ block.blocked.profile_image.url }}" alt="{{ block.blocked.username }}" class="th-blocked-avatar">
+      {% else %}
+        <span class="th-blocked-avatar-fallback">{{ block.blocked.username|slice:":1"|upper }}</span>
+      {% endif %}
+      <div class="th-blocked-name">{{ block.blocked.username }}</div>
+      <button type="button" class="th-blocked-unblock-btn" onclick="thUnblockListener({{ block.blocked.pk }});">
+        {% translate "إلغاء المنع" %}
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="th-empty">
+    <i class="bi bi-headphones" style="font-size: 48px; margin-bottom: 16px;"></i>
+    <p>{% translate "لسه مامنعتش حد من إنه يسمع معاك" %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .th-blocked-list { display: flex; flex-direction: column; gap: 10px; max-width: 480px; }
+  .th-blocked-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .th-blocked-avatar, .th-blocked-avatar-fallback {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  }
+  .th-blocked-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: #22263a; color: var(--accent); font-weight: 900;
+  }
+  .th-blocked-name { flex: 1; font-weight: 700; color: var(--text); }
+  .th-blocked-unblock-btn {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .th-blocked-unblock-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+
+<script>
+  function thUnblockListener(userId) {
+    fetch('/blocked-listeners/' + userId + '/unblock/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRFToken() },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.status === 'success') {
+          var row = document.getElementById('thBlockedRow' + userId);
+          if (row) row.remove();
+        }
+      });
+  }
+</script>
+{% endblock %}

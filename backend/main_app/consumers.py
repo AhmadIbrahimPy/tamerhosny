@@ -299,6 +299,171 @@ class DuetVideoStatusConsumer(WebsocketConsumer):
         }))
 
 
+class ListenTogetherConsumer(WebsocketConsumer):
+    """"اسمع معاه" - live-mirrors one user's ("the host") playback to
+    anyone who joins their group from their public profile ("followers").
+
+    One route (ws/listen-together/<host_user_id>/) serves both roles -
+    self.is_host tells them apart by comparing the connecting user's own
+    id to the host id in the URL. The host's own page opens this exact
+    connection to its own id on every page load (see base.html) whether
+    or not anyone is actually following, so it's always ready to relay
+    playback state and receive a follower_joined ping; followers only
+    connect for as long as they're actively listening along.
+
+    No persistent "who's following whom" row - purely a channel-layer
+    group (listen_together_<host_user_id>), same presence-only tradeoff
+    SongListenerConsumer makes for individual songs. Only the host ever
+    sends a 'state' message, so a follower re-broadcasting it back
+    upstream (and the feedback loop that would cause) is structurally
+    impossible - no extra guarding needed beyond that.
+    """
+
+    def connect(self):
+        user = self.scope.get('user')
+
+        if not user or not user.is_authenticated:
+            self.close()
+            return
+
+        try:
+            host_user_id = int(self.scope['url_route']['kwargs']['host_user_id'])
+        except (KeyError, TypeError, ValueError):
+            self.close()
+            return
+
+        self.user = user
+        self.host_user_id = host_user_id
+        self.is_host = (user.id == host_user_id)
+        self.group_name = f'listen_together_{host_user_id}'
+
+        if not self.is_host:
+            from backend.main_app.models import ListenTogetherBlock
+
+            is_blocked = ListenTogetherBlock.objects.filter(
+                blocker_id=host_user_id, blocked=user,
+            ).exists()
+
+            if is_blocked:
+                self.close()
+                return
+
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name,
+        )
+        self.accept()
+
+        if not self.is_host:
+            self._announce_follower_joined()
+
+    def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            async_to_sync(self.channel_layer.group_discard)(
+                self.group_name, self.channel_name,
+            )
+
+    def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except ValueError:
+            return
+
+        if not self.is_host:
+            return
+
+        action = data.get('action')
+
+        if action == 'state':
+            self._broadcast_state(data)
+        elif action == 'block':
+            self._block(data.get('user_id'))
+
+    # =========================================================
+    # HOST -> GROUP
+    # =========================================================
+
+    def _broadcast_state(self, data):
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'playback.state',
+            'song': data.get('song'),
+            'playing': bool(data.get('playing')),
+            'current_time': data.get('currentTime'),
+        })
+
+    def _announce_follower_joined(self):
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'follower.joined',
+            'username': self.user.username,
+            'user_id': self.user.id,
+        })
+
+        from backend.main_app.models import UserAccount
+        from backend.main_app.shared_utils.push_notifications import send_push_to_user
+
+        host = UserAccount.objects.filter(pk=self.host_user_id).first()
+
+        if host:
+            send_push_to_user(
+                host,
+                'اسمع معاه',
+                f'{self.user.username} بيسمع معاك دلوقتي',
+            )
+
+    def _block(self, blocked_user_id):
+        from backend.main_app.models import ListenTogetherBlock, UserAccount
+
+        try:
+            blocked_user_id = int(blocked_user_id)
+        except (TypeError, ValueError):
+            return
+
+        blocked_user = UserAccount.objects.filter(pk=blocked_user_id).first()
+
+        if not blocked_user:
+            return
+
+        ListenTogetherBlock.objects.get_or_create(
+            blocker_id=self.host_user_id, blocked=blocked_user,
+        )
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'listener.blocked',
+            'user_id': blocked_user_id,
+        })
+
+    # =========================================================
+    # GROUP EVENT HANDLERS
+    # =========================================================
+
+    def playback_state(self, event):
+        if self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'state',
+            'song': event.get('song'),
+            'playing': event.get('playing'),
+            'currentTime': event.get('current_time'),
+        }))
+
+    def follower_joined(self, event):
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'follower_joined',
+            'username': event.get('username'),
+            'user_id': event.get('user_id'),
+        }))
+
+    def listener_blocked(self, event):
+        if self.is_host or event.get('user_id') != self.user.id:
+            return
+
+        self.send(text_data=json.dumps({'type': 'blocked'}))
+        self.close()
+
+
 def _ws_headers(scope):
     return {
         key.decode('latin1').lower(): value.decode('latin1')

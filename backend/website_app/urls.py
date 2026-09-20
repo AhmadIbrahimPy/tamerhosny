@@ -76,6 +76,9 @@ urlpatterns = [
 
     path('likes/', views.likes_list, name='likes'),
     path('likes/toggle/', views.toggle_favorite, name='toggle-like'),
+
+    path('blocked-listeners/', views.blocked_listeners_list, name='blocked-listeners'),
+    path('blocked-listeners/<int:user_id>/unblock/', views.listen_together_unblock, name='listen-together-unblock'),
     path('my-duets/', views.my_duets_list, name='my-duets'),
     path('my-duets/<int:pk>/toggle-privacy/', views.toggle_duet_privacy, name='toggle-duet-privacy'),
     path('my-duets/<int:pk>/', views.duet_detail, name='duet-detail'),

@@ -13,6 +13,7 @@ from django.db import models
 from django.db.models import F, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import get_language, gettext_lazy as _
@@ -2376,6 +2377,35 @@ def likes_list(request):
 
 
 @login_required
+def blocked_listeners_list(request):
+    """المستخدمين اللي منعتهم من إنهم ينضموا لجلسة "اسمع معاه" بتاعتك -
+    شايلهم من هنا هو الطريقة الوحيدة إن الزرار يرجع يظهر لهم تاني على
+    بروفايلك (انظر ListenTogetherBlock وpublic_profile)."""
+    from backend.main_app.models import ListenTogetherBlock
+
+    blocks = ListenTogetherBlock.objects.filter(
+        blocker=request.user,
+    ).select_related('blocked')
+
+    return render(request, 'website/pages/user/blocked_listeners.html', {
+        'blocks': blocks,
+    })
+
+
+@login_required
+@require_POST
+def listen_together_unblock(request, user_id):
+    """AJAX - نفس أسلوب update_profile (JSON مش redirect)."""
+    from backend.main_app.models import ListenTogetherBlock
+
+    ListenTogetherBlock.objects.filter(
+        blocker=request.user, blocked_id=user_id,
+    ).delete()
+
+    return JsonResponse({'status': 'success'})
+
+
+@login_required
 def my_duets_list(request):
     """عرض ثنائيات 'غني مع تامر' الخاصة بالمستخدم فقط"""
     duets = SingWithTamerProject.objects.filter(
@@ -2445,6 +2475,42 @@ def public_profile(request, username):
     game_badges = unlocked_badges(game_profile) if game_profile else []
     game_rank, game_rank_trend = get_rank_and_trend(game_profile) if game_profile else (None, None)
 
+    is_own_profile = request.user.is_authenticated and request.user.pk == profile_user.pk
+
+    # "اسمع معاه" - only offered when there's actually something to join
+    # (profile_user is live right now), it isn't your own profile, and
+    # profile_user hasn't blocked you - see ListenTogetherConsumer for
+    # the live sync itself, this is just what decides whether the
+    # button renders at all. The payload mirrors the fields playAudio()
+    # (base.html) already expects, same shape song-detail.html builds
+    # for its own JS (see 'data' dict a bit above this function).
+    listen_together_song = None
+    listen_together_blocked = False
+    if not is_own_profile:
+        from backend.main_app.models import ListenTogetherBlock
+        from backend.main_app.shared_utils.listen_together import get_current_song_for_user
+
+        song = get_current_song_for_user(profile_user)
+        if song is not None:
+            singers = [
+                credit for credit in song.credits.select_related('person').all()
+                if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+            ]
+            listen_together_song = {
+                'songId': song.pk,
+                'title': localized_field(song, 'title'),
+                'artist': ', '.join(localized_field(credit.person, 'full_name') for credit in singers),
+                'album': localized_field(song.album, 'title') if song.album else '',
+                'albumLink': reverse('website_app:album-detail', args=[song.album.slug]) if song.album else '',
+                'image': song.display_cover_url or '',
+                'url': song.audio_file.url if song.audio_file else '',
+                'link': reverse('website_app:song-detail', args=[song.slug]),
+            }
+        if request.user.is_authenticated:
+            listen_together_blocked = ListenTogetherBlock.objects.filter(
+                blocker=profile_user, blocked=request.user,
+            ).exists()
+
     return render(request, 'website/pages/user/public_profile.html', {
         'profile_user': profile_user,
         'liked_songs': liked_songs,
@@ -2452,11 +2518,13 @@ def public_profile(request, username):
         'public_duets': public_duets,
         'full_listens': full_listens,
         'full_listens_total': full_listens_total,
-        'is_own_profile': request.user.is_authenticated and request.user.pk == profile_user.pk,
+        'is_own_profile': is_own_profile,
         'game_profile': game_profile,
         'game_badges': game_badges,
         'game_rank': game_rank,
         'game_rank_trend': game_rank_trend,
+        'listen_together_song': listen_together_song,
+        'listen_together_blocked': listen_together_blocked,
     })
 
 
