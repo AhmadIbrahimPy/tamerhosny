@@ -2439,6 +2439,26 @@ def my_duets_list(request):
 PROFILE_PREVIEW_SIZE = 12
 
 
+def _serialize_song_for_listen_together(song):
+    """The song payload playAudio() (base.html) expects - shared by
+    public_profile's single button and live_rooms' one-per-slide feed,
+    so both stay in the exact same shape."""
+    singers = [
+        credit for credit in song.credits.select_related('person').all()
+        if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+    ]
+    return {
+        'songId': song.pk,
+        'title': localized_field(song, 'title'),
+        'artist': ', '.join(localized_field(credit.person, 'full_name') for credit in singers),
+        'album': localized_field(song.album, 'title') if song.album else '',
+        'albumLink': reverse('website_app:album-detail', args=[song.album.slug]) if song.album else '',
+        'image': song.display_cover_url or '',
+        'url': song.audio_file.url if song.audio_file else '',
+        'link': reverse('website_app:song-detail', args=[song.slug]),
+    }
+
+
 def public_profile(request, username):
     """صفحة عامة تظهر لأي زائر - إحصائيات ونشاط المستخدم اللي هو نفسه
     اختار مشاركتها (ثنائيات 'غني مع تامر' العامة فقط، مش الخاصة).
@@ -2495,20 +2515,7 @@ def public_profile(request, username):
 
         song = get_current_song_for_user(profile_user)
         if song is not None:
-            singers = [
-                credit for credit in song.credits.select_related('person').all()
-                if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
-            ]
-            listen_together_song = {
-                'songId': song.pk,
-                'title': localized_field(song, 'title'),
-                'artist': ', '.join(localized_field(credit.person, 'full_name') for credit in singers),
-                'album': localized_field(song.album, 'title') if song.album else '',
-                'albumLink': reverse('website_app:album-detail', args=[song.album.slug]) if song.album else '',
-                'image': song.display_cover_url or '',
-                'url': song.audio_file.url if song.audio_file else '',
-                'link': reverse('website_app:song-detail', args=[song.slug]),
-            }
+            listen_together_song = _serialize_song_for_listen_together(song)
 
             room = ListenTogetherRoom.objects.filter(host=profile_user).first()
             if room is not None:
@@ -2565,22 +2572,25 @@ def leaderboard(request):
     })
 
 
-# One of a small fixed set of accent-gradient pairs, picked by host id so
-# different rooms read as visually distinct on the grid without needing
-# per-room color data - see live_rooms.html's .th-room-card-N classes.
-LIVE_ROOM_GRADIENT_COUNT = 6
-
-
 def live_rooms(request):
-    """"اسمع معاه" - كل الجروبات العامة الشغالة دلوقتي. الصف نفسه (انظر
+    """"اسمع معاه" - فييد عمودي بكل الجروبات العامة الشغالة دلوقتي (روم
+    واحدة بتملى الشاشة في المرة، زي تيك توك). الصف نفسه (انظر
     ListenTogetherRoom) موجود بس طول ما صاحبه بيسمع فعلاً - فمفيش داعي
-    لفلتر "لسه شغال ولا لأ"، الاستعلام ده بيرجع بس الجروبات اللايف."""
+    لفلتر "لسه شغال ولا لأ"، الاستعلام ده بيرجع بس الجروبات اللايف.
+    الترتيب بـ tap_score هو "الرانك" - مفيش لوحة ترتيب منفصلة (انظر
+    ListenTogetherConsumer._tap).
+
+    الفييد بيتحمل مرة واحدة كـ JSON (نفس القرار اللي اتاخد وقت شكل
+    الجريد الأول - مفيش سوكيت مخصص للصفحة دي نفسها)؛ الـJS بتاع كل
+    سلايد بيستخدم نفس startListeningWith/requestToJoinRoom الموجودين
+    في base.html.
+    """
     from backend.main_app.models import ListenTogetherRoom
     from backend.main_app.shared_utils.listen_together import get_current_song_for_user
 
     rooms_qs = ListenTogetherRoom.objects.filter(
         is_public=True,
-    ).select_related('host').order_by('-created_at')
+    ).select_related('host').order_by('-tap_score', '-created_at')
 
     rooms = []
     for room in rooms_qs:
@@ -2588,11 +2598,13 @@ def live_rooms(request):
         if song is None:
             continue
         rooms.append({
-            'room': room,
-            'host': room.host,
-            'name': room.display_name,
-            'song': song,
-            'gradient': room.host_id % LIVE_ROOM_GRADIENT_COUNT,
+            'hostUserId': room.host_id,
+            'hostUsername': room.host.username,
+            'hostAvatar': room.host.profile_image.url if room.host.profile_image else '',
+            'roomName': room.display_name,
+            'isPublic': room.is_public,
+            'tapScore': room.tap_score,
+            'song': _serialize_song_for_listen_together(song),
         })
 
     return render(request, 'website/pages/live_rooms.html', {

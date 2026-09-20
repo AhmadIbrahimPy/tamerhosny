@@ -23,6 +23,7 @@ from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from channels.layers import get_channel_layer
 from django.utils import timezone
 
 from backend.main_app.models import CurrentSongListener
@@ -144,12 +145,26 @@ class SongListenerConsumer(WebsocketConsumer):
         if created:
             generate_room_name_task.delay(user.id)
 
+            # Tells the host's own always-open ListenTogetherConsumer
+            # connection (same listen_together_<user.id> group) that
+            # hosting just started, so base.html can swap the global
+            # player bar into its distinct "hosting" look without a
+            # second socket or polling - see room_opened there.
+            async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
+                'type': 'room.opened',
+                'tap_score': room.tap_score,
+            })
+
     @staticmethod
     def _maybe_close_room(user):
         from backend.main_app.models import ListenTogetherRoom
 
         if not CurrentSongListener.objects.filter(user=user).exists():
-            ListenTogetherRoom.objects.filter(host=user).delete()
+            deleted, _ = ListenTogetherRoom.objects.filter(host=user).delete()
+            if deleted:
+                async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
+                    'type': 'room.closed',
+                })
 
     def _broadcast_live_status(self):
         # Presence changed but no score changed - just refresh the live
@@ -382,6 +397,13 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.is_host = (user.id == host_user_id)
         self.group_name = f'listen_together_{host_user_id}'
         self.is_approved_follower = True
+        # Only ever set True right after _announce_follower_joined()
+        # actually runs - disconnect() uses this (not is_host/
+        # is_approved_follower alone) to decide whether to broadcast
+        # follower.left, since a blocked user's connection sets
+        # group_name before being rejected below without ever really
+        # joining anything.
+        self._joined_announced = False
 
         if not self.is_host:
             from backend.main_app.models import ListenTogetherBlock, ListenTogetherJoinRequest, ListenTogetherRoom
@@ -412,12 +434,23 @@ class ListenTogetherConsumer(WebsocketConsumer):
 
         if self.is_host:
             self._send_pending_join_requests()
+            self._send_current_room_state()
 
         if self.is_host or self.is_approved_follower:
             self._send_comment_history()
 
     def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
+            # Only a connection _announce_follower_joined() actually ran
+            # for (a real, counted join) should decrement the host's
+            # live join count - group_name gets set before the blocked-
+            # user check runs, so hasattr alone isn't enough here.
+            if getattr(self, '_joined_announced', False):
+                async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                    'type': 'follower.left',
+                    'user_id': self.user.id,
+                })
+
             async_to_sync(self.channel_layer.group_discard)(
                 self.group_name, self.channel_name,
             )
@@ -462,6 +495,8 @@ class ListenTogetherConsumer(WebsocketConsumer):
         })
 
     def _announce_follower_joined(self):
+        self._joined_announced = True
+
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'follower.joined',
             'username': self.user.username,
@@ -479,6 +514,94 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 'اسمع معاه',
                 f'{self.user.username} بيسمع معاك دلوقتي',
             )
+
+        # The one place a join is ever actually confirmed, whether the
+        # room is public or this is a private one just approved - a
+        # TikTok-style "X انضم" line belongs here and nowhere else, so
+        # it can never drift out of sync with the real join logic above.
+        self._create_comment(
+            kind='system',
+            text=f'{self.user.username} انضم',
+        )
+
+    # =========================================================
+    # COMMENTS + TAPS (host or any approved follower)
+    # =========================================================
+
+    def _create_comment(self, kind, text, author=None):
+        from backend.main_app.models import ListenTogetherComment, ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None:
+            return
+
+        comment = ListenTogetherComment.objects.create(
+            room=room, author=author, kind=kind, text=text,
+        )
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'comment.posted',
+            'id': comment.pk,
+            'kind': comment.kind,
+            'text': comment.text,
+            'author': author.username if author else '',
+        })
+
+    def _post_comment(self, text):
+        text = (text or '').strip()[:300]
+
+        if not text:
+            return
+
+        self._create_comment(kind='message', text=text, author=self.user)
+
+    def _send_comment_history(self):
+        from backend.main_app.models import ListenTogetherComment, ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None:
+            return
+
+        comments = list(
+            ListenTogetherComment.objects.filter(room=room)
+            .select_related('author')
+            .order_by('-created_at')[:50]
+        )
+        comments.reverse()
+
+        self.send(text_data=json.dumps({
+            'type': 'comment_history',
+            'comments': [
+                {
+                    'id': c.pk,
+                    'kind': c.kind,
+                    'text': c.text,
+                    'author': c.author.username if c.author else '',
+                }
+                for c in comments
+            ],
+        }))
+
+    def _tap(self):
+        from django.db.models import F
+
+        from backend.main_app.models import ListenTogetherRoom
+
+        updated = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).update(
+            tap_score=F('tap_score') + 1,
+        )
+
+        if not updated:
+            return
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).only('tap_score').first()
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'room.tapped',
+            'tap_score': room.tap_score if room else None,
+        })
 
     def _block(self, blocked_user_id):
         from backend.main_app.models import ListenTogetherBlock, UserAccount
@@ -525,6 +648,25 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 'username': req.requester.username,
                 'user_id': req.requester_id,
             }))
+
+    def _send_current_room_state(self):
+        """room.opened only ever fires once, the moment a room is first
+        created - a host page-loading (or refreshing) mid-session would
+        otherwise never see the player bar switch into hosting mode
+        until they stop and start listening again. Same shape as
+        room_opened, sent directly instead of via the group.
+        """
+        from backend.main_app.models import ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'room_opened',
+            'tap_score': room.tap_score,
+        }))
 
     # =========================================================
     # FOLLOWER -> GROUP (private rooms only)
@@ -632,6 +774,30 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'user_id': event.get('user_id'),
         }))
 
+    def follower_left(self, event):
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'follower_left',
+            'user_id': event.get('user_id'),
+        }))
+
+    def room_opened(self, event):
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'room_opened',
+            'tap_score': event.get('tap_score'),
+        }))
+
+    def room_closed(self, event):
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({'type': 'room_closed'}))
+
     def join_requested(self, event):
         if not self.is_host:
             return
@@ -648,6 +814,12 @@ class ListenTogetherConsumer(WebsocketConsumer):
 
         self.is_approved_follower = True
         self.send(text_data=json.dumps({'type': 'join_approved'}))
+        # connect() only sends comment history to an ALREADY-approved
+        # participant - a private room's requester was still pending
+        # back then, so it never got sent; catch up now, before the
+        # "X انضم" system line _announce_follower_joined is about to add,
+        # so the history renders in the right order on their screen.
+        self._send_comment_history()
         self._announce_follower_joined()
 
     def join_rejected(self, event):
@@ -661,6 +833,27 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'room_renamed',
             'name': event.get('name'),
+        }))
+
+    def comment_posted(self, event):
+        if not (self.is_host or self.is_approved_follower):
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'comment',
+            'id': event.get('id'),
+            'kind': event.get('kind'),
+            'text': event.get('text'),
+            'author': event.get('author'),
+        }))
+
+    def room_tapped(self, event):
+        if not (self.is_host or self.is_approved_follower):
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'tapped',
+            'tap_score': event.get('tap_score'),
         }))
 
     def listener_blocked(self, event):

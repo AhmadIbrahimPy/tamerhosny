@@ -11,6 +11,7 @@ KIND_TO_MODEL = {
     'media': ('media_app', 'media'),
     'concert': ('concerts_app', 'concert'),
     'ad': ('ads_app', 'advertisement'),
+    'room': ('main_app', 'listentogetherroom'),
 }
 
 def content_type_for_kind(kind):

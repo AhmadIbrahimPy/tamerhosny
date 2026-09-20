@@ -1045,6 +1045,27 @@
     .th-room-settings-popover input[type="text"]{width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; margin-bottom:10px;}
     .th-room-settings-popover label{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); margin-bottom:8px; cursor:pointer;}
     .th-room-settings-popover button[type="button"]{width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#0b0c12; font-weight:700; font-size:13px; cursor:pointer;}
+
+    /* Hosting-mode player bar - #globalAudioPlayer itself, restyled via
+       this class (not a second element) while a ListenTogetherRoom of
+       mine is live - see thEnterHostingMode/thExitHostingMode. */
+    #globalAudioPlayer.th-hosting{
+      background: linear-gradient(90deg, #241a3a, #1a1430 60%, var(--card));
+      border-top: 1px solid var(--accent);
+      box-shadow: 0 -4px 24px rgba(138,92,255,.35);
+    }
+    .th-hosting-stats-row{
+      display: flex; align-items: center; gap: 16px;
+      padding-block: 6px 8px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: 12px; font-weight: 700; color: var(--text);
+    }
+    .th-hosting-stats-row span{ display: flex; align-items: center; gap: 5px; }
+    .th-hosting-stats-row span i{ color: var(--accent); }
+    .th-hosting-browse-btn{
+      margin-inline-start: auto; display: flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 999px; background: var(--accent); color: #0b0c12;
+      text-decoration: none; font-weight: 800; font-size: 12px;
+    }
   </style>
 </head>
 
@@ -2776,8 +2797,12 @@
         var data;
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'follower_joined') thHandleFollowerJoined(data);
+        else if (data.type === 'follower_left') thHandleFollowerLeft(data);
         else if (data.type === 'join_requested') thHandleJoinRequested(data);
         else if (data.type === 'room_renamed') thHandleRoomRenamed(data);
+        else if (data.type === 'room_opened') thEnterHostingMode(data.tap_score);
+        else if (data.type === 'room_closed') thExitHostingMode();
+        else if (data.type === 'tapped') thUpdateHostingTapCount(data.tap_score);
       });
     }
 
@@ -2789,6 +2814,13 @@
         showToast(data.username + ' {% translate "بيسمع معاك دلوقتي" %}', 'info');
       }
       thRenderFollowersChip();
+      thUpdateHostingJoinCount();
+    }
+
+    function thHandleFollowerLeft(data) {
+      thFollowers = thFollowers.filter(function (f) { return f.userId !== data.user_id; });
+      thRenderFollowersChip();
+      thUpdateHostingJoinCount();
     }
 
     window.thBlockListener = function (userId) {
@@ -2797,6 +2829,7 @@
       }
       thFollowers = thFollowers.filter(function (f) { return f.userId !== userId; });
       thRenderFollowersChip();
+      thUpdateHostingJoinCount();
     };
 
     function thRenderFollowersChip() {
@@ -2866,6 +2899,70 @@
     }
 
     // ---------------------------------------------------------
+    // HOSTING MODE - swap the persistent player bar's look while a
+    // ListenTogetherRoom of mine is live, driven entirely by
+    // room_opened/room_closed on the always-open host socket above (no
+    // extra connection, no polling). #globalAudioPlayer itself is never
+    // duplicated - only a class toggle plus one injected stats row, so
+    // every existing title/artist/cover/progress binding (playAudio,
+    // the timeupdate listener) keeps writing to the same elements with
+    // nothing here to keep in sync.
+    // ---------------------------------------------------------
+
+    window.thIsHostingRoom = false;
+    var thHostingTapScore = 0;
+
+    function thEnterHostingMode(tapScore) {
+      window.thIsHostingRoom = true;
+      thHostingTapScore = tapScore || 0;
+
+      var bar = document.getElementById('globalAudioPlayer');
+      if (bar) bar.classList.add('th-hosting');
+
+      thRenderHostingStatsRow();
+    }
+
+    function thExitHostingMode() {
+      window.thIsHostingRoom = false;
+
+      var bar = document.getElementById('globalAudioPlayer');
+      if (bar) bar.classList.remove('th-hosting');
+
+      var row = document.getElementById('thHostingStatsRow');
+      if (row) row.remove();
+    }
+
+    function thUpdateHostingJoinCount() {
+      thRenderHostingStatsRow();
+    }
+
+    function thUpdateHostingTapCount(score) {
+      if (typeof score === 'number') thHostingTapScore = score;
+      thRenderHostingStatsRow();
+    }
+
+    function thRenderHostingStatsRow() {
+      if (!window.thIsHostingRoom) return;
+
+      var bar = document.getElementById('globalAudioPlayer');
+      if (!bar) return;
+
+      var row = document.getElementById('thHostingStatsRow');
+      if (!row) {
+        row = document.createElement('div');
+        row.id = 'thHostingStatsRow';
+        row.className = 'th-hosting-stats-row';
+        bar.insertBefore(row, bar.firstChild);
+      }
+
+      row.innerHTML =
+        '<span><i class="bi bi-broadcast"></i> {% translate "بتستضيف جروب دلوقتي" %}</span>' +
+        '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
+        '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
+        '<a href="{% url "website_app:songs" %}" class="th-hosting-browse-btn">{% translate "تصفح" %} <i class="bi bi-search"></i></a>';
+    }
+
+    // ---------------------------------------------------------
     // ROOM SETTINGS (host role) - name + public/private
     // ---------------------------------------------------------
 
@@ -2929,6 +3026,7 @@
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'state') thApplyRemoteState(data);
         else if (data.type === 'blocked') thHandleBlocked();
+        else thDispatchListenTogetherMessage(data);
       });
 
       btn.classList.add('active');
@@ -2982,6 +3080,8 @@
           thApplyRemoteState(data);
         } else if (data.type === 'blocked') {
           thHandleBlocked();
+        } else {
+          thDispatchListenTogetherMessage(data);
         }
       });
     };
@@ -3026,6 +3126,23 @@
 
       var banner = document.getElementById('thListenTogetherBanner');
       if (banner) banner.style.display = 'none';
+    };
+
+    // Any message on the active follow socket that isn't handled above
+    // (comment_history/comment/tapped, from the live-rooms feed page's
+    // own comment+tap actions) - forwarded as a plain DOM event instead
+    // of teaching this generic follow/host machinery page-specific
+    // message types. thFollowSocket itself is a local var, not on
+    // window, so this + thSendListenTogetherMessage below are the only
+    // way a page's own script can piggyback on it.
+    function thDispatchListenTogetherMessage(data) {
+      document.dispatchEvent(new CustomEvent('thListenTogetherMessage', { detail: data }));
+    }
+
+    window.thSendListenTogetherMessage = function (payload) {
+      if (thFollowSocket && thFollowSocket.readyState === WebSocket.OPEN) {
+        thFollowSocket.send(JSON.stringify(payload));
+      }
     };
 
     function thApplyRemoteState(data) {
