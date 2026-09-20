@@ -2572,7 +2572,7 @@ def leaderboard(request):
     })
 
 
-def live_rooms(request):
+def live_rooms(request, username=None):
     """"اسمع معاه" - فييد عمودي بكل الجروبات العامة الشغالة دلوقتي (روم
     واحدة بتملى الشاشة في المرة، زي تيك توك). الصف نفسه (انظر
     ListenTogetherRoom) موجود بس طول ما صاحبه بيسمع فعلاً - فمفيش داعي
@@ -2580,10 +2580,16 @@ def live_rooms(request):
     الترتيب بـ tap_score هو "الرانك" - مفيش لوحة ترتيب منفصلة (انظر
     ListenTogetherConsumer._tap).
 
-    الفييد بيتحمل مرة واحدة كـ JSON (نفس القرار اللي اتاخد وقت شكل
-    الجريد الأول - مفيش سوكيت مخصص للصفحة دي نفسها)؛ الـJS بتاع كل
-    سلايد بيستخدم نفس startListeningWith/requestToJoinRoom الموجودين
-    في base.html.
+    صاحب الجروب نفسه ماينفعش "ينضم" لجروبه هو - مستبعد من القائمة هنا
+    عشان الفييد ميعرضوش عليه زرار انضمام لنفسه (اللي كان بيفتح سوكيت
+    تاني زيادة عن سوكيته الدائم، ويطلع كإنه "متابع ومستضيف" في نفس
+    الوقت).
+
+    `username` (اختياري، من رابط /live-rooms/<username>/ اللي زرار
+    المشاركة بيولّده) بيحط جروب الشخص ده أول واحد في الفييد، عشان
+    الرابط يفتح على الجروب المقصود مباشرة - نفس فكرة تحميل الفييد مرة
+    واحدة كـ JSON اللي القرار اتاخد بيها قبل كده، غير كده مفيش حاجة
+    تانية بتفرق لو الرابط فيه username ولا لأ.
     """
     from backend.main_app.models import ListenTogetherRoom
     from backend.main_app.shared_utils.listen_together import get_current_song_for_user
@@ -2591,6 +2597,9 @@ def live_rooms(request):
     rooms_qs = ListenTogetherRoom.objects.filter(
         is_public=True,
     ).select_related('host').order_by('-tap_score', '-created_at')
+
+    if request.user.is_authenticated:
+        rooms_qs = rooms_qs.exclude(host=request.user)
 
     rooms = []
     for room in rooms_qs:
@@ -2606,6 +2615,11 @@ def live_rooms(request):
             'tapScore': room.tap_score,
             'song': _serialize_song_for_listen_together(song),
         })
+
+    if username:
+        # Best-effort - if the shared room already ended by the time this
+        # link is opened, just fall back to the normal feed order.
+        rooms.sort(key=lambda r: r['hostUsername'].lower() != username.lower())
 
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,

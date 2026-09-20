@@ -9,9 +9,10 @@
 {% block extra_css %}
 <style>
   .profile-header {
-    display: flex; align-items: center; gap: 20px; padding-block: 32px;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding-block: 32px;
     border-bottom: 1px solid var(--border); margin-bottom: 32px;
   }
+  .profile-header > div:not(.profile-avatar-wrap) { min-width: 0; }
   .profile-avatar-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
   .profile-avatar, .profile-avatar-fallback {
     width: 88px; height: 88px; border-radius: 50%; object-fit: cover;

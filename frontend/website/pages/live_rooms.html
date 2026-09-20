@@ -10,6 +10,7 @@
 <style>
   .th-room-feed {
     height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
@@ -19,6 +20,7 @@
 
   .th-room-slide {
     height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
     scroll-snap-align: start;
     position: relative;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -60,7 +62,7 @@
   }
 
   .th-room-slide-rail {
-    position: absolute; z-index: 3; inset-inline-end: 10px; bottom: 200px;
+    position: absolute; z-index: 3; inset-inline-end: 10px; bottom: 32vh;
     display: flex; flex-direction: column; align-items: center; gap: 18px;
   }
   .th-room-rail-btn {
@@ -108,8 +110,18 @@
     animation: thRoomHeartBurst .9s ease-out forwards;
   }
 
+  @media (max-width:380px){
+    .th-room-rail-btn{width:40px; height:40px; font-size:16px;}
+    .th-room-slide-rail{gap:14px; inset-inline-end:8px;}
+    .th-room-comment-list, .th-room-comment-form{padding-inline-end:52px;}
+    .th-room-slide-name{font-size:19px;}
+    .th-room-slide-song{max-width:45vw;}
+  }
+
   .th-room-feed-empty {
-    height: calc(100vh - 72px); display: none; flex-direction: column;
+    height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
+    display: none; flex-direction: column;
     align-items: center; justify-content: center; gap: 14px; color: var(--muted); text-align: center;
   }
   .th-room-feed-empty button {
@@ -141,6 +153,22 @@
 {% block extra_js %}
 <script>
 (function () {
+  // This feed already shows each room's own song/host/join-status
+  // inline per slide - the persistent bottom player bar's normal
+  // controls (cover, title, play/pause, progress) just duplicate that
+  // and sit on top of the feed's own comment box. Hidden here, restored
+  // on leaving (thOnTeardown) - if this browser happens to be hosting
+  // its own room while browsing, the hosting-stats strip (join/tap
+  // counts, تصفح) stays visible; see the .th-hide-controls CSS rule.
+  var thPlayerBar = document.getElementById('globalAudioPlayer');
+  if (thPlayerBar) thPlayerBar.classList.add('th-hide-controls');
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      var bar = document.getElementById('globalAudioPlayer');
+      if (bar) bar.classList.remove('th-hide-controls');
+    });
+  }
+
   var dataEl = document.getElementById('thRoomsFeedData');
   var rooms = dataEl ? JSON.parse(dataEl.textContent) : [];
   var feedEl = document.getElementById('thRoomFeed');
@@ -228,7 +256,7 @@
     shareBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       if (window.thShare) {
-        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/u/' + room.hostUsername + '/');
+        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
       }
     });
     rail.appendChild(shareBtn);
@@ -288,6 +316,13 @@
       btn.onclick = function () { window.requireAuth && window.requireAuth(null, null); };
       return;
     }
+
+    // Server-side excludes your own room from the feed already (see
+    // live_rooms view) - this is only a safety net for a stale/cached
+    // page. "Joining" yourself would open a second listen-together
+    // connection to your own group on top of the always-on host one,
+    // showing you as your own follower.
+    if (room.hostUserId === window.thUserId) return;
 
     if (room.isPublic) {
       window.startListeningWith(btn);
