@@ -1032,9 +1032,11 @@
        navigation is in flight - the top progress bar alone sits outside
        where the user is actually looking (their thumb/cursor), so a
        1-2s wait with no visible change there reads as "stuck", and they
-       tap again. th-nav-pending dims the element and blocks further taps
-       on it until the request settles - see htmx:beforeRequest below. */
-    .th-nav-pending{opacity:.55; pointer-events:none; transition:opacity .1s ease;}
+       tap again. th-nav-pending blocks further taps on it and pulses its
+       opacity, reading as "this is working" rather than a flat, static
+       dim - see htmx:beforeRequest below. */
+    @keyframes th-nav-pulse{0%,100%{opacity:.45;} 50%{opacity:.9;}}
+    .th-nav-pending{pointer-events:none; animation:th-nav-pulse .9s ease-in-out infinite;}
   </style>
 </head>
 
