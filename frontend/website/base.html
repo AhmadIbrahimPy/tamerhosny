@@ -1028,6 +1028,13 @@
     .th-nav-progress::before{content:""; display:block; height:100%; width:0; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .2s ease; opacity:0;}
     body.htmx-request .th-nav-progress::before{width:70%; opacity:1; transition:width 3s cubic-bezier(.1,.7,.3,1), opacity .2s ease;}
     body:not(.htmx-request) .th-nav-progress::before{width:100%;}
+    /* Feedback right on the tapped link/button itself while its boosted
+       navigation is in flight - the top progress bar alone sits outside
+       where the user is actually looking (their thumb/cursor), so a
+       1-2s wait with no visible change there reads as "stuck", and they
+       tap again. th-nav-pending dims the element and blocks further taps
+       on it until the request settles - see htmx:beforeRequest below. */
+    .th-nav-pending{opacity:.55; pointer-events:none; transition:opacity .1s ease;}
   </style>
 </head>
 
@@ -3593,6 +3600,19 @@
         link.classList.toggle('active', isActive);
       });
     }
+
+    // Immediate feedback on the tapped element itself, on top of the top
+    // progress bar - see .th-nav-pending's own comment above for why the
+    // bar alone isn't enough. evt.detail.boosted scopes this to actual
+    // hx-boost navigations rather than every htmx request on the page.
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+      if (!evt.detail.boosted || !evt.detail.elt || !evt.detail.elt.classList) return;
+      evt.detail.elt.classList.add('th-nav-pending');
+    });
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+      if (!evt.detail.elt || !evt.detail.elt.classList) return;
+      evt.detail.elt.classList.remove('th-nav-pending');
+    });
 
     document.body.addEventListener('htmx:afterSettle', function (evt) {
       thSyncActiveNav();
