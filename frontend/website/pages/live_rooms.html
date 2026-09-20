@@ -17,6 +17,13 @@
     background: #000;
   }
   .th-room-feed::-webkit-scrollbar { display: none; }
+  /* No live rooms -> the extra_js below never appends any slide, so
+     this stays truly empty - a plain CSS fallback that doesn't depend
+     on that script having actually run yet (or at all) to hide a
+     full-height solid-black box sitting under the header for no
+     reason. The script still sets display:none itself too, but only
+     after it runs - this is what's actually reliable moment one. */
+  .th-room-feed:empty { display: none; }
 
   .th-room-slide {
     height: calc(100vh - 72px);
@@ -121,7 +128,11 @@
   .th-room-feed-empty {
     height: calc(100vh - 72px);
     height: calc(100dvh - 72px);
-    display: none; flex-direction: column;
+    /* Visible by default (not hidden-until-JS-says-so) - the same
+       "don't depend on the script having run" reasoning as
+       .th-room-feed:empty above. extra_js hides this instead, once it
+       actually has slides to show in its place. */
+    display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 14px; color: var(--muted); text-align: center;
   }
   .th-room-feed-empty button {
@@ -178,10 +189,14 @@
   var observer = null;
 
   if (!rooms.length) {
-    if (feedEl) feedEl.style.display = 'none';
-    if (emptyEl) emptyEl.style.display = 'flex';
+    // Both elements already default (in CSS) to this exact state - only
+    // reachable here if there actually are rooms to switch to instead,
+    // so this is a no-op most of the time, not the thing making the
+    // empty state appear.
     return;
   }
+
+  if (emptyEl) emptyEl.style.display = 'none';
 
   rooms.forEach(function (room, index) {
     var slide = thBuildSlide(room, index);
