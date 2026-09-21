@@ -1802,6 +1802,20 @@
       globalAudio.play().catch(function(error) {
         console.error('Error playing audio:', error);
         setPlayButtonsIcon('bi-play-fill');
+        // Browsers refuse to auto-play without a real user gesture
+        // (click/tap) having happened first on this page - fires
+        // whenever something starts playback on its own, with nothing
+        // the visitor actually clicked yet: e.g. the live-rooms feed
+        // auto-joining whichever room lands in view first, or a
+        // followed room's remote state applying to a page the visitor
+        // hasn't interacted with. Rather than leave it silently paused
+        // forever, the very next click/tap anywhere on the page -
+        // which satisfies that same gesture requirement - retries it.
+        if (error && error.name === 'NotAllowedError') {
+          document.addEventListener('click', function thRetryBlockedPlay() {
+            globalAudio.play().catch(function () {});
+          }, { once: true });
+        }
       });
     }
 
