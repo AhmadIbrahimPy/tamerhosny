@@ -3401,12 +3401,30 @@
     // FOLLOWER ROLE
     // ---------------------------------------------------------
 
+    // Can't be hosting your own room AND following someone else's at the
+    // same time - there's only one globalAudio element, so "following"
+    // was always going to hijack whatever your own room was playing
+    // anyway; the actual bug this fixes is that your OWN room used to
+    // just keep sitting there is_live=True server-side the whole time
+    // you were off listening to someone else's, showing as still live to
+    // anyone who found it (and to your own bar - the hosting stats row
+    // and the following stats row could both be showing at once). Same
+    // 'stop' path "إنهاء" (thEndOwnRoom) already uses to close it for
+    // real, called here too before a follow session ever starts.
+    function thCloseOwnRoomIfHosting() {
+      if (!window.thIsHostingRoom) return;
+      sendGlobalListenerAction('stop');
+      if (globalAudio) globalAudio.pause();
+      thExitHostingMode();
+    }
+
     window.startListeningWith = function (btn) {
       var hostUserId = parseInt(btn.dataset.hostUserId, 10);
       var hostUsername = btn.dataset.hostUsername;
       var roomName = btn.dataset.roomName;
       if (!hostUserId) return;
       if (window.requireAuth && window.requireAuth(null, null)) return;
+      thCloseOwnRoomIfHosting();
 
       var songDataEl = document.getElementById('thListenTogetherSong');
       var song = songDataEl ? JSON.parse(songDataEl.textContent) : null;
@@ -3489,6 +3507,7 @@
       var roomName = btn.dataset.roomName;
       if (!hostUserId) return;
       if (window.requireAuth && window.requireAuth(null, null)) return;
+      thCloseOwnRoomIfHosting();
 
       thListeningWithHostId = hostUserId;
       thListeningWithHostUsername = hostUsername;
