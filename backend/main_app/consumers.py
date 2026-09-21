@@ -816,9 +816,11 @@ class ListenTogetherConsumer(WebsocketConsumer):
         }))
 
     def follower_joined(self, event):
-        if not self.is_host:
-            return
-
+        # Used to be host-only (the follower chip/join count on the
+        # global bar). live_rooms.html's own live viewer-count badge
+        # (any room's slide, not just your own) needs this too now -
+        # same reasoning as room_opened/room_closed above, not gated to
+        # one role.
         self.send(text_data=json.dumps({
             'type': 'follower_joined',
             'username': event.get('username'),
@@ -826,9 +828,6 @@ class ListenTogetherConsumer(WebsocketConsumer):
         }))
 
     def follower_left(self, event):
-        if not self.is_host:
-            return
-
         self.send(text_data=json.dumps({
             'type': 'follower_left',
             'user_id': event.get('user_id'),

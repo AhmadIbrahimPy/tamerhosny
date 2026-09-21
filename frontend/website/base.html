@@ -3025,6 +3025,14 @@
           // your own slide just never moved, even though the count was
           // incrementing fine server-side.
           thDispatchListenTogetherMessage(data);
+        } else if (data.type === 'comment_history' || data.type === 'comment') {
+          // Same gap as 'tapped' just above, for comments (including
+          // the "X انضم" system line) - thHostSocket never forwarded
+          // these at all before, so your own room's comment box on
+          // live_rooms.html stayed permanently empty while you were
+          // hosting, even though every actual follower could see the
+          // same messages fine.
+          thDispatchListenTogetherMessage(data);
         }
       });
     }
