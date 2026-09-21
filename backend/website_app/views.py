@@ -2581,6 +2581,20 @@ def live_rooms(request, username=None):
     from backend.main_app.models import ListenTogetherRoom
     from backend.main_app.shared_utils.listen_together import get_current_song_for_user
 
+    # The plain /live-rooms/ feed excludes your own room (see rooms_qs
+    # below - you can't meaningfully join yourself), so landing there
+    # while you're actually hosting right now showed everyone ELSE's
+    # rooms with nothing of yours in it - useless, since your own room
+    # is exactly where "تصفح"/"عرض الروم" and playing a suggested song
+    # both actually want you. Redirected straight to it instead; only for
+    # the bare /live-rooms/ URL - a link to someone ELSE's room
+    # (username given) should still open that room, not bounce you back
+    # to your own.
+    if username is None and request.user.is_authenticated:
+        own_room = ListenTogetherRoom.objects.filter(host=request.user, is_live=True).first()
+        if own_room is not None:
+            return redirect('website_app:live-room-detail', username=request.user.username)
+
     # /live-rooms/<own-username>/ - "your room" (the تصفح/عرض الروم link,
     # and playing a suggested song, both land here) is a special case:
     # unlike anyone else's, it should show even if you made it private,

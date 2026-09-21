@@ -1051,7 +1051,7 @@
     #thListenTogetherBanner{box-sizing:border-box;}
     .th-lt-banner-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
     @media (max-width:480px){
-      #thListenTogetherFollowersChip, #thListenTogetherJoinRequests{left:8px;}
+      #thListenTogetherJoinRequests{left:8px;}
       #thListenTogetherBanner{right:8px;}
     }
     .th-room-settings-popover{display:none; position:absolute; bottom:calc(100% + 10px); inset-inline-end:0; width:240px; max-width:calc(100vw - 24px); background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.4); z-index:1002;}
@@ -2166,8 +2166,7 @@
        stay synced too). See the JS block near connectGlobalListenerSocket
        for the logic, and ListenTogetherConsumer (backend/main_app/
        consumers.py) for the server side. -->
-  <div id="thListenTogetherFollowersChip" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
-  <div id="thListenTogetherJoinRequests" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:120px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
+  <div id="thListenTogetherJoinRequests" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
   <div id="thListenTogetherBanner" class="th-lt-fixed-stack" onclick="window.thEnterFollowedRoom();" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;">
     <i class="bi bi-headphones"></i>
     <span class="th-lt-banner-text"></span>
@@ -3119,7 +3118,6 @@
       thFollowers = (viewers || []).map(function (v) {
         return { userId: v.user_id, username: v.username };
       });
-      thRenderFollowersChip();
       thUpdateHostingJoinCount();
       thDispatchListenTogetherMessage({ type: 'viewers_snapshot', viewers: viewers || [] });
     }
@@ -3128,7 +3126,6 @@
       if (!thFollowers.some(function (f) { return f.userId === data.user_id; })) {
         thFollowers.push({ userId: data.user_id, username: data.username });
       }
-      thRenderFollowersChip();
       thUpdateHostingJoinCount();
       // Same reasoning as the 'tapped' fix above - thHostSocket is the
       // only connection open while looking at your OWN room's slide, so
@@ -3140,34 +3137,21 @@
 
     function thHandleFollowerLeft(data) {
       thFollowers = thFollowers.filter(function (f) { return f.userId !== data.user_id; });
-      thRenderFollowersChip();
       thUpdateHostingJoinCount();
       thDispatchListenTogetherMessage(data);
     }
 
+    // Still callable from live_rooms.html's own viewer-list modal
+    // (thShowRoomViewers) - blocking someone no longer also needs to
+    // update a floating chip stack (removed - live_rooms.html's modal is
+    // the one place a host actually manages viewers now).
     window.thBlockListener = function (userId) {
       if (thHostSocket && thHostSocket.readyState === WebSocket.OPEN) {
         thHostSocket.send(JSON.stringify({ action: 'block', user_id: userId }));
       }
       thFollowers = thFollowers.filter(function (f) { return f.userId !== userId; });
-      thRenderFollowersChip();
       thUpdateHostingJoinCount();
     };
-
-    function thRenderFollowersChip() {
-      var chip = document.getElementById('thListenTogetherFollowersChip');
-      if (!chip) return;
-      if (!thFollowers.length) {
-        chip.style.display = 'none';
-        chip.innerHTML = '';
-        return;
-      }
-      chip.style.display = 'flex';
-      chip.innerHTML = thFollowers.map(function (f) {
-        return '<span class="th-lt-follower"><i class="bi bi-headphones"></i> ' + f.username +
-          '<button type="button" title="{% translate "امنع" %}" onclick="window.thBlockListener(' + f.userId + ')"><i class="bi bi-slash-circle"></i></button></span>';
-      }).join('');
-    }
 
     // ---------------------------------------------------------
     // HOST ROLE - private-room join requests
