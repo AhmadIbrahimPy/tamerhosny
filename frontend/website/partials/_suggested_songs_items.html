@@ -1,0 +1,17 @@
+{% load i18n %}
+{% for song in suggested_songs %}
+<a href="{{ song.link }}" class="th-suggested-song-row th-card-song"
+   data-song-id="{{ song.songId }}" data-audio-url="{{ song.url }}"
+   data-title="{{ song.title }}" data-artist="{{ song.artist }}"
+   data-album="{{ song.album }}" data-album-link="{{ song.albumLink }}"
+   data-image="{{ song.image }}">
+  <div class="th-suggested-song-cover-wrap">
+    {% if song.image %}<img src="{{ song.image }}" class="th-suggested-song-cover" alt="">{% else %}<i class="bi bi-music-note-beamed"></i>{% endif %}
+  </div>
+  <div class="th-suggested-song-info">
+    <div class="th-suggested-song-title">{{ song.title }}</div>
+    <div class="th-suggested-song-artist">{{ song.artist }}</div>
+  </div>
+  <span class="th-play-icon th-suggested-song-play"><i class="bi bi-play-fill"></i></span>
+</a>
+{% endfor %}

@@ -3158,11 +3158,20 @@
       var browseLabel = onRoomFeed ? '{% translate "تصفح" %}' : '{% translate "عرض الروم" %}';
       var browseIcon = onRoomFeed ? 'bi-search' : 'bi-broadcast';
 
+      // A plain <a href> injected via innerHTML like this never gets
+      // seen by htmx (it only boosts links present when it first scans
+      // the DOM, or ones explicitly run through htmx.process()) - it'd
+      // fall back to a real, un-boosted browser navigation (full
+      // reload) instead of matching every other link on the site.
+      // window.thBoostedNavigate (base.html, used the same way by
+      // thEnterFollowedRoom above) builds a real anchor, processes it
+      // with htmx, and clicks it - a boosted navigation in every way
+      // that matters.
       row.innerHTML =
         '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
-        '<a href="' + browseHref + '" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true;">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></a>';
+        '<button type="button" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true; window.thBoostedNavigate(\'' + browseHref + '\');">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></button>';
     }
 
     // ---------------------------------------------------------

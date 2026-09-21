@@ -168,23 +168,20 @@
   .th-suggested-songs {
     display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px;
     padding-inline: 20px; max-height: 42vh; overflow-y: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
   }
+  .th-suggested-songs::-webkit-scrollbar { display: none; }
   .th-suggested-song-row {
     display: flex; align-items: center; gap: 12px; padding: 8px 10px;
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     text-decoration: none; color: var(--text); text-align: start;
   }
   .th-suggested-song-cover-wrap {
-    position: relative; width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
+    width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
     flex-shrink: 0; background: #1e2130; display: flex; align-items: center; justify-content: center;
     color: var(--muted); font-size: 18px;
   }
   .th-suggested-song-cover { width: 100%; height: 100%; object-fit: cover; }
-  .th-suggested-song-play {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.35); color: #fff; opacity: 0; transition: opacity .15s ease; font-size: 16px;
-  }
-  .th-suggested-song-row:hover .th-suggested-song-play { opacity: 1; }
   .th-suggested-song-info { min-width: 0; flex: 1; }
   .th-suggested-song-title {
     font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -192,6 +189,20 @@
   .th-suggested-song-artist {
     font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* Its own element at the row's trailing end now, not overlaid on the
+     cover art on the leading side. */
+  .th-suggested-song-play {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #0b0c12; font-size: 13px;
+  }
+
+  .th-suggested-songs-refresh {
+    background: transparent !important; border: 1px solid var(--border) !important;
+    color: var(--text) !important; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .th-suggested-songs-refresh.spinning i { animation: thSpin .7s linear infinite; }
+  @keyframes thSpin { to { transform: rotate(360deg); } }
 
   .leaderboard-live-dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
@@ -210,26 +221,18 @@
   <div style="font-size:48px;">🎧</div>
   <p>{% translate "مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد." %}</p>
   {% if suggested_songs %}
-  <div class="th-suggested-songs">
-    {% for song in suggested_songs %}
-    <a href="{{ song.link }}" class="th-suggested-song-row th-card-song"
-       data-song-id="{{ song.songId }}" data-audio-url="{{ song.url }}"
-       data-title="{{ song.title }}" data-artist="{{ song.artist }}"
-       data-album="{{ song.album }}" data-album-link="{{ song.albumLink }}"
-       data-image="{{ song.image }}">
-      <div class="th-suggested-song-cover-wrap">
-        {% if song.image %}<img src="{{ song.image }}" class="th-suggested-song-cover" alt="">{% else %}<i class="bi bi-music-note-beamed"></i>{% endif %}
-        <span class="th-play-icon th-suggested-song-play"><i class="bi bi-play-fill"></i></span>
-      </div>
-      <div class="th-suggested-song-info">
-        <div class="th-suggested-song-title">{{ song.title }}</div>
-        <div class="th-suggested-song-artist">{{ song.artist }}</div>
-      </div>
-    </a>
-    {% endfor %}
+  <div class="th-suggested-songs" id="thSuggestedSongs">
+    {% include "website/partials/_suggested_songs_items.html" %}
   </div>
   {% endif %}
-  <button type="button" onclick="thRoomFeedCreateRoom()">{% translate "تصفح" %}</button>
+  <div style="display:flex; gap:8px;">
+    <button type="button" onclick="thRoomFeedCreateRoom()">{% translate "تصفح" %}</button>
+    {% if suggested_songs %}
+    <button type="button" class="th-suggested-songs-refresh" onclick="thRefreshSuggestedSongs(this)" title="{% translate 'تحديث القائمة' %}">
+      <i class="bi bi-arrow-clockwise"></i> {% translate "تحديث" %}
+    </button>
+    {% endif %}
+  </div>
 </div>
 {{ rooms|json_script:"thRoomsFeedData" }}
 {% endblock %}
@@ -280,6 +283,24 @@
     if (window.showToast) {
       showToast('{% translate "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي" %}', 'info');
     }
+  };
+
+  // "تحديث" next to "تصفح" - swaps in a freshly (re-randomized
+  // server-side) picked batch of suggestions in place, no reload.
+  window.thRefreshSuggestedSongs = function (btn) {
+    if (btn) btn.classList.add('spinning');
+    fetch('{% url "website_app:live-rooms-suggested-songs" %}', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var list = document.getElementById('thSuggestedSongs');
+        if (list && data.html) list.innerHTML = data.html;
+      })
+      .catch(function () {})
+      .finally(function () {
+        if (btn) btn.classList.remove('spinning');
+      });
   };
 
   if (!rooms.length) {

@@ -2621,42 +2621,74 @@ def live_rooms(request, username=None):
         # link is opened, just fall back to the normal feed order.
         rooms.sort(key=lambda r: r['hostUsername'].lower() != username.lower())
 
-    # Nothing to join right now - give the empty state something more
-    # useful to do than just say so: a few songs worth starting a room
-    # with. Personalized (UserSongRecommendation - the same "recommended
-    # for you" signal this app already computes nightly, just never
-    # actually surfaced anywhere on the site until now) when there's
-    # enough listening history to have any; otherwise the current
-    # trending chart (get_trending - already used by /songs/trending/,
-    # safe to call from any view since it recomputes itself if stale).
-    suggested_songs = []
-    if not rooms:
-        if request.user.is_authenticated:
-            from backend.main_app.models import UserSongRecommendation
-
-            suggested_songs = [
-                rec.song for rec in
-                UserSongRecommendation.objects.filter(user=request.user)
-                .select_related('song', 'song__album')[:6]
-            ]
-
-        if not suggested_songs:
-            from backend.main_app.shared_utils.trending import get_trending
-
-            suggested_songs = [rank.song for rank in get_trending(limit=6)]
-
-        if not suggested_songs:
-            # No engagement data at all yet (trending/recommendations are
-            # both built from real plays) - a fresh catalog with no
-            # listening history yet shouldn't leave this empty either.
-            suggested_songs = list(
-                Song.visible_queryset(Song.objects.exclude(audio_file=''))
-                .select_related('album').order_by('-release_year')[:6]
-            )
+    suggested_songs = _suggested_songs_for_empty_feed(request) if not rooms else []
 
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
-        'suggested_songs': [_serialize_song_for_listen_together(song) for song in suggested_songs],
+        'suggested_songs': suggested_songs,
+    })
+
+
+SUGGESTED_SONGS_COUNT = 6
+# Pull a wider pool than we actually show and pick randomly from it -
+# without this, the list would be byte-for-byte identical every time
+# (page refresh or the "تحديث" button), since the underlying
+# recommendation/trending order is otherwise stable.
+SUGGESTED_SONGS_POOL = 20
+
+
+def _suggested_songs_for_empty_feed(request):
+    """Nothing to join right now - give the live-rooms empty state
+    something more useful to do than just say so: a few songs worth
+    starting a room with. Personalized (UserSongRecommendation - the
+    same "recommended for you" signal this app already computes
+    nightly, just never actually surfaced anywhere on the site until
+    now) when there's enough listening history to have any; otherwise
+    the current trending chart (get_trending - already used by
+    /songs/trending/, safe to call from any view since it recomputes
+    itself if stale); a fresh catalog with no engagement data at all
+    yet falls back further, to just the newest songs.
+    """
+    import random
+
+    songs = []
+
+    if request.user.is_authenticated:
+        from backend.main_app.models import UserSongRecommendation
+
+        songs = [
+            rec.song for rec in
+            UserSongRecommendation.objects.filter(user=request.user)
+            .select_related('song', 'song__album')[:SUGGESTED_SONGS_POOL]
+        ]
+
+    if not songs:
+        from backend.main_app.shared_utils.trending import get_trending
+
+        songs = [rank.song for rank in get_trending(limit=SUGGESTED_SONGS_POOL)]
+
+    if not songs:
+        songs = list(
+            Song.visible_queryset(Song.objects.exclude(audio_file=''))
+            .select_related('album').order_by('-release_year')[:SUGGESTED_SONGS_POOL]
+        )
+
+    if len(songs) > SUGGESTED_SONGS_COUNT:
+        songs = random.sample(songs, SUGGESTED_SONGS_COUNT)
+
+    return [_serialize_song_for_listen_together(song) for song in songs]
+
+
+def live_rooms_suggested_songs(request):
+    """AJAX - "تحديث" next to the live-rooms empty state's "تصفح" button:
+    swaps in a freshly (re-randomized, see _suggested_songs_for_empty_
+    feed) picked batch without a page reload."""
+    return JsonResponse({
+        'html': render_to_string(
+            'website/partials/_suggested_songs_items.html',
+            {'suggested_songs': _suggested_songs_for_empty_feed(request)},
+            request=request,
+        ),
     })
 
 
