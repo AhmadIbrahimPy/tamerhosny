@@ -3392,7 +3392,27 @@
       thUpdateFollowingBannerVisibility();
 
       thRenderFollowingStatsRow(roomName);
+      thMaybeEnterRoomView(hostUsername);
     };
+
+    // "اسمع معاه" clicked from somewhere OTHER than the room feed itself
+    // (a profile page's own button is the real case - previously it
+    // just started mirroring audio silently in place, with no way to
+    // actually land on the room view/slug at all short of navigating
+    // there by hand) takes you straight into that room's own page.
+    // Skipped when already on ANY /live-rooms/ page: thActivateSlide
+    // (live_rooms.html) calls startListeningWith/thHandleJoinApproved
+    // on every single scroll to a new slide - navigating there too
+    // would reload the whole swipeable feed on every swipe.
+    function thMaybeEnterRoomView(hostUsername) {
+      if (window.location.pathname.indexOf('/live-rooms/') === 0) return;
+      var url = '/live-rooms/' + hostUsername + '/';
+      if (window.thBoostedNavigate) {
+        window.thBoostedNavigate(url);
+      } else {
+        window.location.href = url;
+      }
+    }
 
     // A private room's button never starts playback directly - it opens
     // the same follow socket but sends an explicit request_join instead
@@ -3471,6 +3491,7 @@
       thUpdateFollowingBannerVisibility();
 
       thRenderFollowingStatsRow(roomName);
+      thMaybeEnterRoomView(hostUsername);
     }
 
     // The "بتسمع مع..." banner is only useful as a reminder while
