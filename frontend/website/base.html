@@ -3335,9 +3335,9 @@
 
       var banner = document.getElementById('thListenTogetherBanner');
       if (banner) {
-        banner.style.display = 'flex';
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
+      thUpdateFollowingBannerVisibility();
 
       thRenderFollowingStatsRow(roomName);
     };
@@ -3414,12 +3414,32 @@
 
       var banner = document.getElementById('thListenTogetherBanner');
       if (banner) {
-        banner.style.display = 'flex';
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
+      thUpdateFollowingBannerVisibility();
 
       thRenderFollowingStatsRow(roomName);
     }
+
+    // The "بتسمع مع..." banner is only useful as a reminder while
+    // you're looking at something ELSE - sitting right there on the
+    // room's own slide, it's redundant with everything already on
+    // screen. Hidden specifically on that room's own /live-rooms/
+    // <host>/ URL, shown everywhere else while still following - called
+    // both right after start/approve above and on every boosted
+    // navigation (htmx:afterSettle below), since the path can change
+    // without a new follow event.
+    function thUpdateFollowingBannerVisibility() {
+      var banner = document.getElementById('thListenTogetherBanner');
+      if (!banner) return;
+      if (!thFollowSocket || !thListeningWithHostUsername) {
+        banner.style.display = 'none';
+        return;
+      }
+      var inRoom = window.location.pathname === '/live-rooms/' + thListeningWithHostUsername + '/';
+      banner.style.display = inRoom ? 'none' : 'flex';
+    }
+    window.thUpdateFollowingBannerVisibility = thUpdateFollowingBannerVisibility;
 
     // The "بتسمع مع..." banner itself (not its own small x button, which
     // stops propagation and calls stopListeningWith below instead) -
@@ -4523,6 +4543,10 @@
       // every boosted navigation, not just join/tap events, since the
       // path can change with neither. No-ops when not hosting.
       if (typeof thRenderHostingStatsRow === 'function') thRenderHostingStatsRow();
+      // Same idea for the follower-side "بتسمع مع..." banner - hidden
+      // specifically while looking at the room you're following, shown
+      // everywhere else (see thUpdateFollowingBannerVisibility above).
+      if (typeof thUpdateFollowingBannerVisibility === 'function') thUpdateFollowingBannerVisibility();
       window.scrollTo(0, 0);
       // #th-extra-js (the OOB swap carrying each page's extra_js, since
       // it can't live inside #th-page-root - see its own comment) sits

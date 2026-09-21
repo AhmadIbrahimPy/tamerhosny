@@ -17,6 +17,7 @@
      does, so nothing needs undoing on the CSS side specifically. */
   body.th-live-rooms-page { overflow: hidden; }
   body.th-live-rooms-page .th-footer { display: none; }
+  body.th-live-rooms-page .th-mic-fab { display: none !important; }
 
   .th-room-feed-nav-arrows {
     /* Mobile scrolls the feed by hand (swipe) - the arrows are
@@ -116,6 +117,16 @@
   }
   .th-room-tap-badge.tapped i { color: #e5484d; }
 
+  /* Host ended the room while you were following it - see
+     thHandleRoomClosedOnSlide. Dims the whole slide instead of leaving
+     it looking exactly as live as every other one. */
+  .th-room-slide-closed .th-room-slide-bg { filter: blur(30px) brightness(.3) grayscale(1); }
+  .th-room-slide-closed .th-room-now-playing,
+  .th-room-slide-closed .th-room-up-next,
+  .th-room-slide-closed .th-room-suggest-strip { opacity: .35; pointer-events: none; }
+  .th-room-slide-closed .th-room-live-badge { background: rgba(229,72,77,.5); }
+  .th-room-slide-closed .th-room-comment-form { opacity: .5; pointer-events: none; }
+
   .th-room-slide-name {
     position: relative; z-index: 2; font-size: 22px; font-weight: 900;
     padding: 0 16px; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,.5);
@@ -157,6 +168,11 @@
     background: rgba(255,255,255,.15); color: #fff; font-size: 14px; cursor: pointer;
   }
   .th-room-now-playing-controls button.th-room-own-play-btn { width: 38px; height: 38px; font-size: 17px; background: #fff; color: #111; }
+  /* skip-start/skip-end point left/right per LTR reading order - in
+     RTL "previous"/"next" read the opposite way, same fix already used
+     for .th-slider-arrow (base.html). */
+  html[dir="rtl"] .th-room-own-prev-btn i,
+  html[dir="rtl"] .th-room-own-next-btn i { display: inline-block; transform: scaleX(-1); }
 
   /* "بعدها" - smaller/dimmer than the now-playing card, own room only. */
   .th-room-up-next {
@@ -679,7 +695,27 @@
     if (data.type === 'comment_history') thRenderCommentHistory(data.comments);
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
+    else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
   });
+
+  // base.html's own thHandleRoomClosedWhileFollowing() already toasts
+  // and stops the audio/follow session - this is this page's own slide
+  // reacting too, since otherwise the slide you were just following
+  // keeps looking exactly as live as every other one even though it
+  // isn't anymore.
+  function thHandleRoomClosedOnSlide() {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide) return;
+    slide.classList.add('th-room-slide-closed');
+    var badge = slide.querySelector('.th-room-live-badge');
+    if (badge) badge.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
+    var joinBtn = slide.querySelector('.th-room-join-status');
+    if (joinBtn) {
+      joinBtn.disabled = true;
+      joinBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
+    }
+  }
 
   function thBuildSlide(room, index) {
     var slide = document.createElement('div');
@@ -854,6 +890,7 @@
 
     slide.addEventListener('click', function (e) {
       if (e.target.closest('button, input, form')) return;
+      if (slide.classList.contains('th-room-slide-closed')) return;
       thTapSlide(slide, e.clientX, e.clientY);
     });
 

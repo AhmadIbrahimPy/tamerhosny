@@ -503,18 +503,6 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'user_id': self.user.id,
         })
 
-        from backend.main_app.models import UserAccount
-        from backend.main_app.shared_utils.push_notifications import send_push_to_user
-
-        host = UserAccount.objects.filter(pk=self.host_user_id).first()
-
-        if host:
-            send_push_to_user(
-                host,
-                'اسمع معاه',
-                f'{self.user.username} بيسمع معاك دلوقتي',
-            )
-
         # The one place a join is ever actually confirmed, whether the
         # room is public or this is a private one just approved - a
         # TikTok-style "X انضم" line belongs here and nowhere else, so
