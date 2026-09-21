@@ -438,15 +438,6 @@
   var activeIndex = -1;
   var observer = null;
 
-  // Move play buttons inside cover-wrap for empty state suggested songs
-  var suggestedSongsList = document.getElementById('thSuggestedSongs');
-  if (suggestedSongsList) {
-    suggestedSongsList.querySelectorAll('.th-suggested-song-play').forEach(function (btn) {
-      var coverWrap = btn.closest('.th-suggested-song-row').querySelector('.th-suggested-song-cover-wrap');
-      if (coverWrap) coverWrap.appendChild(btn);
-    });
-  }
-
   // Defined before the empty-feed early return below, not after it -
   // that's exactly the one case (rooms.length === 0) where the empty-
   // state button calling this actually gets shown, so putting this
@@ -650,8 +641,6 @@
         // server-side, so this stays the one partial both contexts share.
         cardsEl.querySelectorAll('.th-suggested-song-play').forEach(function (btn) {
           btn.setAttribute('onclick', 'window.thQueueSuggestedSong(this);');
-          var coverWrap = btn.closest('.th-suggested-song-row').querySelector('.th-suggested-song-cover-wrap');
-          if (coverWrap) coverWrap.appendChild(btn);
         });
       })
       .catch(function () {});
