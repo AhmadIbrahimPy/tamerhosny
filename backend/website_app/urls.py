@@ -81,6 +81,7 @@ urlpatterns = [
     path('blocked-listeners/<int:user_id>/unblock/', views.listen_together_unblock, name='listen-together-unblock'),
     path('live-rooms/', views.live_rooms, name='live-rooms'),
     path('live-rooms/settings/', views.update_room_settings, name='update-room-settings'),
+    path('live-rooms/suggested-songs/', views.live_rooms_suggested_songs, name='live-rooms-suggested-songs'),
     # Must stay after the literal 'settings/' path above - <str:username>
     # would otherwise swallow it first.
     path('live-rooms/<str:username>/', views.live_rooms, name='live-room-detail'),

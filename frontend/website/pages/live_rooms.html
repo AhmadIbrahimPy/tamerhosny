@@ -174,7 +174,7 @@
   .th-suggested-song-row {
     display: flex; align-items: center; gap: 12px; padding: 8px 10px;
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    text-decoration: none; color: var(--text); text-align: start;
+    color: var(--text); text-align: start;
   }
   .th-suggested-song-cover-wrap {
     width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
@@ -190,11 +190,12 @@
     font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   /* Its own element at the row's trailing end now, not overlaid on the
-     cover art on the leading side. */
+     cover art on the leading side - and the ONLY clickable/interactive
+     part of the row (the row itself no longer links anywhere). */
   .th-suggested-song-play {
-    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--accent); color: #0b0c12; font-size: 13px;
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    background: var(--accent); color: #0b0c12; font-size: 11px; cursor: pointer;
   }
 
   .th-suggested-songs-refresh {
@@ -301,6 +302,32 @@
       .finally(function () {
         if (btn) btn.classList.remove('spinning');
       });
+  };
+
+  // The suggested-song row itself doesn't link anywhere (unlike a
+  // normal .th-card-song, which the sitewide .th-play-icon delegate in
+  // base.html expects) - only this button does anything, and what it
+  // does is specific to this page: start the song (which, per
+  // SongListenerConsumer._maybe_open_room, automatically creates the
+  // room the instant it's actually playing) and take you into it -
+  // "دور على أغنية وشغلها" is done at that point, no reason to leave
+  // someone stranded looking at the empty state they just left.
+  window.thPlaySuggestedSong = function (btn) {
+    var row = btn.closest('.th-suggested-song-row');
+    if (!row) return;
+
+    toggleAudio(
+      row.dataset.audioUrl, btn, row.dataset.title, '',
+      row.dataset.image ? [row.dataset.image] : null,
+      row.dataset.link, row.dataset.artist, row.dataset.album,
+      false, row.dataset.songId, row.dataset.albumLink, false
+    );
+
+    if (window.thBoostedNavigate) {
+      window.thBoostedNavigate('/live-rooms/');
+    } else {
+      window.location.href = '/live-rooms/';
+    }
   };
 
   if (!rooms.length) {
