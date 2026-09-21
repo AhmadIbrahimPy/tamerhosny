@@ -135,6 +135,18 @@
   .th-room-now-playing-title { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .th-room-now-playing-artist { font-size: 12px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* Own room only - the global player bar is fully hidden on this page
+     (see .th-hide-controls in base.html), so the host needs prev/play-
+     pause/next somewhere; this row lives right on the "دلوقتي بيسمع"
+     card instead of duplicating the whole bar. */
+  .th-room-now-playing-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-inline-start: auto; }
+  .th-room-now-playing-controls button {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.15); color: #fff; font-size: 14px; cursor: pointer;
+  }
+  .th-room-now-playing-controls button.th-room-own-play-btn { width: 38px; height: 38px; font-size: 17px; background: #fff; color: #111; }
+
   /* "بعدها" - smaller/dimmer than the now-playing card, own room only. */
   .th-room-up-next {
     display: flex; align-items: center; gap: 10px;
@@ -245,6 +257,17 @@
     color: #0b0c12; font-weight: 800; cursor: pointer;
   }
 
+  /* Shown while thPlaySuggestedSong waits for the async room_opened
+     round-trip before navigating to the room view - otherwise that gap
+     (up to the 4s timeout fallback) looks like nothing happened. */
+  .th-room-loading-overlay {
+    position: fixed; inset: 0; z-index: 50; background: #0b0c12;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    color: #fff;
+  }
+  .th-room-loading-overlay i { font-size: 40px; color: var(--accent); }
+  .th-room-loading-overlay p { font-size: 14px; font-weight: 700; opacity: .85; margin: 0; }
+
   .th-suggested-songs {
     display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px;
     padding-inline: 20px; max-height: 42vh; overflow-y: auto;
@@ -314,6 +337,10 @@
     </button>
     {% endif %}
   </div>
+</div>
+<div id="thRoomLoadingOverlay" class="th-room-loading-overlay" style="display:none;">
+  <i class="bi bi-arrow-repeat icon-spin"></i>
+  <p>{% translate "بنجهزلك الروم..." %}</p>
 </div>
 {{ rooms|json_script:"thRoomsFeedData" }}
 {% endblock %}
@@ -464,6 +491,8 @@
     function goToMyRoom() {
       if (navigated) return;
       navigated = true;
+      var overlay = document.getElementById('thRoomLoadingOverlay');
+      if (overlay) overlay.style.display = 'none';
       var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
       if (window.thBoostedNavigate) {
         window.thBoostedNavigate(url);
@@ -483,7 +512,10 @@
       // reliably lands on the still-empty feed since the room isn't
       // there yet. thRoomOpened (base.html, dispatched from
       // thEnterHostingMode) is the real signal, not a guessed delay;
-      // the timeout is only a safety net in case it never arrives.
+      // the timeout is only a safety net in case it never arrives. The
+      // overlay covers that wait so it doesn't just look frozen.
+      var overlay = document.getElementById('thRoomLoadingOverlay');
+      if (overlay) overlay.style.display = 'flex';
       document.addEventListener('thRoomOpened', goToMyRoom, { once: true });
       setTimeout(goToMyRoom, 4000);
     }
@@ -703,8 +735,38 @@
       '<div class="th-room-now-playing-label"><i class="bi bi-soundwave"></i> {% translate "دلوقتي بيسمع" %}</div>' +
       '<div class="th-room-now-playing-title">' + room.song.title + '</div>' +
       (room.song.artist ? '<div class="th-room-now-playing-artist">' + room.song.artist + '</div>' : '') +
-      '</div>';
+      '</div>' +
+      (isOwnRoom
+        ? '<div class="th-room-now-playing-controls">' +
+          '<button type="button" class="th-room-own-prev-btn" title="{% translate "السابقة" %}"><i class="bi bi-skip-start-fill"></i></button>' +
+          '<button type="button" class="th-room-own-play-btn" title="{% translate "تشغيل/إيقاف" %}"><i id="thRoomOwnPlayIcon" class="bi bi-pause-fill"></i></button>' +
+          '<button type="button" class="th-room-own-next-btn" title="{% translate "التالية" %}"><i class="bi bi-skip-end-fill"></i></button>' +
+          '</div>'
+        : '');
     header.appendChild(nowPlaying);
+    if (isOwnRoom) {
+      // globalAudio (base.html) is the single source of truth for actual
+      // play state - this just mirrors it once on build; every
+      // subsequent change comes through setPlayButtonsIcon's own
+      // #thRoomOwnPlayIcon hook (base.html), same as every other play
+      // button on the site.
+      var ownPlayIcon = nowPlaying.querySelector('#thRoomOwnPlayIcon');
+      if (ownPlayIcon && window.globalAudio) {
+        ownPlayIcon.className = 'bi ' + (window.globalAudio.paused ? 'bi-play-fill' : 'bi-pause-fill');
+      }
+      nowPlaying.querySelector('.th-room-own-prev-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.playPrevious) window.playPrevious();
+      });
+      nowPlaying.querySelector('.th-room-own-play-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.toggleGlobalAudio) window.toggleGlobalAudio();
+      });
+      nowPlaying.querySelector('.th-room-own-next-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.playNext) window.playNext();
+      });
+    }
 
     // "بعدها" - reflects window.thHostQueue[0] (a single slot, not a
     // growing list - picking a new "next" from the strip below replaces

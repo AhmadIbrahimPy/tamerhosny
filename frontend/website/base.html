@@ -1594,6 +1594,13 @@
       if (pageCoverIcon) {
         pageCoverIcon.className = 'bi ' + iconClass;
       }
+      // The live-rooms feed's own-room slide play/pause icon (the global
+      // bar is fully hidden on that page, so the room owner needs this
+      // separate control kept in sync the same way).
+      var roomIcon = document.getElementById('thRoomOwnPlayIcon');
+      if (roomIcon) {
+        roomIcon.className = 'bi ' + iconClass;
+      }
     }
 
     // A song's own detail page already has full playback controls on the
