@@ -85,6 +85,11 @@
     padding: 6px 12px; background: rgba(229,72,77,.85); color: #fff;
     font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
   }
+  .th-room-top-my-room-btn {
+    display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 6px 12px; background: rgba(0,0,0,.35); color: #fff;
+    font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+  }
   .th-room-slide-avatar, .th-room-slide-avatar-fallback {
     width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
     border: 2px solid rgba(255,255,255,.6); flex-shrink: 0;
@@ -422,6 +427,24 @@
     }
   };
 
+  // "غرفتي" - shown on anyone ELSE's room slide. Leaves whatever's
+  // currently being followed (per the base.html fix above, following
+  // never actually creates a room of your own to begin with - this
+  // just makes sure the follow session itself ends too, not only the
+  // audio) and takes you to your own room's URL - if you're not
+  // hosting anything at that exact moment, that page's own empty state
+  // (with its "دور على أغنية" suggestions) is exactly where you'd want
+  // to land anyway to start one.
+  window.thGoToMyRoom = function () {
+    if (window.stopListeningWith) window.stopListeningWith();
+    var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
+    if (window.thBoostedNavigate) {
+      window.thBoostedNavigate(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
   window.thPlaySuggestedSong = function (btn) {
     var row = btn.closest('.th-suggested-song-row');
     if (!row) return;
@@ -645,6 +668,7 @@
       '<div><div class="th-room-slide-username">@' + room.hostUsername + '</div></div>' +
       '<button type="button" class="th-room-top-share-btn" title="{% translate "مشاركة" %}"><i class="bi bi-share-fill"></i></button>' +
       (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
+      (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
     top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
@@ -657,6 +681,11 @@
       top.querySelector('.th-room-top-end-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         window.thEndOwnRoom();
+      });
+    } else if (window.isAuthenticated) {
+      top.querySelector('.th-room-top-my-room-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        window.thGoToMyRoom();
       });
     }
     header.appendChild(top);

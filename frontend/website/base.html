@@ -1380,7 +1380,17 @@
         document.body.classList.remove('th-audio-paused');
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         document.dispatchEvent(new CustomEvent('audioPlayPause', { detail: { playing: true, songId: currentSongId } }));
-        if (currentSongId !== null) {
+        // While actively following someone (body.th-following-room -
+        // see thSetFollowingMode), this 'play' is a mirror of THEIR
+        // playback, not a genuine listen of your own - counting it here
+        // exactly the same as normal playback used to give the
+        // follower their own CurrentSongListener row for the same
+        // song, which SongListenerConsumer._maybe_open_room then read
+        // as "this user started listening to something" and created a
+        // second, phantom ListenTogetherRoom for them too, visible to
+        // everyone else on /live-rooms/ even though they were only
+        // following, never actually hosting anything.
+        if (currentSongId !== null && !document.body.classList.contains('th-following-room')) {
           connectGlobalListenerSocket(currentSongId);
           sendGlobalListenerAction('start');
           // The one place every playback route (cover-art button, list
@@ -3292,6 +3302,13 @@
       thListeningWithHostId = hostUserId;
       thListeningWithHostUsername = hostUsername;
 
+      // Before playAudio() below, not after - that call triggers
+      // globalAudio's native 'play' synchronously, and that handler's
+      // own "is this a real listen or just following someone" check
+      // (base.html) needs this class already set at that exact moment,
+      // not a tick later.
+      thSetFollowingMode(true);
+
       if (song && song.url && typeof playAudio === 'function') {
         playAudio(song.url, null, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, song.albumLink, false);
       }
@@ -3318,7 +3335,6 @@
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
 
-      thSetFollowingMode(true);
       thRenderFollowingStatsRow(roomName);
     };
 
@@ -3377,6 +3393,10 @@
       var songDataEl = document.getElementById('thListenTogetherSong');
       var song = songDataEl ? JSON.parse(songDataEl.textContent) : null;
 
+      // Before playAudio() below, not after - see startListeningWith's
+      // own identical comment on why the ordering matters here.
+      thSetFollowingMode(true);
+
       if (song && song.url && typeof playAudio === 'function') {
         playAudio(song.url, null, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, song.albumLink, false);
       }
@@ -3394,7 +3414,6 @@
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
 
-      thSetFollowingMode(true);
       thRenderFollowingStatsRow(roomName);
     }
 
