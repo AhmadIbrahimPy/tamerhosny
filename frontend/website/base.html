@@ -3014,7 +3014,18 @@
         else if (data.type === 'room_renamed') thHandleRoomRenamed(data);
         else if (data.type === 'room_opened') thEnterHostingMode(data.tap_score);
         else if (data.type === 'room_closed') thExitHostingMode();
-        else if (data.type === 'tapped') thUpdateHostingTapCount(data.tap_score);
+        else if (data.type === 'tapped') {
+          thUpdateHostingTapCount(data.tap_score);
+          // thFollowSocket (started via startListeningWith) dispatches
+          // this for every OTHER room's slide already - own-room slides
+          // never open a follow socket at all (thActivateSlide returns
+          // early for isOwnRoom, see live_rooms.html), so thHostSocket
+          // is the only connection that ever sees a tap while looking
+          // at your own room. Without this, the visible tap badge on
+          // your own slide just never moved, even though the count was
+          // incrementing fine server-side.
+          thDispatchListenTogetherMessage(data);
+        }
       });
     }
 
