@@ -3394,7 +3394,14 @@
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'state') thApplyRemoteState(data);
         else if (data.type === 'blocked') thHandleBlocked();
-        else if (data.type === 'room_closed') thHandleRoomClosedWhileFollowing();
+        else if (data.type === 'room_closed') {
+          thHandleRoomClosedWhileFollowing();
+          // Toasting + stopping audio here doesn't touch the slide
+          // itself on live_rooms.html - without this, the room you
+          // just left visually kept looking exactly as live as any
+          // other one, even though you'd already been disconnected.
+          thDispatchListenTogetherMessage(data);
+        }
         else thDispatchListenTogetherMessage(data);
       });
 
@@ -3476,6 +3483,7 @@
           thHandleBlocked();
         } else if (data.type === 'room_closed') {
           thHandleRoomClosedWhileFollowing();
+          thDispatchListenTogetherMessage(data);
         } else {
           thDispatchListenTogetherMessage(data);
         }
