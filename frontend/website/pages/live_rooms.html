@@ -43,9 +43,21 @@
     background: linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.15) 45%, rgba(0,0,0,.88) 100%);
   }
 
+  /* Pinned to the slide's actual top edge - .th-room-slide itself is
+     justify-content:flex-end (everything else bunches toward the
+     bottom as one group), which this deliberately sits outside of. */
+  .th-room-slide-header {
+    position: absolute; top: 0; inset-inline: 0; z-index: 2;
+  }
+
   .th-room-slide-top {
-    position: relative; z-index: 2; display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 18px 16px 0;
+  }
+  .th-room-top-share-btn {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,.35); color: #fff; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .th-room-slide-avatar, .th-room-slide-avatar-fallback {
     width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
@@ -56,7 +68,6 @@
     background: rgba(255,255,255,.2); font-weight: 900;
   }
   .th-room-slide-username { font-weight: 800; font-size: 14px; }
-  .th-room-slide-song { font-size: 12px; opacity: .85; max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .th-room-live-badge {
     display: inline-flex; align-items: center; gap: 4px; margin-inline-start: auto;
     background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
@@ -111,7 +122,9 @@
   .th-room-comment-list {
     max-height: 30vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
     margin-bottom: 10px; padding-inline-end: 60px;
+    scrollbar-width: none; -ms-overflow-style: none;
   }
+  .th-room-comment-list::-webkit-scrollbar { display: none; }
   .th-room-comment { font-size: 13px; line-height: 1.4; }
   .th-room-comment .author { font-weight: 800; margin-inline-end: 4px; }
   .th-room-comment.system { opacity: .75; font-style: italic; }
@@ -147,7 +160,6 @@
     .th-room-slide-rail{gap:14px; inset-inline-end:8px;}
     .th-room-comment-list, .th-room-comment-form{padding-inline-end:52px;}
     .th-room-slide-name{font-size:19px;}
-    .th-room-slide-song{max-width:45vw;}
   }
 
   .th-room-feed-empty {
@@ -379,6 +391,14 @@
     slide.appendChild(bg);
     slide.appendChild(Object.assign(document.createElement('div'), { className: 'th-room-slide-overlay' }));
 
+    // Pinned to the actual top of the slide (position:absolute, not
+    // subject to .th-room-slide's own justify-content:flex-end, which
+    // otherwise bunches everything toward the bottom as one group) -
+    // who's hosting + share, right above the "دلوقتي بيسمع" card, both
+    // genuinely at the top rather than just "above the bottom cluster."
+    var header = document.createElement('div');
+    header.className = 'th-room-slide-header';
+
     var top = document.createElement('div');
     top.className = 'th-room-slide-top';
     var avatarHtml = room.hostAvatar
@@ -386,14 +406,16 @@
       : '<span class="th-room-slide-avatar-fallback">' + room.hostUsername.slice(0, 1).toUpperCase() + '</span>';
     top.innerHTML = avatarHtml +
       '<div><div class="th-room-slide-username">@' + room.hostUsername + '</div></div>' +
+      '<button type="button" class="th-room-top-share-btn" title="{% translate "مشاركة" %}"><i class="bi bi-share-fill"></i></button>' +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
-    slide.appendChild(top);
-
-    var name = document.createElement('div');
-    name.className = 'th-room-slide-name';
-    name.textContent = room.roomName;
-    slide.appendChild(name);
+    top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.thShare) {
+        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
+      }
+    });
+    header.appendChild(top);
 
     // "دلوقتي بيسمع" glass card - a frosted-glass panel (backdrop-
     // filter) over the blurred cover art background, instead of the
@@ -409,7 +431,14 @@
       '<div class="th-room-now-playing-title">' + room.song.title + '</div>' +
       (room.song.artist ? '<div class="th-room-now-playing-artist">' + room.song.artist + '</div>' : '') +
       '</div>';
-    slide.appendChild(nowPlaying);
+    header.appendChild(nowPlaying);
+
+    slide.appendChild(header);
+
+    var name = document.createElement('div');
+    name.className = 'th-room-slide-name';
+    name.textContent = room.roomName;
+    slide.appendChild(name);
 
     var joinStatus = document.createElement('button');
     joinStatus.type = 'button';
@@ -419,6 +448,8 @@
     joinStatus.dataset.roomName = room.roomName;
     slide.appendChild(joinStatus);
 
+    // Share moved up into the top bar (see header above) - only the tap/
+    // like counter stays on this side rail now.
     var rail = document.createElement('div');
     rail.className = 'th-room-slide-rail';
     var tapBtn = document.createElement('button');
@@ -427,17 +458,6 @@
     tapBtn.disabled = true;
     tapBtn.innerHTML = '<i class="bi bi-heart-fill"></i><span>' + room.tapScore + '</span>';
     rail.appendChild(tapBtn);
-    var shareBtn = document.createElement('button');
-    shareBtn.type = 'button';
-    shareBtn.className = 'th-room-rail-btn';
-    shareBtn.innerHTML = '<i class="bi bi-share-fill"></i>';
-    shareBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (window.thShare) {
-        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
-      }
-    });
-    rail.appendChild(shareBtn);
     slide.appendChild(rail);
 
     var comments = document.createElement('div');

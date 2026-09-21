@@ -24,12 +24,29 @@ SYSTEM_PROMPT = """أنت بتخترع اسم شقي وجذاب لـ"جروب س
 
 الاسم لازم يكون من 2 لـ4 كلمات بالعربي، من غير علامات ترقيم زيادة."""
 
-# Falls back to this if every LLM provider fails/is unconfigured - the
-# room still needs SOME name the moment it's created (ListenTogetherRoom.
-# display_name already falls back to "جروب {username}" when both
-# custom_name and generated_name are blank, so this is a nicer-than-
-# nothing upgrade over that, not a hard requirement).
+# Falls back to this if every LLM provider fails/is unconfigured - and,
+# via ListenTogetherRoom.display_name (a *deterministic* pick, seeded on
+# the room's own id - see that property), is also the room's name the
+# instant it's created, before generate_room_name_task has even run.
+# generate_room_name_task genuinely not running (Celery down/
+# unconfigured) used to mean a room stayed nameless indefinitely,
+# invisible-feeling next to every other room that already has a
+# personality - this makes sure every room reads like one of these from
+# the very first moment, whether or not the AI pass ever lands.
 FALLBACK_NAMES = [
+    'حريف الأحزان',
+    'ملكة الروشنة',
+    'معلم الطرب',
+    'أسطورة الرومانسي',
+    'بطل الفرحة',
+    'خبير المود',
+    'سلطان الحنين',
+    'أميرة الشجن',
+    'فنان الإحساس',
+    'ملك السهرة',
+    'نجمة الليلة',
+    'صاحب الذوق الرايق',
+    'كينج الفيلينج',
     'جروب سماع مباشر',
     'جلسة سماع حصرية',
     'زاوية الاستماع',

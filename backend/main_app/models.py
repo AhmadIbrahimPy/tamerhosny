@@ -136,7 +136,27 @@ class ListenTogetherRoom(models.Model):
 
     @property
     def display_name(self):
-        return self.custom_name or self.generated_name or _('جروب %(username)s') % {'username': self.host.username}
+        if self.custom_name:
+            return self.custom_name
+        if self.generated_name:
+            return self.generated_name
+
+        # generate_room_name_task (Celery) fills generated_name in
+        # shortly after the room's created - but a room with neither
+        # name set yet (or ever, if Celery isn't running) used to fall
+        # back to a plain "جروب {username}", reading as a broken/
+        # nameless room next to every other one that has a real
+        # personality. A deterministic pick (seeded on this room's own
+        # id, not re-rolled on every access) from the same pool
+        # generate_room_name itself falls back to means every room
+        # looks the part immediately, with zero dependency on that task
+        # having actually run - generated_name still overrides this the
+        # moment it's set, same as always.
+        import random
+
+        from backend.main_app.shared_utils.room_naming import FALLBACK_NAMES
+
+        return random.Random(self.pk).choice(FALLBACK_NAMES)
 
     def __str__(self):
         return f'{self.host.username} - {self.display_name}'
