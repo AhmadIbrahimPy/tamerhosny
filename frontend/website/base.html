@@ -2967,6 +2967,21 @@
         globalListenerSocket.send(JSON.stringify({ action: action }));
       }
     }
+    // live_rooms.html's own thEndOwnRoom calls this directly as a
+    // guaranteed way to close the room, specifically for the case where
+    // globalAudio.pause() (its other, indirect route to the same 'stop'
+    // call, via the native 'pause' listener below) is a no-op - already
+    // paused (e.g. autoplay was blocked pending a gesture) never fires a
+    // real 'pause' event at all. Without this on window, that whole
+    // safety net silently never ran (a bare `function` declared in this
+    // closure isn't reachable from another page's own script as
+    // `window.sendGlobalListenerAction`), leaving the room open server-
+    // side - the host's own hosting-stats bar stuck showing forever, and
+    // window.thIsHostingRoom staying stale-true, which then sent the
+    // next suggested-song pick down the "already hosting" branch
+    // (thPlaySuggestedSong) instead of actually waiting for a fresh
+    // room_opened - so "اختار اغنيه" looked like it did nothing at all.
+    window.sendGlobalListenerAction = sendGlobalListenerAction;
 
     function disconnectGlobalListenerSocket() {
       if (globalListenerSocket) {

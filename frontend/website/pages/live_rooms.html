@@ -493,7 +493,7 @@
 </div>
 <div id="thRoomLoadingOverlay" class="th-room-loading-overlay" style="display:none;">
   <i class="bi bi-arrow-repeat icon-spin"></i>
-  <p>{% translate "بنجهزلك الروم..." %}</p>
+  <p>{% translate "جاري بدء الروم..." %}</p>
 </div>
 <div id="thRoomViewersModal" class="th-room-viewers-modal" style="display:none;">
   <div class="th-room-viewers-backdrop"></div>
@@ -684,6 +684,14 @@
       }
     }
 
+    // Shown either way now (not just the "wait for room_opened" branch
+    // below) - the "already hosting" branch still does a real boosted-
+    // nav fetch that takes a moment on a slow connection, and with
+    // nothing on screen explaining why, that moment used to just look
+    // like the tap did nothing at all.
+    var overlay = document.getElementById('thRoomLoadingOverlay');
+    if (overlay) overlay.style.display = 'flex';
+
     if (window.thIsHostingRoom) {
       // Already hosting (e.g. switching songs while your room's already
       // live) - no new room to wait for, it's already there.
@@ -696,9 +704,8 @@
       // there yet. thRoomOpened (base.html, dispatched from
       // thEnterHostingMode) is the real signal, not a guessed delay;
       // the timeout is only a safety net in case it never arrives. The
-      // overlay covers that wait so it doesn't just look frozen.
-      var overlay = document.getElementById('thRoomLoadingOverlay');
-      if (overlay) overlay.style.display = 'flex';
+      // overlay (already shown above) covers that wait so it doesn't
+      // just look frozen.
       document.addEventListener('thRoomOpened', goToMyRoom, { once: true });
       setTimeout(goToMyRoom, 4000);
     }
