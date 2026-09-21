@@ -604,6 +604,13 @@
   // here depends on it having finished yet - the general feed already
   // excludes your own room regardless of whether it's still open.
   window.thEndOwnRoom = function () {
+    // The one explicit "this is really over" signal (ListenTogether
+    // Consumer._end_room) - sent ahead of the plain stop below, so
+    // followers can tell a real end apart from just pausing the song
+    // (which closes the room the exact same is_live=False way, see
+    // SongListenerConsumer._maybe_close_room) and show the right thing
+    // for each (thHandleRoomEndedOnSlide vs thHandleRoomClosedOnSlide).
+    if (window.thSendListenTogetherMessage) window.thSendListenTogetherMessage({ action: 'end_room' });
     // .pause() only fires the native 'pause' event (base.html's own
     // listener there is what actually sends 'stop' and closes the
     // room) on a genuine playing->paused transition - a no-op if the
@@ -1043,6 +1050,7 @@
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
     else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
+    else if (data.type === 'room_ended') thHandleRoomEndedOnSlide();
     else if (data.type === 'room_opened') thHandleRoomReopenedOnSlide();
     else if (data.type === 'follower_joined') thBumpViewerCount(1, data);
     else if (data.type === 'follower_left') thBumpViewerCount(-1, data);
@@ -1170,7 +1178,36 @@
   // reacting too, since otherwise the slide you were just following
   // keeps looking exactly as live as every other one even though it
   // isn't anymore.
+  // A plain pause, NOT an explicit end - is_live already flips False the
+  // instant the host's own audio stops (see SongListenerConsumer.
+  // _maybe_close_room's own docstring: is_live tracks "something's
+  // actually playing", not "the host is done for good"), which is also
+  // exactly what a genuine "إنهاء" produces server-side - the only way
+  // to tell them apart is the separate room_ended signal (see
+  // thHandleRoomEndedOnSlide), sent ONLY by that button. So this stays
+  // deliberately light: dim + "متوقفة مؤقتًا", no CTA to leave - it might
+  // resume any second (thHandleRoomReopenedOnSlide undoes this exact
+  // treatment the moment it does).
   function thHandleRoomClosedOnSlide() {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide || slide.querySelector('.th-room-ended-panel')) return;
+    slide.classList.add('th-room-slide-closed');
+    var badge = slide.querySelector('.th-room-live-badge');
+    if (badge) badge.innerHTML = '<i class="bi bi-pause-circle-fill"></i> {% translate "متوقفة مؤقتًا" %}';
+    var joinBtn = slide.querySelector('.th-room-join-status');
+    if (joinBtn) {
+      joinBtn.disabled = true;
+      joinBtn.innerHTML = '<i class="bi bi-pause-circle-fill"></i> {% translate "متوقفة مؤقتًا" %}';
+    }
+  }
+
+  // The host actually pressed "إنهاء" (see thEndOwnRoom/room_ended,
+  // distinct from the plain pause thHandleRoomClosedOnSlide handles) -
+  // this one really is over, so a clear screen with somewhere to go next
+  // instead of a dimmed slide someone has to notice and manually scroll
+  // away from.
+  function thHandleRoomEndedOnSlide() {
     if (activeIndex === -1) return;
     var slide = slideEls[activeIndex];
     if (!slide) return;
@@ -1546,6 +1583,20 @@
     thUpdateNavArrows();
 
     var room = rooms[index];
+
+    // Landing on the plain /live-rooms/ feed and scrolling into a room
+    // used to leave the address bar stuck on that generic URL - refresh,
+    // copy-paste, or the browser's own back/forward all lost track of
+    // which room you were actually looking at. replaceState (not
+    // pushState) - swiping through ten rooms shouldn't pile up ten
+    // history entries the back button has to click through one at a
+    // time; this just keeps the current entry's URL honest about what's
+    // on screen right now.
+    var slugUrl = '/live-rooms/' + room.hostUsername + '/';
+    if (window.location.pathname !== slugUrl) {
+      history.replaceState(history.state, '', slugUrl);
+    }
+
     var songDataEl = document.getElementById('thListenTogetherSong');
     if (!songDataEl) {
       songDataEl = document.createElement('script');

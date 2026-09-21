@@ -607,6 +607,8 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 self._block(data.get('user_id'))
             elif action == 'respond_join':
                 self._respond_join(data.get('user_id'), bool(data.get('approve')))
+            elif action == 'end_room':
+                self._end_room()
         elif action == 'request_join':
             self._request_join()
 
@@ -629,6 +631,23 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'song': data.get('song'),
             'playing': bool(data.get('playing')),
             'current_time': data.get('currentTime'),
+        })
+
+    def _end_room(self):
+        # live_rooms.html's own "إنهاء" button - the only thing that
+        # actually sends this. Deliberately separate from the ordinary
+        # room_closed a plain pause already produces (see
+        # SongListenerConsumer._maybe_close_room - is_live tracks "is
+        # something actually playing right now", so pausing your own
+        # song closes the room the exact same way): a follower's slide
+        # used to show the full "this room is over, go find another one"
+        # treatment for BOTH, which made a host just pausing for a
+        # second look permanently over. is_live/CurrentSongListener
+        # cleanup itself still goes through the normal stop path (the
+        # client sends this alongside, not instead of, stopping playback)
+        # - this is purely an extra "and this one's for real" signal.
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'room.ended',
         })
 
     def _announce_follower_joined(self):
@@ -966,6 +985,12 @@ class ListenTogetherConsumer(WebsocketConsumer):
         # client-side distinction, not a server-side one - same message
         # either way.
         self.send(text_data=json.dumps({'type': 'room_closed'}))
+
+    def room_ended(self, event):
+        # See _end_room's own docstring - sent once, right when "إنهاء"
+        # is pressed, ahead of (not instead of) the ordinary room_closed
+        # the actual stop-listening still triggers a moment later.
+        self.send(text_data=json.dumps({'type': 'room_ended'}))
 
     def join_requested(self, event):
         if not self.is_host:
