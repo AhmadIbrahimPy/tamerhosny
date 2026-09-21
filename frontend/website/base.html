@@ -1347,6 +1347,16 @@
 
     // Global Audio Player
     var globalAudio = null;
+    // The pending "next click retries this blocked play()" listener
+    // (see its own registration below) - kept cancelable so
+    // stopListeningWith() can drop it. Without that, leaving a followed
+    // room whose mirrored play() never actually got unblocked left this
+    // listener armed indefinitely; an unrelated later tap (liking a
+    // completely different room, say) would resume that stale audio as
+    // a genuine local play - by then th-following-room is long gone, so
+    // it read as a real listen and spun up a phantom room for someone
+    // who was only ever a guest.
+    var thPendingRetryBlockedPlay = null;
     var currentPlayBtn = null;
     var isManualPause = false;
     // Set only around playAudio()'s own internal pause-then-reload when
@@ -1825,9 +1835,14 @@
         // forever, the very next click/tap anywhere on the page -
         // which satisfies that same gesture requirement - retries it.
         if (error && error.name === 'NotAllowedError') {
-          document.addEventListener('click', function thRetryBlockedPlay() {
+          if (thPendingRetryBlockedPlay) {
+            document.removeEventListener('click', thPendingRetryBlockedPlay);
+          }
+          thPendingRetryBlockedPlay = function thRetryBlockedPlay() {
+            thPendingRetryBlockedPlay = null;
             globalAudio.play().catch(function () {});
-          }, { once: true });
+          };
+          document.addEventListener('click', thPendingRetryBlockedPlay, { once: true });
           // Otherwise this looks like the room/song is just silently
           // dead - nothing on screen explains why, especially now that
           // live_rooms.html's own join button (previously the obvious
@@ -3563,6 +3578,18 @@
       thListeningWithHostUsername = null;
       thSetFollowingMode(false);
       thRemoveFollowingStatsRow();
+
+      // A blocked mirrored play() may still have a retry armed for the
+      // NEXT click anywhere - once th-following-room is gone (right
+      // above), that click would otherwise resume this stale audio as
+      // a genuine local listen and spin up a phantom room. Pausing too,
+      // not just canceling the retry: nothing should keep looking
+      // "about to play" for a room that isn't yours and just ended.
+      if (thPendingRetryBlockedPlay) {
+        document.removeEventListener('click', thPendingRetryBlockedPlay);
+        thPendingRetryBlockedPlay = null;
+      }
+      if (globalAudio) globalAudio.pause();
 
       var btn = document.getElementById('thListenTogetherBtn');
       if (btn) {
