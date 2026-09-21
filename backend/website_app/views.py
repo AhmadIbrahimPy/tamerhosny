@@ -2715,6 +2715,19 @@ def update_room_settings(request):
         room.is_public = request.POST.get('is_public') == '1'
     room.save(update_fields=['custom_name', 'is_public'])
 
+    # Same broadcast generate_room_name_task uses for the AI name
+    # landing - reused here so a manual rename shows up live for
+    # everyone already looking at this room (the host's own slide
+    # included), not just on their next reload.
+    from asgiref.sync import async_to_sync
+    from channels.layers import get_channel_layer
+
+    async_to_sync(get_channel_layer().group_send)(f'listen_together_{request.user.id}', {
+        'type': 'room.renamed',
+        'name': room.display_name,
+        'is_public': room.is_public,
+    })
+
     return JsonResponse({
         'status': 'success',
         'name': room.display_name,

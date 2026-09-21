@@ -3018,7 +3018,15 @@
         if (data.type === 'follower_joined') thHandleFollowerJoined(data);
         else if (data.type === 'follower_left') thHandleFollowerLeft(data);
         else if (data.type === 'join_requested') thHandleJoinRequested(data);
-        else if (data.type === 'room_renamed') thHandleRoomRenamed(data);
+        else if (data.type === 'room_renamed') {
+          thHandleRoomRenamed(data);
+          // Same gap as 'tapped'/'comment' above - own-room slides only
+          // ever have thHostSocket open, so without this the slide's
+          // own name/visibility never updated after a save, even
+          // though thFollowSocket already forwards this fine for
+          // anyone else looking at the room.
+          thDispatchListenTogetherMessage(data);
+        }
         else if (data.type === 'room_opened') thEnterHostingMode(data.tap_score);
         else if (data.type === 'room_closed') thExitHostingMode();
         else if (data.type === 'tapped') {
@@ -3294,6 +3302,17 @@
       var pop = document.getElementById('thRoomSettingsPopover');
       if (pop) pop.classList.toggle('open');
     };
+
+    // Closes on any click outside the gear/popover itself - #thRoomSettingsWrap
+    // is the one stable ancestor regardless of where it currently lives
+    // (the global bar normally, or relocated into a live_rooms.html
+    // slide - see thBuildSlide there).
+    document.addEventListener('click', function (e) {
+      var pop = document.getElementById('thRoomSettingsPopover');
+      if (!pop || !pop.classList.contains('open')) return;
+      if (e.target.closest('#thRoomSettingsWrap')) return;
+      pop.classList.remove('open');
+    });
 
     window.thSaveRoomSettings = function () {
       var nameInput = document.getElementById('thRoomNameInput');

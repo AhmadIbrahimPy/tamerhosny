@@ -847,7 +847,36 @@
     else if (data.type === 'follower_joined') thBumpViewerCount(1);
     else if (data.type === 'follower_left') thBumpViewerCount(-1);
     else if (data.type === 'state') thUpdateNowPlayingFromState(data);
+    else if (data.type === 'room_renamed') thUpdateRoomNameFromRenamed(data);
   });
+
+  // Manual save (thSaveRoomSettings, base.html) or the AI name landing
+  // (generate_room_name_task) - both broadcast 'room.renamed' now, so
+  // this is the one place either shows up live, for the host's own
+  // slide and anyone else currently on it.
+  function thUpdateRoomNameFromRenamed(data) {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide || !data.name) return;
+
+    var room = rooms[activeIndex];
+    if (room) {
+      room.roomName = data.name;
+      if (typeof data.is_public === 'boolean') room.isPublic = data.is_public;
+    }
+
+    var nameEl = slide.querySelector('.th-room-slide-name');
+    if (nameEl) nameEl.textContent = data.name;
+
+    if (room && room.hostUserId !== window.thUserId && typeof data.is_public === 'boolean') {
+      var visBadge = slide.querySelector('.th-room-name-visibility-badge');
+      if (visBadge) {
+        visBadge.innerHTML = data.is_public
+          ? '<i class="bi bi-globe2"></i> {% translate "عام" %}'
+          : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
+      }
+    }
+  }
 
   // Direct, local fallback for the same "دلوقتي بيسمع" update above -
   // playAudio() (base.html) dispatches this event on every real song
@@ -1171,6 +1200,22 @@
             if (settingsOriginalParent) {
               settingsOriginalParent.insertBefore(settingsWrap, settingsOriginalNext);
             }
+          });
+        }
+
+        // Pre-fill with the room's actual current name/visibility on
+        // every open - thToggleRoomSettings (base.html) itself is a
+        // plain visibility toggle with no idea what room it's even
+        // attached to, so this is the one place that context exists.
+        var settingsBtn = settingsWrap.querySelector('#thRoomSettingsBtn');
+        if (settingsBtn) {
+          settingsBtn.addEventListener('click', function () {
+            var nameInput = document.getElementById('thRoomNameInput');
+            if (nameInput) nameInput.value = room.roomName || '';
+            var visInput = document.querySelector(
+              'input[name="thRoomVisibility"][value="' + (room.isPublic ? 'public' : 'private') + '"]'
+            );
+            if (visInput) visInput.checked = true;
           });
         }
       }

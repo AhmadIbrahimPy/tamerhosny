@@ -888,6 +888,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'room_renamed',
             'name': event.get('name'),
+            'is_public': event.get('is_public'),
         }))
 
     def comment_posted(self, event):
