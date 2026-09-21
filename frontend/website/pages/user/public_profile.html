@@ -191,18 +191,18 @@
       {% if listen_together_song and not listen_together_blocked %}
       {% if not listen_together_room_public and listen_together_join_status == 'pending' %}
       <button type="button" class="th-listen-together-btn" id="thListenTogetherBtn" disabled
-        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}">
+        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}" data-room-name="{{ listen_together_room_name }}">
         <i class="bi bi-hourglass-split"></i> {% translate "قيد الانتظار" %}
       </button>
       {% elif not listen_together_room_public and listen_together_join_status != 'accepted' %}
       <button type="button" class="th-listen-together-btn" id="thListenTogetherBtn"
-        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}"
+        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}" data-room-name="{{ listen_together_room_name }}"
         onclick="window.requestToJoinRoom(this);">
         <i class="bi bi-lock-fill"></i> {% translate "اطلب الانضمام" %}
       </button>
       {% else %}
       <button type="button" class="th-listen-together-btn" id="thListenTogetherBtn"
-        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}"
+        data-host-user-id="{{ profile_user.id }}" data-host-username="{{ profile_user.username }}" data-room-name="{{ listen_together_room_name }}"
         onclick="window.startListeningWith(this);">
         <i class="bi bi-headphones"></i> {% translate "اسمع معاه" %}
       </button>

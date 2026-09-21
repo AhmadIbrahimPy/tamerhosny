@@ -188,6 +188,27 @@
   var activeIndex = -1;
   var observer = null;
 
+  // Defined before the empty-feed early return below, not after it -
+  // that's exactly the one case (rooms.length === 0) where the empty-
+  // state button calling this actually gets shown, so putting this
+  // definition after that return (as it used to be) meant the button's
+  // onclick was calling a function that had never actually been
+  // assigned yet, throwing "thRoomFeedCreateRoom is not defined".
+  window.thRoomFeedCreateRoom = function () {
+    // Not hosting yet: nothing to disrupt, the next song picked just
+    // plays immediately (toggleAudio's guard needs thIsHostingRoom too,
+    // which is false here). Already hosting (this "no OTHER rooms"
+    // empty state doesn't mean YOU aren't one - your own room is always
+    // excluded from this feed) and picking another song: this still
+    // marks it as a deliberate room-song search, so that pick gets the
+    // same play-now-or-queue choice as إعدادات's own "تصفح" link.
+    window.thBrowsingForRoom = true;
+    if (typeof thToggleSearch === 'function') thToggleSearch();
+    if (window.showToast) {
+      showToast('{% translate "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي" %}', 'info');
+    }
+  };
+
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only
     // reachable here if there actually are rooms to switch to instead,
@@ -254,6 +275,7 @@
     joinStatus.className = 'th-room-join-status';
     joinStatus.dataset.hostUserId = room.hostUserId;
     joinStatus.dataset.hostUsername = room.hostUsername;
+    joinStatus.dataset.roomName = room.roomName;
     slide.appendChild(joinStatus);
 
     var rail = document.createElement('div');
@@ -399,13 +421,6 @@
     }
     list.appendChild(row);
   }
-
-  window.thRoomFeedCreateRoom = function () {
-    if (typeof thToggleSearch === 'function') thToggleSearch();
-    if (window.showToast) {
-      showToast('{% translate "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي" %}', 'info');
-    }
-  };
 })();
 </script>
 {% endblock %}

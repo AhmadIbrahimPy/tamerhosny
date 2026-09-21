@@ -1085,7 +1085,29 @@
        summary is still useful to see. Nothing left to show at all (not
        hosting) collapses the whole bar via :has(). */
     #globalAudioPlayer.th-hide-controls > .container-xl{ display: none; }
-    #globalAudioPlayer.th-hide-controls:not(:has(#thHostingStatsRow)){ display: none !important; }
+    #globalAudioPlayer.th-hide-controls:not(:has(#thHostingStatsRow, #thFollowingStatsRow)){ display: none !important; }
+
+    /* The gear only ever does anything for whoever's actually hosting a
+       room right now (update_room_settings 400s otherwise) - shown only
+       while #globalAudioPlayer carries .th-hosting (thEnterHostingMode/
+       thExitHostingMode), not to every logged-in visitor. */
+    #thRoomSettingsBtn{ display: none; }
+    #globalAudioPlayer.th-hosting #thRoomSettingsBtn{ display: flex; }
+
+    /* While actively listening along with someone (body.th-following-
+       room - set/cleared alongside thListeningWithHostId), playback is
+       mirrored automatically - prev/play-pause/next, shuffle, repeat and
+       seeking would all fight that instead of doing anything meaningful
+       for a follower, who isn't the one actually in control. The
+       position/duration text and progress fill stay visible (still
+       useful to see), just not interactive. */
+    body.th-following-room #globalAudioPlayer .player-left-controls,
+    body.th-following-room #globalAudioPlayer #playerShuffleBtn,
+    body.th-following-room #globalAudioPlayer #playerRepeatBtn,
+    body.th-following-room #globalAudioPlayer #mobilePlayerShuffleBtn,
+    body.th-following-room #globalAudioPlayer #mobilePlayerRepeatBtn{ display: none !important; }
+    body.th-following-room #globalAudioPlayer #playerProgress,
+    body.th-following-room #globalAudioPlayer #mobilePlayerProgress{ pointer-events: none; cursor: default; }
     .th-hosting-stats-row{
       display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
       padding-block: 6px 8px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08);
@@ -1783,14 +1805,17 @@
     }
 
     function toggleAudio(url, playBtn, title, songs, image, link, artist, album, isMix, songId, albumLink, isRandomQueue, duetId) {
-      // Hosting a room means people are actively listening to whatever's
-      // currently playing - switching them to a different song without
-      // asking is disruptive, so offer a choice instead of just doing
-      // it. Same-song pause/resume (handled below, this file's own
-      // playback) is left alone - only a genuinely different song is
-      // gated. window.thIsHostingRoom is set by thEnterHostingMode/
-      // thExitHostingMode (driven by room_opened/room_closed).
-      if (window.thIsHostingRoom && globalAudio && globalAudio.src) {
+      // Normal play-a-song, everywhere on the site, behaves exactly as
+      // it always has - this only ever asks when you deliberately went
+      // looking for a song FOR your room (clicked "تصفح"/"عرض الروم",
+      // which sets window.thBrowsingForRoom - see thEnterHostingMode's
+      // own section). Gating this on window.thIsHostingRoom alone
+      // (without that flag) used to intercept every single play click
+      // site-wide the instant you were hosting anything, which broke
+      // completely unrelated browsing. Same-song pause/resume (handled
+      // below) is left alone regardless - only a genuinely different
+      // song is ever gated.
+      if (window.thIsHostingRoom && window.thBrowsingForRoom && globalAudio && globalAudio.src) {
         var hostingCurrentUrl = globalAudio.src;
         var hostingIsSameSong = hostingCurrentUrl.includes(url) || url.includes(hostingCurrentUrl);
         if (!hostingIsSameSong) {
@@ -2893,6 +2918,45 @@
     var thFollowers = []; // people currently listening along with ME
     var thLastStatePingAt = 0;
 
+    // Toggled true right when a follower actually starts mirroring
+    // (public join, or a private one once approved) - see the
+    // body.th-following-room CSS above, which hides transport controls
+    // (prev/play-pause/next, shuffle, repeat) and disables seeking,
+    // since playback is driven by the host, not this browser.
+    function thSetFollowingMode(on) {
+      document.body.classList.toggle('th-following-room', !!on);
+    }
+
+    // Shown in the bar itself, in the same space the now-hidden
+    // transport controls (prev/play-pause/next, shuffle, repeat) used
+    // to occupy while following someone - the room's name plus an exit
+    // control, since those controls aren't yours to use right now
+    // anyway. Same injection pattern as thRenderHostingStatsRow, a
+    // separate element (not reused) since both could theoretically be
+    // showing at once (hosting your own room while also following
+    // someone else's).
+    function thRenderFollowingStatsRow(roomName) {
+      var bar = document.getElementById('globalAudioPlayer');
+      if (!bar) return;
+
+      var row = document.getElementById('thFollowingStatsRow');
+      if (!row) {
+        row = document.createElement('div');
+        row.id = 'thFollowingStatsRow';
+        row.className = 'th-hosting-stats-row';
+        bar.insertBefore(row, bar.firstChild);
+      }
+
+      row.innerHTML =
+        '<span><i class="bi bi-headphones"></i> <span class="th-hosting-label-text">{% translate "بتسمع مع" %}:</span> ' + (roomName || '') + '</span>' +
+        '<button type="button" class="th-hosting-browse-btn" onclick="window.stopListeningWith();" style="border:none; cursor:pointer;">{% translate "خروج" %} <i class="bi bi-box-arrow-right"></i></button>';
+    }
+
+    function thRemoveFollowingStatsRow() {
+      var row = document.getElementById('thFollowingStatsRow');
+      if (row) row.remove();
+    }
+
     function thConnectListenTogetherHost() {
       if (thHostSocket || !window.thUserId) return;
       var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -3015,6 +3079,12 @@
     // ---------------------------------------------------------
 
     window.thIsHostingRoom = false;
+    // True only while you're deliberately out looking for a song FOR
+    // your room (set the moment you click "تصفح"/"عرض الروم" below) -
+    // toggleAudio's own guard needs both this AND thIsHostingRoom
+    // before it'll intercept a play click; thIsHostingRoom alone isn't
+    // "currently looking for a room song", it's just "have a room".
+    window.thBrowsingForRoom = false;
     var thHostingTapScore = 0;
 
     function thEnterHostingMode(tapScore) {
@@ -3029,6 +3099,7 @@
 
     function thExitHostingMode() {
       window.thIsHostingRoom = false;
+      window.thBrowsingForRoom = false;
 
       var bar = document.getElementById('globalAudioPlayer');
       if (bar) bar.classList.remove('th-hosting');
@@ -3075,7 +3146,7 @@
         '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
-        '<a href="' + browseHref + '" class="th-hosting-browse-btn">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></a>';
+        '<a href="' + browseHref + '" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true;">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></a>';
     }
 
     // ---------------------------------------------------------
@@ -3100,6 +3171,11 @@
 
       var modal = document.getElementById('thPlayChoiceModal');
       if (modal) modal.classList.remove('open');
+
+      // One-shot per "تصفح" trip - you're back to browsing normally
+      // (no modal on the next random song click) until you deliberately
+      // go looking for a room song again.
+      window.thBrowsingForRoom = false;
 
       if (!args || choice === 'cancel') return;
 
@@ -3159,6 +3235,7 @@
     window.startListeningWith = function (btn) {
       var hostUserId = parseInt(btn.dataset.hostUserId, 10);
       var hostUsername = btn.dataset.hostUsername;
+      var roomName = btn.dataset.roomName;
       if (!hostUserId) return;
       if (window.requireAuth && window.requireAuth(null, null)) return;
 
@@ -3192,6 +3269,9 @@
         banner.style.display = 'flex';
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
+
+      thSetFollowingMode(true);
+      thRenderFollowingStatsRow(roomName);
     };
 
     // A private room's button never starts playback directly - it opens
@@ -3203,6 +3283,7 @@
     window.requestToJoinRoom = function (btn) {
       var hostUserId = parseInt(btn.dataset.hostUserId, 10);
       var hostUsername = btn.dataset.hostUsername;
+      var roomName = btn.dataset.roomName;
       if (!hostUserId) return;
       if (window.requireAuth && window.requireAuth(null, null)) return;
 
@@ -3222,12 +3303,14 @@
           btn.disabled = true;
           btn.innerHTML = '<i class="bi bi-hourglass-split"></i> {% translate "قيد الانتظار" %}';
         } else if (data.type === 'join_approved') {
-          thHandleJoinApproved(btn, hostUsername);
+          thHandleJoinApproved(btn, hostUsername, roomName);
         } else if (data.type === 'join_rejected') {
           if (window.showToast) showToast('{% translate "تم رفض طلب الانضمام" %}', 'error');
           if (thFollowSocket) { var s = thFollowSocket; thFollowSocket = null; s.close(); }
           thListeningWithHostId = null;
           thListeningWithHostUsername = null;
+          thSetFollowingMode(false);
+          thRemoveFollowingStatsRow();
           btn.disabled = false;
           btn.innerHTML = '<i class="bi bi-lock-fill"></i> {% translate "اطلب الانضمام" %}';
         } else if (data.type === 'state') {
@@ -3240,7 +3323,7 @@
       });
     };
 
-    function thHandleJoinApproved(btn, hostUsername) {
+    function thHandleJoinApproved(btn, hostUsername, roomName) {
       var songDataEl = document.getElementById('thListenTogetherSong');
       var song = songDataEl ? JSON.parse(songDataEl.textContent) : null;
 
@@ -3260,6 +3343,9 @@
         banner.style.display = 'flex';
         banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
       }
+
+      thSetFollowingMode(true);
+      thRenderFollowingStatsRow(roomName);
     }
 
     // The "بتسمع مع..." banner itself (not its own small x button, which
@@ -3284,6 +3370,8 @@
       }
       thListeningWithHostId = null;
       thListeningWithHostUsername = null;
+      thSetFollowingMode(false);
+      thRemoveFollowingStatsRow();
 
       var btn = document.getElementById('thListenTogetherBtn');
       if (btn) {
