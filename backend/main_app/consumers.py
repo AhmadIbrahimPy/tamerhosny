@@ -214,6 +214,23 @@ class SongListenerConsumer(WebsocketConsumer):
     def _maybe_close_room(user):
         from backend.main_app.models import ListenTogetherRoom
 
+        # Same STALE_LISTENER_CUTOFF every other read of this table
+        # already respects (_current_count below, get_current_song_for_
+        # user) - without it, a row this user never got to clean up
+        # themselves (a hard process kill, e.g. a deploy restarting the
+        # ASGI workers mid-connection, skips disconnect() same as this
+        # module's own docstring already warns) sits there forever and
+        # permanently blocks this from ever seeing "zero rows left" again -
+        # "إنهاء" (or just genuinely stopping) looked like it silently did
+        # nothing, every single time, for as long as that one phantom row
+        # from some other song existed.
+        cutoff = timezone.now() - STALE_LISTENER_CUTOFF
+        # Swept here too (not just excluded from the check below) - the
+        # per-song sweep in _current_count only ever runs for whichever
+        # song someone happens to still be querying, so a row like this
+        # one (some OTHER, no-longer-visited song) could otherwise sit in
+        # the table forever even though it's already being ignored.
+        CurrentSongListener.objects.filter(user=user, last_heartbeat__lt=cutoff).delete()
         if not CurrentSongListener.objects.filter(user=user).exists():
             # The row itself stays - only is_live flips off - so a
             # custom name, generated_name, and tap_score all survive a
