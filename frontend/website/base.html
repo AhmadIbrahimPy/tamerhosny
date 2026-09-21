@@ -3125,6 +3125,13 @@
       if (bar) bar.classList.add('th-hosting');
 
       thRenderHostingStatsRow();
+
+      // room.opened only reaches this browser once the room actually
+      // exists server-side - a page (live-rooms.html's "play this and
+      // take me to my room" flow) that needs to know exactly when that
+      // happened, not just "sometime after I asked", listens for this
+      // instead of guessing a delay.
+      document.dispatchEvent(new CustomEvent('thRoomOpened'));
     }
 
     function thExitHostingMode() {

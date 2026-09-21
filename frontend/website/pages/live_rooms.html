@@ -339,11 +339,32 @@
     // your own room is excluded from the generic feed (see the view),
     // so that would just show everyone ELSE's rooms again with nothing
     // of yours in it, right after you asked to see yours.
-    var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
-    if (window.thBoostedNavigate) {
-      window.thBoostedNavigate(url);
+    var navigated = false;
+    function goToMyRoom() {
+      if (navigated) return;
+      navigated = true;
+      var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
+      if (window.thBoostedNavigate) {
+        window.thBoostedNavigate(url);
+      } else {
+        window.location.href = url;
+      }
+    }
+
+    if (window.thIsHostingRoom) {
+      // Already hosting (e.g. switching songs while your room's already
+      // live) - no new room to wait for, it's already there.
+      goToMyRoom();
     } else {
-      window.location.href = url;
+      // The room only actually exists server-side once room_opened
+      // reaches this browser (an async WebSocket round-trip after
+      // toggleAudio above) - navigating right away, before that,
+      // reliably lands on the still-empty feed since the room isn't
+      // there yet. thRoomOpened (base.html, dispatched from
+      // thEnterHostingMode) is the real signal, not a guessed delay;
+      // the timeout is only a safety net in case it never arrives.
+      document.addEventListener('thRoomOpened', goToMyRoom, { once: true });
+      setTimeout(goToMyRoom, 4000);
     }
   };
 
