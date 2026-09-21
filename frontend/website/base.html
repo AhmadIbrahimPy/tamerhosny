@@ -2609,6 +2609,23 @@
                 setPlayButtonsIcon('bi-pause-fill');
               }).catch(function() {
                 setPlayButtonsIcon('bi-play-fill');
+                // play() rejected (blocked autoplay, the common case on
+                // a fresh reload with no gesture yet) means the native
+                // 'play' event below never fires, so the "currently
+                // listening" WebSocket 'start' it would have sent never
+                // goes out either. For a room owner mid-hosting session,
+                // that's exactly what read as "the room silently closed
+                // itself, even though I never pressed إنهاء" - the
+                // server had no idea they were still there, since
+                // nothing ever told it so after the reload. Restoring
+                // that listening state doesn't actually need audible
+                // playback to have started - it just needs to happen
+                // regardless of whether play() itself is currently
+                // blocked.
+                if (currentSongId !== null && !document.body.classList.contains('th-following-room')) {
+                  connectGlobalListenerSocket(currentSongId);
+                  sendGlobalListenerAction('start');
+                }
               });
             } else {
               setPlayButtonsIcon('bi-play-fill');
