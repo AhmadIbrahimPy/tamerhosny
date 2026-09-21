@@ -2606,8 +2606,15 @@ def live_rooms(request, username=None):
             'song': _serialize_song_for_listen_together(song),
         }
 
+    # is_live=True - the room row itself now persists past any one
+    # session (see ListenTogetherRoom.is_live's own docstring), so
+    # without this the table accumulates one row per user who's ever
+    # hosted, most of them long since paused; get_current_song_for_user
+    # below would still correctly filter every one of those out, but
+    # only after fetching and checking each - this keeps the query
+    # itself cheap as that table grows.
     rooms_qs = ListenTogetherRoom.objects.filter(
-        is_public=True,
+        is_public=True, is_live=True,
     ).select_related('host').order_by('-tap_score', '-created_at')
 
     if request.user.is_authenticated and not viewing_own_room:
@@ -2716,7 +2723,11 @@ def update_room_settings(request):
     (المستخدم بيسمع حالياً - انظر SongListenerConsumer._maybe_open_room)."""
     from backend.main_app.models import ListenTogetherRoom
 
-    room = ListenTogetherRoom.objects.filter(host=request.user).first()
+    # The room row itself now outlives any one listening session (see
+    # ListenTogetherRoom.is_live's own docstring) - room existing is no
+    # longer proof you're currently live, so is_live has to be checked
+    # explicitly too, not just presence of the row.
+    room = ListenTogetherRoom.objects.filter(host=request.user, is_live=True).first()
     if room is None:
         return JsonResponse({'status': 'error', 'message': str(_('لازم تكون بتسمع دلوقتي.'))}, status=400)
 

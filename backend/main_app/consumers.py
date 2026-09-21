@@ -145,11 +145,27 @@ class SongListenerConsumer(WebsocketConsumer):
         if created:
             generate_room_name_task.delay(user.id)
 
+        # created is only ever True the very first time this host has
+        # hosted, period - the row itself now outlives any one listening
+        # session (see is_live's own docstring), so it can't be reused
+        # as "did a room just genuinely (re)start" the way it used to.
+        # is_live's own False->True transition is that signal instead -
+        # True already (still mid-session, this call is just a song
+        # switch mid-hosting) means none of this needs to run again.
+        if not room.is_live:
+            room.is_live = True
+            room.save(update_fields=['is_live'])
+
             # Tells the host's own always-open ListenTogetherConsumer
             # connection (same listen_together_<user.id> group) that
             # hosting just started, so base.html can swap the global
             # player bar into its distinct "hosting" look without a
-            # second socket or polling - see room_opened there.
+            # second socket or polling - see room_opened there. Also
+            # reaches any already-connected follower now (room_opened
+            # used to be host-only) - live_rooms.html's own slide was
+            # otherwise stuck showing "الروم اتقفلت" forever once the
+            # host paused and resumed, with no signal telling it the
+            # room was actually back.
             async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
                 'type': 'room.opened',
                 'tap_score': room.tap_score,
@@ -190,8 +206,13 @@ class SongListenerConsumer(WebsocketConsumer):
         from backend.main_app.models import ListenTogetherRoom
 
         if not CurrentSongListener.objects.filter(user=user).exists():
-            deleted, _ = ListenTogetherRoom.objects.filter(host=user).delete()
-            if deleted:
+            # The row itself stays - only is_live flips off - so a
+            # custom name, generated_name, and tap_score all survive a
+            # host just pausing/switching devices for a bit instead of
+            # resetting to a brand new room (new random fallback name
+            # included) the moment they press play again.
+            updated = ListenTogetherRoom.objects.filter(host=user, is_live=True).update(is_live=False)
+            if updated:
                 async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
                     'type': 'room.closed',
                 })
@@ -834,9 +855,11 @@ class ListenTogetherConsumer(WebsocketConsumer):
         }))
 
     def room_opened(self, event):
-        if not self.is_host:
-            return
-
+        # Used to be host-only (swap the global bar into hosting mode) -
+        # a follower whose room just paused-and-resumed needs this too
+        # now, to know the room is actually back (see
+        # thHandleRoomClosedOnSlide's own un-close counterpart,
+        # live_rooms.html), not just the host.
         self.send(text_data=json.dumps({
             'type': 'room_opened',
             'tap_score': event.get('tap_score'),

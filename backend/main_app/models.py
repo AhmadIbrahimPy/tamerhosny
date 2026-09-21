@@ -97,11 +97,12 @@ class ListenTogetherBlock(models.Model):
 
 
 class ListenTogetherRoom(models.Model):
-    """جروب "اسمع معاه" - موجود بس طول ما صاحبه فعلاً بيسمع دلوقتي
-    (بيتعمل create/delete مع CurrentSongListener بتاعه بالظبط - انظر
-    SongListenerConsumer._start_listening/_stop_listening). الأغنية اللي
-    بتتشغل دلوقتي متتخزنش هنا خالص، بتتقرا لايف من
-    get_current_song_for_user عشان متبقاش نسخة تانية ممكن تتقلب."""
+    """جروب "اسمع معاه" - الصف نفسه دلوقتي بيفضل موجود طول ما صاحبه
+    استخدمه ولو مرة (مش بيتشال لما هو بس يوقف/يوقّف مؤقتًا - انظر
+    is_live تحت)، عشان اسمه المخصص ونقط التكبيس ميضيعوش كل مرة يوقف
+    فيها لحظيًا. الأغنية اللي بتتشغل دلوقتي متتخزنش هنا خالص، بتتقرا
+    لايف من get_current_song_for_user عشان متبقاش نسخة تانية ممكن
+    تتقلب."""
 
     host = models.OneToOneField(
         UserAccount,
@@ -120,6 +121,14 @@ class ListenTogetherRoom(models.Model):
 
     is_public = models.BooleanField(default=True, verbose_name=_('عام'))
 
+    # بيتحدد False لما صاحبه يوقف الاستماع خالص (SongListenerConsumer.
+    # _maybe_close_room) - مش بيتشال الصف نفسه عشان كده. بيرجع True تاني
+    # لما يشغل تاني (_maybe_open_room) - ده هو الفرق بين "بدأ جروب جديد
+    # فعلاً" (يستاهل room_opened/AI name/بانر فيد جديد) و"مجرد بدل
+    # أغنية" (نفس الجروب لسه شغال)، بدل ما يعتمد على created (اللي
+    # هيبقى True مرة واحدة بس طول عمر الصف).
+    is_live = models.BooleanField(default=True, verbose_name=_('شغال دلوقتي'))
+
     # بيتزود واحد كل مرة أي حد (صاحب الجروب أو حد بيسمع معاه) يكبس على
     # الشاشة - انظر ListenTogetherConsumer._tap. ده هو "الرانك": ترتيب
     # /live-rooms/ بيعتمد عليه مباشرة، مفيش لوحة ترتيب منفصلة.
@@ -132,6 +141,7 @@ class ListenTogetherRoom(models.Model):
         verbose_name_plural = _('جروبات اسمع معاه')
         indexes = [
             models.Index(fields=['is_public']),
+            models.Index(fields=['is_live']),
         ]
 
     @property

@@ -3674,7 +3674,17 @@
       if (window.showToast) {
         showToast('{% translate "الروم اتقفلت" %}', 'info');
       }
-      window.stopListeningWith();
+      // Deliberately NOT stopListeningWith() (full disconnect) anymore -
+      // "closed" here usually just means the host paused for a moment,
+      // not that they're gone for good (see is_live, main_app.models -
+      // the room row itself isn't torn down either). Staying connected
+      // to the same group is what actually lets a genuine resume's
+      // 'room_opened' reach this browser at all and un-close
+      // live_rooms.html's own slide (thHandleRoomReopenedOnSlide) -
+      // disconnecting here meant a follower had no way to find out the
+      // room came back short of manually rejoining. Just pause the
+      // mirrored audio - there's genuinely nothing to play right now.
+      if (globalAudio && !globalAudio.paused) globalAudio.pause();
     }
 
     // ---------------------------------------------------------

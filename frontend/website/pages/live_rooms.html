@@ -854,6 +854,7 @@
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
     else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
+    else if (data.type === 'room_opened') thHandleRoomReopenedOnSlide();
     else if (data.type === 'follower_joined') thBumpViewerCount(1);
     else if (data.type === 'follower_left') thBumpViewerCount(-1);
     else if (data.type === 'state') thUpdateNowPlayingFromState(data);
@@ -990,6 +991,27 @@
     if (joinBtn) {
       joinBtn.disabled = true;
       joinBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
+    }
+  }
+
+  // The room paused then genuinely came back (is_live False->True
+  // server-side, see SongListenerConsumer._maybe_open_room) - reverses
+  // thHandleRoomClosedOnSlide's own changes instead of leaving the
+  // slide stuck reading "الروم اتقفلت" forever once the host resumes.
+  // thFollowSocket itself now also stays connected through a close
+  // (thHandleRoomClosedWhileFollowing, base.html, no longer disconnects
+  // it), which is what actually lets this reach the follower at all.
+  function thHandleRoomReopenedOnSlide() {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide || !slide.classList.contains('th-room-slide-closed')) return;
+    slide.classList.remove('th-room-slide-closed');
+    var badge = slide.querySelector('.th-room-live-badge');
+    if (badge) badge.innerHTML = '<span class="leaderboard-live-dot"></span> {% translate "مباشر" %}';
+    var joinBtn = slide.querySelector('.th-room-join-status');
+    if (joinBtn) {
+      joinBtn.disabled = false;
+      joinBtn.innerHTML = '<i class="bi bi-headphones"></i> {% translate "بتسمع هنا دلوقتي" %}';
     }
   }
 
