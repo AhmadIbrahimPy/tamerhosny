@@ -269,6 +269,40 @@ class ListenTogetherComment(models.Model):
         return f'{self.room} - {self.text[:30]}'
 
 
+class ListenTogetherTap(models.Model):
+    """كام مرة كل مستخدم كبس/كرّه في جروب "اسمع معاه" ده تحديدًا - مش
+    نفس ListenTogetherRoom.tap_score (ده إجمالي الكل مع بعض، بيتحدث
+    مباشرة على الصف نفسه). موجود عشان صاحب الجروب بس يقدر يشوف مين فعلاً
+    فاعل (ListenTogetherConsumer._tap، وقائمة الناس في الروم -
+    live_rooms.html)."""
+
+    room = models.ForeignKey(
+        ListenTogetherRoom,
+        on_delete=models.CASCADE,
+        related_name='taps',
+        verbose_name=_('الجروب')
+    )
+
+    user = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_taps',
+        verbose_name=_('المستخدم')
+    )
+
+    count = models.PositiveIntegerField(default=0, verbose_name=_('عدد الكبسات'))
+
+    class Meta:
+        verbose_name = _('كبسة اسمع معاه')
+        verbose_name_plural = _('كبسات اسمع معاه')
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'user'], name='unique_room_tap_user'),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.room} - {self.count}'
+
+
 class UserSongPlay(models.Model):
     """نموذج لتتبع تشغيل كل مستخدم لكل أغنية"""
 

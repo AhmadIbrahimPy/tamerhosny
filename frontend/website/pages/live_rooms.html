@@ -382,6 +382,8 @@
     background: var(--bg); color: var(--muted); font-weight: 900;
   }
   .th-room-viewer-name { flex: 1; font-weight: 700; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-room-viewer-stats { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 12px; color: var(--muted); }
+  .th-room-viewer-stats i.bi-heart-fill { color: #e5484d; }
   .th-room-viewer-block-btn {
     flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none;
     background: var(--bg); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -1544,20 +1546,42 @@
     var modal = document.getElementById('thRoomViewersModal');
     if (!modal) return;
     var list = modal.querySelector('.th-room-viewers-list');
+    // {userId: {taps, comments}} - own room only, fetched fresh below;
+    // null until that fetch resolves, so the first render (while
+    // waiting) shows plain rows rather than a flash of stale numbers.
+    var statsById = null;
 
     function render() {
       var viewers = isOwnRoom
         ? (window.thFollowers || [])
         : (slide._thGuestViewers || []);
+
+      if (isOwnRoom && statsById) {
+        // Most engaged (taps + comments) first - a plain join order
+        // doesn't say anything about who's actually into it.
+        viewers = viewers.slice().sort(function (a, b) {
+          var sa = statsById[a.userId] || { taps: 0, comments: 0 };
+          var sb = statsById[b.userId] || { taps: 0, comments: 0 };
+          return (sb.taps + sb.comments) - (sa.taps + sa.comments);
+        });
+      }
+
       if (!viewers.length) {
         list.innerHTML = '<div class="th-room-viewers-empty">{% translate "مفيش حد لسه" %}</div>';
         return;
       }
       list.innerHTML = viewers.map(function (v) {
         var url = '/u/' + v.username + '/';
+        var s = (isOwnRoom && statsById) ? (statsById[v.userId] || { taps: 0, comments: 0 }) : null;
         return '<a href="' + url + '" class="th-room-viewer-row" data-user-id="' + v.userId + '">' +
           '<span class="th-room-viewer-avatar-fallback">' + v.username.slice(0, 1).toUpperCase() + '</span>' +
           '<span class="th-room-viewer-name">' + v.username + '</span>' +
+          (s
+            ? '<span class="th-room-viewer-stats">' +
+              '<i class="bi ' + (s.taps > 0 ? 'bi-heart-fill' : 'bi-heart') + '"></i>' +
+              '<i class="bi bi-chat-dots-fill"></i> ' + s.comments +
+              '</span>'
+            : '') +
           (isOwnRoom
             ? '<button type="button" class="th-room-viewer-block-btn" title="{% translate "امنع" %}" data-user-id="' + v.userId + '"><i class="bi bi-slash-circle"></i></button>'
             : '') +
@@ -1590,6 +1614,22 @@
 
     render();
     modal.style.display = 'flex';
+
+    if (isOwnRoom) {
+      fetch('{% url "website_app:live-room-viewer-stats" %}', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.status !== 'success' || modal.style.display === 'none') return;
+          statsById = {};
+          data.stats.forEach(function (s) {
+            statsById[s.userId] = { taps: s.taps, comments: s.comments };
+          });
+          render();
+        })
+        .catch(function () {});
+    }
 
     if (!modal.dataset.wired) {
       modal.dataset.wired = '1';

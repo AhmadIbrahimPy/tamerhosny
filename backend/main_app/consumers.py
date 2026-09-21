@@ -675,7 +675,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
     def _tap(self):
         from django.db.models import F
 
-        from backend.main_app.models import ListenTogetherRoom
+        from backend.main_app.models import ListenTogetherRoom, ListenTogetherTap
 
         updated = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).update(
             tap_score=F('tap_score') + 1,
@@ -685,6 +685,16 @@ class ListenTogetherConsumer(WebsocketConsumer):
             return
 
         room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).only('tap_score').first()
+
+        # Per-user breakdown, separate from the room's own aggregate
+        # tap_score just updated above - only the host ever reads this
+        # (the viewers popup, live_rooms.html), to see who's actually
+        # engaged rather than just a total count.
+        tap_row, tap_created = ListenTogetherTap.objects.get_or_create(
+            room=room, user=self.user, defaults={'count': 1},
+        )
+        if not tap_created:
+            ListenTogetherTap.objects.filter(pk=tap_row.pk).update(count=F('count') + 1)
 
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'room.tapped',

@@ -2757,6 +2757,40 @@ def update_room_settings(request):
     })
 
 
+@login_required
+def live_room_viewer_stats(request):
+    """صاحب الجروب بس - كام كبسة/تعليق كل واحد من اللي كانوا في جروبه
+    عمل، عشان زرار الناس في live_rooms.html (thShowRoomViewers) يقدر
+    يرتبهم الأكتر تفاعلًا فوق. التاب الإجمالي (tap_score) بيفضل بعد ما
+    الجروب يوقف (is_live=False) - التفصيل بالمستخدم هنا نفس الكلام،
+    عشان يفضل متسق معاه."""
+    from django.db.models import Count
+
+    from backend.main_app.models import ListenTogetherComment, ListenTogetherRoom, ListenTogetherTap
+
+    room = ListenTogetherRoom.objects.filter(host=request.user).first()
+    if room is None:
+        return JsonResponse({'status': 'error'}, status=400)
+
+    taps = {
+        row['user_id']: row['count']
+        for row in ListenTogetherTap.objects.filter(room=room).values('user_id', 'count')
+    }
+    comments = {
+        row['author_id']: row['n']
+        for row in ListenTogetherComment.objects.filter(room=room, author__isnull=False, kind='message')
+        .values('author_id').annotate(n=Count('id'))
+    }
+
+    user_ids = set(taps) | set(comments)
+    stats = [
+        {'userId': uid, 'taps': taps.get(uid, 0), 'comments': comments.get(uid, 0)}
+        for uid in user_ids
+    ]
+
+    return JsonResponse({'status': 'success', 'stats': stats})
+
+
 def profile_most_listened(request, username):
     """القائمة الكاملة لأكتر أغاني استمعلها المستخدم - بترقيم صفحات
     أثناء التمرير (الطلب الأول بيرجع الصفحة كاملة، وأي طلب AJAX تالي
