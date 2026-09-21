@@ -3022,9 +3022,6 @@
       if (!thFollowers.some(function (f) { return f.userId === data.user_id; })) {
         thFollowers.push({ userId: data.user_id, username: data.username });
       }
-      if (window.showToast) {
-        showToast(data.username + ' {% translate "بيسمع معاك دلوقتي" %}', 'info');
-      }
       thRenderFollowersChip();
       thUpdateHostingJoinCount();
     }

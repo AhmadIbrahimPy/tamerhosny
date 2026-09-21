@@ -19,8 +19,11 @@
   body.th-live-rooms-page .th-footer { display: none; }
 
   .th-room-feed-nav-arrows {
+    /* Mobile scrolls the feed by hand (swipe) - the arrows are
+       desktop-only, unhidden by the min-width:768px rule below. */
+    display: none;
     position: fixed; top: 50%; transform: translateY(-50%); inset-inline-start: 12px;
-    z-index: 1001; display: flex; flex-direction: column; gap: 10px;
+    z-index: 1001; flex-direction: column; gap: 10px;
   }
   .th-room-feed-nav-btn {
     width: 38px; height: 38px; border-radius: 50%; border: none;
@@ -104,6 +107,14 @@
     background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
   }
   .th-room-live-badge .leaderboard-live-dot { background: #fff; margin-inline-start: 0; }
+  /* Tap/like count - now a small badge up top next to "مباشر" instead
+     of the big circular button that used to sit on the side rail. */
+  .th-room-tap-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .th-room-tap-badge.tapped i { color: #e5484d; }
 
   .th-room-slide-name {
     position: relative; z-index: 2; font-size: 22px; font-weight: 900;
@@ -177,38 +188,28 @@
   .th-room-suggest-cards .th-suggested-song-cover-wrap { width: 100%; height: 90px; }
   .th-room-suggest-cards .th-suggested-song-info { width: 100%; }
   .th-room-suggest-cards .th-suggested-song-artist { display: none; }
+  /* Centered on the cover image itself, not hovering near the title
+     below it - the cover-wrap is the card's first 90px, so centering
+     against the row's own top edge lands it there. */
   .th-room-suggest-cards .th-suggested-song-play {
-    position: absolute; bottom: 6px; inset-inline-end: 6px; width: 26px; height: 26px;
+    position: absolute; top: 45px; inset-inline-start: 50%; inset-inline-end: auto;
+    transform: translate(-50%, -50%);
+    width: 30px; height: 30px;
   }
-
-  .th-room-slide-rail {
-    position: absolute; z-index: 3; inset-inline-end: 10px; bottom: 32vh;
-    display: flex; flex-direction: column; align-items: center; gap: 18px;
-  }
-  .th-room-rail-btn {
-    width: 46px; height: 46px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,.35); color: #fff; display: flex;
-    align-items: center; justify-content: center; font-size: 18px; cursor: pointer;
-  }
-  /* The count sits below the circular icon button, not stacked inside
-     the same 46px circle as it used to be. */
-  .th-room-tap-count { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .th-room-tap-count span { font-size: 11px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
-  .th-room-tap-count.tapped .th-room-rail-btn i { color: #e5484d; }
 
   .th-room-slide-comments {
     position: relative; z-index: 2; padding: 0 16px 16px;
   }
   .th-room-comment-list {
     max-height: 30vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
-    margin-bottom: 10px; padding-inline-end: 60px;
+    margin-bottom: 10px;
     scrollbar-width: none; -ms-overflow-style: none;
   }
   .th-room-comment-list::-webkit-scrollbar { display: none; }
   .th-room-comment { font-size: 13px; line-height: 1.4; }
   .th-room-comment .author { font-weight: 800; margin-inline-end: 4px; }
   .th-room-comment.system { opacity: .75; font-style: italic; }
-  .th-room-comment-form { display: flex; gap: 8px; padding-inline-end: 60px; }
+  .th-room-comment-form { display: flex; gap: 8px; }
   .th-room-comment-form input {
     flex: 1; border-radius: 999px; border: 1px solid rgba(255,255,255,.3);
     background: rgba(0,0,0,.35); color: #fff; padding: 9px 14px; font-size: 13px;
@@ -236,10 +237,20 @@
   }
 
   @media (max-width:380px){
-    .th-room-rail-btn{width:40px; height:40px; font-size:16px;}
-    .th-room-slide-rail{gap:14px; inset-inline-end:8px;}
-    .th-room-comment-list, .th-room-comment-form{padding-inline-end:52px;}
     .th-room-slide-name{font-size:19px;}
+  }
+
+  /* Desktop/web only - the nav arrows move off the fixed left edge and
+     into the exact spot the tap rail used to occupy (inset-inline-end,
+     vertically centered on the lower half of the slide), instead of
+     staying pinned to the left on wide screens too. Mobile keeps them
+     where they've always been. */
+  @media (min-width:768px){
+    .th-room-feed-nav-arrows{
+      display: flex;
+      top: auto; bottom: 32vh; transform: none;
+      inset-inline-start: auto; inset-inline-end: 10px;
+    }
   }
 
   .th-room-feed-empty {
@@ -702,6 +713,7 @@
       (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
+      '<span class="th-room-tap-badge"><i class="bi bi-heart-fill"></i> <span class="th-room-tap-count-num">' + room.tapScore + '</span></span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
     top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -814,20 +826,11 @@
     joinStatus.dataset.roomName = room.roomName;
     slide.appendChild(joinStatus);
 
-    // Share moved up into the top bar (see header above) - only the tap/
-    // like counter stays on this side rail now.
-    var rail = document.createElement('div');
-    rail.className = 'th-room-slide-rail';
-    // The count sits outside the circular icon button now (below it),
-    // not crammed inside the same 46px circle as the icon.
-    var tapWrap = document.createElement('div');
-    tapWrap.className = 'th-room-tap-count';
-    tapWrap.innerHTML =
-      '<button type="button" class="th-room-rail-btn" disabled><i class="bi bi-heart-fill"></i></button>' +
-      '<span>' + room.tapScore + '</span>';
-    rail.appendChild(tapWrap);
-    slide.appendChild(rail);
-
+    // Share moved up into the top bar (see header above); the tap/like
+    // count moved up there too (as th-room-tap-badge, right next to
+    // "مباشر") - the side rail this used to occupy is gone, freeing that
+    // space for the desktop nav arrows instead (see the min-width:768px
+    // rule above).
     var comments = document.createElement('div');
     comments.className = 'th-room-slide-comments';
     var list = document.createElement('div');
@@ -915,14 +918,14 @@
     slide.appendChild(heart);
     setTimeout(function () { heart.remove(); }, 900);
 
-    var tapBtn = slide.querySelector('.th-room-tap-count');
-    if (tapBtn) tapBtn.classList.add('tapped');
+    var tapBadge = slide.querySelector('.th-room-tap-badge');
+    if (tapBadge) tapBadge.classList.add('tapped');
   }
 
   function thUpdateTapCount(score) {
     if (activeIndex === -1 || typeof score !== 'number') return;
-    var tapBtn = slideEls[activeIndex].querySelector('.th-room-tap-count span');
-    if (tapBtn) tapBtn.textContent = score;
+    var tapNum = slideEls[activeIndex].querySelector('.th-room-tap-count-num');
+    if (tapNum) tapNum.textContent = score;
   }
 
   function thRenderCommentHistory(comments) {
