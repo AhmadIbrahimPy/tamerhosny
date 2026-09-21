@@ -466,6 +466,97 @@
     }
   };
 
+  // "بعدها" card - own room only. A single slot (window.thHostQueue[0]),
+  // not a running list - see thQueueSuggestedSong, which replaces it
+  // rather than appending. Callable both when the slide is first built
+  // (queue already has something from before) and right after a pick
+  // (no reload - updates the existing card, or creates it the first
+  // time anything's ever been queued this session).
+  function thRenderUpNextCard(headerEl) {
+    var hasNext = window.thHostQueue && window.thHostQueue.length;
+    var upNext = headerEl.querySelector('.th-room-up-next');
+
+    if (!hasNext) {
+      if (upNext) upNext.remove();
+      return;
+    }
+
+    var nextArgs = window.thHostQueue[0];
+    var nextTitle = nextArgs[2] || '';
+    var nextImageRaw = nextArgs[4];
+    var nextImage = Array.isArray(nextImageRaw) ? nextImageRaw[0] : nextImageRaw;
+
+    if (!upNext) {
+      upNext = document.createElement('div');
+      upNext.className = 'th-room-up-next';
+      upNext.innerHTML =
+        '<img class="th-room-up-next-cover" alt="" style="display:none;">' +
+        '<div class="th-room-up-next-cover th-room-now-playing-cover-fallback"><i class="bi bi-music-note-beamed"></i></div>' +
+        '<div><div class="th-room-up-next-label">{% translate "بعدها" %}</div><div class="th-room-up-next-title"></div></div>';
+      // Right after "دلوقتي بيسمع", before the "شغّل كمان" strip (if
+      // that's already there) or at the end otherwise.
+      var suggestStrip = headerEl.querySelector('.th-room-suggest-strip');
+      headerEl.insertBefore(upNext, suggestStrip || null);
+    }
+
+    var coverImg = upNext.querySelector('img.th-room-up-next-cover');
+    var coverFallback = upNext.querySelector('.th-room-now-playing-cover-fallback');
+    if (nextImage) {
+      coverImg.src = nextImage;
+      coverImg.style.display = 'block';
+      coverFallback.style.display = 'none';
+    } else {
+      coverImg.style.display = 'none';
+      coverFallback.style.display = 'flex';
+    }
+    upNext.querySelector('.th-room-up-next-title').textContent = nextTitle;
+  }
+
+  // "شغّل كمان" strip contents - own room only, fetched fresh both on
+  // first load and after a pick (thQueueSuggestedSong), so a song just
+  // queued doesn't linger in the list it was picked from.
+  function thLoadSuggestCards(suggestWrap) {
+    fetch('{% url "website_app:live-rooms-suggested-songs" %}', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var cardsEl = suggestWrap.querySelector('.th-room-suggest-cards');
+        if (!cardsEl || !data.html) return;
+        cardsEl.innerHTML = data.html;
+        // _suggested_songs_items.html's own play button normally starts
+        // the song immediately (window.thPlaySuggestedSong) - redirected
+        // here, after insertion, to queue it as "بعدها" instead. Done
+        // client-side rather than templating a second onclick variant
+        // server-side, so this stays the one partial both contexts share.
+        cardsEl.querySelectorAll('.th-suggested-song-play').forEach(function (btn) {
+          btn.setAttribute('onclick', 'window.thQueueSuggestedSong(this);');
+        });
+      })
+      .catch(function () {});
+  }
+
+  window.thQueueSuggestedSong = function (btn) {
+    var row = btn.closest('.th-suggested-song-row');
+    var suggestWrap = btn.closest('.th-room-suggest-strip');
+    var headerEl = btn.closest('.th-room-slide-header');
+    if (!row || !headerEl) return;
+
+    window.thHostQueue = [[
+      row.dataset.audioUrl, null, row.dataset.title, '',
+      row.dataset.image ? [row.dataset.image] : null,
+      row.dataset.link, row.dataset.artist, row.dataset.album,
+      false, row.dataset.songId, row.dataset.albumLink, false,
+    ]];
+
+    thRenderUpNextCard(headerEl);
+    if (suggestWrap) thLoadSuggestCards(suggestWrap);
+
+    if (window.showToast) {
+      showToast('{% translate "هتشتغل بعد اللي شغال دلوقتي" %}', 'success');
+    }
+  };
+
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only
     // reachable here if there actually are rooms to switch to instead,
@@ -586,32 +677,24 @@
       '</div>';
     header.appendChild(nowPlaying);
 
-    // "بعدها" - a snapshot of window.thHostQueue[0] (the play-choice
-    // modal's "إضافة للقائمة" pushes here, see base.html) at the moment
-    // this slide was built - only ever meaningful on your own room, and
-    // only while something's actually queued.
-    if (isOwnRoom && window.thHostQueue && window.thHostQueue.length) {
-      var nextArgs = window.thHostQueue[0];
-      var nextTitle = nextArgs[2] || '';
-      var nextImageRaw = nextArgs[4];
-      var nextImage = Array.isArray(nextImageRaw) ? nextImageRaw[0] : nextImageRaw;
-      var upNext = document.createElement('div');
-      upNext.className = 'th-room-up-next';
-      upNext.innerHTML =
-        (nextImage
-          ? '<img class="th-room-up-next-cover" alt="">'
-          : '<div class="th-room-up-next-cover th-room-now-playing-cover-fallback"><i class="bi bi-music-note-beamed"></i></div>') +
-        '<div><div class="th-room-up-next-label">{% translate "بعدها" %}</div><div class="th-room-up-next-title"></div></div>';
-      if (nextImage) upNext.querySelector('.th-room-up-next-cover').src = nextImage;
-      upNext.querySelector('.th-room-up-next-title').textContent = nextTitle;
-      header.appendChild(upNext);
+    // "بعدها" - reflects window.thHostQueue[0] (a single slot, not a
+    // growing list - picking a new "next" from the strip below replaces
+    // it, see thQueueSuggestedSong) - only ever meaningful on your own
+    // room.
+    if (isOwnRoom) {
+      thRenderUpNextCard(header);
     }
 
-    // Only on your own room - a quick way to add another song without
-    // leaving the slide, reusing the exact same suggestions endpoint/
-    // markup the empty-feed state already uses (see thRoomFeedCreateRoom's
-    // own docs), just re-skinned into a horizontal card strip via CSS
-    // instead of the vertical list.
+    // Only on your own room - a quick way to line up another song
+    // without leaving the slide, reusing the exact same suggestions
+    // endpoint/markup the empty-feed state already uses (see
+    // thRoomFeedCreateRoom's own docs), just re-skinned into a
+    // horizontal card strip via CSS instead of the vertical list. A
+    // card's own play button normally starts that song immediately
+    // (thPlaySuggestedSong) - here it's rewired (after insertion, see
+    // thLoadSuggestCards) to queue it as "بعدها" instead, since jumping
+    // straight to a different song would cut off whoever's listening
+    // along right now.
     if (isOwnRoom) {
       var suggestWrap = document.createElement('div');
       suggestWrap.className = 'th-room-suggest-strip';
@@ -622,16 +705,7 @@
         '</div>' +
         '<div class="th-room-suggest-cards"></div>';
       header.appendChild(suggestWrap);
-
-      fetch('{% url "website_app:live-rooms-suggested-songs" %}', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var cardsEl = suggestWrap.querySelector('.th-room-suggest-cards');
-          if (cardsEl && data.html) cardsEl.innerHTML = data.html;
-        })
-        .catch(function () {});
+      thLoadSuggestCards(suggestWrap);
     }
 
     slide.appendChild(header);
