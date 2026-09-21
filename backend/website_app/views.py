@@ -2613,6 +2613,17 @@ def live_rooms(request, username=None):
     if request.user.is_authenticated and not viewing_own_room:
         rooms_qs = rooms_qs.exclude(host=request.user)
 
+    if request.user.is_authenticated:
+        # A room whose host has blocked you shouldn't show up at all -
+        # not just refuse the join. ListenTogetherBlock.blocker is the
+        # host who did the blocking; blocked is this visitor.
+        from backend.main_app.models import ListenTogetherBlock
+
+        blocked_by = ListenTogetherBlock.objects.filter(
+            blocked=request.user,
+        ).values_list('blocker_id', flat=True)
+        rooms_qs = rooms_qs.exclude(host_id__in=blocked_by)
+
     rooms = [entry for entry in (_room_entry(room) for room in rooms_qs) if entry is not None]
 
     if viewing_own_room and not any(r['hostUserId'] == request.user.id for r in rooms):
