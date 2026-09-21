@@ -323,10 +323,15 @@
       false, row.dataset.songId, row.dataset.albumLink, false
     );
 
+    // /live-rooms/<own-username>/ specifically, not the plain feed -
+    // your own room is excluded from the generic feed (see the view),
+    // so that would just show everyone ELSE's rooms again with nothing
+    // of yours in it, right after you asked to see yours.
+    var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
     if (window.thBoostedNavigate) {
-      window.thBoostedNavigate('/live-rooms/');
+      window.thBoostedNavigate(url);
     } else {
-      window.location.href = '/live-rooms/';
+      window.location.href = url;
     }
   };
 
@@ -490,12 +495,17 @@
       return;
     }
 
-    // Server-side excludes your own room from the feed already (see
-    // live_rooms view) - this is only a safety net for a stale/cached
-    // page. "Joining" yourself would open a second listen-together
+    // Your own room - reachable here on purpose via /live-rooms/
+    // <your-username>/ (see the view; the generic feed still excludes
+    // it). Never "join" it - that would open a second listen-together
     // connection to your own group on top of the always-on host one,
-    // showing you as your own follower.
-    if (room.hostUserId === window.thUserId) return;
+    // showing you as your own follower - the button just says so
+    // instead, no action.
+    if (room.hostUserId === window.thUserId) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-broadcast"></i> {% translate "دي غرفتك" %}';
+      return;
+    }
 
     if (room.isPublic) {
       window.startListeningWith(btn);

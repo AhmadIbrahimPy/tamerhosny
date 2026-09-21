@@ -3154,7 +3154,12 @@
       // every boosted navigation (see htmx:afterSettle below), not just
       // on join/tap events, since the path can change with neither.
       var onRoomFeed = window.location.pathname.indexOf('/live-rooms/') === 0;
-      var browseHref = onRoomFeed ? '{% url "website_app:songs" %}' : '{% url "website_app:live-rooms" %}';
+      // /live-rooms/<own-username>/ specifically - your own room is
+      // excluded from the generic /live-rooms/ feed (you can't
+      // meaningfully join yourself), so landing on the plain feed would
+      // just show everyone ELSE's rooms with nothing of yours to see;
+      // the view special-cases this exact URL to show it anyway.
+      var browseHref = onRoomFeed ? '{% url "website_app:songs" %}' : ('/live-rooms/' + window.thUsername + '/');
       var browseLabel = onRoomFeed ? '{% translate "تصفح" %}' : '{% translate "عرض الروم" %}';
       var browseIcon = onRoomFeed ? 'bi-search' : 'bi-broadcast';
 
@@ -4151,6 +4156,7 @@
     // of endpoints under /auth/, no shared code path).
     window.isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
     window.thUserId = {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %};
+    window.thUsername = {% if user.is_authenticated %}'{{ user.username|escapejs }}'{% else %}null{% endif %};
     // Always-on "اسمع معاه" host channel - see thConnectListenTogetherHost's
     // own comment (near connectGlobalListenerSocket) for why this opens
     // unconditionally for every logged-in visitor, not just while

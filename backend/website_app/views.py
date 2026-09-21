@@ -2594,19 +2594,22 @@ def live_rooms(request, username=None):
     from backend.main_app.models import ListenTogetherRoom
     from backend.main_app.shared_utils.listen_together import get_current_song_for_user
 
-    rooms_qs = ListenTogetherRoom.objects.filter(
-        is_public=True,
-    ).select_related('host').order_by('-tap_score', '-created_at')
+    # /live-rooms/<own-username>/ - "your room" (the تصفح/عرض الروم link,
+    # and playing a suggested song, both land here) is a special case:
+    # unlike anyone else's, it should show even if you made it private,
+    # and it's excluded below from the generic feed for the opposite
+    # reason (you can't meaningfully join yourself) - so it needs adding
+    # back in explicitly, not just left un-excluded.
+    viewing_own_room = (
+        username and request.user.is_authenticated
+        and username.lower() == request.user.username.lower()
+    )
 
-    if request.user.is_authenticated:
-        rooms_qs = rooms_qs.exclude(host=request.user)
-
-    rooms = []
-    for room in rooms_qs:
+    def _room_entry(room):
         song = get_current_song_for_user(room.host)
         if song is None:
-            continue
-        rooms.append({
+            return None
+        return {
             'hostUserId': room.host_id,
             'hostUsername': room.host.username,
             'hostAvatar': room.host.profile_image.url if room.host.profile_image else '',
@@ -2614,7 +2617,22 @@ def live_rooms(request, username=None):
             'isPublic': room.is_public,
             'tapScore': room.tap_score,
             'song': _serialize_song_for_listen_together(song),
-        })
+        }
+
+    rooms_qs = ListenTogetherRoom.objects.filter(
+        is_public=True,
+    ).select_related('host').order_by('-tap_score', '-created_at')
+
+    if request.user.is_authenticated and not viewing_own_room:
+        rooms_qs = rooms_qs.exclude(host=request.user)
+
+    rooms = [entry for entry in (_room_entry(room) for room in rooms_qs) if entry is not None]
+
+    if viewing_own_room and not any(r['hostUserId'] == request.user.id for r in rooms):
+        own_room = ListenTogetherRoom.objects.filter(host=request.user).select_related('host').first()
+        own_entry = _room_entry(own_room) if own_room else None
+        if own_entry:
+            rooms.insert(0, own_entry)
 
     if username:
         # Best-effort - if the shared room already ended by the time this
