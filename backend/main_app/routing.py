@@ -35,4 +35,8 @@ websocket_urlpatterns = [
         r'^ws/listen-together/(?P<host_user_id>\d+)/$',
         consumers.ListenTogetherConsumer.as_asgi(),
     ),
+    re_path(
+        r'^ws/live-rooms/feed/$',
+        consumers.LiveRoomsFeedConsumer.as_asgi(),
+    ),
 ]

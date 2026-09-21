@@ -2440,23 +2440,8 @@ PROFILE_PREVIEW_SIZE = 12
 
 
 def _serialize_song_for_listen_together(song):
-    """The song payload playAudio() (base.html) expects - shared by
-    public_profile's single button and live_rooms' one-per-slide feed,
-    so both stay in the exact same shape."""
-    singers = [
-        credit for credit in song.credits.select_related('person').all()
-        if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
-    ]
-    return {
-        'songId': song.pk,
-        'title': localized_field(song, 'title'),
-        'artist': ', '.join(localized_field(credit.person, 'full_name') for credit in singers),
-        'album': localized_field(song.album, 'title') if song.album else '',
-        'albumLink': reverse('website_app:album-detail', args=[song.album.slug]) if song.album else '',
-        'image': song.display_cover_url or '',
-        'url': song.audio_file.url if song.audio_file else '',
-        'link': reverse('website_app:song-detail', args=[song.slug]),
-    }
+    from backend.main_app.shared_utils.listen_together import serialize_song_for_listen_together
+    return serialize_song_for_listen_together(song)
 
 
 def public_profile(request, username):

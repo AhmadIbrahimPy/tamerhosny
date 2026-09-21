@@ -284,6 +284,14 @@
     color: #0b0c12; font-weight: 800; cursor: pointer;
   }
 
+  /* Live-pushed "a room just opened" banner on the empty state - see
+     the feedSocket wiring below (LiveRoomsFeedConsumer). */
+  .th-room-new-banner {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+
   /* Shown while thPlaySuggestedSong waits for the async room_opened
      round-trip before navigating to the room view - otherwise that gap
      (up to the 4s timeout fallback) looks like nothing happened. */
@@ -518,8 +526,12 @@
     function goToMyRoom() {
       if (navigated) return;
       navigated = true;
-      var overlay = document.getElementById('thRoomLoadingOverlay');
-      if (overlay) overlay.style.display = 'none';
+      // Deliberately not hiding #thRoomLoadingOverlay here - it stays
+      // up, covering the boosted-nav fetch itself, until htmx swaps
+      // #th-page-root's whole content (overlay included) for the new
+      // page's. Hiding it first left a gap where the OLD page's content
+      // (the empty state/suggestions this navigation is leaving) was
+      // visible again for a moment before the swap landed.
       var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
       if (window.thBoostedNavigate) {
         window.thBoostedNavigate(url);
@@ -638,6 +650,60 @@
       showToast('{% translate "هتشتغل بعد اللي شغال دلوقتي" %}', 'success');
     }
   };
+
+  // Live push for "a new public room just opened" - so someone sitting
+  // on the empty state doesn't have to keep hitting "تحديث"/refresh to
+  // find out. Scoped deliberately to the empty-state case only (the
+  // feed you can already see is populated by the initial page render;
+  // rebuilding the whole IntersectionObserver/scroll-snap slide setup
+  // live for an already-populated feed is a much bigger, riskier change
+  // than what was actually asked for here) - a lightweight banner
+  // instead of a full slide, since there's no scroll-snap feed to
+  // insert into yet.
+  if (!rooms.length && emptyEl) {
+    var feedSocket = null;
+    try {
+      var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
+    } catch (e) { feedSocket = null; }
+
+    if (feedSocket) {
+      if (window.thOnTeardown) {
+        window.thOnTeardown(function () {
+          if (feedSocket) { var s = feedSocket; feedSocket = null; s.close(); }
+        });
+      }
+      feedSocket.addEventListener('message', function (evt) {
+        var data;
+        try { data = JSON.parse(evt.data); } catch (e) { return; }
+
+        if (data.type === 'room_opened') {
+          var room = data.room;
+          if (!room || room.hostUserId === window.thUserId) return;
+
+          var existing = emptyEl.querySelector('.th-room-new-banner');
+          if (existing) existing.remove();
+
+          var banner = document.createElement('button');
+          banner.type = 'button';
+          banner.className = 'th-room-new-banner';
+          banner.dataset.hostUserId = room.hostUserId;
+          banner.innerHTML = '<span class="leaderboard-live-dot"></span> ' +
+            '<span>' + room.hostUsername + ' ' + '{% translate "بدأ روم جديدة - ادخل اسمع" %}' + '</span>';
+          banner.addEventListener('click', function () {
+            var url = '/live-rooms/' + room.hostUsername + '/';
+            if (window.thBoostedNavigate) { window.thBoostedNavigate(url); } else { window.location.href = url; }
+          });
+          emptyEl.insertBefore(banner, emptyEl.firstChild);
+        } else if (data.type === 'room_closed') {
+          // Closed before anyone clicked it - pull the dead link back
+          // out rather than leaving a banner that 404s on click.
+          var dead = emptyEl.querySelector('.th-room-new-banner[data-host-user-id="' + data.host_user_id + '"]');
+          if (dead) dead.remove();
+        }
+      });
+    }
+  }
 
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only

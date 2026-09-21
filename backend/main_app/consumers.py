@@ -155,6 +155,36 @@ class SongListenerConsumer(WebsocketConsumer):
                 'tap_score': room.tap_score,
             })
 
+            # Separately, anyone sitting on the general /live-rooms/
+            # feed with nothing to show yet gets this room pushed to
+            # them live - previously they only ever found out on their
+            # next manual page load. See LiveRoomsFeedConsumer and
+            # live_rooms.html's own 'room_opened' handler (not to be
+            # confused with the host-only event of the same name just
+            # above - different group, different payload shape).
+            if room.is_public:
+                from backend.main_app.shared_utils.listen_together import (
+                    get_current_song_for_user,
+                    serialize_song_for_listen_together,
+                )
+
+                song = get_current_song_for_user(user)
+                if song is not None:
+                    async_to_sync(get_channel_layer().group_send)(
+                        LiveRoomsFeedConsumer.GROUP_NAME, {
+                            'type': 'feed.room_opened',
+                            'room': {
+                                'hostUserId': user.id,
+                                'hostUsername': user.username,
+                                'hostAvatar': user.profile_image.url if user.profile_image else '',
+                                'roomName': room.display_name,
+                                'isPublic': room.is_public,
+                                'tapScore': room.tap_score,
+                                'song': serialize_song_for_listen_together(song),
+                            },
+                        },
+                    )
+
     @staticmethod
     def _maybe_close_room(user):
         from backend.main_app.models import ListenTogetherRoom
@@ -165,6 +195,12 @@ class SongListenerConsumer(WebsocketConsumer):
                 async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
                     'type': 'room.closed',
                 })
+                async_to_sync(get_channel_layer().group_send)(
+                    LiveRoomsFeedConsumer.GROUP_NAME, {
+                        'type': 'feed.room_closed',
+                        'host_user_id': user.id,
+                    },
+                )
 
     def _broadcast_live_status(self):
         # Presence changed but no score changed - just refresh the live
@@ -196,6 +232,33 @@ class SongListenerConsumer(WebsocketConsumer):
             'type': 'count',
             'count': event['count'],
         }))
+
+
+class LiveRoomsFeedConsumer(WebsocketConsumer):
+    """Anyone sitting on the general /live-rooms/ feed (see
+    website_app.views.live_rooms) joins this one group for as long as
+    the page is open - a live push the instant a new public room opens
+    or an existing one closes, instead of only ever finding out on the
+    visitor's next manual page load (see SongListenerConsumer's own
+    _maybe_open_room/_maybe_close_room, the only senders into this
+    group). Purely server-to-client - nothing it ever expects to
+    receive.
+    """
+
+    GROUP_NAME = 'live_rooms_feed'
+
+    def connect(self):
+        async_to_sync(self.channel_layer.group_add)(self.GROUP_NAME, self.channel_name)
+        self.accept()
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(self.GROUP_NAME, self.channel_name)
+
+    def feed_room_opened(self, event):
+        self.send(text_data=json.dumps({'type': 'room_opened', 'room': event['room']}))
+
+    def feed_room_closed(self, event):
+        self.send(text_data=json.dumps({'type': 'room_closed', 'host_user_id': event['host_user_id']}))
 
 
 class SongLeaderboardConsumer(WebsocketConsumer):

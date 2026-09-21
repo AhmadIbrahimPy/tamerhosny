@@ -9,6 +9,7 @@ shows on their public profile.
 
 from datetime import timedelta
 
+from django.urls import reverse
 from django.utils import timezone
 
 from backend.main_app.models import CurrentSongListener
@@ -40,3 +41,27 @@ def get_current_song_for_user(user):
     )
 
     return listener.song if listener else None
+
+
+def serialize_song_for_listen_together(song):
+    """The song payload playAudio() (base.html) expects - shared by
+    public_profile's single button, live_rooms' one-per-slide feed, and
+    the live_rooms_feed push (SongListenerConsumer._maybe_open_room), so
+    all three stay in the exact same shape."""
+    from backend.main_app.templatetags.bilingual import localized_field
+    from backend.music_app.models import SongCredit
+
+    singers = [
+        credit for credit in song.credits.select_related('person').all()
+        if credit.role in (SongCredit.Role.SINGER, SongCredit.Role.FEATURED_ARTIST)
+    ]
+    return {
+        'songId': song.pk,
+        'title': localized_field(song, 'title'),
+        'artist': ', '.join(localized_field(credit.person, 'full_name') for credit in singers),
+        'album': localized_field(song.album, 'title') if song.album else '',
+        'albumLink': reverse('website_app:album-detail', args=[song.album.slug]) if song.album else '',
+        'image': song.display_cover_url or '',
+        'url': song.audio_file.url if song.audio_file else '',
+        'link': reverse('website_app:song-detail', args=[song.slug]),
+    }
