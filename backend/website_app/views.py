@@ -2621,8 +2621,42 @@ def live_rooms(request, username=None):
         # link is opened, just fall back to the normal feed order.
         rooms.sort(key=lambda r: r['hostUsername'].lower() != username.lower())
 
+    # Nothing to join right now - give the empty state something more
+    # useful to do than just say so: a few songs worth starting a room
+    # with. Personalized (UserSongRecommendation - the same "recommended
+    # for you" signal this app already computes nightly, just never
+    # actually surfaced anywhere on the site until now) when there's
+    # enough listening history to have any; otherwise the current
+    # trending chart (get_trending - already used by /songs/trending/,
+    # safe to call from any view since it recomputes itself if stale).
+    suggested_songs = []
+    if not rooms:
+        if request.user.is_authenticated:
+            from backend.main_app.models import UserSongRecommendation
+
+            suggested_songs = [
+                rec.song for rec in
+                UserSongRecommendation.objects.filter(user=request.user)
+                .select_related('song', 'song__album')[:6]
+            ]
+
+        if not suggested_songs:
+            from backend.main_app.shared_utils.trending import get_trending
+
+            suggested_songs = [rank.song for rank in get_trending(limit=6)]
+
+        if not suggested_songs:
+            # No engagement data at all yet (trending/recommendations are
+            # both built from real plays) - a fresh catalog with no
+            # listening history yet shouldn't leave this empty either.
+            suggested_songs = list(
+                Song.visible_queryset(Song.objects.exclude(audio_file=''))
+                .select_related('album').order_by('-release_year')[:6]
+            )
+
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
+        'suggested_songs': [_serialize_song_for_listen_together(song) for song in suggested_songs],
     })
 
 

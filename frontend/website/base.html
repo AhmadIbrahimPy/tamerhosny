@@ -1119,6 +1119,7 @@
       margin-inline-start: auto; display: flex; align-items: center; gap: 6px;
       padding: 5px 14px; border-radius: 999px; background: var(--accent); color: #0b0c12;
       text-decoration: none; font-weight: 800; font-size: 12px; white-space: nowrap;
+      border: none; cursor: pointer; font-family: inherit;
     }
     @media (max-width:480px){
       /* Keep the icon, drop the label text - "بتستضيف جروب دلوقتي" is
@@ -2869,6 +2870,21 @@
       globalListenerSongId = songId;
       var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       globalListenerSocket = new WebSocket(protocol + '//' + window.location.host + '/ws/songs/' + songId + '/listening/');
+      // A new WebSocket is CONNECTING, not OPEN, the instant it's
+      // constructed - the 'play' handler's own sendGlobalListenerAction
+      // ('start') call right after this function returns used to run
+      // before the handshake ever finished, silently dropped by that
+      // function's own readyState check, every single time a NEW song
+      // started (as opposed to resuming an already-open connection for
+      // the SAME song, where that immediate call does work - this
+      // isn't a duplicate for that case, 'open' never fires again on an
+      // already-open socket this function reused instead of recreating).
+      // No CurrentSongListener ever got created for a freshly-played
+      // song as a result, which is also why a "اسمع معاه" room never
+      // appeared even though playback itself worked fine.
+      globalListenerSocket.addEventListener('open', function () {
+        sendGlobalListenerAction('start');
+      });
       globalListenerSocket.addEventListener('close', function() {
         globalListenerSocket = null;
       });
