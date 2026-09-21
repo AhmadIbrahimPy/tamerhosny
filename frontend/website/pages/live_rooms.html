@@ -1383,6 +1383,32 @@
     }
   }
 
+  // Own-tap bursts (thTapSlide) originate at the click point; these -
+  // for taps arriving from ANYONE via thUpdateTapCount - have no click
+  // coordinate to work with, so they float up from the tap badge
+  // itself instead, staggered slightly so a multi-heart burst doesn't
+  // read as one flat stack.
+  function thSpawnHeartBursts(slide, count) {
+    var badge = slide.querySelector('.th-room-tap-badge');
+    if (!badge) return;
+    var slideRect = slide.getBoundingClientRect();
+    var badgeRect = badge.getBoundingClientRect();
+    var originX = badgeRect.left + badgeRect.width / 2 - slideRect.left;
+    var originY = badgeRect.top + badgeRect.height / 2 - slideRect.top;
+    for (var i = 0; i < count; i++) {
+      (function (delay) {
+        setTimeout(function () {
+          var heart = document.createElement('i');
+          heart.className = 'bi bi-heart-fill th-room-heart-burst';
+          heart.style.left = (originX + (Math.random() * 24 - 12)) + 'px';
+          heart.style.top = originY + 'px';
+          slide.appendChild(heart);
+          setTimeout(function () { heart.remove(); }, 900);
+        }, delay);
+      })(i * 90);
+    }
+  }
+
   function thTapSlide(slide, x, y) {
     if (window.requireAuth && window.requireAuth(null, null)) return;
     window.thSendListenTogetherMessage({ action: 'tap' });
@@ -1401,8 +1427,20 @@
 
   function thUpdateTapCount(score) {
     if (activeIndex === -1 || typeof score !== 'number') return;
-    var tapNum = slideEls[activeIndex].querySelector('.th-room-tap-count-num');
-    if (tapNum) tapNum.textContent = score;
+    var slide = slideEls[activeIndex];
+    var tapNum = slide.querySelector('.th-room-tap-count-num');
+    if (tapNum) {
+      // One burst per point the count actually went up by (so a rapid
+      // run of taps from anyone - not just your own click, which
+      // already gets its own burst in thTapSlide - reads as a visible
+      // flurry rather than just a silently ticking-up number), capped
+      // so a big jump (e.g. this browser was away and just reconnected)
+      // doesn't flood the screen.
+      var prev = parseInt(tapNum.textContent, 10);
+      var delta = isNaN(prev) ? 0 : (score - prev);
+      if (delta > 0) thSpawnHeartBursts(slide, Math.min(delta, 8));
+      tapNum.textContent = score;
+    }
   }
 
   // Live "N watching" badge, next to the tap count. Own room: resynced

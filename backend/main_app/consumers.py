@@ -156,6 +156,15 @@ class SongListenerConsumer(WebsocketConsumer):
             room.is_live = True
             room.save(update_fields=['is_live'])
 
+            # A fresh session starts with an empty comment list, not
+            # whatever "X انضم"/chat history piled up from before this
+            # host last paused - the room ROW surviving a pause is what
+            # keeps its name/tap_score, but comments are tied to one
+            # live session, not the room's whole lifetime.
+            from backend.main_app.models import ListenTogetherComment
+
+            ListenTogetherComment.objects.filter(room=room).delete()
+
             # Tells the host's own always-open ListenTogetherConsumer
             # connection (same listen_together_<user.id> group) that
             # hosting just started, so base.html can swap the global
@@ -513,15 +522,22 @@ class ListenTogetherConsumer(WebsocketConsumer):
         )
         self.accept()
 
-        if not self.is_host and self.is_approved_follower:
-            self._announce_follower_joined()
-
         if self.is_host:
             self._send_pending_join_requests()
             self._send_current_room_state()
 
+        # History has to go out BEFORE the join announcement below, not
+        # after - _announce_follower_joined's own group_send reaches
+        # this exact connection too (already in the group via group_add
+        # above), so sending history second used to include the "X
+        # انضم" comment it had just created, and the live broadcast
+        # delivered that same comment a second time - the joiner saw it
+        # twice, everyone else already in the room only once.
         if self.is_host or self.is_approved_follower:
             self._send_comment_history()
+
+        if not self.is_host and self.is_approved_follower:
+            self._announce_follower_joined()
 
     def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
