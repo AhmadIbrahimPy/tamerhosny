@@ -521,6 +521,15 @@
   // here depends on it having finished yet - the general feed already
   // excludes your own room regardless of whether it's still open.
   window.thEndOwnRoom = function () {
+    // .pause() only fires the native 'pause' event (base.html's own
+    // listener there is what actually sends 'stop' and closes the
+    // room) on a genuine playing->paused transition - a no-op if the
+    // audio happened to already be paused (autoplay blocked pending a
+    // gesture is a common way to land exactly there), which used to
+    // mean "إنهاء" navigated you away while leaving the room fully
+    // alive for everyone else. Sent directly here too so ending the
+    // room never depends on that side effect actually firing.
+    if (window.sendGlobalListenerAction) sendGlobalListenerAction('stop');
     if (globalAudio) globalAudio.pause();
     if (window.thBoostedNavigate) {
       window.thBoostedNavigate('/live-rooms/');
