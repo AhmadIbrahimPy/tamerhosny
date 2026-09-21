@@ -80,6 +80,11 @@
     background: rgba(0,0,0,.35); color: #fff; font-size: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  .th-room-top-end-btn {
+    display: flex; align-items: center; gap: 4px; border: none; border-radius: 999px;
+    padding: 6px 12px; background: rgba(229,72,77,.85); color: #fff;
+    font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+  }
   .th-room-slide-avatar, .th-room-slide-avatar-fallback {
     width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
     border: 2px solid rgba(255,255,255,.6); flex-shrink: 0;
@@ -131,11 +136,14 @@
   }
   .th-room-rail-btn {
     width: 46px; height: 46px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,.35); color: #fff; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 18px; cursor: pointer; gap: 2px;
+    background: rgba(0,0,0,.35); color: #fff; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; cursor: pointer;
   }
-  .th-room-rail-btn span { font-size: 10px; font-weight: 800; }
-  .th-room-tap-count.tapped i { color: #e5484d; }
+  /* The count sits below the circular icon button, not stacked inside
+     the same 46px circle as it used to be. */
+  .th-room-tap-count { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .th-room-tap-count span { font-size: 11px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+  .th-room-tap-count.tapped .th-room-rail-btn i { color: #e5484d; }
 
   .th-room-slide-comments {
     position: relative; z-index: 2; padding: 0 16px 16px;
@@ -360,6 +368,26 @@
   // room the instant it's actually playing) and take you into it -
   // "دور على أغنية وشغلها" is done at that point, no reason to leave
   // someone stranded looking at the empty state they just left.
+  // "إنهاء" - only ever shown on your own room's slide. Pausing here
+  // goes through the exact same path leaving normally does (the native
+  // 'pause' listener in base.html sends the listening socket's 'stop'
+  // action, which is what actually deletes CurrentSongListener/the
+  // room and broadcasts room_closed to anyone still connected -
+  // including any followers, who get told and disconnected via
+  // thHandleRoomClosedWhileFollowing) - no separate "close the room"
+  // endpoint needed. Room-closing is async (same reasoning as
+  // thPlaySuggestedSong's own wait-for-room_opened above), but nothing
+  // here depends on it having finished yet - the general feed already
+  // excludes your own room regardless of whether it's still open.
+  window.thEndOwnRoom = function () {
+    if (globalAudio) globalAudio.pause();
+    if (window.thBoostedNavigate) {
+      window.thBoostedNavigate('/live-rooms/');
+    } else {
+      window.location.href = '/live-rooms/';
+    }
+  };
+
   window.thPlaySuggestedSong = function (btn) {
     var row = btn.closest('.th-suggested-song-row');
     if (!row) return;
@@ -486,9 +514,12 @@
     var avatarHtml = room.hostAvatar
       ? '<img src="' + room.hostAvatar + '" class="th-room-slide-avatar">'
       : '<span class="th-room-slide-avatar-fallback">' + room.hostUsername.slice(0, 1).toUpperCase() + '</span>';
+    var isOwnRoom = room.hostUserId === window.thUserId;
+
     top.innerHTML = avatarHtml +
       '<div><div class="th-room-slide-username">@' + room.hostUsername + '</div></div>' +
       '<button type="button" class="th-room-top-share-btn" title="{% translate "مشاركة" %}"><i class="bi bi-share-fill"></i></button>' +
+      (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
     top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
@@ -497,6 +528,12 @@
         window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
       }
     });
+    if (isOwnRoom) {
+      top.querySelector('.th-room-top-end-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        window.thEndOwnRoom();
+      });
+    }
     header.appendChild(top);
 
     // "دلوقتي بيسمع" glass card - a frosted-glass panel (backdrop-
@@ -534,12 +571,14 @@
     // like counter stays on this side rail now.
     var rail = document.createElement('div');
     rail.className = 'th-room-slide-rail';
-    var tapBtn = document.createElement('button');
-    tapBtn.type = 'button';
-    tapBtn.className = 'th-room-rail-btn th-room-tap-count';
-    tapBtn.disabled = true;
-    tapBtn.innerHTML = '<i class="bi bi-heart-fill"></i><span>' + room.tapScore + '</span>';
-    rail.appendChild(tapBtn);
+    // The count sits outside the circular icon button now (below it),
+    // not crammed inside the same 46px circle as the icon.
+    var tapWrap = document.createElement('div');
+    tapWrap.className = 'th-room-tap-count';
+    tapWrap.innerHTML =
+      '<button type="button" class="th-room-rail-btn" disabled><i class="bi bi-heart-fill"></i></button>' +
+      '<span>' + room.tapScore + '</span>';
+    rail.appendChild(tapWrap);
     slide.appendChild(rail);
 
     var comments = document.createElement('div');

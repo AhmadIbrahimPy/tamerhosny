@@ -793,9 +793,14 @@ class ListenTogetherConsumer(WebsocketConsumer):
         }))
 
     def room_closed(self, event):
-        if not self.is_host:
-            return
-
+        # Unlike follower_joined/join_requested/room_opened above, this
+        # one isn't host-only - a follower connected to this same group
+        # (self.group_name is the host's, shared by both roles) needs to
+        # know too, so their own client can stop following and say why
+        # instead of just silently going quiet. thIsHostingRoom/
+        # thExitHostingMode (host) vs stopListeningWith (follower) is a
+        # client-side distinction, not a server-side one - same message
+        # either way.
         self.send(text_data=json.dumps({'type': 'room_closed'}))
 
     def join_requested(self, event):

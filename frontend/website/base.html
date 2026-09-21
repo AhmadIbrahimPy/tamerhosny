@@ -3308,6 +3308,7 @@
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'state') thApplyRemoteState(data);
         else if (data.type === 'blocked') thHandleBlocked();
+        else if (data.type === 'room_closed') thHandleRoomClosedWhileFollowing();
         else thDispatchListenTogetherMessage(data);
       });
 
@@ -3368,6 +3369,8 @@
           thApplyRemoteState(data);
         } else if (data.type === 'blocked') {
           thHandleBlocked();
+        } else if (data.type === 'room_closed') {
+          thHandleRoomClosedWhileFollowing();
         } else {
           thDispatchListenTogetherMessage(data);
         }
@@ -3477,6 +3480,19 @@
       window.stopListeningWith();
       var btn = document.getElementById('thListenTogetherBtn');
       if (btn) btn.style.display = 'none';
+    }
+
+    // The host deliberately ended their room (see live_rooms.html's
+    // "إنهاء" button) or just stopped listening entirely either way -
+    // whoever was following gets told why instead of the follow socket
+    // just silently going quiet, and stopListeningWith() already
+    // restores the normal controls/bar the same way leaving on purpose
+    // would.
+    function thHandleRoomClosedWhileFollowing() {
+      if (window.showToast) {
+        showToast('{% translate "الروم اتقفلت" %}', 'info');
+      }
+      window.stopListeningWith();
     }
 
     // ---------------------------------------------------------
