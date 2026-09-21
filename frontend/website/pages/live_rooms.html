@@ -175,6 +175,7 @@
     background: rgba(255,255,255,.15); color: #fff; font-size: 14px; cursor: pointer;
   }
   .th-room-now-playing-controls button.th-room-own-play-btn { width: 38px; height: 38px; font-size: 17px; background: #fff; color: #111; }
+  .th-room-now-playing-controls button.th-room-guest-mute-btn.muted { background: #e5484d; color: #fff; }
   /* skip-start/skip-end point left/right per LTR reading order - in
      RTL "previous"/"next" read the opposite way, same fix already used
      for .th-slider-arrow (base.html). */
@@ -867,7 +868,13 @@
           '<button type="button" class="th-room-own-play-btn" title="{% translate "تشغيل/إيقاف" %}"><i id="thRoomOwnPlayIcon" class="bi bi-pause-fill"></i></button>' +
           '<button type="button" class="th-room-own-next-btn" title="{% translate "التالية" %}"><i class="bi bi-skip-end-fill"></i></button>' +
           '</div>'
-        : '');
+        // Not your room - you're just along for the ride, no transport
+        // controls (that would fight the actual host's playback), only
+        // a personal, local mute - doesn't touch the shared session at
+        // all, just globalAudio.muted on this one device.
+        : '<div class="th-room-now-playing-controls">' +
+          '<button type="button" class="th-room-guest-mute-btn" title="{% translate "كتم الصوت" %}"><i class="bi bi-volume-up-fill"></i></button>' +
+          '</div>');
     header.appendChild(nowPlaying);
     if (isOwnRoom) {
       // globalAudio (base.html) is the single source of truth for actual
@@ -890,6 +897,21 @@
       nowPlaying.querySelector('.th-room-own-next-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         if (window.playNext) window.playNext();
+      });
+    } else {
+      var muteBtn = nowPlaying.querySelector('.th-room-guest-mute-btn');
+      var muteIcon = muteBtn.querySelector('i');
+      var syncMuteIcon = function () {
+        var muted = !!(window.globalAudio && window.globalAudio.muted);
+        muteIcon.className = 'bi ' + (muted ? 'bi-volume-mute-fill' : 'bi-volume-up-fill');
+        muteBtn.classList.toggle('muted', muted);
+      };
+      syncMuteIcon();
+      muteBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!window.globalAudio) return;
+        window.globalAudio.muted = !window.globalAudio.muted;
+        syncMuteIcon();
       });
     }
 
