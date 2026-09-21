@@ -244,12 +244,12 @@
     background: var(--accent); color: #0b0c12; flex-shrink: 0; cursor: pointer;
   }
 
-  .th-room-join-status {
-    position: relative; z-index: 2; margin: 0 16px 10px; align-self: flex-start;
-    padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.5);
-    background: rgba(0,0,0,.35); color: #fff; font-size: 12px; font-weight: 700;
-  }
-  .th-room-join-status:disabled { opacity: .75; }
+  /* Hidden, not removed from the DOM - thActivateSlide still reads its
+     data-host-user-id/username/room-name attributes and still drives
+     the actual join/leave (startListeningWith etc.) through it; only
+     the visible pill itself was asked to go, joining/leaving now
+     happens implicitly just by which slide is active. */
+  .th-room-join-status { display: none !important; }
 
   @keyframes thRoomHeartBurst {
     0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
@@ -826,7 +826,7 @@
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       '<span class="th-room-tap-badge"><i class="bi bi-heart-fill"></i> <span class="th-room-tap-count-num">' + room.tapScore + '</span></span>' +
-      '<span class="th-room-viewer-badge"><i class="bi bi-eye-fill"></i> <span class="th-room-viewer-count-num">' +
+      '<span class="th-room-viewer-badge"><i class="bi bi-headphones"></i> <span class="th-room-viewer-count-num">' +
       (isOwnRoom && window.thFollowers ? window.thFollowers.length : 0) + '</span></span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
     top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {

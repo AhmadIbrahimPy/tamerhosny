@@ -1828,6 +1828,13 @@
           document.addEventListener('click', function thRetryBlockedPlay() {
             globalAudio.play().catch(function () {});
           }, { once: true });
+          // Otherwise this looks like the room/song is just silently
+          // dead - nothing on screen explains why, especially now that
+          // live_rooms.html's own join button (previously the obvious
+          // "tap something" target) is gone from the room slides.
+          if (window.showToast) {
+            showToast('{% translate "اضغط في أي مكان عشان الصوت يشتغل" %}', 'info');
+          }
         }
       });
     }
