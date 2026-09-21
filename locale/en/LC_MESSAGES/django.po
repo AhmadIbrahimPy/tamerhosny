@@ -3917,7 +3917,7 @@ msgstr "Request to Join"
 
 #: frontend/website/base.html:3441
 msgid "اتقبلت في الجروب - يلا اسمع"
-msgstr "You're in - start listening"
+msgstr "You are in - start listening"
 
 #: frontend/website/base.html:3505 frontend/website/pages/live_rooms.html:3
 #: frontend/website/pages/live_rooms.html:1021
@@ -4100,8 +4100,7 @@ msgstr "Okay"
 
 #: frontend/website/base.html:5007
 msgid "افتح صفحة الأغنية أو صفحة البلاير الأول عشان تقدر تشوف مين بيسمع"
-msgstr ""
-"Open the song page or the player page first so you can see who's listening"
+msgstr "Open the song page or the player page first to see who is listening"
 
 #: frontend/website/base.html:5020
 msgid "تمام، جريت شوية ⏩"
@@ -4831,7 +4830,7 @@ msgstr "Search remixes..."
 
 #: frontend/website/pages/live_rooms.html:450
 msgid "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي"
-msgstr "Search for a song and play it - you'll automatically get your own room"
+msgstr "Search for a song and play it - you will automatically get your own room"
 
 #: frontend/website/pages/live_rooms.html:597
 msgid "بعدها"
@@ -4904,7 +4903,7 @@ msgstr "This is your room"
 
 #: frontend/website/pages/live_rooms.html:1051
 msgid "بتسمع هنا دلوقتي"
-msgstr "You're listening here now"
+msgstr "You are listening here now"
 
 #: frontend/website/pages/media/detail.html:6
 #, python-format

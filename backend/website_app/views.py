@@ -17,6 +17,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import get_language, gettext_lazy as _
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -2557,6 +2558,7 @@ def leaderboard(request):
     })
 
 
+@never_cache
 def live_rooms(request, username=None):
     """"اسمع معاه" - فييد عمودي بكل الجروبات العامة الشغالة دلوقتي (روم
     واحدة بتملى الشاشة في المرة، زي تيك توك). الصف نفسه (انظر
