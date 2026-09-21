@@ -2212,7 +2212,7 @@
           <i class="bi bi-heart"></i>
         </button>
         {% if user.is_authenticated %}
-        <div style="position:relative;">
+        <div style="position:relative;" id="thRoomSettingsWrap">
           <button onclick="window.thToggleRoomSettings()" id="thRoomSettingsBtn" title="{% translate 'إعدادات جروب اسمع معاه' %}" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
             <i class="bi bi-gear"></i>
           </button>

@@ -146,17 +146,25 @@ class ListenTogetherRoom(models.Model):
         # name set yet (or ever, if Celery isn't running) used to fall
         # back to a plain "جروب {username}", reading as a broken/
         # nameless room next to every other one that has a real
-        # personality. A deterministic pick (seeded on this room's own
-        # id, not re-rolled on every access) from the same pool
+        # personality. A deterministic pick from the same pool
         # generate_room_name itself falls back to means every room
         # looks the part immediately, with zero dependency on that task
         # having actually run - generated_name still overrides this the
         # moment it's set, same as always.
+        #
+        # Seeded on the HOST's own id, not this row's own pk: the room
+        # itself gets deleted and recreated (a fresh pk) every time its
+        # host starts a new listening session (see
+        # SongListenerConsumer._maybe_open_room/_maybe_close_room), so a
+        # pk-seeded pick re-rolled a new "random" name each time - this
+        # keeps the same host landing on the same fallback name across
+        # every session, changing only if generate_room_name_task
+        # actually succeeds or the host sets their own name.
         import random
 
         from backend.main_app.shared_utils.room_naming import FALLBACK_NAMES
 
-        return random.Random(self.pk).choice(FALLBACK_NAMES)
+        return random.Random(self.host_id).choice(FALLBACK_NAMES)
 
     def __str__(self):
         return f'{self.host.username} - {self.display_name}'

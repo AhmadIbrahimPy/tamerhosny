@@ -79,11 +79,6 @@
     display: flex; align-items: center; gap: 10px;
     padding: 18px 16px 0;
   }
-  .th-room-top-share-btn {
-    width: 30px; height: 30px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,.35); color: #fff; font-size: 14px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
   .th-room-top-end-btn {
     display: flex; align-items: center; gap: 4px; border: none; border-radius: 999px;
     padding: 6px 12px; background: rgba(229,72,77,.85); color: #fff;
@@ -103,6 +98,10 @@
     background: rgba(255,255,255,.2); font-weight: 900;
   }
   .th-room-slide-username { font-weight: 800; font-size: 14px; }
+  .th-room-slide-identity {
+    display: flex; align-items: center; gap: 10px;
+    color: inherit; text-decoration: none; min-width: 0; flex-shrink: 0;
+  }
   .th-room-live-badge {
     display: inline-flex; align-items: center; gap: 4px; margin-inline-start: auto;
     background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
@@ -134,9 +133,34 @@
   .th-room-slide-closed .th-room-live-badge { background: rgba(229,72,77,.5); }
   .th-room-slide-closed .th-room-comment-form { opacity: .5; pointer-events: none; }
 
+  .th-room-slide-name-row {
+    position: relative; z-index: 2; display: flex; align-items: center; gap: 8px;
+    padding: 0 16px; margin-bottom: 10px;
+  }
   .th-room-slide-name {
-    position: relative; z-index: 2; font-size: 22px; font-weight: 900;
-    padding: 0 16px; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,.5);
+    font-size: 22px; font-weight: 900; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 10px rgba(0,0,0,.5);
+  }
+  .th-room-name-share-btn, .th-room-name-visibility-badge {
+    flex-shrink: 0;
+  }
+  .th-room-name-share-btn {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,.35); color: #fff; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .th-room-name-visibility-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+  }
+  /* #thRoomSettingsBtn/#thRoomSettingsWrap are base.html's own (see
+     thBuildSlide's relocation) - restyled here so the gear reads
+     against this slide's dark blurred background instead of the
+     player bar's own theme-aware colors. */
+  .th-room-slide-name-row #thRoomSettingsWrap { flex-shrink: 0; }
+  .th-room-slide-name-row #thRoomSettingsBtn {
+    width: 30px !important; height: 30px !important;
+    background: rgba(0,0,0,.35) !important; color: #fff !important;
   }
 
   /* "دلوقتي بيسمع" - frosted glass over the slide's own blurred cover
@@ -575,22 +599,46 @@
     }
   };
 
-  // "بعدها" card - own room only. A single slot (window.thHostQueue[0]),
-  // not a running list - see thQueueSuggestedSong, which replaces it
-  // rather than appending. Callable both when the slide is first built
-  // (queue already has something from before) and right after a pick
-  // (no reload - updates the existing card, or creates it the first
-  // time anything's ever been queued this session).
+  // An explicit pick (thQueueSuggestedSong) always wins; otherwise, a
+  // best-effort automatic preview off the exact same queue next/prev
+  // already reads (window.otherSongsList, base.html) - previously
+  // "بعدها" only ever showed anything after you deliberately queued a
+  // song, which meant it usually stayed empty even though the site
+  // already knows what would play next for a plain next-click.
+  function thComputeUpNextArgs() {
+    if (window.thHostQueue && window.thHostQueue.length) {
+      return window.thHostQueue[0];
+    }
+    var list = window.otherSongsList;
+    if (!list || !list.length || window.currentSongId == null || typeof window.pickAdjacentIndex !== 'function') {
+      return null;
+    }
+    var currentIndex = list.findIndex(function (s) { return s.songId == window.currentSongId; });
+    if (currentIndex === -1) return null;
+    var song = list[window.pickAdjacentIndex(list, currentIndex, 1)];
+    if (!song) return null;
+    return [
+      song.url, null, song.title, '',
+      song.image ? [song.image] : null,
+      song.link || null, song.artist, song.album,
+      false, song.songId, song.albumLink, false,
+    ];
+  }
+
+  // "بعدها" card - own room only. Callable both when the slide is
+  // first built (queue/queue-able list already exists from before) and
+  // right after a pick or a song change (no reload - updates the
+  // existing card, or creates it the first time there's anything to
+  // show).
   function thRenderUpNextCard(headerEl) {
-    var hasNext = window.thHostQueue && window.thHostQueue.length;
+    var nextArgs = thComputeUpNextArgs();
     var upNext = headerEl.querySelector('.th-room-up-next');
 
-    if (!hasNext) {
+    if (!nextArgs) {
       if (upNext) upNext.remove();
       return;
     }
 
-    var nextArgs = window.thHostQueue[0];
     var nextTitle = nextArgs[2] || '';
     var nextImageRaw = nextArgs[4];
     var nextImage = Array.isArray(nextImageRaw) ? nextImageRaw[0] : nextImageRaw;
@@ -671,9 +719,10 @@
   window.thPlayUpNext = function (btn) {
     var upNext = btn.closest('.th-room-up-next');
     var headerEl = upNext ? upNext.closest('.th-room-slide-header') : null;
-    if (!headerEl || !window.thHostQueue || !window.thHostQueue.length) return;
+    if (!headerEl) return;
 
-    var nextArgs = window.thHostQueue[0];
+    var nextArgs = thComputeUpNextArgs();
+    if (!nextArgs) return;
     toggleAudio(
       nextArgs[0], null, nextArgs[2], '',
       nextArgs[4], nextArgs[5], nextArgs[6], nextArgs[7],
@@ -800,6 +849,78 @@
     else if (data.type === 'state') thUpdateNowPlayingFromState(data);
   });
 
+  // Direct, local fallback for the same "دلوقتي بيسمع" update above -
+  // playAudio() (base.html) dispatches this event on every real song
+  // change, whether it's YOUR own next/prev/"بعدها" click (host) or a
+  // followed room's remote state just switched your audio via
+  // thApplyRemoteState (follower) - either way this fires in this same
+  // browser the instant the track actually changes, with no socket
+  // round-trip needed. Covers the host's own slide in particular, since
+  // thHostSocket never relays 'state' at all (only thFollowSocket does,
+  // via thApplyRemoteState's own dispatch above).
+  document.addEventListener('songChanged', function (e) {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide) return;
+    var d = e.detail || {};
+
+    var room = rooms[activeIndex];
+    if (room) {
+      room.song = {
+        songId: d.songId, title: d.title || '', artist: d.artist || '',
+        album: d.album || '', albumLink: d.albumLink || '',
+        image: d.image || '', url: d.url || '', link: d.link || '',
+      };
+    }
+
+    var nowPlaying = slide.querySelector('.th-room-now-playing');
+    if (nowPlaying) {
+      var titleEl = nowPlaying.querySelector('.th-room-now-playing-title');
+      if (titleEl) titleEl.textContent = d.title || '';
+
+      var artistEl = nowPlaying.querySelector('.th-room-now-playing-artist');
+      if (d.artist) {
+        if (!artistEl) {
+          artistEl = document.createElement('div');
+          artistEl.className = 'th-room-now-playing-artist';
+          titleEl.insertAdjacentElement('afterend', artistEl);
+        }
+        artistEl.textContent = d.artist;
+      } else if (artistEl) {
+        artistEl.remove();
+      }
+
+      var coverEl = nowPlaying.querySelector('.th-room-now-playing-cover');
+      if (coverEl) {
+        if (d.image) {
+          var img = document.createElement('img');
+          img.className = 'th-room-now-playing-cover';
+          img.alt = '';
+          img.src = d.image;
+          coverEl.replaceWith(img);
+        } else {
+          var fallback = document.createElement('div');
+          fallback.className = 'th-room-now-playing-cover th-room-now-playing-cover-fallback';
+          fallback.innerHTML = '<i class="bi bi-music-note-beamed"></i>';
+          coverEl.replaceWith(fallback);
+        }
+      }
+    }
+
+    var bg = slide.querySelector('.th-room-slide-bg');
+    if (bg && d.image) bg.style.backgroundImage = 'url(' + d.image + ')';
+
+    // "بعدها" depends on what's now playing (either the explicit queue
+    // stays as-is, or the auto-preview needs recomputing against the
+    // new current track) - own room only; thRenderUpNextCard isn't
+    // guarded internally, so it's only ever called here when this
+    // really is your own room.
+    if (room && room.hostUserId === window.thUserId) {
+      var headerEl = slide.querySelector('.th-room-slide-header');
+      if (headerEl) thRenderUpNextCard(headerEl);
+    }
+  });
+
   // base.html's own thHandleRoomClosedWhileFollowing() already toasts
   // and stops the audio/follow session - this is this page's own slide
   // reacting too, since otherwise the slide you were just following
@@ -877,23 +998,19 @@
       ? '<img src="' + room.hostAvatar + '" class="th-room-slide-avatar">'
       : '<span class="th-room-slide-avatar-fallback">' + room.hostUsername.slice(0, 1).toUpperCase() + '</span>';
     var isOwnRoom = room.hostUserId === window.thUserId;
+    var profileUrl = '/u/' + room.hostUsername + '/';
 
-    top.innerHTML = avatarHtml +
-      '<div><div class="th-room-slide-username">@' + room.hostUsername + '</div></div>' +
-      '<button type="button" class="th-room-top-share-btn" title="{% translate "مشاركة" %}"><i class="bi bi-share-fill"></i></button>' +
+    top.innerHTML =
+      '<a href="' + profileUrl + '" class="th-room-slide-identity" onclick="event.stopPropagation(); if (window.thBoostedNavigate) { event.preventDefault(); window.thBoostedNavigate(\'' + profileUrl + '\'); }">' +
+      avatarHtml +
+      '<div class="th-room-slide-username">@' + room.hostUsername + '</div>' +
+      '</a>' +
       (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       '<span class="th-room-tap-badge"><i class="bi bi-heart-fill"></i> <span class="th-room-tap-count-num">' + room.tapScore + '</span></span>' +
       '<span class="th-room-viewer-badge"><i class="bi bi-headphones"></i> <span class="th-room-viewer-count-num">' +
-      (isOwnRoom && window.thFollowers ? window.thFollowers.length : 0) + '</span></span>' +
-      (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
-    top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (window.thShare) {
-        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
-      }
-    });
+      (isOwnRoom && window.thFollowers ? window.thFollowers.length : 0) + '</span></span>';
     if (isOwnRoom) {
       top.querySelector('.th-room-top-end-btn').addEventListener('click', function (e) {
         e.stopPropagation();
@@ -1007,10 +1124,66 @@
 
     slide.appendChild(header);
 
+    // Name row - share and (own room: settings, else: public/private)
+    // sit right beside the room's own name now, not up in the top bar
+    // with the host identity/live badges.
+    var nameRow = document.createElement('div');
+    nameRow.className = 'th-room-slide-name-row';
+
     var name = document.createElement('div');
     name.className = 'th-room-slide-name';
     name.textContent = room.roomName;
-    slide.appendChild(name);
+    nameRow.appendChild(name);
+
+    var nameShareBtn = document.createElement('button');
+    nameShareBtn.type = 'button';
+    nameShareBtn.className = 'th-room-name-share-btn';
+    nameShareBtn.title = '{% translate "مشاركة" %}';
+    nameShareBtn.innerHTML = '<i class="bi bi-share-fill"></i>';
+    nameShareBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.thShare) {
+        window.thShare('room', room.hostUserId, room.roomName, window.location.origin + '/live-rooms/' + room.hostUsername + '/');
+      }
+    });
+    nameRow.appendChild(nameShareBtn);
+
+    if (isOwnRoom) {
+      // The existing #thRoomSettingsBtn/#thRoomSettingsPopover (built
+      // once in base.html, tied to the global player bar which is
+      // fully hidden on this page - see .th-hide-controls) is relocated
+      // here rather than rebuilt - thToggleRoomSettings/
+      // thSaveRoomSettings (base.html) are plain getElementById calls,
+      // not tied to wherever the node happens to sit in the DOM, so
+      // moving it keeps every bit of existing behavior intact.
+      var settingsWrap = document.getElementById('thRoomSettingsWrap');
+      if (settingsWrap) {
+        // It actually lives in base.html (the global player bar, fully
+        // hidden on this page) and persists across boosted navigation -
+        // appendChild MOVES the real node, not a copy, so without
+        // putting it back on the way out it would vanish from the bar
+        // for good the next time this page's own content is torn down.
+        var settingsOriginalParent = settingsWrap.parentElement;
+        var settingsOriginalNext = settingsWrap.nextSibling;
+        nameRow.appendChild(settingsWrap);
+        if (window.thOnTeardown) {
+          window.thOnTeardown(function () {
+            if (settingsOriginalParent) {
+              settingsOriginalParent.insertBefore(settingsWrap, settingsOriginalNext);
+            }
+          });
+        }
+      }
+    } else {
+      var visBadge = document.createElement('span');
+      visBadge.className = 'th-room-name-visibility-badge';
+      visBadge.innerHTML = room.isPublic
+        ? '<i class="bi bi-globe2"></i> {% translate "عام" %}'
+        : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
+      nameRow.appendChild(visBadge);
+    }
+
+    slide.appendChild(nameRow);
 
     var joinStatus = document.createElement('button');
     joinStatus.type = 'button';
@@ -1047,7 +1220,7 @@
     slide.appendChild(comments);
 
     slide.addEventListener('click', function (e) {
-      if (e.target.closest('button, input, form')) return;
+      if (e.target.closest('button, input, form, a')) return;
       if (slide.classList.contains('th-room-slide-closed')) return;
       thTapSlide(slide, e.clientX, e.clientY);
     });
