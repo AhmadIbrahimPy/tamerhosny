@@ -3574,6 +3574,12 @@
       } else if (!data.playing && !globalAudio.paused) {
         globalAudio.pause();
       }
+
+      // Same song, just a play/pause toggle (audioPlayPause on the
+      // host's side, see thSendListenTogetherState) - live_rooms.html's
+      // guest mute button needs to know too, so it can disable itself
+      // while there's genuinely nothing playing to mute.
+      thDispatchListenTogetherMessage({ type: 'playback', playing: data.playing });
     }
 
     function thHandleBlocked() {
