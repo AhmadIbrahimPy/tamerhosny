@@ -191,6 +191,12 @@
   .th-room-up-next-cover { width: 30px; height: 30px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
   .th-room-up-next-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
   .th-room-up-next-title { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55vw; }
+  .th-room-up-next-title-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+  .th-room-up-next-play-btn {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    background: var(--accent); color: #0b0c12; font-size: 11px; cursor: pointer;
+  }
 
   /* Own room only - "شغّل كمان" horizontal strip, reusing
      _suggested_songs_items.html's own safe server-rendered markup (see
@@ -250,6 +256,7 @@
      the visible pill itself was asked to go, joining/leaving now
      happens implicitly just by which slide is active. */
   .th-room-join-status { display: none !important; }
+  #thListenTogetherBanner { display: none !important; }
 
   @keyframes thRoomHeartBurst {
     0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
@@ -325,23 +332,23 @@
   .th-suggested-song-cover-wrap {
     width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
     flex-shrink: 0; background: #1e2130; display: flex; align-items: center; justify-content: center;
-    color: var(--muted); font-size: 18px;
+    color: var(--muted); font-size: 18px; position: relative;
   }
   .th-suggested-song-cover { width: 100%; height: 100%; object-fit: cover; }
   .th-suggested-song-info { min-width: 0; flex: 1; }
   .th-suggested-song-title {
-    font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 12px; font-weight: 800; overflow: hidden; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;
   }
   .th-suggested-song-artist {
     font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  /* Its own element at the row's trailing end now, not overlaid on the
-     cover art on the leading side - and the ONLY clickable/interactive
-     part of the row (the row itself no longer links anywhere). */
+  /* Centered on the cover image */
   .th-suggested-song-play {
-    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: none;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 28px; height: 28px; border-radius: 50%; border: none;
     display: flex; align-items: center; justify-content: center; padding: 0;
-    background: var(--accent); color: #0b0c12; font-size: 11px; cursor: pointer;
+    background: var(--accent); color: #0b0c12; font-size: 12px; cursor: pointer;
   }
 
   .th-suggested-songs-refresh {
@@ -594,7 +601,7 @@
       upNext.innerHTML =
         '<img class="th-room-up-next-cover" alt="" style="display:none;">' +
         '<div class="th-room-up-next-cover th-room-now-playing-cover-fallback"><i class="bi bi-music-note-beamed"></i></div>' +
-        '<div><div class="th-room-up-next-label">{% translate "بعدها" %}</div><div class="th-room-up-next-title"></div></div>';
+        '<div class="th-room-up-next-title-wrap"><div><div class="th-room-up-next-label">{% translate "بعدها" %}</div><div class="th-room-up-next-title"></div></div><button type="button" class="th-room-up-next-play-btn" onclick="window.thPlayUpNext(this);"><i class="bi bi-play-fill"></i></button></div>';
       // Right after "دلوقتي بيسمع", before the "شغّل كمان" strip (if
       // that's already there) or at the end otherwise.
       var suggestStrip = headerEl.querySelector('.th-room-suggest-strip');
@@ -657,6 +664,22 @@
     if (window.showToast) {
       showToast('{% translate "هتشتغل بعد اللي شغال دلوقتي" %}', 'success');
     }
+  };
+
+  window.thPlayUpNext = function (btn) {
+    var upNext = btn.closest('.th-room-up-next');
+    var headerEl = upNext ? upNext.closest('.th-room-slide-header') : null;
+    if (!headerEl || !window.thHostQueue || !window.thHostQueue.length) return;
+
+    var nextArgs = window.thHostQueue[0];
+    toggleAudio(
+      nextArgs[0], null, nextArgs[2], '',
+      nextArgs[4], nextArgs[5], nextArgs[6], nextArgs[7],
+      false, nextArgs[9], nextArgs[10], false
+    );
+
+    window.thHostQueue = [];
+    thRenderUpNextCard(headerEl);
   };
 
   // Live push for "a new public room just opened" - so someone sitting
@@ -772,6 +795,7 @@
     else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
     else if (data.type === 'follower_joined') thBumpViewerCount(1);
     else if (data.type === 'follower_left') thBumpViewerCount(-1);
+    else if (data.type === 'state') thUpdateNowPlayingFromState(data);
   });
 
   // base.html's own thHandleRoomClosedWhileFollowing() already toasts
@@ -791,6 +815,39 @@
       joinBtn.disabled = true;
       joinBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
     }
+  }
+
+  function thUpdateNowPlayingFromState(data) {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide || !data.song) return;
+
+    var song = data.song;
+    var nowPlaying = slide.querySelector('.th-room-now-playing');
+    if (!nowPlaying) return;
+
+    var coverImg = nowPlaying.querySelector('.th-room-now-playing-cover');
+    var coverFallback = nowPlaying.querySelector('.th-room-now-playing-cover-fallback');
+    var titleEl = nowPlaying.querySelector('.th-room-now-playing-title');
+    var artistEl = nowPlaying.querySelector('.th-room-now-playing-artist');
+
+    if (song.image) {
+      if (coverImg) {
+        coverImg.src = song.image;
+        coverImg.style.display = 'block';
+      }
+      if (coverFallback) coverFallback.style.display = 'none';
+    } else {
+      if (coverImg) coverImg.style.display = 'none';
+      if (coverFallback) coverFallback.style.display = 'flex';
+    }
+
+    if (titleEl && song.title) titleEl.textContent = song.title;
+    if (artistEl && song.artist) artistEl.textContent = song.artist;
+
+    // Update background blur
+    var bg = slide.querySelector('.th-room-slide-bg');
+    if (bg && song.image) bg.style.backgroundImage = 'url(' + song.image + ')';
   }
 
   function thBuildSlide(room, index) {

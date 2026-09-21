@@ -3542,6 +3542,8 @@
 
       if (String(data.song.songId) !== String(currentSongId)) {
         playAudio(data.song.url, null, data.song.title, '', data.song.image ? [data.song.image] : null, data.song.link, data.song.artist, data.song.album, false, data.song.songId, data.song.albumLink, false);
+        // Dispatch event for live_rooms.html to update its now-playing card
+        thDispatchListenTogetherMessage({ type: 'state', song: data.song, playing: data.playing, currentTime: data.currentTime });
         return;
       }
 
