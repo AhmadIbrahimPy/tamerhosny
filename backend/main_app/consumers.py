@@ -121,7 +121,7 @@ class SongListenerConsumer(WebsocketConsumer):
         self._broadcast_live_status()
 
         if user is not None:
-            self._maybe_close_room(user)
+            self._maybe_close_room(user.id)
 
     # =========================================================
     # "اسمع معاه" ROOM LIFECYCLE
@@ -211,7 +211,12 @@ class SongListenerConsumer(WebsocketConsumer):
                     )
 
     @staticmethod
-    def _maybe_close_room(user):
+    def _maybe_close_room(user_id):
+        """Takes a plain id, not a user instance - callable both from
+        _stop_listening (a specific connection's own user) and from
+        _current_count's sweep below (which only ever has ids on hand,
+        for whichever OTHER users' rows it just swept away, not full
+        objects worth fetching just for this)."""
         from backend.main_app.models import ListenTogetherRoom
 
         # Same STALE_LISTENER_CUTOFF every other read of this table
@@ -230,22 +235,22 @@ class SongListenerConsumer(WebsocketConsumer):
         # song someone happens to still be querying, so a row like this
         # one (some OTHER, no-longer-visited song) could otherwise sit in
         # the table forever even though it's already being ignored.
-        CurrentSongListener.objects.filter(user=user, last_heartbeat__lt=cutoff).delete()
-        if not CurrentSongListener.objects.filter(user=user).exists():
+        CurrentSongListener.objects.filter(user_id=user_id, last_heartbeat__lt=cutoff).delete()
+        if not CurrentSongListener.objects.filter(user_id=user_id).exists():
             # The row itself stays - only is_live flips off - so a
             # custom name, generated_name, and tap_score all survive a
             # host just pausing/switching devices for a bit instead of
             # resetting to a brand new room (new random fallback name
             # included) the moment they press play again.
-            updated = ListenTogetherRoom.objects.filter(host=user, is_live=True).update(is_live=False)
+            updated = ListenTogetherRoom.objects.filter(host_id=user_id, is_live=True).update(is_live=False)
             if updated:
-                async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {
+                async_to_sync(get_channel_layer().group_send)(f'listen_together_{user_id}', {
                     'type': 'room.closed',
                 })
                 async_to_sync(get_channel_layer().group_send)(
                     LiveRoomsFeedConsumer.GROUP_NAME, {
                         'type': 'feed.room_closed',
-                        'host_user_id': user.id,
+                        'host_user_id': user_id,
                     },
                 )
 
@@ -258,9 +263,25 @@ class SongListenerConsumer(WebsocketConsumer):
     def _current_count(self):
         cutoff = timezone.now() - STALE_LISTENER_CUTOFF
 
-        CurrentSongListener.objects.filter(
+        stale = CurrentSongListener.objects.filter(
             song_id=self.song_id, last_heartbeat__lt=cutoff,
-        ).delete()
+        )
+        # Whoever's rows are about to be swept, before they're gone -
+        # this is the ONLY place a stale row for someone who never came
+        # back to cleanly stop/disconnect ever gets noticed at all. Not
+        # re-checking their room here left it stuck is_live=True forever
+        # with zero rows behind it (this exact drift is what made a
+        # later _maybe_open_room think "nothing changed, no reason to
+        # tell anyone" the next time that same host actually started
+        # playing again - a follower's slide never got the room_opened
+        # that would have un-paused it).
+        stale_user_ids = list(
+            stale.exclude(user_id=None).values_list('user_id', flat=True).distinct()
+        )
+        stale.delete()
+
+        for user_id in stale_user_ids:
+            self._maybe_close_room(user_id)
 
         return CurrentSongListener.objects.filter(song_id=self.song_id).count()
 

@@ -34,8 +34,7 @@
   .th-room-feed-nav-btn:disabled { opacity: .3; cursor: default; }
 
   .th-room-feed {
-    height: calc(100vh - 72px);
-    height: calc(100dvh - 72px);
+    height: calc(100dvh - 90px);
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
@@ -51,8 +50,7 @@
   .th-room-feed:empty { display: none; }
 
   .th-room-slide {
-    height: calc(100vh - 72px);
-    height: calc(100dvh - 72px);
+    height: calc(100dvh - 90px);
     scroll-snap-align: start;
     position: relative;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -343,8 +341,7 @@
   }
 
   .th-room-feed-empty {
-    height: calc(100vh - 72px);
-    height: calc(100dvh - 72px);
+    height: calc(100dvh - 90px);
     /* Visible by default (not hidden-until-JS-says-so) - the same
        "don't depend on the script having run" reasoning as
        .th-room-feed:empty above. extra_js hides this instead, once it
