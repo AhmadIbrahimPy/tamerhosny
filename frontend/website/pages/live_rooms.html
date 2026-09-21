@@ -8,6 +8,27 @@
 
 {% block extra_css %}
 <style>
+  /* The footer (base.html - persists across boosted nav, not part of
+     this page's own DOM) sits right below #th-page-root in normal
+     document flow - scrolling the outer page (not .th-room-feed's own
+     inner scroll-snap) at all reveals it. body.th-live-rooms-page is
+     added/removed by this page's own JS (see thOnTeardown below) -
+     this rule itself only exists while this page's own <style> block
+     does, so nothing needs undoing on the CSS side specifically. */
+  body.th-live-rooms-page { overflow: hidden; }
+  body.th-live-rooms-page .th-footer { display: none; }
+
+  .th-room-feed-nav-arrows {
+    position: fixed; top: 50%; transform: translateY(-50%); inset-inline-start: 12px;
+    z-index: 1001; display: flex; flex-direction: column; gap: 10px;
+  }
+  .th-room-feed-nav-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,.4); color: #fff; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .th-room-feed-nav-btn:disabled { opacity: .3; cursor: default; }
+
   .th-room-feed {
     height: calc(100vh - 72px);
     height: calc(100dvh - 72px);
@@ -84,7 +105,7 @@
      -webkit- prefix for Safari/iOS still. */
   .th-room-now-playing {
     position: relative; z-index: 2; display: flex; align-items: center; gap: 12px;
-    margin: 0 16px 14px; padding: 10px 14px; border-radius: 16px;
+    margin: 16px; padding: 10px 14px; border-radius: 16px;
     background: rgba(255,255,255,.12);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     backdrop-filter: blur(16px) saturate(160%);
@@ -269,6 +290,21 @@
     });
   }
 
+  // Footer + outer page scroll - see this page's own extra_css for why
+  // (scrolling the outer page, not .th-room-feed's own inner scroll-
+  // snap, is what reveals the footer sitting right below #th-page-root
+  // in normal flow). Cleaned up on leaving even though the CSS rule
+  // driving it disappears with this page's own <style> block anyway
+  // (this class itself is on <body>, which persists across boosted
+  // nav) - leaving it there is harmless today but not worth risking
+  // against some future page also matching it.
+  document.body.classList.add('th-live-rooms-page');
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      document.body.classList.remove('th-live-rooms-page');
+    });
+  }
+
   var dataEl = document.getElementById('thRoomsFeedData');
   var rooms = dataEl ? JSON.parse(dataEl.textContent) : [];
   var feedEl = document.getElementById('thRoomFeed');
@@ -383,6 +419,31 @@
     feedEl.appendChild(slide);
     slideEls.push(slide);
   });
+
+  // Up/down arrows - a click-driven alternative to scrolling/swiping,
+  // one slide's height at a time so CSS scroll-snap settles on the
+  // next/prev slide the same way a real swipe would.
+  var navWrap = document.createElement('div');
+  navWrap.className = 'th-room-feed-nav-arrows';
+  navWrap.innerHTML =
+    '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
+    '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
+  document.body.appendChild(navWrap);
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () { navWrap.remove(); });
+  }
+
+  var upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
+  var downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
+  function thScrollToSlide(index) {
+    if (slideEls[index]) slideEls[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
+  downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
+  function thUpdateNavArrows() {
+    upBtn.disabled = activeIndex <= 0;
+    downBtn.disabled = activeIndex >= slideEls.length - 1;
+  }
 
   observer = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
@@ -516,6 +577,7 @@
       window.stopListeningWith();
     }
     activeIndex = index;
+    thUpdateNavArrows();
 
     var room = rooms[index];
     var songDataEl = document.getElementById('thListenTogetherSong');
