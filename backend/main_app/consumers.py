@@ -525,6 +525,14 @@ class ListenTogetherConsumer(WebsocketConsumer):
         if self.is_host:
             self._send_pending_join_requests()
             self._send_current_room_state()
+            # Without this, a host who just reloaded/reconnected mid-
+            # session (thConnectListenTogetherHost reconnects on every
+            # fresh page load) started back at thFollowers=[] client-
+            # side and only rebuilt the count from whatever
+            # follower_joined/left happened to arrive AFTER that -
+            # anyone who joined earlier and never left was invisible to
+            # them until someone else's join/leave nudged the number.
+            self._send_viewers_snapshot()
 
         # History has to go out BEFORE the join announcement below, not
         # after - _announce_follower_joined's own group_send reaches
@@ -535,6 +543,12 @@ class ListenTogetherConsumer(WebsocketConsumer):
         # twice, everyone else already in the room only once.
         if self.is_host or self.is_approved_follower:
             self._send_comment_history()
+            # Sent BEFORE _announce_follower_joined() below (which is
+            # the thing that actually adds this exact connection's own
+            # row) - a fresh connection's baseline should be "everyone
+            # already here", with its own join arriving right after as
+            # the first live delta on top of that, not counted twice.
+            self._send_viewers_snapshot()
 
         if not self.is_host and self.is_approved_follower:
             self._announce_follower_joined()
@@ -546,6 +560,12 @@ class ListenTogetherConsumer(WebsocketConsumer):
             # live join count - group_name gets set before the blocked-
             # user check runs, so hasattr alone isn't enough here.
             if getattr(self, '_joined_announced', False):
+                from backend.main_app.models import ListenTogetherViewer
+
+                ListenTogetherViewer.objects.filter(
+                    room__host_id=self.host_user_id, user=self.user,
+                ).delete()
+
                 async_to_sync(self.channel_layer.group_send)(self.group_name, {
                     'type': 'follower.left',
                     'user_id': self.user.id,
@@ -595,7 +615,18 @@ class ListenTogetherConsumer(WebsocketConsumer):
         })
 
     def _announce_follower_joined(self):
+        from backend.main_app.models import ListenTogetherRoom, ListenTogetherViewer
+
         self._joined_announced = True
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is not None:
+            # The one authoritative record of "who's actually in this
+            # room right now" - see ListenTogetherViewer's own docstring
+            # for why every client needs to read from this instead of
+            # just accumulating follower_joined/left events from
+            # whenever THEIR OWN connection happened to open.
+            ListenTogetherViewer.objects.get_or_create(room=room, user=self.user)
 
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'follower.joined',
@@ -611,6 +642,23 @@ class ListenTogetherConsumer(WebsocketConsumer):
             kind='system',
             text=f'{self.user.username} انضم',
         )
+
+    def _send_viewers_snapshot(self):
+        from backend.main_app.models import ListenTogetherRoom, ListenTogetherViewer
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is None:
+            viewers = []
+        else:
+            viewers = [
+                {'user_id': v.user_id, 'username': v.user.username}
+                for v in ListenTogetherViewer.objects.filter(room=room).select_related('user')
+            ]
+
+        self.send(text_data=json.dumps({
+            'type': 'viewers_snapshot',
+            'viewers': viewers,
+        }))
 
     # =========================================================
     # COMMENTS + TAPS (host or any approved follower)
@@ -924,6 +972,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
         # "X انضم" system line _announce_follower_joined is about to add,
         # so the history renders in the right order on their screen.
         self._send_comment_history()
+        self._send_viewers_snapshot()
         self._announce_follower_joined()
 
     def join_rejected(self, event):

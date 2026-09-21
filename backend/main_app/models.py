@@ -303,6 +303,44 @@ class ListenTogetherTap(models.Model):
         return f'{self.user.username} - {self.room} - {self.count}'
 
 
+class ListenTogetherViewer(models.Model):
+    """مين فاتح كونكشن "اسمع معاه" حي لجروب معين دلوقتي بالظبط - انظر
+    ListenTogetherConsumer._announce_follower_joined/disconnect. موجود
+    عشان عداد "الناس في اللايف" يبقى نفسه عند كل الناس: قبل كده كل
+    براوزر كان بيبني العدد من صفر بس من follower_joined/left اللي
+    وصلته هو بعد ما اتصل - حد دخل بعد ما ٣ ناس بالفعل جوا كان يشوف
+    رقم يبدأ من صفر، مش ٣. الصف ده هو الحقيقة اللي أي كونكشن جديد
+    (مضيف أو متابع) بيتاخد منها snapshot لحظة الاتصال (انظر
+    _send_viewers_snapshot)، بدل ما يعتمد بس على الأحداث اللي حصلت
+    بعد ما هو اتصل."""
+
+    room = models.ForeignKey(
+        ListenTogetherRoom,
+        on_delete=models.CASCADE,
+        related_name='viewers',
+        verbose_name=_('الجروب')
+    )
+
+    user = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='listen_together_viewing',
+        verbose_name=_('المستخدم')
+    )
+
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الدخول'))
+
+    class Meta:
+        verbose_name = _('متابع اسمع معاه')
+        verbose_name_plural = _('متابعين اسمع معاه')
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'user'], name='unique_room_viewer_user'),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.room}'
+
+
 class UserSongPlay(models.Model):
     """نموذج لتتبع تشغيل كل مستخدم لكل أغنية"""
 

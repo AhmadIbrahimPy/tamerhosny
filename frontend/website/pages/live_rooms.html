@@ -138,6 +138,38 @@
   .th-room-slide-closed .th-room-live-badge { background: rgba(229,72,77,.5); }
   .th-room-slide-closed .th-room-comment-form { opacity: .5; pointer-events: none; }
 
+  /* Shown only on the slide you're actually looking at when its room
+     ends (thHandleRoomClosedOnSlide) - a clear "this is over" screen
+     with somewhere to go next, instead of just a dimmed slide someone
+     has to notice and manually scroll away from. */
+  .th-room-ended-panel {
+    position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 0 32px;
+  }
+  .th-room-ended-panel i.bi-headphones { font-size: 40px; opacity: .7; }
+  .th-room-ended-panel p { margin: 0; font-size: 15px; font-weight: 800; }
+  .th-room-ended-panel button {
+    display: flex; align-items: center; gap: 6px; border: none; border-radius: 999px;
+    padding: 10px 22px; background: var(--accent); color: #0b0c12; font-weight: 800; cursor: pointer;
+  }
+
+  /* The browser blocked autoplay (no real tap/click happened yet on this
+     page) - see thAudioAutoplayBlocked, dispatched from base.html's own
+     playAudio(). A small toast alone is easy to miss right as the page/
+     slide first loads; this sits right in the middle of the slide,
+     impossible to scroll past without noticing. */
+  .th-room-autoplay-hint {
+    position: absolute; z-index: 6; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    display: flex; align-items: center; gap: 8px; border: none; border-radius: 999px;
+    padding: 12px 22px; background: rgba(0,0,0,.55); color: #fff; font-weight: 800; font-size: 14px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    animation: thAutoplayHintPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes thAutoplayHintPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.06); }
+  }
+
   .th-room-slide-name-row {
     position: relative; z-index: 2; display: flex; align-items: center; gap: 8px;
     padding: 0 16px; margin-bottom: 10px;
@@ -615,6 +647,13 @@
   window.thPlaySuggestedSong = function (btn) {
     var row = btn.closest('.th-suggested-song-row');
     if (!row) return;
+    // Playing a suggested song here is what actually spins up a room
+    // (SongListenerConsumer._maybe_open_room only runs for a logged-in
+    // user) - an anonymous visitor could tap this, hear the song, and
+    // then just sit on the still-empty feed forever waiting for a
+    // 'thRoomOpened' event that server-side can never fire for them, with
+    // nothing telling them why. Caught here, before that dead end.
+    if (window.requireAuth && window.requireAuth(null, null)) return;
 
     toggleAudio(
       row.dataset.audioUrl, btn, row.dataset.title, '',
@@ -799,36 +838,124 @@
     thRenderUpNextCard(headerEl);
   };
 
-  // Live push for "a new public room just opened" - so someone sitting
-  // on the empty state doesn't have to keep hitting "تحديث"/refresh to
-  // find out. Scoped deliberately to the empty-state case only (the
-  // feed you can already see is populated by the initial page render;
-  // rebuilding the whole IntersectionObserver/scroll-snap slide setup
-  // live for an already-populated feed is a much bigger, riskier change
-  // than what was actually asked for here) - a lightweight banner
-  // instead of a full slide, since there's no scroll-snap feed to
-  // insert into yet.
-  if (!rooms.length && emptyEl) {
-    var feedSocket = null;
-    try {
-      var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
-    } catch (e) { feedSocket = null; }
+  var upBtn = null, downBtn = null;
+  function thScrollToSlide(index) {
+    if (slideEls[index]) slideEls[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function thUpdateNavArrows() {
+    if (!upBtn || !downBtn) return;
+    upBtn.disabled = activeIndex <= 0;
+    downBtn.disabled = activeIndex >= slideEls.length - 1;
+  }
 
-    if (feedSocket) {
-      if (window.thOnTeardown) {
-        window.thOnTeardown(function () {
-          if (feedSocket) { var s = feedSocket; feedSocket = null; s.close(); }
-        });
-      }
-      feedSocket.addEventListener('message', function (evt) {
-        var data;
-        try { data = JSON.parse(evt.data); } catch (e) { return; }
+  // Everything a swipeable feed needs beyond the raw slide elements
+  // themselves (nav arrows, the IntersectionObserver driving
+  // thActivateSlide) - built once, whether that's during this page's
+  // initial render (rooms already non-empty) or lazily the first time
+  // thAddLiveRoomSlide below turns a previously-empty feed into a real
+  // one. Idempotent (checks `observer`) so the live path never rebuilds
+  // it a second time on top of what initial render already did.
+  function thEnsureFeedChrome() {
+    if (observer) return;
 
-        if (data.type === 'room_opened') {
-          var room = data.room;
-          if (!room || room.hostUserId === window.thUserId) return;
+    if (emptyEl) emptyEl.style.display = 'none';
 
+    var navWrap = document.createElement('div');
+    navWrap.className = 'th-room-feed-nav-arrows';
+    navWrap.innerHTML =
+      '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
+      '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
+    document.body.appendChild(navWrap);
+    if (window.thOnTeardown) {
+      window.thOnTeardown(function () { navWrap.remove(); });
+    }
+
+    upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
+    downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
+    upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
+    downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
+
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          thActivateSlide(parseInt(entry.target.dataset.index, 10));
+        }
+      });
+    }, { root: feedEl, threshold: 0.6 });
+  }
+
+  // Appends one more slide at the end of the feed - used both for the
+  // initial server-rendered batch and (see the feedSocket wiring below)
+  // for a room that opens live while this page is already sitting open,
+  // whether the feed was already populated or still showing the empty
+  // state. Always appending (never inserting mid-array) means every
+  // existing slide's own dataset.index - what the IntersectionObserver
+  // callback above reads to find which room just came into view - never
+  // needs to shift.
+  function thAddLiveRoomSlide(room) {
+    thEnsureFeedChrome();
+    var slide = thBuildSlide(room, slideEls.length);
+    feedEl.appendChild(slide);
+    rooms.push(room);
+    slideEls.push(slide);
+    observer.observe(slide);
+    thUpdateNavArrows();
+    return slide;
+  }
+
+  // A room somewhere ELSE in the feed (not the one you're actually
+  // looking at right now - that one already reacts live through its own
+  // ListenTogether follow/host socket, see thHandleRoomClosedOnSlide)
+  // just closed. Marked in place rather than spliced out of the
+  // rooms/slideEls arrays - removing a slide that isn't the last one
+  // would shift every later slide's dataset.index out from under the
+  // IntersectionObserver callback above, which is a lot of moving parts
+  // for something a dimmed, clearly-labeled slide already communicates
+  // just as well.
+  function thMarkSlideClosedByHost(hostUserId) {
+    for (var i = 0; i < slideEls.length; i++) {
+      if (i === activeIndex) continue;
+      if (parseInt(slideEls[i].dataset.hostUserId, 10) !== hostUserId) continue;
+      slideEls[i].classList.add('th-room-slide-closed');
+      var badge = slideEls[i].querySelector('.th-room-live-badge');
+      if (badge) badge.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
+    }
+  }
+
+  // Live push for "a new public room just opened"/"a room just closed" -
+  // so nobody has to keep hitting "تحديث"/refresh to find either out,
+  // whether they're sitting on the empty state or already mid-feed on
+  // someone else's room.
+  var feedSocket = null;
+  try {
+    var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
+  } catch (e) { feedSocket = null; }
+
+  if (feedSocket) {
+    if (window.thOnTeardown) {
+      window.thOnTeardown(function () {
+        if (feedSocket) { var s = feedSocket; feedSocket = null; s.close(); }
+      });
+    }
+    feedSocket.addEventListener('message', function (evt) {
+      var data;
+      try { data = JSON.parse(evt.data); } catch (e) { return; }
+
+      if (data.type === 'room_opened') {
+        var room = data.room;
+        if (!room || room.hostUserId === window.thUserId) return;
+        if (rooms.some(function (r) { return r.hostUserId === room.hostUserId; })) return;
+
+        if (!observer && emptyEl && emptyEl.style.display !== 'none') {
+          // Still genuinely empty - a lightweight banner rather than a
+          // full slide (this browser hasn't asked to actually browse
+          // rooms yet, it's parked on the "start your own" screen).
+          // Clicking it does a real boosted navigation to that room's
+          // own URL, which server-renders the feed fresh with the room
+          // already in it - simpler than replicating that whole
+          // transition (empty state -> real scroll-snap feed) purely
+          // client-side for what's a one-click detour either way.
           var existing = emptyEl.querySelector('.th-room-new-banner');
           if (existing) existing.remove();
 
@@ -843,66 +970,70 @@
             if (window.thBoostedNavigate) { window.thBoostedNavigate(url); } else { window.location.href = url; }
           });
           emptyEl.insertBefore(banner, emptyEl.firstChild);
-        } else if (data.type === 'room_closed') {
-          // Closed before anyone clicked it - pull the dead link back
-          // out rather than leaving a banner that 404s on click.
-          var dead = emptyEl.querySelector('.th-room-new-banner[data-host-user-id="' + data.host_user_id + '"]');
-          if (dead) dead.remove();
+        } else {
+          // Already browsing the feed (or the empty-state banner above
+          // was already clicked/superseded) - a scrollable slide right
+          // away instead of a banner with nothing to scroll to yet.
+          thAddLiveRoomSlide(room);
         }
-      });
-    }
+      } else if (data.type === 'room_closed') {
+        // Closed before anyone clicked it - pull the dead link back
+        // out rather than leaving a banner that 404s on click.
+        var dead = emptyEl ? emptyEl.querySelector('.th-room-new-banner[data-host-user-id="' + data.host_user_id + '"]') : null;
+        if (dead) dead.remove();
+
+        thMarkSlideClosedByHost(data.host_user_id);
+      }
+    });
   }
 
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only
     // reachable here if there actually are rooms to switch to instead,
     // so this is a no-op most of the time, not the thing making the
-    // empty state appear.
+    // empty state appear. thAddLiveRoomSlide (above) takes over from
+    // here the moment a room actually opens live.
     return;
   }
 
-  if (emptyEl) emptyEl.style.display = 'none';
+  thEnsureFeedChrome();
 
   rooms.forEach(function (room, index) {
     var slide = thBuildSlide(room, index);
     feedEl.appendChild(slide);
     slideEls.push(slide);
+    observer.observe(slide);
+  });
+  thUpdateNavArrows();
+
+  document.addEventListener('thAudioAutoplayBlocked', function () {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide || slide.querySelector('.th-room-autoplay-hint')) return;
+
+    var hint = document.createElement('button');
+    hint.type = 'button';
+    hint.className = 'th-room-autoplay-hint';
+    hint.innerHTML = '<i class="bi bi-play-circle-fill"></i> {% translate "اضغط عشان الصوت يشتغل" %}';
+    hint.addEventListener('click', function (e) {
+      e.stopPropagation();
+      hint.remove();
+    });
+    slide.appendChild(hint);
   });
 
-  // Up/down arrows - a click-driven alternative to scrolling/swiping,
-  // one slide's height at a time so CSS scroll-snap settles on the
-  // next/prev slide the same way a real swipe would.
-  var navWrap = document.createElement('div');
-  navWrap.className = 'th-room-feed-nav-arrows';
-  navWrap.innerHTML =
-    '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
-    '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
-  document.body.appendChild(navWrap);
-  if (window.thOnTeardown) {
-    window.thOnTeardown(function () { navWrap.remove(); });
-  }
-
-  var upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
-  var downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
-  function thScrollToSlide(index) {
-    if (slideEls[index]) slideEls[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
-  downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
-  function thUpdateNavArrows() {
-    upBtn.disabled = activeIndex <= 0;
-    downBtn.disabled = activeIndex >= slideEls.length - 1;
-  }
-
-  observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-        thActivateSlide(parseInt(entry.target.dataset.index, 10));
-      }
+  // Audio actually started (the click that dismisses the hint above
+  // also satisfies the same browser gesture requirement that unblocks
+  // it, see base.html's own thPendingRetryBlockedPlay) - clear it from
+  // whichever slide it's still sitting on instead of leaving a stale
+  // "tap to play" pill over audio that's already playing.
+  document.addEventListener('audioPlayPause', function (e) {
+    if (!e.detail || !e.detail.playing) return;
+    slideEls.forEach(function (slide) {
+      var hint = slide.querySelector('.th-room-autoplay-hint');
+      if (hint) hint.remove();
     });
-  }, { root: feedEl, threshold: 0.6 });
-
-  slideEls.forEach(function (slide) { observer.observe(slide); });
+  });
 
   document.addEventListener('thListenTogetherMessage', function (evt) {
     var data = evt.detail;
@@ -913,6 +1044,7 @@
     else if (data.type === 'room_opened') thHandleRoomReopenedOnSlide();
     else if (data.type === 'follower_joined') thBumpViewerCount(1, data);
     else if (data.type === 'follower_left') thBumpViewerCount(-1, data);
+    else if (data.type === 'viewers_snapshot') thApplyViewersSnapshot(data.viewers);
     else if (data.type === 'state') thUpdateNowPlayingFromState(data);
     else if (data.type === 'room_renamed') thUpdateRoomNameFromRenamed(data);
     else if (data.type === 'playback') thUpdateGuestMuteAvailability(data.playing);
@@ -1048,6 +1180,27 @@
       joinBtn.disabled = true;
       joinBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% translate "الروم اتقفلت" %}';
     }
+
+    if (!slide.querySelector('.th-room-ended-panel')) {
+      var panel = document.createElement('div');
+      panel.className = 'th-room-ended-panel';
+      panel.innerHTML =
+        '<i class="bi bi-headphones"></i>' +
+        '<p>{% translate "الفرفشة انتهت هنا - يلا لروم تانية" %}</p>' +
+        '<button type="button"><i class="bi bi-arrow-down-circle-fill"></i> {% translate "روم تانية" %}</button>';
+      panel.querySelector('button').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var nextIndex = activeIndex + 1 < slideEls.length ? activeIndex + 1 : activeIndex - 1;
+        if (nextIndex >= 0 && nextIndex < slideEls.length) {
+          thScrollToSlide(nextIndex);
+        } else if (window.thBoostedNavigate) {
+          window.thBoostedNavigate('/live-rooms/');
+        } else {
+          window.location.href = '/live-rooms/';
+        }
+      });
+      slide.appendChild(panel);
+    }
   }
 
   // The room paused then genuinely came back (is_live False->True
@@ -1069,6 +1222,8 @@
       joinBtn.disabled = false;
       joinBtn.innerHTML = '<i class="bi bi-headphones"></i> {% translate "بتسمع هنا دلوقتي" %}';
     }
+    var panel = slide.querySelector('.th-room-ended-panel');
+    if (panel) panel.remove();
   }
 
   function thUpdateNowPlayingFromState(data) {
@@ -1108,6 +1263,7 @@
     var slide = document.createElement('div');
     slide.className = 'th-room-slide';
     slide.dataset.index = index;
+    slide.dataset.hostUserId = room.hostUserId;
 
     var bg = document.createElement('div');
     bg.className = 'th-room-slide-bg';
@@ -1535,6 +1691,32 @@
     }
     var next = Math.max(0, (parseInt(el.textContent, 10) || 0) + delta);
     el.textContent = next;
+  }
+
+  // The server-authoritative roster, sent right after connecting (see
+  // base.html's own thApplyViewersSnapshot, which already handles the
+  // own-room case by resyncing window.thFollowers itself and dispatching
+  // this same event here too) - for someone else's room, this is what
+  // actually fixes the "everyone sees a different number" bug: without
+  // it, slide._thGuestViewers only ever grew from follower_joined/left
+  // events that happened to arrive AFTER this exact slide activated, so
+  // whoever was already in the room before you scrolled here was
+  // invisible until some unrelated join/leave nudged the count.
+  function thApplyViewersSnapshot(viewers) {
+    if (activeIndex === -1) return;
+    var slide = slideEls[activeIndex];
+    if (!slide) return;
+    var room = rooms[activeIndex];
+    var el = slide.querySelector('.th-room-viewer-count-num');
+
+    if (room && room.hostUserId === window.thUserId) {
+      if (el && window.thFollowers) el.textContent = window.thFollowers.length;
+      return;
+    }
+
+    var roster = (viewers || []).map(function (v) { return { userId: v.user_id, username: v.username }; });
+    slide._thGuestViewers = roster;
+    if (el) el.textContent = roster.length;
   }
 
   // Tapping the viewer-count badge - own room: the real, always-
