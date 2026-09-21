@@ -116,6 +116,13 @@
     flex-shrink: 0;
   }
   .th-room-tap-badge.tapped i { color: #e5484d; }
+  /* Live viewer count, right next to the tap badge - see
+     thUpdateViewerCount below (follower_joined/follower_left). */
+  .th-room-viewer-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+    flex-shrink: 0;
+  }
 
   /* Host ended the room while you were following it - see
      thHandleRoomClosedOnSlide. Dims the whole slide instead of leaving
@@ -762,6 +769,8 @@
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
     else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
+    else if (data.type === 'follower_joined') thBumpViewerCount(1);
+    else if (data.type === 'follower_left') thBumpViewerCount(-1);
   });
 
   // base.html's own thHandleRoomClosedWhileFollowing() already toasts
@@ -816,6 +825,8 @@
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       '<span class="th-room-tap-badge"><i class="bi bi-heart-fill"></i> <span class="th-room-tap-count-num">' + room.tapScore + '</span></span>' +
+      '<span class="th-room-viewer-badge"><i class="bi bi-eye-fill"></i> <span class="th-room-viewer-count-num">' +
+      (isOwnRoom && window.thFollowers ? window.thFollowers.length : 0) + '</span></span>' +
       (!room.isPublic ? '<i class="bi bi-lock-fill" style="margin-inline-start:6px;"></i>' : '');
     top.querySelector('.th-room-top-share-btn').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -1002,6 +1013,24 @@
       return;
     }
 
+    // Already following this exact host from somewhere else (e.g. you
+    // clicked the floating "بتسمع مع..." banner to jump straight into
+    // the room you were already in) - this slide IS that room, so
+    // there's nothing to join. Re-running startListeningWith here would
+    // open a second, redundant follow connection on top of the one
+    // that's already live, and leave the button stuck showing "اسمع
+    // معاه" instead of reflecting reality. The banner itself is already
+    // hidden on this exact page (thUpdateFollowingBannerVisibility,
+    // base.html) - re-checked here too since that call is driven by
+    // htmx:afterSettle, which can land before this slide's own
+    // IntersectionObserver activation does.
+    if (window.thListeningWithHostId === room.hostUserId) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-headphones"></i> {% translate "بتسمع هنا دلوقتي" %}';
+      if (window.thUpdateFollowingBannerVisibility) window.thUpdateFollowingBannerVisibility();
+      return;
+    }
+
     if (room.isPublic) {
       window.startListeningWith(btn);
     } else {
@@ -1029,6 +1058,26 @@
     if (activeIndex === -1 || typeof score !== 'number') return;
     var tapNum = slideEls[activeIndex].querySelector('.th-room-tap-count-num');
     if (tapNum) tapNum.textContent = score;
+  }
+
+  // Live "N watching" badge, next to the tap count. Own room: resynced
+  // straight from window.thFollowers (base.html) - already tracked
+  // accurately for as long as you've been hosting, not just since this
+  // slide/page loaded. Someone else's room: only a running delta from
+  // whenever THIS follow connection opened (same accepted limitation as
+  // the hosting bar's own join count - no server-side presence registry
+  // to ask for the true count a latecomer missed).
+  function thBumpViewerCount(delta) {
+    if (activeIndex === -1) return;
+    var el = slideEls[activeIndex].querySelector('.th-room-viewer-count-num');
+    if (!el) return;
+    var room = rooms[activeIndex];
+    if (room && room.hostUserId === window.thUserId && window.thFollowers) {
+      el.textContent = window.thFollowers.length;
+      return;
+    }
+    var next = Math.max(0, (parseInt(el.textContent, 10) || 0) + delta);
+    el.textContent = next;
   }
 
   function thRenderCommentHistory(comments) {

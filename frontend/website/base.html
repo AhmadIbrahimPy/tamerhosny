@@ -3035,12 +3035,19 @@
       }
       thRenderFollowersChip();
       thUpdateHostingJoinCount();
+      // Same reasoning as the 'tapped' fix above - thHostSocket is the
+      // only connection open while looking at your OWN room's slide, so
+      // live_rooms.html's own live viewer-count badge needs this
+      // forwarded too, not just the (hidden, on this page) global-bar
+      // stats row.
+      thDispatchListenTogetherMessage(data);
     }
 
     function thHandleFollowerLeft(data) {
       thFollowers = thFollowers.filter(function (f) { return f.userId !== data.user_id; });
       thRenderFollowersChip();
       thUpdateHostingJoinCount();
+      thDispatchListenTogetherMessage(data);
     }
 
     window.thBlockListener = function (userId) {
@@ -3502,6 +3509,16 @@
     window.thSendListenTogetherMessage = function (payload) {
       if (thFollowSocket && thFollowSocket.readyState === WebSocket.OPEN) {
         thFollowSocket.send(JSON.stringify(payload));
+      } else if (thHostSocket && thHostSocket.readyState === WebSocket.OPEN) {
+        // No follow socket to send through - either not following
+        // anyone, or (the common case from live_rooms.html) tapping/
+        // commenting on your OWN room, which never opens one
+        // (thActivateSlide returns early for isOwnRoom). thHostSocket
+        // is always open for a logged-in host and the server already
+        // accepts 'tap'/'comment' from self.is_host just the same - see
+        // ListenTogetherConsumer.receive. Without this fallback, every
+        // tap/comment on your own room silently went nowhere.
+        thHostSocket.send(JSON.stringify(payload));
       }
     };
 
