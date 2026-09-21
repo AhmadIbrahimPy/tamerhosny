@@ -1077,15 +1077,11 @@
       box-shadow: 0 -4px 24px rgba(138,92,255,.35);
     }
     /* live_rooms.html adds this - the feed already shows each room's own
-       playback/join UI per slide, so the bar's normal controls (cover,
-       title, play/pause, progress) are redundant clutter there. The
-       hosting-stats row (a sibling, inserted before .container-xl - see
-       thRenderHostingStatsRow) is left alone: if this browser happens to
-       be hosting its own room while browsing the feed, that join/tap
-       summary is still useful to see. Nothing left to show at all (not
-       hosting) collapses the whole bar via :has(). */
-    #globalAudioPlayer.th-hide-controls > .container-xl{ display: none; }
-    #globalAudioPlayer.th-hide-controls:not(:has(#thHostingStatsRow, #thFollowingStatsRow)){ display: none !important; }
+       playback/join UI per slide (including, on your own room's slide,
+       its own now-playing/join/tap/suggestions - see that page's own
+       CSS), so the bar itself is entirely redundant there, not just its
+       normal controls. */
+    #globalAudioPlayer.th-hide-controls{ display: none !important; }
 
     /* The gear only ever does anything for whoever's actually hosting a
        room right now (update_room_settings 400s otherwise) - shown only

@@ -130,6 +130,40 @@
   .th-room-now-playing-title { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .th-room-now-playing-artist { font-size: 12px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* "بعدها" - smaller/dimmer than the now-playing card, own room only. */
+  .th-room-up-next {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 16px 10px; padding: 6px 12px; border-radius: 12px;
+    background: rgba(255,255,255,.06); color: #fff; opacity: .85;
+  }
+  .th-room-up-next-cover { width: 30px; height: 30px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
+  .th-room-up-next-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
+  .th-room-up-next-title { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55vw; }
+
+  /* Own room only - "شغّل كمان" horizontal strip, reusing
+     _suggested_songs_items.html's own safe server-rendered markup (see
+     thBuildSlide) but re-skinned from a vertical list into square-ish
+     cards via these descendant overrides, not a second template. */
+  .th-room-suggest-strip { margin: 0 16px 10px; }
+  .th-room-suggest-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .th-room-suggest-label { font-size: 11px; font-weight: 800; color: #fff; opacity: .85; }
+  .th-room-suggest-browse {
+    border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff;
+    border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .th-room-suggest-cards { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .th-room-suggest-cards::-webkit-scrollbar { display: none; }
+  .th-room-suggest-cards .th-suggested-song-row {
+    flex-direction: column; align-items: flex-start; gap: 6px; width: 96px; flex-shrink: 0;
+    background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; position: relative;
+  }
+  .th-room-suggest-cards .th-suggested-song-cover-wrap { width: 100%; height: 90px; }
+  .th-room-suggest-cards .th-suggested-song-info { width: 100%; }
+  .th-room-suggest-cards .th-suggested-song-artist { display: none; }
+  .th-room-suggest-cards .th-suggested-song-play {
+    position: absolute; bottom: 6px; inset-inline-end: 6px; width: 26px; height: 26px;
+  }
+
   .th-room-slide-rail {
     position: absolute; z-index: 3; inset-inline-end: 10px; bottom: 32vh;
     display: flex; flex-direction: column; align-items: center; gap: 18px;
@@ -551,6 +585,54 @@
       (room.song.artist ? '<div class="th-room-now-playing-artist">' + room.song.artist + '</div>' : '') +
       '</div>';
     header.appendChild(nowPlaying);
+
+    // "بعدها" - a snapshot of window.thHostQueue[0] (the play-choice
+    // modal's "إضافة للقائمة" pushes here, see base.html) at the moment
+    // this slide was built - only ever meaningful on your own room, and
+    // only while something's actually queued.
+    if (isOwnRoom && window.thHostQueue && window.thHostQueue.length) {
+      var nextArgs = window.thHostQueue[0];
+      var nextTitle = nextArgs[2] || '';
+      var nextImageRaw = nextArgs[4];
+      var nextImage = Array.isArray(nextImageRaw) ? nextImageRaw[0] : nextImageRaw;
+      var upNext = document.createElement('div');
+      upNext.className = 'th-room-up-next';
+      upNext.innerHTML =
+        (nextImage
+          ? '<img class="th-room-up-next-cover" alt="">'
+          : '<div class="th-room-up-next-cover th-room-now-playing-cover-fallback"><i class="bi bi-music-note-beamed"></i></div>') +
+        '<div><div class="th-room-up-next-label">{% translate "بعدها" %}</div><div class="th-room-up-next-title"></div></div>';
+      if (nextImage) upNext.querySelector('.th-room-up-next-cover').src = nextImage;
+      upNext.querySelector('.th-room-up-next-title').textContent = nextTitle;
+      header.appendChild(upNext);
+    }
+
+    // Only on your own room - a quick way to add another song without
+    // leaving the slide, reusing the exact same suggestions endpoint/
+    // markup the empty-feed state already uses (see thRoomFeedCreateRoom's
+    // own docs), just re-skinned into a horizontal card strip via CSS
+    // instead of the vertical list.
+    if (isOwnRoom) {
+      var suggestWrap = document.createElement('div');
+      suggestWrap.className = 'th-room-suggest-strip';
+      suggestWrap.innerHTML =
+        '<div class="th-room-suggest-top">' +
+        '<span class="th-room-suggest-label">{% translate "شغّل كمان" %}</span>' +
+        '<button type="button" class="th-room-suggest-browse" onclick="window.thRoomFeedCreateRoom();">{% translate "تصفح" %}</button>' +
+        '</div>' +
+        '<div class="th-room-suggest-cards"></div>';
+      header.appendChild(suggestWrap);
+
+      fetch('{% url "website_app:live-rooms-suggested-songs" %}', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var cardsEl = suggestWrap.querySelector('.th-room-suggest-cards');
+          if (cardsEl && data.html) cardsEl.innerHTML = data.html;
+        })
+        .catch(function () {});
+    }
 
     slide.appendChild(header);
 
