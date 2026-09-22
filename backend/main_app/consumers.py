@@ -855,6 +855,11 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 'type': 'join_requested',
                 'username': req.requester.username,
                 'user_id': req.requester_id,
+                # Best-effort - live_rooms.html's own join-requests list
+                # (thRenderJoinRequestsList) uses this to show the host a
+                # live countdown matching the requester's own, not just a
+                # bare name with no sense of how long it's been pending.
+                'started_at': req.created_at.isoformat(),
             }))
 
     def _send_current_room_state(self):
@@ -899,10 +904,18 @@ class ListenTogetherConsumer(WebsocketConsumer):
 
         self.send(text_data=json.dumps({'type': 'join_pending'}))
 
+        # "Now", not req.created_at - a retry after an earlier expiry/
+        # rejection reuses the same row (created_at is auto_now_add,
+        # never updated), but the 60s window a host's own countdown
+        # should track starts fresh with THIS attempt, not whenever the
+        # row first ever existed.
+        started_at = timezone.now()
+
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'join.requested',
             'username': self.user.username,
             'user_id': self.user.id,
+            'started_at': started_at.isoformat(),
         })
 
         from backend.main_app.models import UserAccount
@@ -1052,6 +1065,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'type': 'join_requested',
             'username': event.get('username'),
             'user_id': event.get('user_id'),
+            'started_at': event.get('started_at'),
         }))
 
     def join_expired(self, event):

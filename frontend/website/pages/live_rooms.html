@@ -168,11 +168,14 @@
 
   /* Private room, not yours - covers the whole slide (header, now-
      playing, comments, all of it) so nothing about who's in there or
-     what's playing leaks through before you're actually approved.
-     Built once per slide (thBuildSlide) but only ever shown
-     (.open) once thActivateSlide's thStartPrivateJoinFlow actually
-     fires the join request for this exact slide - scrolled-past private
-     slides you haven't reached yet stay plain. */
+     what's playing leaks through before you're actually approved. Built
+     once per slide (thBuildSlide) and open (blurred) from the moment
+     the slide exists, not just once activated - a private room's
+     contents stay hidden whether you've actually scrolled to it or not,
+     and whether you're logged in or not. Starts in its "idle" state
+     (thBuildSlide) - nothing is sent to the host until "طلب انضمام" is
+     actually tapped (thStartPrivateJoinFlow), never just from scrolling
+     into view. */
   .th-room-private-overlay {
     position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column;
     align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 0 32px;
@@ -185,11 +188,22 @@
   .th-room-private-name { font-size: 20px; font-weight: 900; }
   .th-room-private-status { margin: 0; font-size: 13px; font-weight: 700; opacity: .85; }
   .th-room-private-countdown { font-size: 40px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .th-room-private-idle p,
   .th-room-private-expired p { margin: 0 0 14px; font-size: 13px; font-weight: 700; opacity: .9; max-width: 260px; }
+  .th-room-private-request-btn,
   .th-room-private-retry-btn {
     display: flex; align-items: center; gap: 6px; border: none; border-radius: 999px;
     padding: 10px 22px; background: var(--accent); color: #0b0c12; font-weight: 800; cursor: pointer;
     margin: 0 auto;
+  }
+  /* Cancel, while a request is still pending - secondary/outline, not
+     the same visual weight as the accent-colored request/retry buttons
+     above (this one un-does what you just asked for, it shouldn't look
+     like the default next step). */
+  .th-room-private-cancel-btn {
+    display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 8px 20px; background: rgba(0,0,0,.3); color: #fff;
+    font-weight: 800; cursor: pointer; margin: 4px auto 0; font-size: 13px;
   }
 
   /* The browser blocked autoplay (no real tap/click happened yet on this
@@ -531,6 +545,23 @@
     background: var(--bg); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
   .th-room-viewer-block-btn:hover { color: #e5484d; }
+
+  /* Approve/reject a pending join request (thRenderJoinRequestsList) -
+     same round-icon-button shape as .th-room-viewer-block-btn above,
+     just colored by intent instead of both rendering as bare unstyled
+     buttons (the browser default) like before. */
+  .th-room-join-request-countdown {
+    flex-shrink: 0; font-size: 12px; font-weight: 800; color: var(--muted);
+    font-variant-numeric: tabular-nums; min-width: 28px; text-align: center;
+  }
+  .th-room-join-approve-btn, .th-room-join-reject-btn {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .th-room-join-approve-btn { background: rgba(79,212,134,.18); color: #4fd486; }
+  .th-room-join-approve-btn:hover { background: rgba(79,212,134,.3); }
+  .th-room-join-reject-btn { background: rgba(229,72,77,.15); color: #e5484d; }
+  .th-room-join-reject-btn:hover { background: rgba(229,72,77,.28); }
 
   .th-suggested-songs {
     display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px;
@@ -1705,25 +1736,40 @@
 
     if (!isOwnRoom && !room.isPublic) {
       var privateOverlay = document.createElement('div');
-      // .open from the start, not just once thStartPrivateJoinFlow runs
-      // (thActivateSlide, authenticated visitors only) - an anonymous
-      // visitor never reaches that call (thActivateSlide returns before
-      // it for !window.isAuthenticated), and a private room's contents
-      // should stay blurred for them too, not just for someone who's
-      // actually logged in.
+      // .open from the start (blurred the instant the slide exists, not
+      // just once you've activated it) - an anonymous visitor never
+      // reaches thStartPrivateJoinFlow at all (thActivateSlide returns
+      // early for !window.isAuthenticated), so a private room's
+      // contents need to stay hidden for them too, not just for someone
+      // logged in who's tapped "طلب انضمام".
       privateOverlay.className = 'th-room-private-overlay open';
       privateOverlay.innerHTML =
         '<i class="bi bi-lock-fill"></i>' +
         '<div class="th-room-private-name">' + room.roomName + '</div>' +
+        '<div class="th-room-private-idle">' +
+        '<p>{% translate "روم خاصة - محتاج موافقة صاحبها" %}</p>' +
+        '<button type="button" class="th-room-private-request-btn"><i class="bi bi-person-plus-fill"></i> {% translate "طلب انضمام" %}</button>' +
+        '</div>' +
+        '<div class="th-room-private-pending" style="display:none;">' +
         '<p class="th-room-private-status">{% translate "طلب انضمام" %}</p>' +
         '<div class="th-room-private-countdown">60</div>' +
+        '<button type="button" class="th-room-private-cancel-btn"><i class="bi bi-x-lg"></i> {% translate "إلغاء الطلب" %}</button>' +
+        '</div>' +
         '<div class="th-room-private-expired" style="display:none;">' +
         '<p>{% translate "محدش رد على طلبك - اطلب تاني ولا اسكرول لروم تانية" %}</p>' +
         '<button type="button" class="th-room-private-retry-btn"><i class="bi bi-arrow-repeat"></i> {% translate "اطلب تاني" %}</button>' +
         '</div>';
+      privateOverlay.querySelector('.th-room-private-request-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        thStartPrivateJoinFlow(slide, room);
+      });
       privateOverlay.querySelector('.th-room-private-retry-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         thStartPrivateJoinFlow(slide, room);
+      });
+      privateOverlay.querySelector('.th-room-private-cancel-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        thCancelPrivateJoin(slide);
       });
       slide.appendChild(privateOverlay);
     }
@@ -1815,13 +1861,19 @@
     if (room.isPublic) {
       window.startListeningWith(btn);
     } else {
-      thStartPrivateJoinFlow(slideEls[index], room, btn);
+      // No auto-request - just make sure the overlay reads "طلب
+      // انضمام" (idle) rather than whatever state it was left in last
+      // time you were on this exact slide (thResetPrivateOverlay below).
+      // Nothing is actually sent to the host until that button (or
+      // "اطلب تاني") is tapped.
+      thResetPrivateOverlay(slideEls[index]);
     }
   }
 
   // ---------------------------------------------------------
-  // PRIVATE ROOM - blurred overlay + 60s countdown while waiting for the
-  // host to respond (see .th-room-private-overlay, thBuildSlide).
+  // PRIVATE ROOM - idle "طلب انضمام" button -> pending (60s countdown +
+  // cancel) -> approved/rejected/expired. See .th-room-private-overlay,
+  // thBuildSlide.
   // ---------------------------------------------------------
 
   var thPrivateJoinTimer = null;
@@ -1830,20 +1882,27 @@
     if (thPrivateJoinTimer) { clearInterval(thPrivateJoinTimer); thPrivateJoinTimer = null; }
   }
 
-  function thStartPrivateJoinFlow(slide, room, btn) {
+  function thResetPrivateOverlay(slide) {
+    var overlay = slide.querySelector('.th-room-private-overlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+    overlay.querySelector('.th-room-private-idle').style.display = '';
+    overlay.querySelector('.th-room-private-pending').style.display = 'none';
+    overlay.querySelector('.th-room-private-expired').style.display = 'none';
+  }
+
+  function thStartPrivateJoinFlow(slide, room) {
     thClearPrivateJoinTimer();
-    window.requestToJoinRoom(btn || slide.querySelector('.th-room-join-status'));
+    window.requestToJoinRoom(slide.querySelector('.th-room-join-status'));
 
     var overlay = slide.querySelector('.th-room-private-overlay');
     if (!overlay) return;
     overlay.classList.add('open');
-
-    var statusEl = overlay.querySelector('.th-room-private-status');
+    overlay.querySelector('.th-room-private-idle').style.display = 'none';
+    overlay.querySelector('.th-room-private-expired').style.display = 'none';
+    var pendingEl = overlay.querySelector('.th-room-private-pending');
+    pendingEl.style.display = '';
     var countdownEl = overlay.querySelector('.th-room-private-countdown');
-    var expiredEl = overlay.querySelector('.th-room-private-expired');
-    statusEl.style.display = '';
-    countdownEl.style.display = '';
-    expiredEl.style.display = 'none';
 
     var remaining = 60;
     countdownEl.textContent = remaining;
@@ -1856,11 +1915,21 @@
         // ListenTogetherConsumer._cancel_join) - not just a local UI
         // change, the request itself really is done for.
         if (window.thSendListenTogetherMessage) window.thSendListenTogetherMessage({ action: 'cancel_join' });
-        statusEl.style.display = 'none';
-        countdownEl.style.display = 'none';
-        expiredEl.style.display = 'block';
+        pendingEl.style.display = 'none';
+        overlay.querySelector('.th-room-private-expired').style.display = 'block';
       }
     }, 1000);
+  }
+
+  // "إلغاء الطلب" - a deliberate cancel while still pending, not a
+  // timeout. Same server-side signal as letting the clock run out
+  // (cancel_join), but goes straight back to "طلب انضمام" instead of the
+  // "لا رد - اطلب تاني" screen, since nothing actually failed here.
+  function thCancelPrivateJoin(slide) {
+    thClearPrivateJoinTimer();
+    if (window.thSendListenTogetherMessage) window.thSendListenTogetherMessage({ action: 'cancel_join' });
+    if (window.stopListeningWith) window.stopListeningWith();
+    thResetPrivateOverlay(slide);
   }
 
   // The host approved (join_approved) - nothing left to wait on.
@@ -1879,8 +1948,8 @@
     if (activeIndex === -1) return;
     var overlay = slideEls[activeIndex].querySelector('.th-room-private-overlay');
     if (!overlay) return;
-    overlay.querySelector('.th-room-private-status').style.display = 'none';
-    overlay.querySelector('.th-room-private-countdown').style.display = 'none';
+    overlay.querySelector('.th-room-private-idle').style.display = 'none';
+    overlay.querySelector('.th-room-private-pending').style.display = 'none';
     overlay.querySelector('.th-room-private-expired').style.display = 'block';
   }
 
@@ -2119,11 +2188,19 @@
   // rejecting from here and from anywhere else on the site (the
   // floating panel base.html still shows off this page) never drift out
   // of sync with each other.
+  var thJoinRequestsCountdownTimer = null;
+
   function thShowJoinRequests() {
     var modal = document.getElementById('thRoomJoinRequestsModal');
     if (!modal) return;
     thRenderJoinRequestsList();
     modal.style.display = 'flex';
+
+    // Live per-second refresh while the modal is actually open, so the
+    // host sees the same countdown the requester is watching instead of
+    // a number frozen at whatever it was the moment the list was built.
+    if (thJoinRequestsCountdownTimer) clearInterval(thJoinRequestsCountdownTimer);
+    thJoinRequestsCountdownTimer = setInterval(thRenderJoinRequestsList, 1000);
 
     if (!modal.dataset.wired) {
       modal.dataset.wired = '1';
@@ -2135,6 +2212,7 @@
   function thHideJoinRequests() {
     var modal = document.getElementById('thRoomJoinRequestsModal');
     if (modal) modal.style.display = 'none';
+    if (thJoinRequestsCountdownTimer) { clearInterval(thJoinRequestsCountdownTimer); thJoinRequestsCountdownTimer = null; }
   }
 
   function thRenderJoinRequestsList() {
@@ -2150,9 +2228,19 @@
 
     list.innerHTML = requests.map(function (r) {
       var url = '/u/' + r.username + '/';
+      // started_at (ListenTogetherConsumer._request_join) - same 60s
+      // window the requester's own countdown (thStartPrivateJoinFlow)
+      // counts down, so the host isn't left guessing how much longer a
+      // request has before it expires on its own.
+      var remaining = 60;
+      if (r.startedAt) {
+        var elapsed = (Date.now() - new Date(r.startedAt).getTime()) / 1000;
+        remaining = Math.max(0, Math.round(60 - elapsed));
+      }
       return '<a href="' + url + '" class="th-room-viewer-row" data-user-id="' + r.userId + '">' +
         '<span class="th-room-viewer-avatar-fallback">' + r.username.slice(0, 1).toUpperCase() + '</span>' +
         '<span class="th-room-viewer-name">' + r.username + '</span>' +
+        '<span class="th-room-join-request-countdown">' + remaining + '</span>' +
         '<span class="th-room-viewer-stats">' +
         '<button type="button" class="th-room-join-approve-btn" data-user-id="' + r.userId + '" title="{% translate "قبول" %}"><i class="bi bi-check-lg"></i></button>' +
         '<button type="button" class="th-room-join-reject-btn" data-user-id="' + r.userId + '" title="{% translate "رفض" %}"><i class="bi bi-x-lg"></i></button>' +

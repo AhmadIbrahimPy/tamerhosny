@@ -3181,7 +3181,7 @@
 
     function thHandleJoinRequested(data) {
       if (!window.thJoinRequests.some(function (r) { return r.userId === data.user_id; })) {
-        window.thJoinRequests.push({ userId: data.user_id, username: data.username });
+        window.thJoinRequests.push({ userId: data.user_id, username: data.username, startedAt: data.started_at });
       }
       if (window.showToast) {
         showToast(data.username + ' {% translate "عايز ينضم لجروبك" %}', 'info');
