@@ -42,11 +42,11 @@
     /* Not "100dvh minus the player bar's height" - the bar is always
        fully display:none (.th-hide-controls, base.html) on this page,
        reserving nothing. Subtracting a fixed height for it anyway left
-       a real, empty gap at the bottom of the actual viewport. 108dvh on
+       a real, empty gap at the bottom of the actual viewport. 106dvh on
        mobile deliberately overshoots the visual viewport - matched by
        92dvh on desktop (min-width:768px below) - not a mistake to
        "fix" back to 100: see that rule's own comment for why. */
-    height: 108dvh;
+    height: 106dvh;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
@@ -62,11 +62,11 @@
   .th-room-feed:empty { display: none; }
 
   .th-room-slide {
-    /* Same 108dvh (mobile) / 92dvh (desktop, min-width:768px below) as
+    /* Same 106dvh (mobile) / 92dvh (desktop, min-width:768px below) as
        .th-room-feed just above - has to match it exactly, or scroll-
        snap-align:start below stops landing flush with each slide's own
        top edge. */
-    height: 108dvh;
+    height: 106dvh;
     scroll-snap-align: start;
     position: relative;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -467,9 +467,9 @@
   }
 
   .th-room-feed-empty {
-    /* Same 108dvh (mobile) / 92dvh (desktop, min-width:768px below) as
+    /* Same 106dvh (mobile) / 92dvh (desktop, min-width:768px below) as
        .th-room-feed/.th-room-slide above. */
-    height: 108dvh;
+    height: 106dvh;
     /* Visible by default (not hidden-until-JS-says-so) - the same
        "don't depend on the script having run" reasoning as
        .th-room-feed:empty above. extra_js hides this instead, once it
@@ -478,7 +478,7 @@
     align-items: center; justify-content: center; gap: 14px; color: var(--muted); text-align: center;
   }
 
-  /* Desktop/web gets the shorter 92dvh instead of mobile's 108dvh (see
+  /* Desktop/web gets the shorter 92dvh instead of mobile's 106dvh (see
      each selector's own comment above) - declared after all three base
      rules so it actually wins the cascade at this width, not just
      matched by source-order luck. */
