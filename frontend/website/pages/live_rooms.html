@@ -175,7 +175,17 @@
   }
 
   .th-room-slide-name-row {
-    position: relative; z-index: 2; display: flex; align-items: center; gap: 8px;
+    /* z-index higher than .th-room-slide-comments' own (2, below) on
+       purpose, not a typo - #thRoomSettingsPopover lives inside this
+       row (thBuildSlide relocates it here), and its own z-index:1002
+       (base.html) only ever competes WITHIN this row's stacking context
+       (position+z-index here creates one) - equal z-index elsewhere
+       falls back to source order, and comments comes later in the DOM,
+       so the popover was painting UNDER the comment input/send button
+       regardless of its own much higher number. Nothing else depends on
+       these two rows' relative order (they don't overlap in normal
+       flow), so raising this one is safe. */
+    position: relative; z-index: 5; display: flex; align-items: center; gap: 8px;
     padding: 0 16px; margin-bottom: 10px;
   }
   .th-room-slide-name {
