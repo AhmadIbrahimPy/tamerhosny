@@ -18,6 +18,11 @@
   body.th-live-rooms-page { overflow: hidden; }
   body.th-live-rooms-page .th-footer { display: none; }
   body.th-live-rooms-page .th-mic-fab { display: none !important; }
+  /* base.html's own site-wide floating panel (approve/reject inline) -
+     redundant here now that the own-room slide has its own "طلبات"
+     badge + popup (thShowJoinRequests) with the exact same data, just
+     integrated into the room instead of floating disconnected from it. */
+  body.th-live-rooms-page #thListenTogetherJoinRequests { display: none !important; }
 
   .th-room-feed-nav-arrows {
     /* Mobile scrolls the feed by hand (swipe) - the arrows are

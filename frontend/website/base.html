@@ -4453,6 +4453,15 @@
       const container = document.getElementById('toastContainer');
       if (!container) return;
 
+      // Capped at 3 stacked at once - several join requests (or any
+      // other toast) landing close together used to just keep piling up
+      // uncapped, running off the top of the screen. Oldest goes first,
+      // same as it would have disappeared on its own in a few seconds
+      // anyway.
+      while (container.children.length >= 3) {
+        container.firstElementChild.remove();
+      }
+
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
 
