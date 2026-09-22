@@ -679,10 +679,16 @@
   var promo = document.getElementById('thLiveRoomPromo');
   if (!promo) return;
 
-  var currentHostUserId = null; // whoever the slide is showing right now, if anyone
+  // Whoever the slide is showing right now, if anyone - seeded from what
+  // the server actually rendered (promo.dataset.hostUserId), not just
+  // assumed empty; a 'room_closed' for a room that was already showing
+  // at page load would otherwise never match (null !== that host's id)
+  // and the slide would keep advertising a room that's already over.
+  var currentHostUserId = promo.dataset.hostUserId ? parseInt(promo.dataset.hostUserId, 10) : null;
 
   function renderJoin(room) {
     currentHostUserId = room.hostUserId;
+    promo.dataset.hostUserId = room.hostUserId;
     promo.href = '/live-rooms/' + room.hostUsername + '/';
     promo.className = 'th-guess-promo th-live-room-promo';
     promo.innerHTML =
@@ -696,6 +702,7 @@
 
   function renderIdle() {
     currentHostUserId = null;
+    delete promo.dataset.hostUserId;
     promo.href = '{% url "website_app:live-rooms" %}';
     promo.className = 'th-guess-promo th-live-room-promo idle';
     promo.innerHTML =
