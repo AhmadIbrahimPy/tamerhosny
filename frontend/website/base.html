@@ -2167,7 +2167,7 @@
        for the logic, and ListenTogetherConsumer (backend/main_app/
        consumers.py) for the server side. -->
   <div id="thListenTogetherJoinRequests" class="th-lt-fixed-stack" style="display:none; position:fixed; bottom:72px; left:16px; z-index:1001; flex-direction:column; gap:6px; align-items:flex-start;"></div>
-  <div id="thListenTogetherBanner" class="th-lt-fixed-stack" onclick="window.thEnterFollowedRoom();" style="display:none; position:fixed; bottom:72px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;">
+  <div id="thListenTogetherBanner" class="th-lt-fixed-stack" onclick="window.thEnterFollowedRoom();" style="display:none; position:fixed; bottom:80px; right:16px; z-index:1001; align-items:center; gap:8px; background:var(--accent); color:#0b0c12; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;">
     <i class="bi bi-headphones"></i>
     <span class="th-lt-banner-text"></span>
   </div>
@@ -3515,7 +3515,7 @@
 
       var banner = document.getElementById('thListenTogetherBanner');
       if (banner) {
-        banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
+        banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + roomName;
       }
       thUpdateFollowingBannerVisibility();
 
@@ -3622,7 +3622,7 @@
 
       var banner = document.getElementById('thListenTogetherBanner');
       if (banner) {
-        banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + hostUsername;
+        banner.querySelector('.th-lt-banner-text').textContent = '{% translate "بتسمع مع" %} ' + roomName;
       }
       thUpdateFollowingBannerVisibility();
 
