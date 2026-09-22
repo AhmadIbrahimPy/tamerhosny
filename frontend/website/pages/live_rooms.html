@@ -411,6 +411,29 @@
     .th-room-slide-name{font-size:19px;}
   }
 
+  /* Own room, mobile: avatar/username + live/tap/viewer badges (up to 4
+     flex-shrink:0 items, none of them small) plus "إنهاء" and (private
+     rooms) "طلبات" all crammed into one un-wrapped row ran straight off
+     the edge of a phone screen - flex-wrap alone would already stop
+     that, but this also puts "إنهاء" deliberately on its own second
+     line under the avatar, with "طلبات" pushed to the opposite end of
+     that same line (margin-inline-start:auto) rather than wherever wrap
+     happened to break. The ::after pseudo-element is the line break
+     itself - a flex-basis:100% item, positioned via `order` right
+     between the two rows, forces everything after it onto a fresh line
+     without needing a real DOM node for it. Desktop (min-width:768px
+     below) is unaffected - plenty of room there for one row. */
+  @media (max-width:480px){
+    .th-room-slide-top{ flex-wrap: wrap; row-gap: 8px; }
+    .th-room-slide-identity{ order: 1; }
+    .th-room-live-badge{ order: 2; margin-inline-start: 0; }
+    .th-room-tap-badge{ order: 3; }
+    .th-room-viewer-badge{ order: 4; }
+    .th-room-slide-top::after{ content: ''; flex-basis: 100%; order: 5; }
+    .th-room-top-end-btn, .th-room-top-my-room-btn{ order: 6; }
+    .th-room-requests-badge{ order: 7; margin-inline-start: auto; }
+  }
+
   /* Desktop/web only - the nav arrows move off the fixed left edge and
      into the exact spot the tap rail used to occupy (inset-inline-end,
      vertically centered on the lower half of the slide), instead of
