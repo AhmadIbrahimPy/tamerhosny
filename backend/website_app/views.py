@@ -104,6 +104,33 @@ def home(request):
     guess_played_today = request.user.is_authenticated and DailyGuessAttempt.objects.filter(
         user=request.user, challenge__date=timezone.localdate(),
     ).exists()
+
+    # Third promo-carousel slide (thLiveRoomPromo, home.html) - this is
+    # just the INITIAL state at page load; a small WS listener there
+    # (the same LiveRoomsFeedConsumer /live-rooms/ itself uses) keeps it
+    # live from here on, swapping between "join this room" and "start
+    # your own" as rooms actually open/close, no reload needed.
+    from backend.main_app.models import ListenTogetherRoom
+    from backend.main_app.shared_utils.listen_together import get_current_song_for_user
+
+    live_room = None
+    live_room_qs = ListenTogetherRoom.objects.filter(
+        is_public=True, is_live=True,
+    ).select_related('host')
+    if request.user.is_authenticated:
+        live_room_qs = live_room_qs.exclude(host=request.user)
+    top_room = live_room_qs.order_by('-tap_score', '-created_at').first()
+    if top_room is not None:
+        song = get_current_song_for_user(top_room.host)
+        if song is not None:
+            live_room = {
+                'hostUserId': top_room.host_id,
+                'hostUsername': top_room.host.username,
+                'hostAvatar': top_room.host.profile_image.url if top_room.host.profile_image else '',
+                'roomName': top_room.display_name,
+                'songTitle': localized_field(song, 'title'),
+            }
+
     return render(request, 'website/pages/home.html', {
         'guess_played_today': guess_played_today,
         'trending_ranks': trending_ranks,
@@ -118,6 +145,7 @@ def home(request):
         'home_ads': home_ads,
         'mid_ad': home_ads[1] if len(home_ads) > 1 else (home_ads[0] if home_ads else None),
         'bottom_ad': home_ads[-1] if home_ads else None,
+        'live_room': live_room,
     })
 
 
