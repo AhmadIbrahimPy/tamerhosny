@@ -870,6 +870,9 @@
       // overlay (already shown above) covers that wait so it doesn't
       // just look frozen.
       document.addEventListener('thRoomOpened', goToMyRoom, { once: true });
+      if (window.thOnTeardown) {
+        window.thOnTeardown(function () { document.removeEventListener('thRoomOpened', goToMyRoom); });
+      }
       setTimeout(goToMyRoom, 4000);
     }
   };
@@ -1180,6 +1183,9 @@
   // globalListenerSocket the same way and fires this same custom event
   // for page-specific sockets like this one to hook into.
   document.addEventListener('thReconnectLiveSockets', thConnectFeedSocket);
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () { document.removeEventListener('thReconnectLiveSockets', thConnectFeedSocket); });
+  }
 
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only
@@ -1200,7 +1206,20 @@
   });
   thUpdateNavArrows();
 
-  document.addEventListener('thAudioAutoplayBlocked', function () {
+  // Named (not anonymous) and paired with thOnTeardown below for every
+  // one of these document-level listeners - boosted navigation never
+  // unloads the document (see base.html's own thOnTeardown comment for
+  // the exact bug class this caused before: every page visited left its
+  // listeners stacked on the last one forever). Switching rooms a few
+  // times in one tab left MULTIPLE live copies of this exact handler
+  // all firing on the same event, each with its own stale
+  // activeIndex/slideEls/rooms closure - which is what made posting a
+  // comment look like the whole feed "refreshed" and lost every comment
+  // for the poster specifically: their own stale handler(s) called
+  // thRenderCommentHistory/thAppendComment against slides that either
+  // no longer existed or belonged to an earlier page load, while anyone
+  // else watching (a single clean handler each) saw it post normally.
+  function thHandleAudioAutoplayBlocked() {
     if (activeIndex === -1) return;
     var slide = slideEls[activeIndex];
     if (!slide || slide.querySelector('.th-room-autoplay-hint')) return;
@@ -1214,22 +1233,31 @@
       hint.remove();
     });
     slide.appendChild(hint);
-  });
+  }
+  document.addEventListener('thAudioAutoplayBlocked', thHandleAudioAutoplayBlocked);
 
   // Audio actually started (the click that dismisses the hint above
   // also satisfies the same browser gesture requirement that unblocks
   // it, see base.html's own thPendingRetryBlockedPlay) - clear it from
   // whichever slide it's still sitting on instead of leaving a stale
   // "tap to play" pill over audio that's already playing.
-  document.addEventListener('audioPlayPause', function (e) {
+  function thHandleAudioPlayPauseForHint(e) {
     if (!e.detail || !e.detail.playing) return;
     slideEls.forEach(function (slide) {
       var hint = slide.querySelector('.th-room-autoplay-hint');
       if (hint) hint.remove();
     });
-  });
+  }
+  document.addEventListener('audioPlayPause', thHandleAudioPlayPauseForHint);
 
-  document.addEventListener('thListenTogetherMessage', function (evt) {
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      document.removeEventListener('thAudioAutoplayBlocked', thHandleAudioAutoplayBlocked);
+      document.removeEventListener('audioPlayPause', thHandleAudioPlayPauseForHint);
+    });
+  }
+
+  function thHandleListenTogetherMessage(evt) {
     var data = evt.detail;
     if (data.type === 'comment_history') thRenderCommentHistory(data.comments);
     else if (data.type === 'comment') thAppendComment(data);
@@ -1246,7 +1274,13 @@
     else if (data.type === 'join_requested' || data.type === 'join_expired' || data.type === 'join_requests_changed') thUpdateJoinRequestsBadge();
     else if (data.type === 'join_approved') thClearPrivateJoinOverlay();
     else if (data.type === 'join_rejected') thShowPrivateJoinRejected();
-  });
+  }
+  document.addEventListener('thListenTogetherMessage', thHandleListenTogetherMessage);
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      document.removeEventListener('thListenTogetherMessage', thHandleListenTogetherMessage);
+    });
+  }
 
   // The host paused - nothing playing to mute/unmute on the guest's
   // side right now, so the button shouldn't pretend otherwise. Own
@@ -1342,7 +1376,7 @@
   // round-trip needed. Covers the host's own slide in particular, since
   // thHostSocket never relays 'state' at all (only thFollowSocket does,
   // via thApplyRemoteState's own dispatch above).
-  document.addEventListener('songChanged', function (e) {
+  function thHandleSongChanged(e) {
     if (activeIndex === -1) return;
     var slide = slideEls[activeIndex];
     if (!slide) return;
@@ -1403,7 +1437,11 @@
       var headerEl = slide.querySelector('.th-room-slide-header');
       if (headerEl) thRenderUpNextCard(headerEl);
     }
-  });
+  }
+  document.addEventListener('songChanged', thHandleSongChanged);
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () { document.removeEventListener('songChanged', thHandleSongChanged); });
+  }
 
   // base.html's own thHandleRoomClosedWhileFollowing() already toasts
   // and stops the audio/follow session - this is this page's own slide
