@@ -69,45 +69,57 @@
   }
   .th-leaderboard-promo:hover { box-shadow: 0 20px 50px -14px rgba(43, 11, 94, .7); }
 
-  /* Third promo slide - "اسمع معاه" live rooms (moved out of the navbar
-     entirely, this is the one place it's advertised now). Deliberately
-     NOT the same animated-gradient look as the two cards above - a
-     pulsing red "live" glow + waveform when a room is actually live
-     (thRenderLiveRoomPromo, extra_js below, keeps this in sync in real
-     time via the same feed socket /live-rooms/ itself uses), a calmer
-     static one when there's nothing to join right now. */
-  @keyframes thLiveRoomPulse {
-    0%, 100% { box-shadow: 0 16px 40px -14px rgba(229,72,77,.55), 0 0 0 0 rgba(229,72,77,.45); }
-    50% { box-shadow: 0 16px 40px -14px rgba(229,72,77,.7), 0 0 0 10px rgba(229,72,77,0); }
+  /* "اسمع معاه" live rooms - its own section/slider (th-slider-row/
+     th-slider, the same horizontal-scroll mechanic every other home
+     section already uses - reusing it means the existing arrow/drag
+     JS just works, nothing page-specific to wire up), not folded into
+     the two-card promo carousel above: could be up to 10 cards deep,
+     which a single auto-rotating slide has no room for. Deliberately
+     NOT styled like the other .th-card types (posters/avatars on a
+     plain background) - a dark, pulsing-red "live" card is meant to
+     visually read as "happening right now" at a glance while scrolling
+     past it. Kept live via a feed-socket listener (extra_js below, the
+     same LiveRoomsFeedConsumer /live-rooms/ itself uses) - cards are
+     inserted/removed as rooms actually open/close, sorted by tap_score
+     (highest engagement first) same as the /live-rooms/ feed's own
+     ranking.
+     One case not handled: a room's own tap_score climbing while its
+     card is already showing doesn't reorder it live (the score itself
+     doesn't visibly update mid-session either) - both would need a per-
+     room WS subscription this page doesn't otherwise have any reason to
+     open, so it's accepted as slightly stale between real navigations. */
+  @keyframes thLiveRoomCardPulse {
+    0%, 100% { box-shadow: 0 10px 24px -10px rgba(229,72,77,.5), 0 0 0 0 rgba(229,72,77,.4); }
+    50% { box-shadow: 0 10px 24px -10px rgba(229,72,77,.65), 0 0 0 8px rgba(229,72,77,0); }
   }
-  @keyframes thLiveRoomBar {
-    0%, 100% { transform: scaleY(.35); }
-    50% { transform: scaleY(1); }
+  .th-live-room-card {
+    flex-basis: 190px; padding: 16px 14px; text-align: center;
+    background: linear-gradient(160deg, #3a0f14, #1a0709);
+    animation: thLiveRoomCardPulse 2.4s ease-in-out infinite;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
   }
-  .th-live-room-promo {
-    background: linear-gradient(120deg, #3a0f14, #7a1f28, #2a0a0e, #7a1f28);
-    background-size: 300% 300%;
-    animation: thGuessGradientShift 8s ease infinite, thLiveRoomPulse 2.2s ease-in-out infinite;
+  .th-live-room-card.idle {
+    background: var(--card); animation: none; justify-content: center;
   }
-  .th-live-room-promo.idle {
-    background: linear-gradient(120deg, #14171f, #232838, #14171f);
-    animation: thGuessGradientShift 10s ease infinite;
-    box-shadow: 0 16px 40px -14px rgba(0,0,0,.5);
+  .th-live-room-card-avatar, .th-live-room-card-avatar-fallback {
+    width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(255,255,255,.5);
   }
-  .th-live-room-promo .th-guess-promo-icon { position: relative; overflow: hidden; }
-  .th-live-room-promo-bars { display: flex; align-items: center; gap: 3px; height: 18px; }
-  .th-live-room-promo-bars span {
-    display: block; width: 3px; height: 100%; border-radius: 2px; background: #fff;
-    animation: thLiveRoomBar .9s ease-in-out infinite;
+  .th-live-room-card-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.15); color: #fff; font-weight: 900; font-size: 18px;
   }
-  .th-live-room-promo-bars span:nth-child(2) { animation-delay: .15s; }
-  .th-live-room-promo-bars span:nth-child(3) { animation-delay: .3s; }
-  .th-live-room-promo-live-tag {
+  .th-live-room-card-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--muted); font-size: 22px;
+  }
+  .th-live-room-card-live-tag {
     display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 900;
-    background: rgba(255,255,255,.2); border-radius: 999px; padding: 2px 8px; margin-inline-start: 6px;
-    text-transform: uppercase; letter-spacing: .04em; vertical-align: middle;
+    background: rgba(255,255,255,.2); color: #fff; border-radius: 999px; padding: 2px 8px;
+    text-transform: uppercase; letter-spacing: .04em;
   }
-  .th-live-room-promo-live-tag .th-live-room-promo-dot {
+  .th-live-room-card-dot {
     display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff;
     animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite;
   }
@@ -115,6 +127,18 @@
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: .35; transform: scale(.65); }
   }
+  .th-live-room-card-name { color: #fff; font-weight: 900; font-size: 14px; }
+  .th-live-room-card.idle .th-live-room-card-name { color: var(--text); }
+  .th-live-room-card-song {
+    color: rgba(255,255,255,.85); font-size: 11.5px; display: flex; align-items: center; gap: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+  }
+  .th-live-room-card.idle .th-live-room-card-song { color: var(--muted); white-space: normal; }
+  .th-live-room-card-taps {
+    display: flex; align-items: center; gap: 4px; color: #fff; font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,.15); border-radius: 999px; padding: 2px 10px; margin-top: 2px;
+  }
+  .th-live-room-card-taps i { color: #ff8a94; }
 
   /* Two promo cards, one carousel: rotates on its own, and can also be
      dragged/swiped by hand - translateX works in raw screen pixels
@@ -226,27 +250,37 @@
         </div>
         <div class="th-guess-promo-cta">{% translate "شوف ترتيبك" %} <i class="bi bi-arrow-left"></i></div>
       </a>
-      <a id="thLiveRoomPromo" href="{% if live_room %}{% url 'website_app:live-room-detail' live_room.hostUsername %}{% else %}{% url 'website_app:live-rooms' %}{% endif %}"
-         data-host-user-id="{% if live_room %}{{ live_room.hostUserId }}{% endif %}"
-         class="th-guess-promo th-live-room-promo{% if not live_room %} idle{% endif %}">
-        {% if live_room %}
-        <div class="th-guess-promo-icon"><div class="th-live-room-promo-bars"><span></span><span></span><span></span></div></div>
-        <div class="th-guess-promo-text">
-          <h3>{{ live_room.hostUsername }} <span class="th-live-room-promo-live-tag"><span class="th-live-room-promo-dot"></span> {% translate "مباشر" %}</span></h3>
-          <p>{{ live_room.roomName }} - {% translate "دلوقتي بيسمع" %} {{ live_room.songTitle }}</p>
-        </div>
-        <div class="th-guess-promo-cta">{% translate "ادخل اسمع" %} <i class="bi bi-arrow-left"></i></div>
-        {% else %}
-        <div class="th-guess-promo-icon"><i class="bi bi-headphones"></i></div>
-        <div class="th-guess-promo-text">
-          <h3>{% translate "اسمع معاه" %}</h3>
-          <p>{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</p>
-        </div>
-        <div class="th-guess-promo-cta">{% translate "افتح روم" %} <i class="bi bi-arrow-left"></i></div>
-        {% endif %}
-      </a>
     </div>
     <div class="th-promo-dots" id="thPromoDots"></div>
+  </div>
+
+  <div class="th-section">
+    <div class="th-section-head">
+      <h2 class="th-section-title">🔴 {% translate "اسمع معاه دلوقتي" %}</h2>
+      <a href="{% url 'website_app:live-rooms' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+    </div>
+    <div class="th-slider-row">
+      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
+      <div class="th-slider" id="thLiveRoomsSlider">
+        {% for room in live_rooms %}
+        <a href="{% url 'website_app:live-room-detail' room.hostUsername %}" class="th-card th-live-room-card" data-host-user-id="{{ room.hostUserId }}" data-tap-score="{{ room.tapScore }}">
+          {% if room.hostAvatar %}<img src="{{ room.hostAvatar }}" alt="" class="th-live-room-card-avatar">
+          {% else %}<span class="th-live-room-card-avatar-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>{% endif %}
+          <span class="th-live-room-card-live-tag"><span class="th-live-room-card-dot"></span> {% translate "مباشر" %}</span>
+          <div class="th-live-room-card-name">{{ room.hostUsername }}</div>
+          <div class="th-live-room-card-song"><i class="bi bi-soundwave"></i> {{ room.songTitle }}</div>
+          <div class="th-live-room-card-taps"><i class="bi bi-heart-fill"></i> {{ room.tapScore }}</div>
+        </a>
+        {% empty %}
+        <a href="{% url 'website_app:live-rooms' %}" class="th-card th-live-room-card idle">
+          <div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>
+          <div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>
+          <div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>
+        </a>
+        {% endfor %}
+      </div>
+      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
+    </div>
   </div>
 
   {% if trending_ranks %}
@@ -669,49 +703,63 @@
 </script>
 <script>
 (function () {
-  // Keeps #thLiveRoomPromo (the third promo-carousel slide) in sync
-  // with whatever's actually live, without a page reload - same feed
-  // socket live_rooms.html itself uses for the exact same "a public
-  // room just opened/closed" push (LiveRoomsFeedConsumer). Own room
-  // (window.thUserId hosting) is deliberately never shown here, same
-  // reasoning as the /live-rooms/ feed itself excluding it - you can't
-  // meaningfully join yourself.
-  var promo = document.getElementById('thLiveRoomPromo');
-  if (!promo) return;
+  // Keeps the "اسمع معاه" card slider in sync with whatever's actually
+  // live, without a page reload - same feed socket live_rooms.html
+  // itself uses for the exact same "a public room just opened/closed"
+  // push (LiveRoomsFeedConsumer). Own room (window.thUserId hosting) is
+  // deliberately never shown here, same reasoning as the /live-rooms/
+  // feed itself excluding it - you can't meaningfully join yourself.
+  var slider = document.getElementById('thLiveRoomsSlider');
+  if (!slider) return;
 
-  // Whoever the slide is showing right now, if anyone - seeded from what
-  // the server actually rendered (promo.dataset.hostUserId), not just
-  // assumed empty; a 'room_closed' for a room that was already showing
-  // at page load would otherwise never match (null !== that host's id)
-  // and the slide would keep advertising a room that's already over.
-  var currentHostUserId = promo.dataset.hostUserId ? parseInt(promo.dataset.hostUserId, 10) : null;
+  var MAX_CARDS = 10;
 
-  function renderJoin(room) {
-    currentHostUserId = room.hostUserId;
-    promo.dataset.hostUserId = room.hostUserId;
-    promo.href = '/live-rooms/' + room.hostUsername + '/';
-    promo.className = 'th-guess-promo th-live-room-promo';
-    promo.innerHTML =
-      '<div class="th-guess-promo-icon"><div class="th-live-room-promo-bars"><span></span><span></span><span></span></div></div>' +
-      '<div class="th-guess-promo-text">' +
-      '<h3>' + room.hostUsername + ' <span class="th-live-room-promo-live-tag"><span class="th-live-room-promo-dot"></span> {% translate "مباشر" %}</span></h3>' +
-      '<p>' + room.roomName + ' - {% translate "دلوقتي بيسمع" %} ' + (room.song ? room.song.title : '') + '</p>' +
-      '</div>' +
-      '<div class="th-guess-promo-cta">{% translate "ادخل اسمع" %} <i class="bi bi-arrow-left"></i></div>';
+  function buildCard(room) {
+    var a = document.createElement('a');
+    a.href = '/live-rooms/' + room.hostUsername + '/';
+    a.className = 'th-card th-live-room-card';
+    a.dataset.hostUserId = room.hostUserId;
+    a.dataset.tapScore = room.tapScore || 0;
+    var avatar = room.hostAvatar
+      ? '<img src="' + room.hostAvatar + '" alt="" class="th-live-room-card-avatar">'
+      : '<span class="th-live-room-card-avatar-fallback">' + room.hostUsername.slice(0, 1).toUpperCase() + '</span>';
+    a.innerHTML =
+      avatar +
+      '<span class="th-live-room-card-live-tag"><span class="th-live-room-card-dot"></span> {% translate "مباشر" %}</span>' +
+      '<div class="th-live-room-card-name">' + room.hostUsername + '</div>' +
+      '<div class="th-live-room-card-song"><i class="bi bi-soundwave"></i> ' + (room.song ? room.song.title : '') + '</div>' +
+      '<div class="th-live-room-card-taps"><i class="bi bi-heart-fill"></i> ' + (room.tapScore || 0) + '</div>';
+    return a;
   }
 
-  function renderIdle() {
-    currentHostUserId = null;
-    delete promo.dataset.hostUserId;
-    promo.href = '{% url "website_app:live-rooms" %}';
-    promo.className = 'th-guess-promo th-live-room-promo idle';
-    promo.innerHTML =
-      '<div class="th-guess-promo-icon"><i class="bi bi-headphones"></i></div>' +
-      '<div class="th-guess-promo-text">' +
-      '<h3>{% translate "اسمع معاه" %}</h3>' +
-      '<p>{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</p>' +
-      '</div>' +
-      '<div class="th-guess-promo-cta">{% translate "افتح روم" %} <i class="bi bi-arrow-left"></i></div>';
+  function buildIdleCard() {
+    var a = document.createElement('a');
+    a.href = '{% url "website_app:live-rooms" %}';
+    a.className = 'th-card th-live-room-card idle';
+    a.innerHTML =
+      '<div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>' +
+      '<div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>' +
+      '<div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>';
+    return a;
+  }
+
+  function refresh() {
+    var cards = slider.querySelectorAll('.th-live-room-card:not(.idle)');
+    if (!cards.length) {
+      slider.innerHTML = '';
+      slider.appendChild(buildIdleCard());
+    } else {
+      var idle = slider.querySelector('.th-live-room-card.idle');
+      if (idle) idle.remove();
+      // Highest tap_score first, same ranking /live-rooms/ itself uses.
+      Array.prototype.slice.call(cards)
+        .sort(function (a, b) { return (parseInt(b.dataset.tapScore, 10) || 0) - (parseInt(a.dataset.tapScore, 10) || 0); })
+        .forEach(function (card) { slider.appendChild(card); });
+      while (slider.children.length > MAX_CARDS) {
+        slider.removeChild(slider.lastElementChild);
+      }
+    }
+    if (typeof initSliderArrows === 'function') initSliderArrows();
   }
 
   var feedSocket = null;
@@ -727,20 +775,15 @@
 
     if (data.type === 'room_opened') {
       var room = data.room;
-      // A guest with no room of their own currently showing, or your
-      // own room just started (excluded, same as the real feed) - stay
-      // put either way. Otherwise, this is the first (or a fresher)
-      // room to show, so it wins the slide.
       if (!room || room.hostUserId === window.thUserId) return;
-      if (currentHostUserId !== null) return;
-      renderJoin(room);
+      if (slider.querySelector('.th-live-room-card[data-host-user-id="' + room.hostUserId + '"]')) return;
+      slider.appendChild(buildCard(room));
+      refresh();
     } else if (data.type === 'room_closed') {
-      if (data.host_user_id !== currentHostUserId) return;
-      // Best-effort - a real reload would ask the server for whichever
-      // OTHER public room might still be live and show that instead;
-      // going back to "start your own" is simpler and still accurate
-      // most of the time (rooms are rarely more than one deep).
-      renderIdle();
+      var existing = slider.querySelector('.th-live-room-card[data-host-user-id="' + data.host_user_id + '"]');
+      if (!existing) return;
+      existing.remove();
+      refresh();
     }
   });
 
