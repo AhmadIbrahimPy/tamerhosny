@@ -4519,12 +4519,26 @@
     // real close frame, so nothing here noticed and nothing reconnected
     // on its own. Coming back to a room/follow session gone quiet -
     // needing a manual refresh just to "hear" again - traced back to
-    // exactly this. Re-checked on the three signals a tab coming back to
-    // life actually fires: the tab becoming visible again, the window
-    // regaining focus (covers some cases visibilitychange alone misses,
-    // e.g. switching between two visible windows on desktop), and the
-    // browser reporting the network itself came back.
+    // exactly this.
+    //
+    // Only re-checked on visibilitychange/'online' now, not window
+    // 'focus' too (used to also listen for that, on top of these) - on
+    // some mobile/PWA browsers, the on-screen keyboard opening/closing
+    // (e.g. tapping a room's own comment box to type) fires a spurious
+    // focus event with nothing actually backgrounded, which every
+    // reconnect below is a real (if fully guarded, only-if-actually-
+    // closed) round trip that re-syncs comment history/viewer counts/
+    // etc. fresh - visible as the whole room "refreshing" on every
+    // single comment typed, even though nothing had really gone stale.
+    // Also throttled outright (min 5s between actual runs) as a second
+    // line of defense regardless of what ends up triggering this.
+    var thLastReconnectAttempt = 0;
+
     function thReconnectLiveSockets() {
+      var now = Date.now();
+      if (now - thLastReconnectAttempt < 5000) return;
+      thLastReconnectAttempt = now;
+
       if (window.isAuthenticated) thConnectListenTogetherHost();
 
       // Only if we were actually following someone - re-opening this
@@ -4552,7 +4566,6 @@
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) thReconnectLiveSockets();
     });
-    window.addEventListener('focus', thReconnectLiveSockets);
     window.addEventListener('online', thReconnectLiveSockets);
 
     // retry (optional): re-run when login/register succeeds, so the
