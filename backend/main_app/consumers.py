@@ -186,29 +186,32 @@ class SongListenerConsumer(WebsocketConsumer):
             # next manual page load. See LiveRoomsFeedConsumer and
             # live_rooms.html's own 'room_opened' handler (not to be
             # confused with the host-only event of the same name just
-            # above - different group, different payload shape).
-            if room.is_public:
-                from backend.main_app.shared_utils.listen_together import (
-                    get_current_song_for_user,
-                    serialize_song_for_listen_together,
-                )
+            # above - different group, different payload shape). Private
+            # rooms are pushed too, same as website_app.views.live_rooms'
+            # own query no longer filtering them out - live_rooms.html's
+            # blurred "طلب انضمام" overlay is exactly what handles one of
+            # these once it lands (thAddLiveRoomSlide -> thBuildSlide).
+            from backend.main_app.shared_utils.listen_together import (
+                get_current_song_for_user,
+                serialize_song_for_listen_together,
+            )
 
-                song = get_current_song_for_user(user)
-                if song is not None:
-                    async_to_sync(get_channel_layer().group_send)(
-                        LiveRoomsFeedConsumer.GROUP_NAME, {
-                            'type': 'feed.room_opened',
-                            'room': {
-                                'hostUserId': user.id,
-                                'hostUsername': user.username,
-                                'hostAvatar': user.profile_image.url if user.profile_image else '',
-                                'roomName': room.display_name,
-                                'isPublic': room.is_public,
-                                'tapScore': room.tap_score,
-                                'song': serialize_song_for_listen_together(song),
-                            },
+            song = get_current_song_for_user(user)
+            if song is not None:
+                async_to_sync(get_channel_layer().group_send)(
+                    LiveRoomsFeedConsumer.GROUP_NAME, {
+                        'type': 'feed.room_opened',
+                        'room': {
+                            'hostUserId': user.id,
+                            'hostUsername': user.username,
+                            'hostAvatar': user.profile_image.url if user.profile_image else '',
+                            'roomName': room.display_name,
+                            'isPublic': room.is_public,
+                            'tapScore': room.tap_score,
+                            'song': serialize_song_for_listen_together(song),
                         },
-                    )
+                    },
+                )
 
     @staticmethod
     def _maybe_close_room(user_id):

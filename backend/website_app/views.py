@@ -2627,8 +2627,16 @@ def live_rooms(request, username=None):
     # below would still correctly filter every one of those out, but
     # only after fetching and checking each - this keeps the query
     # itself cheap as that table grows.
+    #
+    # NOT filtered to is_public=True (used to be) - a private room needs
+    # to actually reach the feed for live_rooms.html's own blurred "طلب
+    # انضمام" overlay (thBuildSlide) to ever have anything to show; that
+    # overlay already exists specifically to handle a private room
+    # showing up here, so excluding them at the query level made that
+    # whole feature unreachable - every private room just looked like it
+    # didn't exist at all instead of showing blurred-but-requestable.
     rooms_qs = ListenTogetherRoom.objects.filter(
-        is_public=True, is_live=True,
+        is_live=True,
     ).select_related('host').order_by('-tap_score', '-created_at')
 
     if request.user.is_authenticated and not viewing_own_room:

@@ -1705,7 +1705,13 @@
 
     if (!isOwnRoom && !room.isPublic) {
       var privateOverlay = document.createElement('div');
-      privateOverlay.className = 'th-room-private-overlay';
+      // .open from the start, not just once thStartPrivateJoinFlow runs
+      // (thActivateSlide, authenticated visitors only) - an anonymous
+      // visitor never reaches that call (thActivateSlide returns before
+      // it for !window.isAuthenticated), and a private room's contents
+      // should stay blurred for them too, not just for someone who's
+      // actually logged in.
+      privateOverlay.className = 'th-room-private-overlay open';
       privateOverlay.innerHTML =
         '<i class="bi bi-lock-fill"></i>' +
         '<div class="th-room-private-name">' + room.roomName + '</div>' +
