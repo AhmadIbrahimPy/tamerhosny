@@ -92,8 +92,14 @@
     0%, 100% { box-shadow: 0 10px 24px -10px rgba(229,72,77,.5), 0 0 0 0 rgba(229,72,77,.4); }
     50% { box-shadow: 0 10px 24px -10px rgba(229,72,77,.65), 0 0 0 8px rgba(229,72,77,0); }
   }
-  .th-live-room-card {
-    flex-basis: 190px; padding: 16px 14px; text-align: center;
+  /* .th-slider > .th-card (base.html) sets flex:0 0 170px at the same
+     ".th-slider > .class" specificity - a bare ".th-live-room-card"
+     selector here loses that tie on the flex-basis/grow/shrink
+     longhands regardless of source order, which is what stretched the
+     empty-state card (the only child, so flex-grow:0 losing to
+     whatever else applied here filled 100% of the slider's width). */
+  .th-slider > .th-live-room-card {
+    flex: 0 0 190px; padding: 16px 14px; text-align: center;
     background: linear-gradient(160deg, #3a0f14, #1a0709);
     animation: thLiveRoomCardPulse 2.4s ease-in-out infinite;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -263,7 +269,7 @@
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
       <div class="th-slider" id="thLiveRoomsSlider">
         {% for room in live_rooms %}
-        <a href="{% url 'website_app:live-room-detail' room.hostUsername %}" class="th-card th-live-room-card" data-host-user-id="{{ room.hostUserId }}" data-tap-score="{{ room.tapScore }}">
+        <a href="{% url 'website_app:live-room-detail' room.hostUsername %}" class="th-card th-live-room-card plain" data-host-user-id="{{ room.hostUserId }}" data-tap-score="{{ room.tapScore }}">
           {% if room.hostAvatar %}<img src="{{ room.hostAvatar }}" alt="" class="th-live-room-card-avatar">
           {% else %}<span class="th-live-room-card-avatar-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>{% endif %}
           <span class="th-live-room-card-live-tag"><span class="th-live-room-card-dot"></span> {% translate "مباشر" %}</span>
@@ -272,7 +278,7 @@
           <div class="th-live-room-card-taps"><i class="bi bi-heart-fill"></i> {{ room.tapScore }}</div>
         </a>
         {% empty %}
-        <a href="{% url 'website_app:live-rooms' %}" class="th-card th-live-room-card idle">
+        <a href="{% url 'website_app:live-rooms' %}" class="th-card th-live-room-card plain idle">
           <div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>
           <div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>
           <div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>
@@ -717,7 +723,7 @@
   function buildCard(room) {
     var a = document.createElement('a');
     a.href = '/live-rooms/' + room.hostUsername + '/';
-    a.className = 'th-card th-live-room-card';
+    a.className = 'th-card th-live-room-card plain';
     a.dataset.hostUserId = room.hostUserId;
     a.dataset.tapScore = room.tapScore || 0;
     var avatar = room.hostAvatar
@@ -735,7 +741,7 @@
   function buildIdleCard() {
     var a = document.createElement('a');
     a.href = '{% url "website_app:live-rooms" %}';
-    a.className = 'th-card th-live-room-card idle';
+    a.className = 'th-card th-live-room-card plain idle';
     a.innerHTML =
       '<div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>' +
       '<div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>' +
