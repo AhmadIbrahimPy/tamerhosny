@@ -3455,6 +3455,36 @@
       thExitHostingMode();
     }
 
+    // The actual WebSocket + message handling behind following someone -
+    // shared by startListeningWith (a fresh follow) and
+    // thReconnectLiveSockets below (resuming one that dropped, e.g. a
+    // backgrounded tab). Deliberately NOT re-sending 'request_join' on
+    // reconnect - the server already re-decides is_approved_follower
+    // fresh on every connect() from the ACCEPTED row that's still there,
+    // and re-requesting would have reset it back to PENDING (see
+    // ListenTogetherConsumer._request_join), showing an already-approved
+    // follower a bogus "waiting for approval" state.
+    function thOpenFollowSocket(hostUserId) {
+      var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      thFollowSocket = new WebSocket(protocol + '//' + window.location.host + '/ws/listen-together/' + hostUserId + '/');
+      thFollowSocket.addEventListener('close', function () { thFollowSocket = null; });
+      thFollowSocket.addEventListener('message', function (evt) {
+        var data;
+        try { data = JSON.parse(evt.data); } catch (e) { return; }
+        if (data.type === 'state') thApplyRemoteState(data);
+        else if (data.type === 'blocked') thHandleBlocked();
+        else if (data.type === 'room_closed') {
+          thHandleRoomClosedWhileFollowing();
+          // Toasting + stopping audio here doesn't touch the slide
+          // itself on live_rooms.html - without this, the room you
+          // just left visually kept looking exactly as live as any
+          // other one, even though you'd already been disconnected.
+          thDispatchListenTogetherMessage(data);
+        }
+        else thDispatchListenTogetherMessage(data);
+      });
+    }
+
     window.startListeningWith = function (btn) {
       var hostUserId = parseInt(btn.dataset.hostUserId, 10);
       var hostUsername = btn.dataset.hostUsername;
@@ -3480,24 +3510,7 @@
         playAudio(song.url, null, song.title, '', song.image ? [song.image] : null, song.link, song.artist, song.album, false, song.songId, song.albumLink, false);
       }
 
-      var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      thFollowSocket = new WebSocket(protocol + '//' + window.location.host + '/ws/listen-together/' + hostUserId + '/');
-      thFollowSocket.addEventListener('close', function () { thFollowSocket = null; });
-      thFollowSocket.addEventListener('message', function (evt) {
-        var data;
-        try { data = JSON.parse(evt.data); } catch (e) { return; }
-        if (data.type === 'state') thApplyRemoteState(data);
-        else if (data.type === 'blocked') thHandleBlocked();
-        else if (data.type === 'room_closed') {
-          thHandleRoomClosedWhileFollowing();
-          // Toasting + stopping audio here doesn't touch the slide
-          // itself on live_rooms.html - without this, the room you
-          // just left visually kept looking exactly as live as any
-          // other one, even though you'd already been disconnected.
-          thDispatchListenTogetherMessage(data);
-        }
-        else thDispatchListenTogetherMessage(data);
-      });
+      thOpenFollowSocket(hostUserId);
 
       btn.classList.add('active');
       btn.innerHTML = '<i class="bi bi-headphones"></i> {% translate "إيقاف الاستماع المشترك" %}';
@@ -4477,6 +4490,48 @@
     // unconditionally for every logged-in visitor, not just while
     // someone's actually following.
     if (window.isAuthenticated) thConnectListenTogetherHost();
+
+    // A backgrounded/inactive browser tab commonly has its WebSockets
+    // silently dropped (mobile Safari in particular does this fairly
+    // aggressively to save battery/memory) - neither side ever sends a
+    // real close frame, so nothing here noticed and nothing reconnected
+    // on its own. Coming back to a room/follow session gone quiet -
+    // needing a manual refresh just to "hear" again - traced back to
+    // exactly this. Re-checked on the three signals a tab coming back to
+    // life actually fires: the tab becoming visible again, the window
+    // regaining focus (covers some cases visibilitychange alone misses,
+    // e.g. switching between two visible windows on desktop), and the
+    // browser reporting the network itself came back.
+    function thReconnectLiveSockets() {
+      if (window.isAuthenticated) thConnectListenTogetherHost();
+
+      // Only if we were actually following someone - re-opening this
+      // blind (with no host in mind) would make no sense, and
+      // thOpenFollowSocket needs a real hostUserId to connect to.
+      if (thListeningWithHostId && (!thFollowSocket || thFollowSocket.readyState === WebSocket.CLOSED)) {
+        thOpenFollowSocket(thListeningWithHostId);
+      }
+
+      // Only if a song is actually meant to be playing right now -
+      // reconnecting this for paused/idle audio would just create a
+      // phantom "listening" presence for nothing actually being heard.
+      if (currentSongId !== null && globalAudio && !globalAudio.paused &&
+          (!globalListenerSocket || globalListenerSocket.readyState === WebSocket.CLOSED)) {
+        connectGlobalListenerSocket(currentSongId);
+      }
+
+      // live_rooms.html's own feedSocket (or any other page-specific
+      // live connection a future page adds) - base.html has no idea
+      // what that page's own reconnect looks like, this is just the
+      // signal that it's time to check.
+      document.dispatchEvent(new CustomEvent('thReconnectLiveSockets'));
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) thReconnectLiveSockets();
+    });
+    window.addEventListener('focus', thReconnectLiveSockets);
+    window.addEventListener('online', thReconnectLiveSockets);
 
     // retry (optional): re-run when login/register succeeds, so the
     // action the visitor actually asked for (play this song, like this

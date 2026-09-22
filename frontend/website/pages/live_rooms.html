@@ -1090,19 +1090,19 @@
   // Live push for "a new public room just opened"/"a room just closed" -
   // so nobody has to keep hitting "تحديث"/refresh to find either out,
   // whether they're sitting on the empty state or already mid-feed on
-  // someone else's room.
+  // someone else's room. Wrapped in a function (not just run inline) so
+  // thReconnectLiveSockets below can re-open it after a background tab
+  // got its sockets dropped - see that handler's own comment for why
+  // that happens.
   var feedSocket = null;
-  try {
-    var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
-  } catch (e) { feedSocket = null; }
+  function thConnectFeedSocket() {
+    if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) return;
+    try {
+      var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
+    } catch (e) { feedSocket = null; return; }
 
-  if (feedSocket) {
-    if (window.thOnTeardown) {
-      window.thOnTeardown(function () {
-        if (feedSocket) { var s = feedSocket; feedSocket = null; s.close(); }
-      });
-    }
+    feedSocket.addEventListener('close', function () { feedSocket = null; });
     feedSocket.addEventListener('message', function (evt) {
       var data;
       try { data = JSON.parse(evt.data); } catch (e) { return; }
@@ -1151,6 +1151,23 @@
       }
     });
   }
+
+  thConnectFeedSocket();
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      if (feedSocket) { var s = feedSocket; feedSocket = null; s.close(); }
+    });
+  }
+
+  // A background/inactive tab commonly has its WebSockets dropped by the
+  // browser (or the connection quietly dies without either side ever
+  // sending a close frame) - reconnecting only ever happened by luck,
+  // whenever something else on the page (a click, a boosted nav)
+  // happened to touch the socket. Explicit now: base.html's own
+  // thReconnectLiveSockets already handles thHostSocket/thFollowSocket/
+  // globalListenerSocket the same way and fires this same custom event
+  // for page-specific sockets like this one to hook into.
+  document.addEventListener('thReconnectLiveSockets', thConnectFeedSocket);
 
   if (!rooms.length) {
     // Both elements already default (in CSS) to this exact state - only
