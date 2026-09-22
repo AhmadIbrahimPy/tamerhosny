@@ -1617,9 +1617,7 @@
   }
 
   function thScheduleRoomAd(slot) {
-    // 12-20s between ads, ~6s actually visible - a guess at "often
-    // enough to be worth showing, not so often it feels like the room
-    // itself is an ad break."
+    // 12-20s between ads, ~12s actually visible.
     var delay = 12000 + Math.random() * 8000;
     var id = setTimeout(function () { thShowRoomAd(slot); }, delay);
     thRoomAdTimers.push(id);
@@ -1662,7 +1660,7 @@
         thScheduleRoomAd(slot);
       }, 450);
       thRoomAdTimers.push(clearId);
-    }, 6000);
+    }, 12000);
     thRoomAdTimers.push(hideId);
   }
 
