@@ -189,6 +189,11 @@ class ListenTogetherJoinRequest(models.Model):
         PENDING = 'pending', _('قيد الانتظار')
         ACCEPTED = 'accepted', _('مقبول')
         REJECTED = 'rejected', _('مرفوض')
+        # A request the requester's own 60s countdown ran out on
+        # (ListenTogetherConsumer._cancel_join) before the host ever
+        # responded - distinct from REJECTED (an explicit "لا" from the
+        # host) so the two can read differently wherever this shows up.
+        EXPIRED = 'expired', _('انتهت المهلة')
 
     room = models.ForeignKey(
         ListenTogetherRoom,

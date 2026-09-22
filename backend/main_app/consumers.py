@@ -632,6 +632,8 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 self._end_room()
         elif action == 'request_join':
             self._request_join()
+        elif action == 'cancel_join':
+            self._cancel_join()
 
         # Comments and taps are open to any actual participant - the
         # host or an already-approved follower - not gated to one role
@@ -912,6 +914,32 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 f'{self.user.username} عايز ينضم لجروبك',
             )
 
+    def _cancel_join(self):
+        """The requester's own 60s countdown (live_rooms.html) ran out
+        with no response - tells the host to drop it from their pending
+        list in real time, instead of it just sitting there until they
+        happen to notice it's stale. Only ever touches a still-PENDING
+        row of this exact requester's own - a request the host already
+        acted on (or one for a room that went public/private again in
+        the meantime) is left alone."""
+        from backend.main_app.models import ListenTogetherJoinRequest, ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+
+        if room is None:
+            return
+
+        updated = ListenTogetherJoinRequest.objects.filter(
+            room=room, requester=self.user,
+            status=ListenTogetherJoinRequest.Status.PENDING,
+        ).update(status=ListenTogetherJoinRequest.Status.EXPIRED)
+
+        if updated:
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'join.expired',
+                'user_id': self.user.id,
+            })
+
     def _respond_join(self, requester_user_id, approve):
         from backend.main_app.models import ListenTogetherJoinRequest, ListenTogetherRoom, UserAccount
 
@@ -1020,6 +1048,19 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'join_requested',
             'username': event.get('username'),
+            'user_id': event.get('user_id'),
+        }))
+
+    def join_expired(self, event):
+        # Host-only, same as join_requested above - the requester who
+        # sent this already knows their own request just timed out
+        # (that's what drove the client-side countdown that sent it),
+        # they don't need it echoed back to themselves.
+        if not self.is_host:
+            return
+
+        self.send(text_data=json.dumps({
+            'type': 'join_expired',
             'user_id': event.get('user_id'),
         }))
 

@@ -3017,7 +3017,14 @@
     var thFollowSocket = null;
     var thListeningWithHostId = null;
     var thListeningWithHostUsername = null;
-    var thFollowers = []; // people currently listening along with ME
+    // On window, not a plain var - live_rooms.html's own thBuildSlide/
+    // thBumpViewerCount read this directly as window.thFollowers (a
+    // plain var here was never actually reachable from that other
+    // script's scope, so every one of those reads silently saw
+    // `undefined` and fell back to showing 0 - this exact bug is why
+    // the initial slide render/fallback paths never showed a real
+    // count, only the live delta events ever did).
+    window.thFollowers = []; // people currently listening along with ME
     var thLastStatePingAt = 0;
 
     // Toggled true right when a follower actually starts mirroring
@@ -3070,6 +3077,7 @@
         if (data.type === 'follower_joined') thHandleFollowerJoined(data);
         else if (data.type === 'follower_left') thHandleFollowerLeft(data);
         else if (data.type === 'join_requested') thHandleJoinRequested(data);
+        else if (data.type === 'join_expired') thHandleJoinExpired(data);
         else if (data.type === 'room_renamed') {
           thHandleRoomRenamed(data);
           // Same gap as 'tapped'/'comment' above - own-room slides only
@@ -3115,7 +3123,7 @@
     // exact connection opened - a different, wrong number for every
     // person looking at the same room.
     function thApplyViewersSnapshot(viewers) {
-      thFollowers = (viewers || []).map(function (v) {
+      window.thFollowers = (viewers || []).map(function (v) {
         return { userId: v.user_id, username: v.username };
       });
       thUpdateHostingJoinCount();
@@ -3123,8 +3131,8 @@
     }
 
     function thHandleFollowerJoined(data) {
-      if (!thFollowers.some(function (f) { return f.userId === data.user_id; })) {
-        thFollowers.push({ userId: data.user_id, username: data.username });
+      if (!window.thFollowers.some(function (f) { return f.userId === data.user_id; })) {
+        window.thFollowers.push({ userId: data.user_id, username: data.username });
       }
       thUpdateHostingJoinCount();
       // Same reasoning as the 'tapped' fix above - thHostSocket is the
@@ -3136,7 +3144,7 @@
     }
 
     function thHandleFollowerLeft(data) {
-      thFollowers = thFollowers.filter(function (f) { return f.userId !== data.user_id; });
+      window.thFollowers = window.thFollowers.filter(function (f) { return f.userId !== data.user_id; });
       thUpdateHostingJoinCount();
       thDispatchListenTogetherMessage(data);
     }
@@ -3149,7 +3157,7 @@
       if (thHostSocket && thHostSocket.readyState === WebSocket.OPEN) {
         thHostSocket.send(JSON.stringify({ action: 'block', user_id: userId }));
       }
-      thFollowers = thFollowers.filter(function (f) { return f.userId !== userId; });
+      window.thFollowers = window.thFollowers.filter(function (f) { return f.userId !== userId; });
       thUpdateHostingJoinCount();
     };
 
@@ -3157,36 +3165,56 @@
     // HOST ROLE - private-room join requests
     // ---------------------------------------------------------
 
-    var thJoinRequests = []; // people asking to join a private room of mine
+    // On window (same reasoning as window.thFollowers above) -
+    // live_rooms.html's own "طلبات" badge (thBuildSlide) reads this
+    // directly to show a live count next to "مباشر".
+    window.thJoinRequests = []; // people asking to join a private room of mine
 
     function thHandleJoinRequested(data) {
-      if (!thJoinRequests.some(function (r) { return r.userId === data.user_id; })) {
-        thJoinRequests.push({ userId: data.user_id, username: data.username });
+      if (!window.thJoinRequests.some(function (r) { return r.userId === data.user_id; })) {
+        window.thJoinRequests.push({ userId: data.user_id, username: data.username });
       }
       if (window.showToast) {
         showToast(data.username + ' {% translate "عايز ينضم لجروبك" %}', 'info');
       }
       thRenderJoinRequestsPanel();
+      // live_rooms.html's own on-slide join-requests badge/list - same
+      // gap as follower_joined/tapped/comment above (thHostSocket is the
+      // only connection ever open while looking at your own room's
+      // slide).
+      thDispatchListenTogetherMessage(data);
+    }
+
+    // The requester's own 60s countdown (live_rooms.html) ran out before
+    // this host ever responded - ListenTogetherConsumer._cancel_join
+    // sends this so the request disappears from the pending list here
+    // (and on the room slide) instead of sitting there stale, looking
+    // like it's still awaiting a response that would now do nothing.
+    function thHandleJoinExpired(data) {
+      window.thJoinRequests = window.thJoinRequests.filter(function (r) { return r.userId !== data.user_id; });
+      thRenderJoinRequestsPanel();
+      thDispatchListenTogetherMessage(data);
     }
 
     window.thRespondJoin = function (userId, approve) {
       if (thHostSocket && thHostSocket.readyState === WebSocket.OPEN) {
         thHostSocket.send(JSON.stringify({ action: 'respond_join', user_id: userId, approve: approve }));
       }
-      thJoinRequests = thJoinRequests.filter(function (r) { return r.userId !== userId; });
+      window.thJoinRequests = window.thJoinRequests.filter(function (r) { return r.userId !== userId; });
       thRenderJoinRequestsPanel();
+      thDispatchListenTogetherMessage({ type: 'join_requests_changed' });
     };
 
     function thRenderJoinRequestsPanel() {
       var panel = document.getElementById('thListenTogetherJoinRequests');
       if (!panel) return;
-      if (!thJoinRequests.length) {
+      if (!window.thJoinRequests.length) {
         panel.style.display = 'none';
         panel.innerHTML = '';
         return;
       }
       panel.style.display = 'flex';
-      panel.innerHTML = thJoinRequests.map(function (r) {
+      panel.innerHTML = window.thJoinRequests.map(function (r) {
         return '<span class="th-lt-follower"><i class="bi bi-person-plus"></i> ' + r.username +
           '<button type="button" title="{% translate "قبول" %}" onclick="window.thRespondJoin(' + r.userId + ', true)"><i class="bi bi-check-lg"></i></button>' +
           '<button type="button" title="{% translate "رفض" %}" onclick="window.thRespondJoin(' + r.userId + ', false)"><i class="bi bi-x-lg"></i></button></span>';
@@ -3302,7 +3330,7 @@
       // that matters.
       row.innerHTML =
         '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
-        '<span><i class="bi bi-headphones"></i> ' + thFollowers.length + '</span>' +
+        '<span><i class="bi bi-headphones"></i> ' + window.thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
         '<button type="button" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true; window.thBoostedNavigate(\'' + browseHref + '\');">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></button>';
     }
@@ -3524,8 +3552,13 @@
         if (data.type === 'join_pending') {
           btn.disabled = true;
           btn.innerHTML = '<i class="bi bi-hourglass-split"></i> {% translate "قيد الانتظار" %}';
+          // live_rooms.html's own blur+countdown overlay (thShowJoinPendingOverlay) -
+          // this is the one signal that a request was actually filed
+          // server-side, not just clicked.
+          thDispatchListenTogetherMessage(data);
         } else if (data.type === 'join_approved') {
           thHandleJoinApproved(btn, hostUsername, roomName);
+          thDispatchListenTogetherMessage(data);
         } else if (data.type === 'join_rejected') {
           if (window.showToast) showToast('{% translate "تم رفض طلب الانضمام" %}', 'error');
           if (thFollowSocket) { var s = thFollowSocket; thFollowSocket = null; s.close(); }
@@ -3535,6 +3568,7 @@
           thRemoveFollowingStatsRow();
           btn.disabled = false;
           btn.innerHTML = '<i class="bi bi-lock-fill"></i> {% translate "اطلب الانضمام" %}';
+          thDispatchListenTogetherMessage(data);
         } else if (data.type === 'state') {
           thApplyRemoteState(data);
         } else if (data.type === 'blocked') {

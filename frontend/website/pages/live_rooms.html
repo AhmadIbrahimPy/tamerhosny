@@ -131,6 +131,15 @@
     background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
     flex-shrink: 0;
   }
+  /* Own room, private only - pending join requests, right next to
+     "مباشر" (thShowJoinRequests/thUpdateJoinRequestsBadge below). Not
+     shown at all on a public room - there's nothing to approve, joining
+     is instant. */
+  .th-room-requests-badge {
+    display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+    background: rgba(138,92,255,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+    flex-shrink: 0;
+  }
 
   /* Host ended the room while you were following it - see
      thHandleRoomClosedOnSlide. Dims the whole slide instead of leaving
@@ -155,6 +164,32 @@
   .th-room-ended-panel button {
     display: flex; align-items: center; gap: 6px; border: none; border-radius: 999px;
     padding: 10px 22px; background: var(--accent); color: #0b0c12; font-weight: 800; cursor: pointer;
+  }
+
+  /* Private room, not yours - covers the whole slide (header, now-
+     playing, comments, all of it) so nothing about who's in there or
+     what's playing leaks through before you're actually approved.
+     Built once per slide (thBuildSlide) but only ever shown
+     (.open) once thActivateSlide's thStartPrivateJoinFlow actually
+     fires the join request for this exact slide - scrolled-past private
+     slides you haven't reached yet stay plain. */
+  .th-room-private-overlay {
+    position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 0 32px;
+    background: rgba(0,0,0,.45);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    backdrop-filter: blur(24px) saturate(140%);
+  }
+  .th-room-private-overlay.open { display: flex; }
+  .th-room-private-overlay i.bi-lock-fill { font-size: 32px; opacity: .8; }
+  .th-room-private-name { font-size: 20px; font-weight: 900; }
+  .th-room-private-status { margin: 0; font-size: 13px; font-weight: 700; opacity: .85; }
+  .th-room-private-countdown { font-size: 40px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .th-room-private-expired p { margin: 0 0 14px; font-size: 13px; font-weight: 700; opacity: .9; max-width: 260px; }
+  .th-room-private-retry-btn {
+    display: flex; align-items: center; gap: 6px; border: none; border-radius: 999px;
+    padding: 10px 22px; background: var(--accent); color: #0b0c12; font-weight: 800; cursor: pointer;
+    margin: 0 auto;
   }
 
   /* The browser blocked autoplay (no real tap/click happened yet on this
@@ -552,6 +587,16 @@
   <div class="th-room-viewers-panel">
     <div class="th-room-viewers-header">
       <span>{% translate "الناس في الروم" %}</span>
+      <button type="button" class="th-room-viewers-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="th-room-viewers-list"></div>
+  </div>
+</div>
+<div id="thRoomJoinRequestsModal" class="th-room-viewers-modal" style="display:none;">
+  <div class="th-room-viewers-backdrop"></div>
+  <div class="th-room-viewers-panel">
+    <div class="th-room-viewers-header">
+      <span>{% translate "طلبات الانضمام" %}</span>
       <button type="button" class="th-room-viewers-close"><i class="bi bi-x-lg"></i></button>
     </div>
     <div class="th-room-viewers-list"></div>
@@ -1115,6 +1160,9 @@
     else if (data.type === 'state') thUpdateNowPlayingFromState(data);
     else if (data.type === 'room_renamed') thUpdateRoomNameFromRenamed(data);
     else if (data.type === 'playback') thUpdateGuestMuteAvailability(data.playing);
+    else if (data.type === 'join_requested' || data.type === 'join_expired' || data.type === 'join_requests_changed') thUpdateJoinRequestsBadge();
+    else if (data.type === 'join_approved') thClearPrivateJoinOverlay();
+    else if (data.type === 'join_rejected') thShowPrivateJoinRejected();
   });
 
   // The host paused - nothing playing to mute/unmute on the guest's
@@ -1391,6 +1439,10 @@
       (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
+      (isOwnRoom && !room.isPublic
+        ? '<span class="th-room-requests-badge"><i class="bi bi-person-plus-fill"></i> {% translate "طلبات" %} <span class="th-room-requests-count-num">' +
+          (window.thJoinRequests ? window.thJoinRequests.length : 0) + '</span></span>'
+        : '') +
       '<span class="th-room-tap-badge"><i class="bi bi-heart-fill"></i> <span class="th-room-tap-count-num">' + room.tapScore + '</span></span>' +
       '<span class="th-room-viewer-badge"><i class="bi bi-headphones"></i> <span class="th-room-viewer-count-num">' +
       (isOwnRoom && window.thFollowers ? window.thFollowers.length : 0) + '</span></span>';
@@ -1409,6 +1461,12 @@
       e.stopPropagation();
       thShowRoomViewers(slide, room, isOwnRoom);
     });
+    if (isOwnRoom && !room.isPublic) {
+      top.querySelector('.th-room-requests-badge').addEventListener('click', function (e) {
+        e.stopPropagation();
+        thShowJoinRequests();
+      });
+    }
     header.appendChild(top);
 
     // "دلوقتي بيسمع" glass card - a frosted-glass panel (backdrop-
@@ -1622,6 +1680,25 @@
     comments.appendChild(form);
     slide.appendChild(comments);
 
+    if (!isOwnRoom && !room.isPublic) {
+      var privateOverlay = document.createElement('div');
+      privateOverlay.className = 'th-room-private-overlay';
+      privateOverlay.innerHTML =
+        '<i class="bi bi-lock-fill"></i>' +
+        '<div class="th-room-private-name">' + room.roomName + '</div>' +
+        '<p class="th-room-private-status">{% translate "طلب انضمام" %}</p>' +
+        '<div class="th-room-private-countdown">60</div>' +
+        '<div class="th-room-private-expired" style="display:none;">' +
+        '<p>{% translate "محدش رد على طلبك - اطلب تاني ولا اسكرول لروم تانية" %}</p>' +
+        '<button type="button" class="th-room-private-retry-btn"><i class="bi bi-arrow-repeat"></i> {% translate "اطلب تاني" %}</button>' +
+        '</div>';
+      privateOverlay.querySelector('.th-room-private-retry-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        thStartPrivateJoinFlow(slide, room);
+      });
+      slide.appendChild(privateOverlay);
+    }
+
     slide.addEventListener('click', function (e) {
       if (e.target.closest('button, input, form, a')) return;
       if (slide.classList.contains('th-room-slide-closed')) return;
@@ -1633,6 +1710,10 @@
 
   function thActivateSlide(index) {
     if (activeIndex === index) return;
+    // Leaving whatever slide was active (private or not) - a still-
+    // running countdown for a room you just scrolled away from has
+    // nothing left to count down toward.
+    thClearPrivateJoinTimer();
     if (activeIndex !== -1 && window.stopListeningWith) {
       window.stopListeningWith();
     }
@@ -1705,8 +1786,73 @@
     if (room.isPublic) {
       window.startListeningWith(btn);
     } else {
-      window.requestToJoinRoom(btn);
+      thStartPrivateJoinFlow(slideEls[index], room, btn);
     }
+  }
+
+  // ---------------------------------------------------------
+  // PRIVATE ROOM - blurred overlay + 60s countdown while waiting for the
+  // host to respond (see .th-room-private-overlay, thBuildSlide).
+  // ---------------------------------------------------------
+
+  var thPrivateJoinTimer = null;
+
+  function thClearPrivateJoinTimer() {
+    if (thPrivateJoinTimer) { clearInterval(thPrivateJoinTimer); thPrivateJoinTimer = null; }
+  }
+
+  function thStartPrivateJoinFlow(slide, room, btn) {
+    thClearPrivateJoinTimer();
+    window.requestToJoinRoom(btn || slide.querySelector('.th-room-join-status'));
+
+    var overlay = slide.querySelector('.th-room-private-overlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+
+    var statusEl = overlay.querySelector('.th-room-private-status');
+    var countdownEl = overlay.querySelector('.th-room-private-countdown');
+    var expiredEl = overlay.querySelector('.th-room-private-expired');
+    statusEl.style.display = '';
+    countdownEl.style.display = '';
+    expiredEl.style.display = 'none';
+
+    var remaining = 60;
+    countdownEl.textContent = remaining;
+    thPrivateJoinTimer = setInterval(function () {
+      remaining -= 1;
+      countdownEl.textContent = Math.max(remaining, 0);
+      if (remaining <= 0) {
+        thClearPrivateJoinTimer();
+        // Tells the host to drop this from their pending list too (see
+        // ListenTogetherConsumer._cancel_join) - not just a local UI
+        // change, the request itself really is done for.
+        if (window.thSendListenTogetherMessage) window.thSendListenTogetherMessage({ action: 'cancel_join' });
+        statusEl.style.display = 'none';
+        countdownEl.style.display = 'none';
+        expiredEl.style.display = 'block';
+      }
+    }, 1000);
+  }
+
+  // The host approved (join_approved) - nothing left to wait on.
+  function thClearPrivateJoinOverlay() {
+    thClearPrivateJoinTimer();
+    if (activeIndex === -1) return;
+    var overlay = slideEls[activeIndex].querySelector('.th-room-private-overlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  // The host explicitly rejected (join_rejected) - same "ask again or
+  // move on" screen the 60s timeout itself shows (thStartPrivateJoinFlow),
+  // reused rather than a second near-identical message.
+  function thShowPrivateJoinRejected() {
+    thClearPrivateJoinTimer();
+    if (activeIndex === -1) return;
+    var overlay = slideEls[activeIndex].querySelector('.th-room-private-overlay');
+    if (!overlay) return;
+    overlay.querySelector('.th-room-private-status').style.display = 'none';
+    overlay.querySelector('.th-room-private-countdown').style.display = 'none';
+    overlay.querySelector('.th-room-private-expired').style.display = 'block';
   }
 
   // Own-tap bursts (thTapSlide) originate at the click point; these -
@@ -1936,6 +2082,93 @@
   function thHideRoomViewers() {
     var modal = document.getElementById('thRoomViewersModal');
     if (modal) modal.style.display = 'none';
+  }
+
+  // Own room, private only - "طلبات" badge (thBuildSlide). Reads
+  // window.thFollowers-style shared state (window.thJoinRequests,
+  // base.html) rather than tracking its own copy, so approving/
+  // rejecting from here and from anywhere else on the site (the
+  // floating panel base.html still shows off this page) never drift out
+  // of sync with each other.
+  function thShowJoinRequests() {
+    var modal = document.getElementById('thRoomJoinRequestsModal');
+    if (!modal) return;
+    thRenderJoinRequestsList();
+    modal.style.display = 'flex';
+
+    if (!modal.dataset.wired) {
+      modal.dataset.wired = '1';
+      modal.querySelector('.th-room-viewers-backdrop').addEventListener('click', thHideJoinRequests);
+      modal.querySelector('.th-room-viewers-close').addEventListener('click', thHideJoinRequests);
+    }
+  }
+
+  function thHideJoinRequests() {
+    var modal = document.getElementById('thRoomJoinRequestsModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function thRenderJoinRequestsList() {
+    var modal = document.getElementById('thRoomJoinRequestsModal');
+    if (!modal) return;
+    var list = modal.querySelector('.th-room-viewers-list');
+    var requests = window.thJoinRequests || [];
+
+    if (!requests.length) {
+      list.innerHTML = '<div class="th-room-viewers-empty">{% translate "مفيش طلبات دلوقتي" %}</div>';
+      return;
+    }
+
+    list.innerHTML = requests.map(function (r) {
+      var url = '/u/' + r.username + '/';
+      return '<a href="' + url + '" class="th-room-viewer-row" data-user-id="' + r.userId + '">' +
+        '<span class="th-room-viewer-avatar-fallback">' + r.username.slice(0, 1).toUpperCase() + '</span>' +
+        '<span class="th-room-viewer-name">' + r.username + '</span>' +
+        '<span class="th-room-viewer-stats">' +
+        '<button type="button" class="th-room-join-approve-btn" data-user-id="' + r.userId + '" title="{% translate "قبول" %}"><i class="bi bi-check-lg"></i></button>' +
+        '<button type="button" class="th-room-join-reject-btn" data-user-id="' + r.userId + '" title="{% translate "رفض" %}"><i class="bi bi-x-lg"></i></button>' +
+        '</span></a>';
+    }).join('');
+
+    list.querySelectorAll('.th-room-join-approve-btn, .th-room-join-reject-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var userId = parseInt(btn.dataset.userId, 10);
+        var approve = btn.classList.contains('th-room-join-approve-btn');
+        if (window.thRespondJoin) window.thRespondJoin(userId, approve);
+        thRenderJoinRequestsList();
+      });
+    });
+
+    list.querySelectorAll('.th-room-viewer-row').forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var url = row.getAttribute('href');
+        if (window.thBoostedNavigate) {
+          e.preventDefault();
+          window.thBoostedNavigate(url);
+          thHideJoinRequests();
+        }
+      });
+    });
+  }
+
+  // Updates the live count on the "طلبات" badge (own room's slide only,
+  // wherever it currently sits in the feed - not necessarily the active
+  // one, since a request can arrive/expire while you're looking at a
+  // different slide).
+  function thUpdateJoinRequestsBadge() {
+    var count = (window.thJoinRequests || []).length;
+    slideEls.forEach(function (slide, i) {
+      var room = rooms[i];
+      if (!room || room.hostUserId !== window.thUserId) return;
+      var num = slide.querySelector('.th-room-requests-count-num');
+      if (num) num.textContent = count;
+    });
+    if (document.getElementById('thRoomJoinRequestsModal').style.display !== 'none') {
+      thRenderJoinRequestsList();
+    }
   }
 
   function thRenderCommentHistory(comments) {
