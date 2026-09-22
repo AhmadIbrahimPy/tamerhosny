@@ -2766,8 +2766,23 @@ def update_room_settings(request):
     from asgiref.sync import async_to_sync
     from channels.layers import get_channel_layer
 
-    async_to_sync(get_channel_layer().group_send)(f'listen_together_{request.user.id}', {
+    from backend.main_app.consumers import LiveRoomsFeedConsumer
+
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(f'listen_together_{request.user.id}', {
         'type': 'room.renamed',
+        'name': room.display_name,
+        'is_public': room.is_public,
+    })
+    # Separately, anyone on the general /live-rooms/ feed who hasn't
+    # actually joined this room yet (no listen_together_<host> connection
+    # of their own to have received the broadcast above) - see
+    # LiveRoomsFeedConsumer.feed_room_renamed for why this is a second,
+    # distinct send rather than relying on the one above.
+    async_to_sync(channel_layer.group_send)(LiveRoomsFeedConsumer.GROUP_NAME, {
+        'type': 'feed.room_renamed',
+        'host_user_id': request.user.id,
         'name': room.display_name,
         'is_public': room.is_public,
     })

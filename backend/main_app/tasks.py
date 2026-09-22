@@ -59,7 +59,22 @@ def generate_room_name_task(user_id):
     room.generated_name = generate_room_name(song)
     room.save(update_fields=['generated_name'])
 
-    async_to_sync(get_channel_layer().group_send)(f'listen_together_{user_id}', {
+    from backend.main_app.consumers import LiveRoomsFeedConsumer
+
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(f'listen_together_{user_id}', {
         'type': 'room.renamed',
         'name': room.display_name,
+    })
+    # Same gap website_app.views.update_room_settings' own identical
+    # second send fixes - a guest on the general feed who hasn't
+    # actually joined this room yet has no listen_together_<host>
+    # connection to have received the broadcast above, so the AI name
+    # landing never reached them there either.
+    async_to_sync(channel_layer.group_send)(LiveRoomsFeedConsumer.GROUP_NAME, {
+        'type': 'feed.room_renamed',
+        'host_user_id': user_id,
+        'name': room.display_name,
+        'is_public': room.is_public,
     })

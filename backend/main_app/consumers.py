@@ -331,6 +331,22 @@ class LiveRoomsFeedConsumer(WebsocketConsumer):
     def feed_room_closed(self, event):
         self.send(text_data=json.dumps({'type': 'room_closed', 'host_user_id': event['host_user_id']}))
 
+    def feed_room_renamed(self, event):
+        # A rename/visibility change (website_app.views.update_room_
+        # settings) only ever broadcast to the room's own listen_
+        # together_<host> group before - reached anyone actively
+        # following (or waiting on a private room's response), but not
+        # a guest sitting on this general feed who hasn't tapped "طلب
+        # انضمام" yet, since that guest has no connection to that group
+        # at all until they do. This group is the one connection every
+        # visitor on /live-rooms/ already has open regardless.
+        self.send(text_data=json.dumps({
+            'type': 'room_renamed',
+            'host_user_id': event['host_user_id'],
+            'name': event['name'],
+            'is_public': event['is_public'],
+        }))
+
 
 class SongLeaderboardConsumer(WebsocketConsumer):
     """The "top listeners" board on a song's detail page. Read-only from

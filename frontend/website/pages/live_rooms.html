@@ -1153,6 +1153,13 @@
         if (dead) dead.remove();
 
         thMarkSlideClosedByHost(data.host_user_id);
+      } else if (data.type === 'room_renamed') {
+        // Reaches every visitor on this page via the always-open feed
+        // socket, including one still sitting on a private room's idle
+        // "طلب انضمام" screen with no follow/host connection of their
+        // own yet (see LiveRoomsFeedConsumer.feed_room_renamed).
+        var renamedIdx = rooms.findIndex(function (r) { return r.hostUserId === data.host_user_id; });
+        if (renamedIdx !== -1) thApplyRoomRenamed(slideEls[renamedIdx], rooms[renamedIdx], data);
       }
     });
   }
@@ -1258,16 +1265,20 @@
   // (generate_room_name_task) - both broadcast 'room.renamed' now, so
   // this is the one place either shows up live, for the host's own
   // slide and anyone else currently on it.
-  function thUpdateRoomNameFromRenamed(data) {
-    if (activeIndex === -1) return;
-    var slide = slideEls[activeIndex];
-    if (!slide || !data.name) return;
+  // Shared by both routes a rename/visibility change can arrive through
+  // - thUpdateRoomNameFromRenamed below (the ACTIVE slide only, via the
+  // follow/host socket someone actually connected to that room has) and
+  // the feedSocket's own 'room_renamed' handler (ANY slide, by
+  // hostUserId - the one connection every visitor on this page has open
+  // regardless of whether they've engaged with this particular room at
+  // all, which a guest still sitting on the idle "طلب انضمام" screen
+  // hasn't - see LiveRoomsFeedConsumer.feed_room_renamed for why that
+  // second broadcast exists).
+  function thApplyRoomRenamed(slide, room, data) {
+    if (!slide || !room || !data.name) return;
 
-    var room = rooms[activeIndex];
-    if (room) {
-      room.roomName = data.name;
-      if (typeof data.is_public === 'boolean') room.isPublic = data.is_public;
-    }
+    room.roomName = data.name;
+    if (typeof data.is_public === 'boolean') room.isPublic = data.is_public;
 
     var nameEl = slide.querySelector('.th-room-slide-name');
     if (nameEl) nameEl.textContent = data.name;
@@ -1279,40 +1290,47 @@
     var privateNameEl = slide.querySelector('.th-room-private-name');
     if (privateNameEl) privateNameEl.textContent = data.name;
 
-    if (room && room.hostUserId !== window.thUserId && typeof data.is_public === 'boolean') {
-      var visBadge = slide.querySelector('.th-room-name-visibility-badge');
-      if (visBadge) {
-        visBadge.innerHTML = data.is_public
-          ? '<i class="bi bi-globe2"></i> {% translate "عام" %}'
-          : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
-      }
+    if (room.hostUserId === window.thUserId || typeof data.is_public !== 'boolean') return;
 
-      // Built once (thBuildSlide) based on isPublic at that moment -
-      // the host switching a room's visibility mid-session used to
-      // leave a guest stuck on whatever screen they already had: the
-      // blur overlay staying up over a room that just went public (or
-      // vice versa, no overlay at all over one that just went private).
-      var overlay = slide.querySelector('.th-room-private-overlay');
-      if (overlay) {
-        if (data.is_public) {
-          // Now public - nothing left to request or wait on. Only
-          // actually starts listening if not already following someone
-          // else's room (thActivateSlide's own early-return cases still
-          // apply - this mirrors "arrived on an already-public room").
-          thClearPrivateJoinTimer();
-          overlay.classList.remove('open');
-          if (window.thListeningWithHostId !== room.hostUserId) {
-            var joinBtn = slide.querySelector('.th-room-join-status');
-            if (joinBtn) window.startListeningWith(joinBtn);
-          }
-        } else if (window.thListeningWithHostId !== room.hostUserId) {
-          // Now private, and not already an approved follower - back to
-          // idle ("طلب انضمام"), same starting point as landing on a
-          // private room fresh.
-          thResetPrivateOverlay(slide);
-        }
-      }
+    var visBadge = slide.querySelector('.th-room-name-visibility-badge');
+    if (visBadge) {
+      visBadge.innerHTML = data.is_public
+        ? '<i class="bi bi-globe2"></i> {% translate "عام" %}'
+        : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
     }
+
+    // Built once (thBuildSlide) based on isPublic at that moment - the
+    // host switching a room's visibility mid-session used to leave a
+    // guest stuck on whatever screen they already had: the blur overlay
+    // staying up over a room that just went public (or vice versa, no
+    // overlay at all over one that just went private).
+    var overlay = slide.querySelector('.th-room-private-overlay');
+    if (!overlay) return;
+
+    // Only the slide actually on screen right now should react by
+    // starting playback - updating a background slide's overlay markup
+    // is fine sight-unseen, but auto-joining a room nobody's even
+    // looking at yet would be a much bigger surprise than a stale blur.
+    var isActiveSlide = slide === slideEls[activeIndex];
+
+    if (data.is_public) {
+      if (isActiveSlide) thClearPrivateJoinTimer();
+      overlay.classList.remove('open');
+      if (isActiveSlide && window.thListeningWithHostId !== room.hostUserId) {
+        var joinBtn = slide.querySelector('.th-room-join-status');
+        if (joinBtn) window.startListeningWith(joinBtn);
+      }
+    } else if (window.thListeningWithHostId !== room.hostUserId) {
+      // Now private, and not already an approved follower - back to
+      // idle ("طلب انضمام"), same starting point as landing on a private
+      // room fresh.
+      thResetPrivateOverlay(slide);
+    }
+  }
+
+  function thUpdateRoomNameFromRenamed(data) {
+    if (activeIndex === -1) return;
+    thApplyRoomRenamed(slideEls[activeIndex], rooms[activeIndex], data);
   }
 
   // Direct, local fallback for the same "دلوقتي بيسمع" update above -
