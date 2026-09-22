@@ -32,12 +32,37 @@
   var current = 0;
   var interval = parseInt(root.dataset.interval, 10) || 5000;
 
+  // True crossfade, not an instant swap - the outgoing slide (display:
+  // none the moment .active came off) used to vanish immediately while
+  // the incoming one was still only midway through its own .5s fade-in,
+  // leaving a real blank gap between them every single rotation. The
+  // outgoing slide now stays fully visible in normal flow (so the
+  // slider's own height never collapses either) while the incoming one
+  // overlays it (position:absolute, see .th-ad-slide.entering) and
+  // fades in on top - only once that finishes does the swap actually
+  // happen (outgoing hidden, incoming becomes the new normal-flow
+  // .active).
+  var transitioning = false;
+
   function show(index) {
-    slides[current].classList.remove('active');
-    if (dots[current]) dots[current].classList.remove('active');
-    current = (index + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    if (dots[current]) dots[current].classList.add('active');
+    if (transitioning) return;
+    var nextIndex = (index + slides.length) % slides.length;
+    if (nextIndex === current) return;
+    transitioning = true;
+
+    var outgoingIndex = current;
+    var incoming = slides[nextIndex];
+    incoming.classList.add('entering');
+    if (dots[nextIndex]) dots[nextIndex].classList.add('active');
+    if (dots[outgoingIndex]) dots[outgoingIndex].classList.remove('active');
+
+    setTimeout(function () {
+      slides[outgoingIndex].classList.remove('active');
+      incoming.classList.remove('entering');
+      incoming.classList.add('active');
+      current = nextIndex;
+      transitioning = false;
+    }, 500); // matches @keyframes thFade's own .5s duration (base.html)
   }
 
   var timer = setInterval(function(){ show(current + 1); }, interval);

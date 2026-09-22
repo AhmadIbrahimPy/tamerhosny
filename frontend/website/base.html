@@ -514,7 +514,13 @@
     .th-ad-slider{position:relative; padding-block:20px 0;}
     .th-ad-slides{position:relative;}
     .th-ad-slide{display:none;}
-    .th-ad-slide.active{display:block; animation:thFade .5s ease;}
+    .th-ad-slide.active{display:block;}
+    /* Incoming slide during a crossfade (ad_slider.html's own show()) -
+       overlaid on top of the still-visible outgoing .active slide
+       (position:absolute, filling it via inset:0 since .th-ad-slides is
+       position:relative), not replacing it in flow yet - that swap only
+       happens once this fade-in actually finishes. */
+    .th-ad-slide.entering{display:block; position:absolute; inset:0; animation:thFade .5s ease;}
     .th-ad-slide .th-ad-banner{margin:0;}
     @keyframes thFade{from{opacity:0;} to{opacity:1;}}
     /* Loading spinner swapped onto the global player's play/pause icon
