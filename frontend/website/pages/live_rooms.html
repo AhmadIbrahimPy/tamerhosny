@@ -1296,7 +1296,7 @@
     if (data.type === 'comment_history') thRenderCommentHistory(data.comments);
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
-    else if (data.type === 'room_closed') thHandleRoomClosedOnSlide();
+    else if (data.type === 'room_closed') thScheduleRoomClosedOnSlide();
     else if (data.type === 'room_ended') thHandleRoomEndedOnSlide();
     else if (data.type === 'room_opened') thHandleRoomReopenedOnSlide();
     else if (data.type === 'follower_joined') thBumpViewerCount(1, data);
@@ -1492,6 +1492,27 @@
   // deliberately light: dim + "متوقفة مؤقتًا", no CTA to leave - it might
   // resume any second (thHandleRoomReopenedOnSlide undoes this exact
   // treatment the moment it does).
+  // Switching songs on the host's side (prev/next/"بعدها"/auto-advance)
+  // genuinely closes and reopens the room for a brief moment server-side
+  // - the old song's per-song listening socket disconnects (which is
+  // what actually clears is_live) before the new song's 'start' arrives
+  // over its own fresh socket to set it back. A real "إنهاء" or a
+  // deliberate pause holds room_closed with nothing following it; a
+  // plain song switch is followed by room_opened again within well
+  // under a second. Debounced so only the former ever actually shows -
+  // without this, a follower saw their slide flash "متوقفة مؤقتًا" on
+  // literally every song change the host made, even though nothing was
+  // ever really paused.
+  var thRoomClosedDebounceTimer = null;
+
+  function thScheduleRoomClosedOnSlide() {
+    if (thRoomClosedDebounceTimer) clearTimeout(thRoomClosedDebounceTimer);
+    thRoomClosedDebounceTimer = setTimeout(function () {
+      thRoomClosedDebounceTimer = null;
+      thHandleRoomClosedOnSlide();
+    }, 1200);
+  }
+
   function thHandleRoomClosedOnSlide() {
     if (activeIndex === -1) return;
     var slide = slideEls[activeIndex];
@@ -1554,6 +1575,10 @@
   // (thHandleRoomClosedWhileFollowing, base.html, no longer disconnects
   // it), which is what actually lets this reach the follower at all.
   function thHandleRoomReopenedOnSlide() {
+    // Cancel a still-pending "closed" debounce (thScheduleRoomClosedOnSlide)
+    // regardless of whether the visual treatment ever actually applied -
+    // a fast enough reopen means it never should.
+    if (thRoomClosedDebounceTimer) { clearTimeout(thRoomClosedDebounceTimer); thRoomClosedDebounceTimer = null; }
     if (activeIndex === -1) return;
     var slide = slideEls[activeIndex];
     if (!slide || !slide.classList.contains('th-room-slide-closed')) return;
@@ -2005,8 +2030,11 @@
     if (activeIndex === index) return;
     // Leaving whatever slide was active (private or not) - a still-
     // running countdown for a room you just scrolled away from has
-    // nothing left to count down toward.
+    // nothing left to count down toward, and a still-pending "closed"
+    // debounce (thScheduleRoomClosedOnSlide) has no slide left to apply
+    // to.
     thClearPrivateJoinTimer();
+    if (thRoomClosedDebounceTimer) { clearTimeout(thRoomClosedDebounceTimer); thRoomClosedDebounceTimer = null; }
     if (activeIndex !== -1 && window.stopListeningWith) {
       window.stopListeningWith();
     }
