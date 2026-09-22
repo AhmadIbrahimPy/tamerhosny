@@ -34,7 +34,14 @@
   .th-room-feed-nav-btn:disabled { opacity: .3; cursor: default; }
 
   .th-room-feed {
-    height: calc(100dvh - 90px);
+    /* Not "100dvh minus the player bar's height" - the bar is always
+       fully display:none (.th-hide-controls, base.html) on this page,
+       reserving nothing. Subtracting a fixed height for it anyway left
+       a real, empty gap at the bottom of the actual viewport, worst on
+       phones where that gap reads as "half the screen is just black
+       under the comment box" rather than a subtle few missing pixels. */
+    height: 100vh;
+    height: 100dvh;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
@@ -50,7 +57,14 @@
   .th-room-feed:empty { display: none; }
 
   .th-room-slide {
-    height: calc(100dvh - 90px);
+    /* Not "100dvh minus the player bar's height" - the bar is always
+       fully display:none (.th-hide-controls, base.html) on this page,
+       reserving nothing. Subtracting a fixed height for it anyway left
+       a real, empty gap at the bottom of the actual viewport, worst on
+       phones where that gap reads as "half the screen is just black
+       under the comment box" rather than a subtle few missing pixels. */
+    height: 100vh;
+    height: 100dvh;
     scroll-snap-align: start;
     position: relative;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -192,6 +206,26 @@
     width: 30px !important; height: 30px !important;
     background: rgba(0,0,0,.35) !important; color: #fff !important;
   }
+  /* base.html's own mobile rule for this popover (bottom:76px) assumes
+     it's still sitting near the global player bar, which is entirely
+     display:none on this page (.th-hide-controls) - the gear itself
+     lives up in the slide's own name row instead (thBuildSlide's
+     relocation), nowhere near that fixed offset, so the popover opened
+     floating in an unrelated spot with nothing visually tying it back
+     to the button that opened it. A real bottom sheet instead - pinned
+     to the actual bottom of the viewport, not a guessed offset above a
+     bar that isn't there. Two classes (body + popover) outweighs
+     base.html's single-class rule regardless of which stylesheet loads
+     second. */
+  @media (max-width:480px) {
+    body.th-live-rooms-page .th-room-settings-popover {
+      position: fixed; inset-inline: 0; bottom: 0; top: auto;
+      width: auto; max-width: none;
+      border-radius: 16px 16px 0 0;
+      max-height: 70vh; overflow-y: auto;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+  }
 
   /* "دلوقتي بيسمع" - frosted glass over the slide's own blurred cover
      background, not a plain text line. backdrop-filter needs the
@@ -319,7 +353,15 @@
     100% { transform: translate(-50%, -180%) scale(1.6); opacity: 0; }
   }
   .th-room-heart-burst {
-    position: absolute; z-index: 5; font-size: 34px; color: #e5484d; pointer-events: none;
+    /* fixed + raw viewport coordinates (see thSpawnHeartBursts/
+       thTapSlide), not absolute positioned relative to the slide - a
+       mobile browser's dynamic address bar changes the visual viewport
+       height out from under 100dvh mid-scroll-snap, and clientX/clientY
+       (viewport-relative) vs. the slide's own getBoundingClientRect can
+       transiently disagree about where "the slide's top" actually is
+       right then; fixed sidesteps that entirely by never subtracting
+       the slide's own rect at all. */
+    position: fixed; z-index: 1003; font-size: 34px; color: #e5484d; pointer-events: none;
     animation: thRoomHeartBurst .9s ease-out forwards;
   }
 
@@ -341,7 +383,14 @@
   }
 
   .th-room-feed-empty {
-    height: calc(100dvh - 90px);
+    /* Not "100dvh minus the player bar's height" - the bar is always
+       fully display:none (.th-hide-controls, base.html) on this page,
+       reserving nothing. Subtracting a fixed height for it anyway left
+       a real, empty gap at the bottom of the actual viewport, worst on
+       phones where that gap reads as "half the screen is just black
+       under the comment box" rather than a subtle few missing pixels. */
+    height: 100vh;
+    height: 100dvh;
     /* Visible by default (not hidden-until-JS-says-so) - the same
        "don't depend on the script having run" reasoning as
        .th-room-feed:empty above. extra_js hides this instead, once it
@@ -1657,18 +1706,18 @@
   function thSpawnHeartBursts(slide, count) {
     var badge = slide.querySelector('.th-room-tap-badge');
     if (!badge) return;
-    var slideRect = slide.getBoundingClientRect();
-    var badgeRect = badge.getBoundingClientRect();
-    var originX = badgeRect.left + badgeRect.width / 2 - slideRect.left;
-    var originY = badgeRect.top + badgeRect.height / 2 - slideRect.top;
+    // Raw viewport coordinates now (.th-room-heart-burst is position:
+    // fixed, see its own CSS comment) - badgeRect is already viewport-
+    // relative, so no more subtracting the slide's own rect from it.
     for (var i = 0; i < count; i++) {
       (function (delay) {
         setTimeout(function () {
+          var badgeRect = badge.getBoundingClientRect();
           var heart = document.createElement('i');
           heart.className = 'bi bi-heart-fill th-room-heart-burst';
-          heart.style.left = (originX + (Math.random() * 24 - 12)) + 'px';
-          heart.style.top = originY + 'px';
-          slide.appendChild(heart);
+          heart.style.left = (badgeRect.left + badgeRect.width / 2 + (Math.random() * 24 - 12)) + 'px';
+          heart.style.top = (badgeRect.top + badgeRect.height / 2) + 'px';
+          document.body.appendChild(heart);
           setTimeout(function () { heart.remove(); }, 900);
         }, delay);
       })(i * 90);
@@ -1679,12 +1728,15 @@
     if (window.requireAuth && window.requireAuth(null, null)) return;
     window.thSendListenTogetherMessage({ action: 'tap' });
 
-    var rect = slide.getBoundingClientRect();
+    // x/y are already viewport coordinates (e.clientX/clientY from the
+    // slide's own click listener) - used directly now that
+    // .th-room-heart-burst is position:fixed, no slide-relative
+    // subtraction needed.
     var heart = document.createElement('i');
     heart.className = 'bi bi-heart-fill th-room-heart-burst';
-    heart.style.left = (x - rect.left) + 'px';
-    heart.style.top = (y - rect.top) + 'px';
-    slide.appendChild(heart);
+    heart.style.left = x + 'px';
+    heart.style.top = y + 'px';
+    document.body.appendChild(heart);
     setTimeout(function () { heart.remove(); }, 900);
 
     var tapBadge = slide.querySelector('.th-room-tap-badge');
