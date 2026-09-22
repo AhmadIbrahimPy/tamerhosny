@@ -1272,12 +1272,45 @@
     var nameEl = slide.querySelector('.th-room-slide-name');
     if (nameEl) nameEl.textContent = data.name;
 
+    // The private overlay (thBuildSlide) has its own separate name
+    // display, sitting ON TOP of .th-room-slide-name above while it's
+    // open - updating only that one left the rename invisible to anyone
+    // still looking at the blur, even though it had genuinely applied.
+    var privateNameEl = slide.querySelector('.th-room-private-name');
+    if (privateNameEl) privateNameEl.textContent = data.name;
+
     if (room && room.hostUserId !== window.thUserId && typeof data.is_public === 'boolean') {
       var visBadge = slide.querySelector('.th-room-name-visibility-badge');
       if (visBadge) {
         visBadge.innerHTML = data.is_public
           ? '<i class="bi bi-globe2"></i> {% translate "عام" %}'
           : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
+      }
+
+      // Built once (thBuildSlide) based on isPublic at that moment -
+      // the host switching a room's visibility mid-session used to
+      // leave a guest stuck on whatever screen they already had: the
+      // blur overlay staying up over a room that just went public (or
+      // vice versa, no overlay at all over one that just went private).
+      var overlay = slide.querySelector('.th-room-private-overlay');
+      if (overlay) {
+        if (data.is_public) {
+          // Now public - nothing left to request or wait on. Only
+          // actually starts listening if not already following someone
+          // else's room (thActivateSlide's own early-return cases still
+          // apply - this mirrors "arrived on an already-public room").
+          thClearPrivateJoinTimer();
+          overlay.classList.remove('open');
+          if (window.thListeningWithHostId !== room.hostUserId) {
+            var joinBtn = slide.querySelector('.th-room-join-status');
+            if (joinBtn) window.startListeningWith(joinBtn);
+          }
+        } else if (window.thListeningWithHostId !== room.hostUserId) {
+          // Now private, and not already an approved follower - back to
+          // idle ("طلب انضمام"), same starting point as landing on a
+          // private room fresh.
+          thResetPrivateOverlay(slide);
+        }
       }
     }
   }
