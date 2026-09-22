@@ -717,6 +717,20 @@
   var rooms = dataEl ? JSON.parse(dataEl.textContent) : [];
   var adsDataEl = document.getElementById('thRoomAdsData');
   var roomAds = adsDataEl ? JSON.parse(adsDataEl.textContent) : [];
+  // Declared here (not down by thBuildRoomAdSlot/thScheduleRoomAd's own
+  // section) - thBuildSlide runs synchronously for the initial batch of
+  // rooms further down THIS SAME script before execution ever reaches
+  // that section, and `var`-hoisting only hoists the declaration, not
+  // this assignment - thScheduleRoomAd's own thRoomAdTimers.push(id)
+  // threw "Cannot read properties of undefined" on that very first
+  // batch until this moved up here.
+  var thRoomAdTimers = [];
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      thRoomAdTimers.forEach(function (id) { clearTimeout(id); });
+      thRoomAdTimers = [];
+    });
+  }
   var feedEl = document.getElementById('thRoomFeed');
   var emptyEl = document.getElementById('thRoomFeedEmpty');
   var slideEls = [];
@@ -1594,14 +1608,6 @@
   // uncluttered, so this only ever occupies the space while actually
   // showing something, not permanently.
   // ---------------------------------------------------------
-
-  var thRoomAdTimers = [];
-  if (window.thOnTeardown) {
-    window.thOnTeardown(function () {
-      thRoomAdTimers.forEach(function (id) { clearTimeout(id); });
-      thRoomAdTimers = [];
-    });
-  }
 
   function thBuildRoomAdSlot() {
     var slot = document.createElement('div');
