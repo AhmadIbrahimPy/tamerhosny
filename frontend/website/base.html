@@ -2905,6 +2905,15 @@
         if (prev.url) {
           playAudio(prev.url, currentPlayBtn, prev.title, '', prev.image ? [prev.image] : null, prev.link, prev.artist, prev.album, false, prev.songId, prev.albumLink);
         }
+        // On the live-rooms feed, "السابقة" is the room's own transport
+        // control (live_rooms.html's th-room-own-prev-btn) - switching
+        // songs there should never navigate away from the room to that
+        // song's own detail page (the room's "دلوقتي بيسمع" card already
+        // reflects the change on its own, via the songChanged event
+        // playAudio dispatches). Everywhere else on the site, following
+        // playback to that page IS the intended behavior - only skipped
+        // here.
+        if (window.location.pathname.indexOf('/live-rooms/') === 0) return;
         // Boosted (AJAX swap), not a real navigation - see
         // thBoostedNavigate's own comment above for why this matters:
         // a real reload would tear down and re-fetch the whole page
