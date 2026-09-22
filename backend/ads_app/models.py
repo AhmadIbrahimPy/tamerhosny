@@ -31,6 +31,7 @@ class Advertisement(models.Model):
         ALBUMS = 'ALBUMS', _('Albums Pages')
         MEDIA = 'MEDIA', _('Movies & Series Pages')
         CONCERTS = 'CONCERTS', _('Concerts Pages')
+        LIVE_ROOMS = 'LIVE_ROOMS', _('Live Rooms')
 
     title = models.CharField(max_length=200)
     image = models.ImageField(upload_to='ads/')

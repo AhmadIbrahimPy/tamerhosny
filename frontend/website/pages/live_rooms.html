@@ -378,6 +378,20 @@
     z-index: 2;
   }
 
+  /* Own room: right below the "شغّل كمان" strip. Guest: right below
+     "دلوقتي بيسمع". Empty (0 height) most of the time on purpose - an ad
+     card only ever gets inserted into it briefly (thCycleRoomAd), not a
+     permanently-reserved slot, so it doesn't leave a dead gap while no
+     ad is showing. */
+  .th-room-ad-slot { margin: 0 16px 10px; }
+  .th-room-ad-card {
+    opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .4s ease;
+    pointer-events: none;
+  }
+  .th-room-ad-card.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .th-room-ad-card .th-ad-banner { border-radius: 14px; }
+  .th-room-ad-card .th-ad-banner img { max-height: 140px; }
+
   .th-room-slide-comments {
     position: relative; z-index: 2; padding: 0 16px 16px;
   }
@@ -662,6 +676,7 @@
   </div>
 </div>
 {{ rooms|json_script:"thRoomsFeedData" }}
+{{ room_ads|json_script:"thRoomAdsData" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -700,6 +715,8 @@
 
   var dataEl = document.getElementById('thRoomsFeedData');
   var rooms = dataEl ? JSON.parse(dataEl.textContent) : [];
+  var adsDataEl = document.getElementById('thRoomAdsData');
+  var roomAds = adsDataEl ? JSON.parse(adsDataEl.textContent) : [];
   var feedEl = document.getElementById('thRoomFeed');
   var emptyEl = document.getElementById('thRoomFeedEmpty');
   var slideEls = [];
@@ -1568,6 +1585,81 @@
     if (bg && song.image) bg.style.backgroundImage = 'url(' + song.image + ')';
   }
 
+  // ---------------------------------------------------------
+  // ROOM ADS - a slot that's empty most of the time, briefly showing one
+  // random ad (fade in, hold, fade out) every so often, on every room
+  // slide - own room (below "شغّل كمان") and every guest's (below
+  // "دلوقتي بيسمع") alike. Deliberately NOT the homepage's always-on
+  // rotating ad_slider.html - a room slide is meant to feel live and
+  // uncluttered, so this only ever occupies the space while actually
+  // showing something, not permanently.
+  // ---------------------------------------------------------
+
+  var thRoomAdTimers = [];
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () {
+      thRoomAdTimers.forEach(function (id) { clearTimeout(id); });
+      thRoomAdTimers = [];
+    });
+  }
+
+  function thBuildRoomAdSlot() {
+    var slot = document.createElement('div');
+    slot.className = 'th-room-ad-slot';
+    if (roomAds.length) thScheduleRoomAd(slot);
+    return slot;
+  }
+
+  function thScheduleRoomAd(slot) {
+    // 12-20s between ads, ~6s actually visible - a guess at "often
+    // enough to be worth showing, not so often it feels like the room
+    // itself is an ad break."
+    var delay = 12000 + Math.random() * 8000;
+    var id = setTimeout(function () { thShowRoomAd(slot); }, delay);
+    thRoomAdTimers.push(id);
+  }
+
+  function thShowRoomAd(slot) {
+    // Slide (and slot) may have been removed from the feed by now (a
+    // closed room pruned, or this was for a room that's since scrolled
+    // out of existence some other way) - a detached node is harmless to
+    // keep building on, but there's no point scheduling yet another
+    // cycle for something nobody will ever see again.
+    if (!slot.isConnected) return;
+
+    var ad = roomAds[Math.floor(Math.random() * roomAds.length)];
+    var card = document.createElement('div');
+    card.className = 'th-room-ad-card';
+    card.innerHTML =
+      '<a ' + (ad.target_url ? 'href="' + ad.target_url + '" ' + (ad.linked_kind === null && ad.external_url ? 'target="_blank" rel="noopener sponsored" ' : '') : '') +
+      'class="th-ad-banner plain" onclick="thTrack(\'EXTERNAL_CLICK\', \'ad\', ' + ad.id + ', {});">' +
+      '<img src="' + ad.image_url + '" alt="' + ad.title.replace(/"/g, '&quot;') + '" loading="lazy" decoding="async">' +
+      '<span class="th-ad-tag">{% translate "إعلان" %}</span>' +
+      '</a>';
+    slot.innerHTML = '';
+    slot.appendChild(card);
+    if (window.thTrack) thTrack('VIEW', 'ad', ad.id);
+
+    // Two rAFs (not one) - the browser needs to actually paint the
+    // freshly-inserted .th-room-ad-card at opacity:0 first, or adding
+    // .show on the very next frame can get coalesced into the same
+    // paint and skip the transition entirely (the card just appears
+    // instantly instead of fading in).
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { card.classList.add('show'); });
+    });
+
+    var hideId = setTimeout(function () {
+      card.classList.remove('show');
+      var clearId = setTimeout(function () {
+        if (slot.isConnected) slot.innerHTML = '';
+        thScheduleRoomAd(slot);
+      }, 450);
+      thRoomAdTimers.push(clearId);
+    }, 6000);
+    thRoomAdTimers.push(hideId);
+  }
+
   function thBuildSlide(room, index) {
     var slide = document.createElement('div');
     slide.className = 'th-room-slide';
@@ -1699,6 +1791,10 @@
         window.globalAudio.muted = !window.globalAudio.muted;
         syncMuteIcon();
       });
+
+      // Guest only - the host's own copy sits lower, below "شغّل كمان"
+      // instead (see thBuildRoomAdSlot's other call site further down).
+      header.appendChild(thBuildRoomAdSlot());
     }
 
     // "بعدها" - reflects window.thHostQueue[0] (a single slot, not a
@@ -1730,6 +1826,10 @@
         '<div class="th-room-suggest-cards"></div>';
       header.appendChild(suggestWrap);
       thLoadSuggestCards(suggestWrap);
+
+      // Own room - right below "شغّل كمان" (guests get theirs below
+      // "دلوقتي بيسمع" instead, see the guest branch above).
+      header.appendChild(thBuildRoomAdSlot());
     }
 
     slide.appendChild(header);

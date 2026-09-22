@@ -2668,9 +2668,21 @@ def live_rooms(request, username=None):
 
     suggested_songs = _suggested_songs_for_empty_feed(request) if not rooms else []
 
+    # Shown to both the host (below their own "شغّل كمان" strip) and every
+    # guest (below "دلوقتي بيسمع") on each room slide - see thBuildSlide's
+    # own JS, not server-rendered per slide since slides themselves are
+    # built client-side from `rooms` above.
+    from backend.ads_app.models import Advertisement
+    from backend.ads_app.shared_utils.serializers import serialize_ad
+
+    room_ads = [
+        serialize_ad(ad, request) for ad in _ads_for(Advertisement.Placement.LIVE_ROOMS)[:8]
+    ]
+
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
         'suggested_songs': suggested_songs,
+        'room_ads': room_ads,
     })
 
 
