@@ -884,10 +884,20 @@ class ListenTogetherConsumer(WebsocketConsumer):
         otherwise never see the player bar switch into hosting mode
         until they stop and start listening again. Same shape as
         room_opened, sent directly instead of via the group.
+
+        is_live=True is required here - the row itself outlives any one
+        session (see ListenTogetherRoom.is_live's own docstring), so
+        without this, ANYONE who has ever hosted so much as once got the
+        player bar's hosting mode falsely re-activated on literally every
+        future page load/reconnect (thConnectListenTogetherHost runs on
+        every one), whether they were actually live at that moment or
+        not - "بتستضيف جروب دلوقتي" showing with 0 listeners for a room
+        that wasn't really open, right after just leaving someone ELSE's
+        room and refreshing.
         """
         from backend.main_app.models import ListenTogetherRoom
 
-        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id, is_live=True).first()
 
         if room is None:
             return
