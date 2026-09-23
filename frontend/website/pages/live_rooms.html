@@ -1453,16 +1453,22 @@ generic "رومات اسمع معاه" copy.
     if (!viewingOwnRoom) {
       var navWrap = document.createElement('div');
       navWrap.className = 'th-room-feed-nav-arrows';
+      // Up/down chevrons, not left/right - .th-room-feed-nav-arrows is a
+      // vertical column (flex-direction:column, fixed to the side of the
+      // screen) matching the feed's own vertical scroll-snap swipe
+      // direction, not a horizontal slider like the mood-group tracks
+      // elsewhere on this page - a sideways chevron in a vertical stack
+      // reads as broken/rotated, not just mislabeled.
       navWrap.innerHTML =
-        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedPrevBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-left"></i></button>' +
-        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedNextBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-right"></i></button>';
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
       document.body.appendChild(navWrap);
       if (window.thOnTeardown) {
         window.thOnTeardown(function () { navWrap.remove(); });
       }
 
-      upBtn = navWrap.querySelector('#thRoomFeedPrevBtn');
-      downBtn = navWrap.querySelector('#thRoomFeedNextBtn');
+      upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
+      downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
       upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
       downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
     }
