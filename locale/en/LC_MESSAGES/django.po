@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 16:26+0300\n"
+"POT-Creation-Date: 2026-09-23 16:54+0300\n"
 "PO-Revision-Date: 2026-08-25 13:08+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -803,7 +803,7 @@ msgstr "TV Series"
 #: backend/dashboard_app/views.py:56 backend/website_app/views.py:1445
 #: frontend/dashboard/partials/sidebar-collapse.html:131
 #: frontend/dashboard/partials/sidebar-collapse.html:234
-#: frontend/website/pages/home.html:486
+#: frontend/website/pages/home.html:485
 msgid "الإعلانات والحملات الترويجية"
 msgstr "Commercials & Ad Campaigns"
 
@@ -820,7 +820,7 @@ msgstr "Programs"
 #: frontend/dashboard/pages/people/all.html:8
 #: frontend/dashboard/partials/sidebar-collapse.html:59
 #: frontend/dashboard/partials/sidebar-collapse.html:228
-#: frontend/website/pages/home.html:589
+#: frontend/website/pages/home.html:588
 #: frontend/website/pages/media/detail.html:240
 #: frontend/website/pages/people/list.html:3
 #: frontend/website/pages/people/list.html:8
@@ -841,7 +841,7 @@ msgstr "Artists"
 #: frontend/website/pages/albums/list.html:3
 #: frontend/website/pages/albums/list.html:8
 #: frontend/website/pages/albums/list.html:13
-#: frontend/website/pages/bio.html:329 frontend/website/pages/home.html:421
+#: frontend/website/pages/bio.html:329 frontend/website/pages/home.html:420
 #: frontend/website/partials/footer.html:16
 #: frontend/website/partials/header.html:17
 #: frontend/website/partials/header.html:129
@@ -882,7 +882,7 @@ msgstr "Movies, Series & Commercials"
 #: frontend/website/pages/concerts/list.html:3
 #: frontend/website/pages/concerts/list.html:8
 #: frontend/website/pages/concerts/list.html:33
-#: frontend/website/pages/home.html:550
+#: frontend/website/pages/home.html:549
 #: frontend/website/pages/user/favorites.html:64
 #: frontend/website/partials/footer.html:23
 #: frontend/website/partials/header.html:21
@@ -1696,7 +1696,7 @@ msgid "ثابت"
 msgstr "Same"
 
 #: backend/main_app/models.py:577 backend/main_app/models.py:618
-#: frontend/website/pages/home.html:330
+#: frontend/website/pages/home.html:329
 #: frontend/website/pages/player/index.html:1168
 #: frontend/website/pages/songs/detail.html:4251
 #: frontend/website/pages/songs/trending.html:104
@@ -2255,11 +2255,11 @@ msgstr "Tamer Hosny Archive"
 #: frontend/dashboard/partials/pagination_named.html:20
 #: frontend/website/pages/albums/detail.html:183
 #: frontend/website/pages/concerts/detail.html:208
-#: frontend/website/pages/home.html:283 frontend/website/pages/home.html:321
-#: frontend/website/pages/home.html:360 frontend/website/pages/home.html:392
-#: frontend/website/pages/home.html:425 frontend/website/pages/home.html:457
-#: frontend/website/pages/home.html:490 frontend/website/pages/home.html:524
-#: frontend/website/pages/home.html:554 frontend/website/pages/home.html:593
+#: frontend/website/pages/home.html:283 frontend/website/pages/home.html:320
+#: frontend/website/pages/home.html:359 frontend/website/pages/home.html:391
+#: frontend/website/pages/home.html:424 frontend/website/pages/home.html:456
+#: frontend/website/pages/home.html:489 frontend/website/pages/home.html:523
+#: frontend/website/pages/home.html:553 frontend/website/pages/home.html:592
 #: frontend/website/pages/media/detail.html:242
 #: frontend/website/pages/media/detail.html:265
 #: frontend/website/pages/media/detail.html:291
@@ -2289,11 +2289,11 @@ msgstr "Previous"
 #: frontend/dashboard/partials/pagination_named.html:36
 #: frontend/website/pages/albums/detail.html:203
 #: frontend/website/pages/concerts/detail.html:235
-#: frontend/website/pages/home.html:310 frontend/website/pages/home.html:349
-#: frontend/website/pages/home.html:382 frontend/website/pages/home.html:415
-#: frontend/website/pages/home.html:447 frontend/website/pages/home.html:480
-#: frontend/website/pages/home.html:512 frontend/website/pages/home.html:543
-#: frontend/website/pages/home.html:583 frontend/website/pages/home.html:609
+#: frontend/website/pages/home.html:309 frontend/website/pages/home.html:348
+#: frontend/website/pages/home.html:381 frontend/website/pages/home.html:414
+#: frontend/website/pages/home.html:446 frontend/website/pages/home.html:479
+#: frontend/website/pages/home.html:511 frontend/website/pages/home.html:542
+#: frontend/website/pages/home.html:582 frontend/website/pages/home.html:608
 #: frontend/website/pages/media/detail.html:256
 #: frontend/website/pages/media/detail.html:282
 #: frontend/website/pages/media/detail.html:311
@@ -4395,11 +4395,11 @@ msgstr "Other Albums"
 
 #: frontend/website/pages/albums/detail.html:179
 #: frontend/website/pages/concerts/detail.html:204
-#: frontend/website/pages/home.html:280 frontend/website/pages/home.html:318
-#: frontend/website/pages/home.html:357 frontend/website/pages/home.html:389
-#: frontend/website/pages/home.html:422 frontend/website/pages/home.html:454
-#: frontend/website/pages/home.html:487 frontend/website/pages/home.html:551
-#: frontend/website/pages/home.html:590
+#: frontend/website/pages/home.html:280 frontend/website/pages/home.html:317
+#: frontend/website/pages/home.html:356 frontend/website/pages/home.html:388
+#: frontend/website/pages/home.html:421 frontend/website/pages/home.html:453
+#: frontend/website/pages/home.html:486 frontend/website/pages/home.html:550
+#: frontend/website/pages/home.html:589
 #: frontend/website/pages/people/detail.html:60
 #: frontend/website/pages/people/detail.html:92
 #: frontend/website/pages/people/detail.html:125
@@ -4701,7 +4701,7 @@ msgstr "You haven't played Guess the Song yet"
 msgid "العب دلوقتي"
 msgstr "Play now"
 
-#: frontend/website/pages/home.html:219 frontend/website/pages/home.html:356
+#: frontend/website/pages/home.html:219 frontend/website/pages/home.html:355
 msgid "أحدث الأغاني"
 msgstr "Latest Songs"
 
@@ -4730,7 +4730,7 @@ msgstr "See your rank"
 msgid "رومات اسمع معاه دلوقتي"
 msgstr "Listen Together Rooms Now"
 
-#: frontend/website/pages/home.html:289 frontend/website/pages/home.html:778
+#: frontend/website/pages/home.html:289 frontend/website/pages/home.html:777
 #: frontend/website/pages/live_rooms.html:1992
 #: frontend/website/pages/live_rooms.html:2152
 #: frontend/website/pages/player/index.html:980
@@ -4738,70 +4738,70 @@ msgstr "Listen Together Rooms Now"
 msgid "مباشر"
 msgstr "Live"
 
-#: frontend/website/pages/home.html:298 frontend/website/pages/home.html:792
+#: frontend/website/pages/home.html:297 frontend/website/pages/home.html:790
 msgid "انت مستضيف دلوقتي"
 msgstr "You Are Hosting Now"
 
-#: frontend/website/pages/home.html:299 frontend/website/pages/home.html:793
+#: frontend/website/pages/home.html:298 frontend/website/pages/home.html:791
 msgid "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي"
 msgstr "Head over and listen together - no one else has a room open right now"
 
-#: frontend/website/pages/home.html:304 frontend/website/pages/home.html:799
+#: frontend/website/pages/home.html:303 frontend/website/pages/home.html:797
 #: frontend/website/pages/live_rooms.html:13
 #: frontend/website/pages/live_rooms.html:19
 msgid "رومات اسمع معاه"
 msgstr "Listen Together Rooms"
 
-#: frontend/website/pages/home.html:305 frontend/website/pages/home.html:800
+#: frontend/website/pages/home.html:304 frontend/website/pages/home.html:798
 msgid "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد"
 msgstr "No one is listening right now - open a room and be the first"
 
-#: frontend/website/pages/home.html:317
+#: frontend/website/pages/home.html:316
 #: frontend/website/pages/songs/trending.html:3
 #: frontend/website/pages/songs/trending.html:77
 msgid "ترند دلوقتي"
 msgstr "Trending Now"
 
-#: frontend/website/pages/home.html:379
+#: frontend/website/pages/home.html:378
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد أغاني متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:388
+#: frontend/website/pages/home.html:387
 msgid "أحدث الأفلام"
 msgstr "Latest Movies"
 
-#: frontend/website/pages/home.html:412
+#: frontend/website/pages/home.html:411
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد أفلام متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:444
+#: frontend/website/pages/home.html:443
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد ألبومات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:453
+#: frontend/website/pages/home.html:452
 msgid "أحدث المسلسلات"
 msgstr "Latest TV Series"
 
-#: frontend/website/pages/home.html:477
+#: frontend/website/pages/home.html:476
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد مسلسلات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:509
+#: frontend/website/pages/home.html:508
 #: frontend/website/pages/media/commercials_list.html:29
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد إعلانات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:521 frontend/website/pages/home.html:538
+#: frontend/website/pages/home.html:520 frontend/website/pages/home.html:537
 #: frontend/website/pages/sing-with-tamer/index.html:1058
 #: frontend/website/pages/songs/detail.html:2293
 #: frontend/website/pages/songs/detail.html:2710
@@ -4809,13 +4809,13 @@ msgstr "No data available yet"
 msgid "غني مع تامر"
 msgstr "Sing With Tamer"
 
-#: frontend/website/pages/home.html:580
+#: frontend/website/pages/home.html:579
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد حفلات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:606
+#: frontend/website/pages/home.html:605
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا يوجد فنانون متاحون حالياً"
@@ -5690,22 +5690,16 @@ msgstr "Not enough data yet to calculate trends - check back soon"
 
 #: frontend/website/pages/user/blocked_listeners.html:3
 #: frontend/website/partials/header.html:90
-#, fuzzy
-#| msgid "المستخدمون الحاليون"
 msgid "المستخدمون الممنوعون"
-msgstr "Current Listeners"
+msgstr "Blocked Users"
 
 #: frontend/website/pages/user/blocked_listeners.html:7
-#, fuzzy
-#| msgid "المستخدمون الحاليون"
-msgid "المستخدمون الممنوعون من \\"
-msgstr "Current Listeners"
+msgid "المستخدمون الممنوعون من \"اسمع معاه\""
+msgstr "Users Blocked From Listen Together"
 
 #: frontend/website/pages/user/blocked_listeners.html:20
-#, fuzzy
-#| msgid "إنشاء الريمكس"
 msgid "إلغاء المنع"
-msgstr "Create Remix"
+msgstr "Unblock"
 
 #: frontend/website/pages/user/blocked_listeners.html:28
 #, fuzzy
