@@ -9,6 +9,7 @@ shows on their public profile.
 
 from datetime import timedelta
 
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
@@ -53,6 +54,40 @@ def get_current_song_for_user(user):
     )
 
     return listener.song if listener else None
+
+
+def record_song_play(user, song):
+    """Credits `user` with one listen of `song` - the exact same
+    once-per-user-per-song-per-hour dedup website_app.views.increment_play_count
+    uses for its own POST /songs/increment-play/ endpoint, extracted here
+    so ListenTogetherConsumer can credit a whole room's worth of people
+    (the host who started the song, plus everyone else in
+    ListenTogetherViewer) the same way a solo listener earns a play,
+    instead of only ever crediting whoever's browser happens to send the
+    HTTP ping.
+
+    Returns True if this call actually incremented the count, False if
+    the dedup window suppressed it (mirrors 'incremented' in that view's
+    JSON response) - callers that don't care can ignore the return value.
+    """
+    from backend.main_app.models import UserSongPlay
+
+    if song.is_duet or user is None or not user.is_authenticated:
+        return False
+
+    user_play, created = UserSongPlay.objects.get_or_create(user=user, song=song)
+
+    if not created and user_play.last_played_at:
+        if timezone.now() - user_play.last_played_at < timedelta(hours=1):
+            return False
+
+    song.__class__.objects.filter(pk=song.pk).update(play_count=models.F('play_count') + 1)
+
+    user_play.play_count += 1
+    user_play.last_played_at = timezone.now()
+    user_play.save()
+
+    return True
 
 
 def serialize_song_for_listen_together(song):

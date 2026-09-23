@@ -25,6 +25,7 @@ from backend.ads_app.models import Advertisement
 from backend.ai_remix_app.models import RemixProject, RemixSource, AudioSource
 from backend.main_app.models import Like, Playlist, PlaylistItem, SongSimilarity, UserGameProfile, UserSongPlay, CurrentSongListener, VoiceAssistantLog, VoiceKnownPhrase
 from backend.main_app.shared_utils.credits import dedupe_credits
+from backend.main_app.shared_utils.listen_together import record_song_play
 from backend.main_app.shared_utils.llm_providers import ask_json
 from backend.main_app.shared_utils.voice_shared import VOICE_NAV_PAGES, VOICE_VALID_INTENTS
 from backend.main_app.shared_utils.gamification import (
@@ -1842,38 +1843,11 @@ def increment_play_count(request):
     try:
         song = Song.objects.get(pk=song_id)
 
-        # A duet play isn't a play of the official track - don't count it
-        # (moved here from the one caller that used to check this
-        # client-side, so it holds no matter which play path calls this).
-        if song.is_duet:
-            return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': False})
+        incremented = record_song_play(request.user, song)
+        if incremented:
+            song.refresh_from_db(fields=['play_count'])
 
-        # Only track logged in users
-        if not request.user.is_authenticated:
-            return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': False})
-        
-        # Get or create UserSongPlay for this user and song
-        user_play, created = UserSongPlay.objects.get_or_create(
-            user=request.user,
-            song=song
-        )
-        
-        # Check if last play was more than 1 hour ago
-        if not created and user_play.last_played_at:
-            time_since_last_play = timezone.now() - user_play.last_played_at
-            if time_since_last_play < timedelta(hours=1):
-                # Less than 1 hour since last play, don't increment
-                return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': False})
-        
-        # Increment song play count and user play count
-        song.play_count += 1
-        song.save(update_fields=['play_count'])
-        
-        user_play.play_count += 1
-        user_play.last_played_at = timezone.now()
-        user_play.save()
-
-        return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': True})
+        return JsonResponse({'status': 'success', 'play_count': song.play_count, 'incremented': incremented})
     except Song.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Song not found'}, status=404)
     except Exception as e:

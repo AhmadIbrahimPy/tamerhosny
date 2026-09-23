@@ -679,12 +679,53 @@ class ListenTogetherConsumer(WebsocketConsumer):
     # =========================================================
 
     def _broadcast_state(self, data):
+        playing = bool(data.get('playing'))
+        song_data = data.get('song') or {}
+
+        # thSendListenTogetherMessage fires this on every songChanged/
+        # audioPlayPause AND a throttled timeupdate ping while the same
+        # song keeps playing - self._credited_song_id (per-connection,
+        # not persisted) is how a "new song actually started" is told
+        # apart from "still the same song, just another progress tick",
+        # so a room full of viewers only gets credited with one listen
+        # per song, not once per throttle tick.
+        song_id = song_data.get('songId')
+        if playing and song_id and song_id != getattr(self, '_credited_song_id', None):
+            self._credited_song_id = song_id
+            self._credit_room_play(song_id)
+        elif not playing:
+            self._credited_song_id = None
+
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'playback.state',
-            'song': data.get('song'),
-            'playing': bool(data.get('playing')),
+            'song': song_data,
+            'playing': playing,
             'current_time': data.get('currentTime'),
         })
+
+    def _credit_room_play(self, song_id):
+        """Counts the song the host just started as one listen for every
+        person actually in the room right now - the host themselves plus
+        everyone in ListenTogetherViewer - not just the host's own
+        browser (the only one that would otherwise ever reach
+        increment_play_count, since followers never call it - see
+        base.html's th-following-room guard on the 'play' listener)."""
+        from backend.main_app.models import ListenTogetherRoom, ListenTogetherViewer
+        from backend.main_app.shared_utils.listen_together import record_song_play
+
+        try:
+            song = Song.objects.get(pk=song_id)
+        except (Song.DoesNotExist, ValueError, TypeError):
+            return
+
+        record_song_play(self.user, song)
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is not None:
+            for viewer_user in [
+                v.user for v in ListenTogetherViewer.objects.filter(room=room).select_related('user')
+            ]:
+                record_song_play(viewer_user, song)
 
     def _end_room(self):
         # live_rooms.html's own "إنهاء" button - the only thing that
@@ -716,6 +757,20 @@ class ListenTogetherConsumer(WebsocketConsumer):
             # just accumulating follower_joined/left events from
             # whenever THEIR OWN connection happened to open.
             viewer, created = ListenTogetherViewer.objects.get_or_create(room=room, user=self.user)
+            if created:
+                # Joining mid-song still counts as a listen, same as
+                # anyone already in the room got credited for when the
+                # host started it (_credit_room_play) - otherwise
+                # someone who joins seconds after a song starts and
+                # leaves before the next one would never be counted at
+                # all.
+                from backend.main_app.shared_utils.listen_together import (
+                    get_current_song_for_user, record_song_play,
+                )
+
+                current_song = get_current_song_for_user(room.host)
+                if current_song is not None:
+                    record_song_play(self.user, current_song)
             if not created:
                 # get_or_create's own save() only runs (bumping
                 # last_heartbeat via auto_now) on the CREATE path - a
