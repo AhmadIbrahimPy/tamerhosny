@@ -4701,7 +4701,7 @@ msgstr "Live"
 
 #: frontend/website/pages/home.html:292 frontend/website/pages/home.html:769
 msgid "انت مستضيف دلوقتي"
-msgstr "You're Hosting Now"
+msgstr "You Are Hosting Now"
 
 #: frontend/website/pages/home.html:293 frontend/website/pages/home.html:770
 msgid "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي"
@@ -4715,7 +4715,7 @@ msgstr "Listen Together Rooms"
 
 #: frontend/website/pages/home.html:299 frontend/website/pages/home.html:777
 msgid "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد"
-msgstr "No one's listening right now - open a room and be the first"
+msgstr "No one is listening right now - open a room and be the first"
 
 #: frontend/website/pages/home.html:311
 #: frontend/website/pages/songs/trending.html:3
@@ -5001,7 +5001,7 @@ msgstr "Write a comment..."
 
 #: frontend/website/pages/live_rooms.html:2009
 msgid "روم خاصة - محتاج موافقة صاحبها"
-msgstr "Private room - needs the host's approval"
+msgstr "Private room - needs the host to approve"
 
 #: frontend/website/pages/live_rooms.html:2015
 msgid "إلغاء الطلب"
@@ -5773,10 +5773,8 @@ msgid "مفيش كلمات متاحة لهذه الأغنية."
 msgstr "Song Lyrics Timing"
 
 #: frontend/website/pages/user/duet_detail.html:196
-#, fuzzy
-#| msgid "أنت مسجل الدخول بالفعل."
 msgid "تم تحويل الدويتو إلى عام"
-msgstr "You're already signed in."
+msgstr "The duet was made public"
 
 #: frontend/website/pages/user/duet_detail.html:197
 #, fuzzy
