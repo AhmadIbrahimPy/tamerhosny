@@ -2196,6 +2196,12 @@ generic "رومات اسمع معاه" copy.
       top.querySelector('.th-room-top-leave-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         if (window.stopListeningWith) window.stopListeningWith();
+        // stopListeningWith() alone just disconnects the follow socket
+        // and pauses audio in place - fine for its other callers (the
+        // persistent player bar's own exit control, where staying put
+        // makes sense), but this button's whole point is to leave the
+        // room, so it also has to actually navigate away.
+        if (window.thBoostedNavigate) { window.thBoostedNavigate('/'); } else { window.location.href = '/'; }
       });
     }
     top.querySelector('.th-room-viewer-badge').addEventListener('click', function (e) {
