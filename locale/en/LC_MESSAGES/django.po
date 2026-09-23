@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 14:50+0300\n"
+"POT-Creation-Date: 2026-09-23 11:30+0300\n"
 "PO-Revision-Date: 2026-08-25 13:08+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -36,6 +36,10 @@ msgstr "Movies & Series Pages"
 #: backend/ads_app/models.py:33
 msgid "Concerts Pages"
 msgstr "Concerts Pages"
+
+#: backend/ads_app/models.py:34
+msgid "Live Rooms"
+msgstr ""
 
 #: backend/ai_remix_app/models.py:10
 msgid "Vocal Track"
@@ -354,12 +358,12 @@ msgstr "Photo"
 #: frontend/dashboard/pages/song_detail.html:171
 #: frontend/dashboard/pages/studios/all.html:16
 #: frontend/dashboard/pages/user_detail.html:225
-#: frontend/website/base.html:4031
+#: frontend/website/base.html:4253
 msgid "الاسم"
 msgstr "Name"
 
 #: backend/dashboard_app/forms.py:55 backend/dashboard_app/forms.py:114
-#: backend/dashboard_app/views.py:899 backend/main_app/models.py:236
+#: backend/dashboard_app/views.py:899 backend/main_app/models.py:259
 #: frontend/dashboard/pages/_detail_generic.html:140
 #: frontend/dashboard/pages/album_detail.html:123
 #: frontend/dashboard/pages/analytics.html:203
@@ -400,7 +404,7 @@ msgstr "Title (English)"
 msgid "تاريخ الإصدار"
 msgstr "Release Date"
 
-#: backend/dashboard_app/forms.py:76 backend/main_app/models.py:372
+#: backend/dashboard_app/forms.py:76 backend/main_app/models.py:467
 msgid "صورة الغلاف"
 msgstr "Cover Image"
 
@@ -605,7 +609,7 @@ msgid "الدولة"
 msgstr "Country"
 
 #: backend/dashboard_app/forms.py:345 backend/dashboard_app/views.py:1563
-#: backend/main_app/models.py:366
+#: backend/main_app/models.py:461
 #: frontend/website/pages/user/playlist_detail.html:80
 #: frontend/website/pages/user/playlists.html:70
 msgid "الوصف"
@@ -643,7 +647,7 @@ msgstr "To (seconds)"
 msgid "نوع المقطع"
 msgstr "Segment Type"
 
-#: backend/dashboard_app/forms.py:391 backend/main_app/models.py:238
+#: backend/dashboard_app/forms.py:391 backend/main_app/models.py:261
 #: frontend/dashboard/pages/song_detail.html:222
 #: frontend/dashboard/pages/songs/segments.html:194
 msgid "النص"
@@ -731,8 +735,8 @@ msgstr "Username"
 
 #: backend/dashboard_app/forms.py:472
 #: frontend/dashboard/pages/user_detail.html:162
-#: frontend/website/base.html:3998 frontend/website/base.html:4035
-#: frontend/website/base.html:4057
+#: frontend/website/base.html:4220 frontend/website/base.html:4257
+#: frontend/website/base.html:4279
 msgid "البريد الإلكتروني"
 msgstr "Email"
 
@@ -777,29 +781,29 @@ msgstr "The ad links to either an internal item or an external URL, not both."
 msgid "اختر صفحة واحدة على الأقل، أو فعّل \"يظهر في كل الصفحات\"."
 msgstr "Choose at least one page, or enable \"Shown on all pages\"."
 
-#: backend/dashboard_app/views.py:54 backend/website_app/views.py:1370
+#: backend/dashboard_app/views.py:54 backend/website_app/views.py:1410
 #: frontend/dashboard/pages/cinema_venues/all.html:18
 #: frontend/dashboard/partials/sidebar-collapse.html:107
 #: frontend/dashboard/partials/sidebar-collapse.html:232
 #: frontend/website/pages/bio.html:330 frontend/website/partials/footer.html:17
 #: frontend/website/partials/header.html:18
-#: frontend/website/partials/header.html:131
+#: frontend/website/partials/header.html:130
 msgid "الأفلام"
 msgstr "Movies"
 
-#: backend/dashboard_app/views.py:55 backend/website_app/views.py:1374
+#: backend/dashboard_app/views.py:55 backend/website_app/views.py:1414
 #: frontend/dashboard/partials/sidebar-collapse.html:119
 #: frontend/dashboard/partials/sidebar-collapse.html:233
 #: frontend/website/partials/footer.html:18
 #: frontend/website/partials/header.html:19
-#: frontend/website/partials/header.html:132
+#: frontend/website/partials/header.html:131
 msgid "المسلسلات"
 msgstr "TV Series"
 
-#: backend/dashboard_app/views.py:56 backend/website_app/views.py:1378
+#: backend/dashboard_app/views.py:56 backend/website_app/views.py:1418
 #: frontend/dashboard/partials/sidebar-collapse.html:131
 #: frontend/dashboard/partials/sidebar-collapse.html:234
-#: frontend/website/pages/home.html:359
+#: frontend/website/pages/home.html:480
 msgid "الإعلانات والحملات الترويجية"
 msgstr "Commercials & Ad Campaigns"
 
@@ -816,14 +820,14 @@ msgstr "Programs"
 #: frontend/dashboard/pages/people/all.html:8
 #: frontend/dashboard/partials/sidebar-collapse.html:59
 #: frontend/dashboard/partials/sidebar-collapse.html:228
-#: frontend/website/pages/home.html:462
+#: frontend/website/pages/home.html:583
 #: frontend/website/pages/media/detail.html:240
 #: frontend/website/pages/people/list.html:3
 #: frontend/website/pages/people/list.html:8
 #: frontend/website/pages/people/list.html:13
 #: frontend/website/partials/footer.html:25
 #: frontend/website/partials/header.html:22
-#: frontend/website/partials/header.html:135
+#: frontend/website/partials/header.html:134
 msgid "الفنانون"
 msgstr "Artists"
 
@@ -837,10 +841,10 @@ msgstr "Artists"
 #: frontend/website/pages/albums/list.html:3
 #: frontend/website/pages/albums/list.html:8
 #: frontend/website/pages/albums/list.html:13
-#: frontend/website/pages/bio.html:329 frontend/website/pages/home.html:294
+#: frontend/website/pages/bio.html:329 frontend/website/pages/home.html:415
 #: frontend/website/partials/footer.html:16
 #: frontend/website/partials/header.html:17
-#: frontend/website/partials/header.html:130
+#: frontend/website/partials/header.html:129
 msgid "الألبومات"
 msgstr "Albums"
 
@@ -860,7 +864,7 @@ msgstr "Albums"
 #: frontend/website/pages/user/favorites.html:11
 #: frontend/website/partials/footer.html:15
 #: frontend/website/partials/header.html:16
-#: frontend/website/partials/header.html:129
+#: frontend/website/partials/header.html:128
 msgid "الأغاني"
 msgstr "Songs"
 
@@ -878,11 +882,11 @@ msgstr "Movies, Series & Commercials"
 #: frontend/website/pages/concerts/list.html:3
 #: frontend/website/pages/concerts/list.html:8
 #: frontend/website/pages/concerts/list.html:33
-#: frontend/website/pages/home.html:423
+#: frontend/website/pages/home.html:544
 #: frontend/website/pages/user/favorites.html:64
 #: frontend/website/partials/footer.html:23
 #: frontend/website/partials/header.html:21
-#: frontend/website/partials/header.html:134
+#: frontend/website/partials/header.html:133
 msgid "الحفلات"
 msgstr "Concerts"
 
@@ -1320,9 +1324,10 @@ msgstr "Viewer"
 msgid "صورة الملف الشخصي"
 msgstr "Profile Image"
 
-#: backend/main_app/models.py:35 backend/main_app/models.py:261
-#: backend/main_app/models.py:306 backend/main_app/models.py:363
-#: backend/main_app/models.py:425
+#: backend/main_app/models.py:35 backend/main_app/models.py:295
+#: backend/main_app/models.py:333 backend/main_app/models.py:356
+#: backend/main_app/models.py:401 backend/main_app/models.py:458
+#: backend/main_app/models.py:520
 #: frontend/dashboard/pages/daily_guess/day_detail.html:22
 #: frontend/dashboard/pages/song_detail.html:248
 #: frontend/dashboard/pages/song_detail.html:275
@@ -1338,7 +1343,7 @@ msgstr "Content Type"
 msgid "معرف المحتوى"
 msgstr "Content ID"
 
-#: backend/main_app/models.py:50 backend/main_app/models.py:402
+#: backend/main_app/models.py:50 backend/main_app/models.py:497
 msgid "تاريخ الإضافة"
 msgstr "Date Added"
 
@@ -1351,8 +1356,8 @@ msgstr "Likes"
 
 #: backend/main_app/models.py:54 frontend/website/pages/user/favorites.html:3
 #: frontend/website/pages/user/favorites.html:7
-#: frontend/website/partials/header.html:70
-#: frontend/website/partials/header.html:170
+#: frontend/website/partials/header.html:69
+#: frontend/website/partials/header.html:168
 msgid "الإعجاب"
 msgstr "Likes"
 
@@ -1378,27 +1383,29 @@ msgstr "Listen Together Block"
 msgid "ممنوعو اسمع معاه"
 msgstr "Listen Together Blocks"
 
-#: backend/main_app/models.py:110
+#: backend/main_app/models.py:111
 #, fuzzy
 #| msgid "مفتاح الجلسة"
 msgid "صاحب الجروب"
 msgstr "Session key"
 
-#: backend/main_app/models.py:115
+#: backend/main_app/models.py:116
 #, fuzzy
 #| msgid "اسم الإعلان"
 msgid "اسم الجروب"
 msgstr "Ad Name"
 
-#: backend/main_app/models.py:119
+#: backend/main_app/models.py:120
 #, fuzzy
 #| msgid "اسم المستخدم"
 msgid "اسم مولّد"
 msgstr "Username"
 
-#: backend/main_app/models.py:121 frontend/dashboard/pages/song_detail.html:312
+#: backend/main_app/models.py:122 frontend/dashboard/pages/song_detail.html:312
 #: frontend/dashboard/pages/user_detail.html:272
 #: frontend/dashboard/pages/user_detail.html:493
+#: frontend/website/pages/live_rooms.html:1382
+#: frontend/website/pages/live_rooms.html:1955
 #: frontend/website/pages/songs/detail.html:2941
 #: frontend/website/pages/user/duet_detail.html:87
 #: frontend/website/pages/user/duet_detail.html:90
@@ -1410,50 +1417,59 @@ msgstr "Username"
 msgid "عام"
 msgstr "Public"
 
-#: backend/main_app/models.py:126
+#: backend/main_app/models.py:130
+msgid "شغال دلوقتي"
+msgstr "Currently Live"
+
+#: backend/main_app/models.py:135
 #, fuzzy
 #| msgid "نقاط التفاعل"
 msgid "نقاط التكبيس"
 msgstr "Engagement Score"
 
-#: backend/main_app/models.py:128
+#: backend/main_app/models.py:137
 #, fuzzy
 #| msgid "وقت البدء"
 msgid "وقت الإنشاء"
 msgstr "Start Time"
 
-#: backend/main_app/models.py:131 frontend/website/base.html:2220
+#: backend/main_app/models.py:140 frontend/website/base.html:2243
 msgid "جروب اسمع معاه"
 msgstr "Listen Together Room"
 
-#: backend/main_app/models.py:132
+#: backend/main_app/models.py:141
 msgid "جروبات اسمع معاه"
 msgstr "Listen Together Rooms"
 
-#: backend/main_app/models.py:171 frontend/website/base.html:3405
+#: backend/main_app/models.py:189 frontend/website/base.html:3579
 #: frontend/website/pages/user/public_profile.html:195
 msgid "قيد الانتظار"
 msgstr "Pending"
 
-#: backend/main_app/models.py:172
+#: backend/main_app/models.py:190
 msgid "مقبول"
 msgstr "Accepted"
 
-#: backend/main_app/models.py:173
+#: backend/main_app/models.py:191
 msgid "مرفوض"
 msgstr "Rejected"
 
-#: backend/main_app/models.py:179 backend/main_app/models.py:223
+#: backend/main_app/models.py:196
+msgid "انتهت المهلة"
+msgstr "Timed Out"
+
+#: backend/main_app/models.py:202 backend/main_app/models.py:246
+#: backend/main_app/models.py:288 backend/main_app/models.py:326
 msgid "الجروب"
 msgstr "Room"
 
-#: backend/main_app/models.py:186
+#: backend/main_app/models.py:209
 #, fuzzy
 #| msgid "الطاقة"
 msgid "الطالب"
 msgstr "Energy"
 
-#: backend/main_app/models.py:189 frontend/dashboard/pages/ads/all.html:22
+#: backend/main_app/models.py:212 frontend/dashboard/pages/ads/all.html:22
 #: frontend/dashboard/pages/album_detail.html:125
 #: frontend/dashboard/pages/albums/all.html:19
 #: frontend/dashboard/pages/concerts/all.html:17
@@ -1466,52 +1482,77 @@ msgstr "Energy"
 msgid "الحالة"
 msgstr "Status"
 
-#: backend/main_app/models.py:191
+#: backend/main_app/models.py:214
 #, fuzzy
 #| msgid "وقت البدء"
 msgid "وقت الطلب"
 msgstr "Start Time"
 
-#: backend/main_app/models.py:194
+#: backend/main_app/models.py:217 frontend/website/pages/live_rooms.html:2010
+#: frontend/website/pages/live_rooms.html:2013
 #, fuzzy
 #| msgid "تاريخ الانضمام"
 msgid "طلب انضمام"
 msgstr "Join Date"
 
-#: backend/main_app/models.py:195
+#: backend/main_app/models.py:218 frontend/website/pages/live_rooms.html:691
 #, fuzzy
 #| msgid "تاريخ الانضمام"
 msgid "طلبات الانضمام"
 msgstr "Join Date"
 
-#: backend/main_app/models.py:216
+#: backend/main_app/models.py:239
 msgid "رسالة"
 msgstr "Message"
 
-#: backend/main_app/models.py:217
+#: backend/main_app/models.py:240
 msgid "نظام"
 msgstr "System"
 
-#: backend/main_app/models.py:233
+#: backend/main_app/models.py:256
 msgid "الكاتب"
 msgstr "Author"
 
-#: backend/main_app/models.py:240
+#: backend/main_app/models.py:263
 #, fuzzy
 #| msgid "وقت البدء"
 msgid "وقت الإرسال"
 msgstr "Start Time"
 
-#: backend/main_app/models.py:243
+#: backend/main_app/models.py:266
 msgid "تعليق اسمع معاه"
 msgstr "Listen Together Comment"
 
-#: backend/main_app/models.py:244
+#: backend/main_app/models.py:267
 msgid "تعليقات اسمع معاه"
 msgstr "Listen Together Comments"
 
-#: backend/main_app/models.py:268 backend/main_app/models.py:322
-#: backend/main_app/models.py:399
+#: backend/main_app/models.py:298
+msgid "عدد الكبسات"
+msgstr "Tap Count"
+
+#: backend/main_app/models.py:301
+msgid "كبسة اسمع معاه"
+msgstr "Listen Together Tap"
+
+#: backend/main_app/models.py:302
+msgid "كبسات اسمع معاه"
+msgstr "Listen Together Taps"
+
+#: backend/main_app/models.py:336
+msgid "وقت الدخول"
+msgstr "Joined At"
+
+#: backend/main_app/models.py:339
+msgid "متابع اسمع معاه"
+msgstr "Listen Together Viewer"
+
+#: backend/main_app/models.py:340
+msgid "متابعين اسمع معاه"
+msgstr "Listen Together Viewers"
+
+#: backend/main_app/models.py:363 backend/main_app/models.py:417
+#: backend/main_app/models.py:494
 #: frontend/dashboard/pages/album_detail.html:122
 #: frontend/dashboard/pages/daily_guess/day_detail.html:24
 #: frontend/dashboard/pages/person_detail.html:127
@@ -1520,67 +1561,67 @@ msgstr "Listen Together Comments"
 msgid "الأغنية"
 msgstr "Song"
 
-#: backend/main_app/models.py:271 frontend/dashboard/pages/song_detail.html:252
+#: backend/main_app/models.py:366 frontend/dashboard/pages/song_detail.html:252
 #: frontend/dashboard/pages/user_detail.html:179
 msgid "آخر تشغيل"
 msgstr "Last Played"
 
-#: backend/main_app/models.py:272
+#: backend/main_app/models.py:367
 msgid "عدد مرات التشغيل للمستخدم"
 msgstr "User's Play Count"
 
-#: backend/main_app/models.py:281
+#: backend/main_app/models.py:376
 msgid "عدد مرات الاستماع الكامل"
 msgstr "Full Listen Count"
 
-#: backend/main_app/models.py:282
+#: backend/main_app/models.py:377
 msgid "نقاط التفاعل (متناقصة زمنياً)"
 msgstr "Engagement score (decaying over time)"
 
-#: backend/main_app/models.py:283
+#: backend/main_app/models.py:378
 msgid "آخر تحديث للنقاط"
 msgstr "Score Last Updated"
 
-#: backend/main_app/models.py:286
+#: backend/main_app/models.py:381
 msgid "تشغيل مستخدم"
 msgstr "User Play"
 
-#: backend/main_app/models.py:287
+#: backend/main_app/models.py:382
 msgid "تشغيلات المستخدمين"
 msgstr "User Plays"
 
-#: backend/main_app/models.py:315
+#: backend/main_app/models.py:410
 msgid "مفتاح الجلسة"
 msgstr "Session key"
 
-#: backend/main_app/models.py:325
+#: backend/main_app/models.py:420
 msgid "وقت البدء"
 msgstr "Start Time"
 
-#: backend/main_app/models.py:326
+#: backend/main_app/models.py:421
 msgid "آخر نبض"
 msgstr "Last Heartbeat"
 
-#: backend/main_app/models.py:329
+#: backend/main_app/models.py:424
 msgid "مستخدم حالي"
 msgstr "Current Listener"
 
-#: backend/main_app/models.py:330
+#: backend/main_app/models.py:425
 msgid "المستخدمون الحاليون"
 msgstr "Current Listeners"
 
-#: backend/main_app/models.py:365 frontend/website/pages/songs/detail.html:2936
+#: backend/main_app/models.py:460 frontend/website/pages/songs/detail.html:2936
 #: frontend/website/pages/user/playlist_detail.html:76
 #: frontend/website/pages/user/playlists.html:66
 msgid "اسم القائمة"
 msgstr "Playlist Name"
 
-#: backend/main_app/models.py:367 frontend/dashboard/pages/user_detail.html:236
+#: backend/main_app/models.py:462 frontend/dashboard/pages/user_detail.html:236
 #: frontend/website/pages/songs/detail.html:2456
 msgid "عامة"
 msgstr "Public"
 
-#: backend/main_app/models.py:374 backend/main_app/models.py:428
+#: backend/main_app/models.py:469 backend/main_app/models.py:523
 #: frontend/dashboard/pages/song_detail.html:299
 #: frontend/dashboard/pages/user_detail.html:228
 #: frontend/dashboard/pages/user_detail.html:257
@@ -1588,121 +1629,121 @@ msgstr "Public"
 msgid "تاريخ الإنشاء"
 msgstr "Created At"
 
-#: backend/main_app/models.py:375
+#: backend/main_app/models.py:470
 msgid "تاريخ التحديث"
 msgstr "Updated At"
 
-#: backend/main_app/models.py:378
+#: backend/main_app/models.py:473
 msgid "قائمة تشغيل"
 msgstr "Playlist"
 
-#: backend/main_app/models.py:379 frontend/dashboard/pages/user_detail.html:130
+#: backend/main_app/models.py:474 frontend/dashboard/pages/user_detail.html:130
 #: frontend/website/pages/user/playlists.html:3
 #: frontend/website/pages/user/playlists.html:8
-#: frontend/website/partials/header.html:76
-#: frontend/website/partials/header.html:176
+#: frontend/website/partials/header.html:75
+#: frontend/website/partials/header.html:174
 msgid "قوائم التشغيل"
 msgstr "Playlists"
 
-#: backend/main_app/models.py:393 frontend/website/pages/songs/detail.html:2257
+#: backend/main_app/models.py:488 frontend/website/pages/songs/detail.html:2257
 msgid "قائمة التشغيل"
 msgstr "Playlist"
 
-#: backend/main_app/models.py:401 frontend/dashboard/pages/user_detail.html:76
-#: frontend/website/pages/home.html:178
+#: backend/main_app/models.py:496 frontend/dashboard/pages/user_detail.html:76
+#: frontend/website/pages/home.html:262
 #: frontend/website/pages/leaderboard.html:3
 #: frontend/website/pages/leaderboard.html:50
 #: frontend/website/pages/user/public_profile.html:227
 #: frontend/website/pages/user/recap.html:326
-#: frontend/website/partials/header.html:88
+#: frontend/website/partials/header.html:87
 msgid "الترتيب"
 msgstr "Rank"
 
-#: backend/main_app/models.py:405
+#: backend/main_app/models.py:500
 msgid "عنصر قائمة التشغيل"
 msgstr "Playlist Item"
 
-#: backend/main_app/models.py:406
+#: backend/main_app/models.py:501
 msgid "عناصر قوائم التشغيل"
 msgstr "Playlist Items"
 
-#: backend/main_app/models.py:427 frontend/website/base.html:4069
+#: backend/main_app/models.py:522 frontend/website/base.html:4291
 msgid "الكود"
 msgstr "Code"
 
-#: backend/main_app/models.py:429
+#: backend/main_app/models.py:524
 msgid "تاريخ الاستخدام"
 msgstr "Used At"
 
-#: backend/main_app/models.py:432 backend/website_app/auth_views.py:223
+#: backend/main_app/models.py:527 backend/website_app/auth_views.py:223
 msgid "كود استعادة كلمة السر"
 msgstr "Password reset code"
 
-#: backend/main_app/models.py:433
+#: backend/main_app/models.py:528
 msgid "أكواد استعادة كلمة السر"
 msgstr "Password reset codes"
 
-#: backend/main_app/models.py:462 backend/main_app/models.py:503
+#: backend/main_app/models.py:557 backend/main_app/models.py:598
 msgid "صاعد"
 msgstr "Up"
 
-#: backend/main_app/models.py:463 backend/main_app/models.py:504
+#: backend/main_app/models.py:558 backend/main_app/models.py:599
 msgid "هابط"
 msgstr "Down"
 
-#: backend/main_app/models.py:464 backend/main_app/models.py:505
+#: backend/main_app/models.py:559 backend/main_app/models.py:600
 msgid "ثابت"
 msgstr "Same"
 
-#: backend/main_app/models.py:465 backend/main_app/models.py:506
-#: frontend/website/pages/home.html:203
+#: backend/main_app/models.py:560 backend/main_app/models.py:601
+#: frontend/website/pages/home.html:324
 #: frontend/website/pages/player/index.html:1168
 #: frontend/website/pages/songs/detail.html:4251
 #: frontend/website/pages/songs/trending.html:104
 msgid "جديد"
 msgstr "New"
 
-#: backend/main_app/models.py:538
+#: backend/main_app/models.py:633
 msgid "تعاوني (حسب المستمعين)"
 msgstr "Collaborative (by listeners)"
 
-#: backend/main_app/models.py:539
+#: backend/main_app/models.py:634
 msgid "حسب المحتوى"
 msgstr "Content-based"
 
-#: backend/main_app/models.py:612 backend/music_app/models.py:70
+#: backend/main_app/models.py:707 backend/music_app/models.py:70
 msgid "Romantic / رومانسي"
 msgstr "Romantic"
 
-#: backend/main_app/models.py:613 backend/music_app/models.py:71
+#: backend/main_app/models.py:708 backend/music_app/models.py:71
 msgid "Sad & Heartbreak / حزين / دراما / جرح"
 msgstr "Sad & Heartbreak"
 
-#: backend/main_app/models.py:614 backend/music_app/models.py:72
+#: backend/main_app/models.py:709 backend/music_app/models.py:72
 msgid "Energetic & Upbeat / حماسي / طاقة عالية / أفراح"
 msgstr "Energetic & Upbeat"
 
-#: backend/main_app/models.py:615 backend/music_app/models.py:73
+#: backend/main_app/models.py:710 backend/music_app/models.py:73
 msgid "Motivational & Hopeful / تحفيزي / أمل وتفاؤل"
 msgstr "Motivational & Hopeful"
 
-#: backend/main_app/models.py:616 backend/music_app/models.py:74
+#: backend/main_app/models.py:711 backend/music_app/models.py:74
 msgid "Chill & Relaxing / رايق / هادئ للاسترخاء"
 msgstr "Chill & Relaxing"
 
-#: backend/main_app/models.py:617 backend/music_app/models.py:75
+#: backend/main_app/models.py:712 backend/music_app/models.py:75
 msgid "Nostalgic / ذكريات وحنين"
 msgstr "Nostalgic"
 
-#: backend/main_app/models.py:618 backend/music_app/models.py:76
+#: backend/main_app/models.py:713 backend/music_app/models.py:76
 msgid "Confident & Playful / واثق / فريش"
 msgstr "Confident & Playful"
 
-#: backend/main_app/models.py:644 frontend/dashboard/index.html:7
+#: backend/main_app/models.py:739 frontend/dashboard/index.html:7
 msgid "لوحة التحكم"
 msgstr "Dashboard"
 
-#: backend/main_app/models.py:645
+#: backend/main_app/models.py:740
 #, fuzzy
 #| msgid "نجم الموقع"
 msgid "التطبيق / الموقع"
@@ -2067,93 +2108,93 @@ msgstr ""
 msgid "الكود غير صحيح أو منتهي."
 msgstr "The code is incorrect or has expired."
 
-#: backend/website_app/views.py:1849
+#: backend/website_app/views.py:1889
 msgid "شكلك حافظ كل أغاني تامر عن ظهر قلب 🎤"
 msgstr "Looks like you know Tamer's songs by heart 🎤"
 
-#: backend/website_app/views.py:1850
+#: backend/website_app/views.py:1890
 msgid "ده انت من جمهور تامر الأصليين فعلاً 👏"
 msgstr "You're a true Tamer fan for real 👏"
 
-#: backend/website_app/views.py:1851
+#: backend/website_app/views.py:1891
 msgid "عارفها من أول ثانية؟ يبقى انت جمهور VIP"
 msgstr "Knew it from the first second? That makes you a VIP fan"
 
-#: backend/website_app/views.py:1852
+#: backend/website_app/views.py:1892
 msgid "احترافية! مفيش حد يفوتك في أغاني تامر"
 msgstr "Impressive! Nothing gets past you with Tamer's songs"
 
-#: backend/website_app/views.py:1853
+#: backend/website_app/views.py:1893
 msgid "تمام كده، ذوقك في الأغاني موزون"
 msgstr "Spot on, your taste in music is on point"
 
-#: backend/website_app/views.py:1854
+#: backend/website_app/views.py:1894
 msgid "ماشاء الله عليك، ودنك موسيقية فعلاً 🎧"
 msgstr "Wow, you've got a real musical ear 🎧"
 
-#: backend/website_app/views.py:1855
+#: backend/website_app/views.py:1895
 msgid "برافو، ده مستوى المحترفين"
 msgstr "Bravo, that's a pro-level guess"
 
-#: backend/website_app/views.py:1856
+#: backend/website_app/views.py:1896
 msgid "واضح إنك سامع تامر من زمان"
 msgstr "Clearly you've been listening to Tamer for years"
 
-#: backend/website_app/views.py:1857
+#: backend/website_app/views.py:1897
 msgid "يا سلام، خمّنتها بسهولة!"
 msgstr "Wow, you nailed it so easily!"
 
-#: backend/website_app/views.py:1858
+#: backend/website_app/views.py:1898
 msgid "أنت فعلاً من عيلة تامر حسني الكبيرة"
 msgstr "You're really part of Tamer Hosny's big family"
 
-#: backend/website_app/views.py:1859
+#: backend/website_app/views.py:1899
 msgid "حاسس إنك حافظ الألبومات كلها؟ 😄"
 msgstr "Feels like you've memorized every album 😄"
 
-#: backend/website_app/views.py:1860
+#: backend/website_app/views.py:1900
 msgid "جميل جدًا، جايبها من أول محاولة"
 msgstr "Beautiful, got it on the first try"
 
-#: backend/website_app/views.py:1861
+#: backend/website_app/views.py:1901
 msgid "ذوقك الموسيقي عالي جدًا"
 msgstr "Your musical taste is top notch"
 
-#: backend/website_app/views.py:1862
+#: backend/website_app/views.py:1902
 msgid "كده تستاهل تاج جمهور تامر 👑"
 msgstr "You deserve the Tamer fan crown for this 👑"
 
-#: backend/website_app/views.py:1863
+#: backend/website_app/views.py:1903
 msgid "مستحيل حد يغلبك في اللعبة دي"
 msgstr "No one's beating you at this game"
 
-#: backend/website_app/views.py:1864
+#: backend/website_app/views.py:1904
 msgid "شكلك بتسمع تامر كل يوم صح؟"
 msgstr "You listen to Tamer every day, don't you?"
 
-#: backend/website_app/views.py:1865
+#: backend/website_app/views.py:1905
 msgid "عارف كل نغمة قبل ما تخلص 🎶"
 msgstr "You know every tune before it even ends 🎶"
 
-#: backend/website_app/views.py:1866
+#: backend/website_app/views.py:1906
 msgid "برافو عليك، ده تحدي مش سهل وعديته"
 msgstr "Well done, that wasn't an easy one and you nailed it"
 
-#: backend/website_app/views.py:1867
+#: backend/website_app/views.py:1907
 msgid "واثق من نفسك واخترت صح - عاش"
 msgstr "Confident and correct - amazing"
 
-#: backend/website_app/views.py:1868
+#: backend/website_app/views.py:1908
 msgid "ده مستوى تاني خالص، تحفة"
 msgstr "That's a whole different level, superb"
 
-#: backend/website_app/views.py:2708
+#: backend/website_app/views.py:2817
 #, fuzzy
 #| msgid "محدش بيسمعها دلوقتي"
 msgid "لازم تكون بتسمع دلوقتي."
 msgstr "No one is listening right now"
 
-#: backend/website_app/views.py:2801
+#: backend/website_app/views.py:2972
 msgid "اسم المستخدم ده مأخوذ بالفعل."
 msgstr "This username is already taken."
 
@@ -2178,11 +2219,11 @@ msgstr "Tamer Hosny Archive"
 #: frontend/dashboard/partials/pagination_named.html:20
 #: frontend/website/pages/albums/detail.html:183
 #: frontend/website/pages/concerts/detail.html:208
-#: frontend/website/pages/home.html:194 frontend/website/pages/home.html:233
-#: frontend/website/pages/home.html:265 frontend/website/pages/home.html:298
-#: frontend/website/pages/home.html:330 frontend/website/pages/home.html:363
-#: frontend/website/pages/home.html:397 frontend/website/pages/home.html:427
-#: frontend/website/pages/home.html:466
+#: frontend/website/pages/home.html:277 frontend/website/pages/home.html:315
+#: frontend/website/pages/home.html:354 frontend/website/pages/home.html:386
+#: frontend/website/pages/home.html:419 frontend/website/pages/home.html:451
+#: frontend/website/pages/home.html:484 frontend/website/pages/home.html:518
+#: frontend/website/pages/home.html:548 frontend/website/pages/home.html:587
 #: frontend/website/pages/media/detail.html:242
 #: frontend/website/pages/media/detail.html:265
 #: frontend/website/pages/media/detail.html:291
@@ -2211,11 +2252,11 @@ msgstr "Previous"
 #: frontend/dashboard/partials/pagination_named.html:36
 #: frontend/website/pages/albums/detail.html:203
 #: frontend/website/pages/concerts/detail.html:235
-#: frontend/website/pages/home.html:222 frontend/website/pages/home.html:255
-#: frontend/website/pages/home.html:288 frontend/website/pages/home.html:320
-#: frontend/website/pages/home.html:353 frontend/website/pages/home.html:385
-#: frontend/website/pages/home.html:416 frontend/website/pages/home.html:456
-#: frontend/website/pages/home.html:482
+#: frontend/website/pages/home.html:304 frontend/website/pages/home.html:343
+#: frontend/website/pages/home.html:376 frontend/website/pages/home.html:409
+#: frontend/website/pages/home.html:441 frontend/website/pages/home.html:474
+#: frontend/website/pages/home.html:506 frontend/website/pages/home.html:537
+#: frontend/website/pages/home.html:577 frontend/website/pages/home.html:603
 #: frontend/website/pages/media/detail.html:256
 #: frontend/website/pages/media/detail.html:282
 #: frontend/website/pages/media/detail.html:311
@@ -2438,7 +2479,7 @@ msgid ""
 msgstr ""
 
 #: frontend/dashboard/pages/_form_generic.html:93
-#: frontend/dashboard/pages/songs/all.html:157 frontend/website/base.html:2224
+#: frontend/dashboard/pages/songs/all.html:157 frontend/website/base.html:2247
 #: frontend/website/pages/user/public_profile.html:182
 msgid "حفظ"
 msgstr "Save"
@@ -2446,7 +2487,7 @@ msgstr "Save"
 #: frontend/dashboard/pages/_form_generic.html:94
 #: frontend/dashboard/pages/songs/all.html:156
 #: frontend/dashboard/pages/songs/segments.html:441
-#: frontend/website/base.html:2172
+#: frontend/website/base.html:2195
 #: frontend/website/pages/songs/detail.html:2906
 #: frontend/website/pages/user/public_profile.html:185
 msgid "إلغاء"
@@ -3157,9 +3198,9 @@ msgstr ""
 #: frontend/website/pages/daily_guess.html:567
 #: frontend/website/pages/daily_guess_history.html:3
 #: frontend/website/pages/daily_guess_history.html:32
-#: frontend/website/pages/home.html:169
-#: frontend/website/partials/header.html:85
-#: frontend/website/partials/header.html:136
+#: frontend/website/pages/home.html:253
+#: frontend/website/partials/header.html:84
+#: frontend/website/partials/header.html:135
 msgid "خمّن الأغنية"
 msgstr "Guess the Song"
 
@@ -3296,6 +3337,8 @@ msgstr "Processing Status"
 #: frontend/dashboard/pages/song_detail.html:313
 #: frontend/dashboard/pages/user_detail.html:273
 #: frontend/dashboard/pages/user_detail.html:493
+#: frontend/website/pages/live_rooms.html:1383
+#: frontend/website/pages/live_rooms.html:1956
 #: frontend/website/pages/songs/detail.html:2940
 #: frontend/website/pages/user/duet_detail.html:87
 #: frontend/website/pages/user/duet_detail.html:90
@@ -3521,8 +3564,8 @@ msgstr "Listening"
 #: frontend/website/pages/sing-with-tamer/index.html:1564
 #: frontend/website/pages/user/duets.html:3
 #: frontend/website/pages/user/duets.html:192
-#: frontend/website/partials/header.html:82
-#: frontend/website/partials/header.html:182
+#: frontend/website/partials/header.html:81
+#: frontend/website/partials/header.html:180
 msgid "غنيت إيه مع تامر"
 msgstr "What I Sang With Tamer"
 
@@ -3531,7 +3574,7 @@ msgid "جلسات الدخول"
 msgstr "Login Sessions"
 
 #: frontend/dashboard/pages/user_detail.html:150
-#: frontend/website/base.html:2395
+#: frontend/website/base.html:2418
 #: frontend/website/pages/songs/detail.html:2342
 msgid "المساعد الصوتي"
 msgstr "Voice Assistant"
@@ -3676,8 +3719,8 @@ msgid "بحث..."
 msgstr "Search..."
 
 #: frontend/dashboard/partials/_search_filter_bar.html:24
-#: frontend/website/partials/header.html:25
-#: frontend/website/partials/header.html:106
+#: frontend/website/partials/header.html:24
+#: frontend/website/partials/header.html:105
 msgid "بحث"
 msgstr "Search"
 
@@ -3695,7 +3738,7 @@ msgstr "Showing %(start)s–%(end)s of %(total)s"
 #: frontend/dashboard/partials/sidebar-collapse.html:225
 #: frontend/website/base.html:35 frontend/website/pages/home.html:3
 #: frontend/website/partials/header.html:14
-#: frontend/website/partials/header.html:127
+#: frontend/website/partials/header.html:126
 msgid "الرئيسية"
 msgstr "Home"
 
@@ -3737,7 +3780,7 @@ msgstr ""
 #: frontend/website/pages/bio.html:220
 #: frontend/website/pages/concerts/detail.html:10
 #: frontend/website/pages/concerts/list.html:8
-#: frontend/website/pages/home.html:123 frontend/website/pages/home.html:155
+#: frontend/website/pages/home.html:207 frontend/website/pages/home.html:239
 #: frontend/website/pages/media/detail.html:10
 #: frontend/website/pages/media/list.html:8
 #: frontend/website/pages/people/detail.html:10
@@ -3751,207 +3794,193 @@ msgstr ""
 msgid "تامر حسني"
 msgstr "Tamer Hosny"
 
-#: frontend/website/base.html:1277
+#: frontend/website/base.html:1283
 #, fuzzy
 #| msgid "نسخ الرابط"
 msgid "تم نسخ الرابط"
 msgstr "Copy Link"
 
-#: frontend/website/base.html:1836
+#: frontend/website/base.html:1857
 msgid "اضغط في أي مكان عشان الصوت يشتغل"
 msgstr "Tap anywhere to start the audio"
 
-#: frontend/website/base.html:2101
+#: frontend/website/base.html:2128
 msgid "تشغيل الصوت"
 msgstr "Play Audio"
 
-#: frontend/website/base.html:2164
+#: frontend/website/base.html:2187
 #, fuzzy
 #| msgid "أقدر أوقف الأغنية لو قولتلي"
 msgid "الجروب بيسمع الأغنية دي دلوقتي"
 msgstr "I can stop the song if you ask me to"
 
-#: frontend/website/base.html:2166
+#: frontend/website/base.html:2189
 #, fuzzy
 #| msgid "تشغيل الصوت"
 msgid "تشغيل الآن"
 msgstr "Play Audio"
 
-#: frontend/website/base.html:2169
+#: frontend/website/base.html:2192
 #, fuzzy
 #| msgid "أقدر أفتحلك صفحة الأغنية اللي شغالة لو قولتلي"
 msgid "إضافة للقائمة - تشغيل بعد اللي شغال دلوقتي"
 msgstr "I can open the page of the song that is playing if you ask me to"
 
-#: frontend/website/base.html:2208 frontend/website/pages/player/index.html:944
+#: frontend/website/base.html:2231 frontend/website/pages/player/index.html:944
 #: frontend/website/pages/songs/detail.html:2273
 #: frontend/website/pages/songs/detail.html:2572
 #: frontend/website/pages/songs/detail.html:3006
 msgid "الكلمات"
 msgstr "Lyrics"
 
-#: frontend/website/base.html:2216
+#: frontend/website/base.html:2239
 msgid "إعدادات جروب اسمع معاه"
 msgstr "Listen Together Room Settings"
 
-#: frontend/website/base.html:2221
-#, fuzzy
-#| msgid "رابط الحجز (اختياري)"
+#: frontend/website/base.html:2244
 msgid "اسم الجروب (اختياري)"
-msgstr "Booking Link (optional)"
+msgstr "Group Name (optional)"
 
-#: frontend/website/base.html:2222
+#: frontend/website/base.html:2245
 msgid "عام - أي حد يقدر ينضم"
 msgstr "Public - anyone can join"
 
-#: frontend/website/base.html:2223
+#: frontend/website/base.html:2246
 msgid "خاص - محتاج موافقتك"
 msgstr "Private - needs your approval"
 
-#: frontend/website/base.html:2420
+#: frontend/website/base.html:2443
 msgid "أنا هنا"
 msgstr "I'm here"
 
-#: frontend/website/base.html:2429 frontend/website/base.html:5901
+#: frontend/website/base.html:2452 frontend/website/base.html:6187
 msgid "جرّب المساعد الصوتي!"
 msgstr "Try the voice assistant!"
 
-#: frontend/website/base.html:2434
+#: frontend/website/base.html:2457
 msgid "فعّل الميكروفون وقول"
 msgstr "Turn on the mic and say"
 
-#: frontend/website/base.html:2436
+#: frontend/website/base.html:2459
 msgid "وقولنا عايز تسمع إيه"
 msgstr "then tell us what you want to hear"
 
-#: frontend/website/base.html:2439
+#: frontend/website/base.html:2462
 msgid "فعّل الميكروفون"
 msgstr "Enable microphone"
 
-#: frontend/website/base.html:2441 frontend/website/base.html:3976
-#: frontend/website/base.html:5839 frontend/website/pages/player/index.html:981
+#: frontend/website/base.html:2464 frontend/website/base.html:4198
+#: frontend/website/base.html:6125 frontend/website/pages/player/index.html:981
 #: frontend/website/pages/songs/detail.html:2837
 #: frontend/website/pages/songs/detail.html:2920
 #: frontend/website/pages/songs/detail.html:2957
 #: frontend/website/pages/songs/detail.html:3007
-#: frontend/website/partials/header.html:211
+#: frontend/website/partials/header.html:209
 msgid "إغلاق"
 msgstr "Close"
 
-#: frontend/website/base.html:3001 frontend/website/base.html:3371
-#: frontend/website/base.html:3450
+#: frontend/website/base.html:3072 frontend/website/base.html:3524
+#: frontend/website/base.html:3631
 msgid "بتسمع مع"
 msgstr "Listening with"
 
-#: frontend/website/base.html:3002
+#: frontend/website/base.html:3073
 msgid "خروج"
 msgstr "Leave"
 
-#: frontend/website/base.html:3088
-msgid "امنع"
-msgstr "Block"
-
-#: frontend/website/base.html:3103
+#: frontend/website/base.html:3190
 msgid "عايز ينضم لجروبك"
 msgstr "wants to join your room"
 
-#: frontend/website/base.html:3127
+#: frontend/website/base.html:3231 frontend/website/pages/live_rooms.html:2507
 msgid "قبول"
 msgstr "Accept"
 
-#: frontend/website/base.html:3128
-#, fuzzy
-#| msgid "حفظ"
+#: frontend/website/base.html:3232 frontend/website/pages/live_rooms.html:2508
 msgid "رفض"
-msgstr "Save"
+msgstr "Reject"
 
-#: frontend/website/base.html:3227 frontend/website/pages/live_rooms.html:376
-#: frontend/website/pages/live_rooms.html:942
+#: frontend/website/base.html:3331 frontend/website/pages/live_rooms.html:665
+#: frontend/website/pages/live_rooms.html:1872
 msgid "تصفح"
 msgstr "Browse"
 
-#: frontend/website/base.html:3227
-#, fuzzy
-#| msgid "عرض الكل"
+#: frontend/website/base.html:3331
 msgid "عرض الروم"
-msgstr "See All"
+msgstr "View Room"
 
-#: frontend/website/base.html:3240
-#, fuzzy
-#| msgid "بيسمعها دلوقتي"
+#: frontend/website/base.html:3344
 msgid "بتستضيف جروب دلوقتي"
-msgstr "listening right now"
+msgstr "Hosting a Room Now"
 
-#: frontend/website/base.html:3284
+#: frontend/website/base.html:3388
 #, fuzzy
 #| msgid "الأغنية الأصلية"
 msgid "هتشتغل بعد الأغنية الحالية"
 msgstr "Original Song"
 
-#: frontend/website/base.html:3313
+#: frontend/website/base.html:3428
 #, fuzzy
 #| msgid "جاري الإنشاء..."
 msgid "تم الحفظ"
 msgstr "Creating..."
 
-#: frontend/website/base.html:3317 frontend/website/base.html:3321
+#: frontend/website/base.html:3432 frontend/website/base.html:3436
 #, fuzzy
 #| msgid "حدث خطأ"
 msgid "حصل خطأ"
 msgstr "Something went wrong"
 
-#: frontend/website/base.html:3366 frontend/website/base.html:3445
+#: frontend/website/base.html:3519 frontend/website/base.html:3626
 #, fuzzy
 #| msgid "عدد مرات الاستماع الكامل"
 msgid "إيقاف الاستماع المشترك"
 msgstr "Full Listen Count"
 
-#: frontend/website/base.html:3409
+#: frontend/website/base.html:3588
 msgid "تم رفض طلب الانضمام"
 msgstr "Join request rejected"
 
-#: frontend/website/base.html:3416
+#: frontend/website/base.html:3595
 #: frontend/website/pages/user/public_profile.html:201
 msgid "اطلب الانضمام"
 msgstr "Request to Join"
 
-#: frontend/website/base.html:3441
+#: frontend/website/base.html:3622
 msgid "اتقبلت في الجروب - يلا اسمع"
 msgstr "You are in - start listening"
 
-#: frontend/website/base.html:3505 frontend/website/pages/live_rooms.html:3
-#: frontend/website/pages/live_rooms.html:1021
+#: frontend/website/base.html:3699 frontend/website/pages/live_rooms.html:2088
 #: frontend/website/pages/user/public_profile.html:207
-#: frontend/website/partials/header.html:23
-#: frontend/website/partials/header.html:137
 msgid "اسمع معاه"
 msgstr "Listen Together"
 
-#: frontend/website/base.html:3560
+#: frontend/website/base.html:3762
 #, fuzzy
 #| msgid "الإشعارات متمنوعة من إعدادات المتصفح"
 msgid "المستخدم ده منعك من الاستماع المشترك"
 msgstr "Notifications are blocked in your browser settings"
 
-#: frontend/website/base.html:3575 frontend/website/pages/live_rooms.html:788
-#: frontend/website/pages/live_rooms.html:792
+#: frontend/website/base.html:3777 frontend/website/pages/live_rooms.html:1144
+#: frontend/website/pages/live_rooms.html:1557
+#: frontend/website/pages/live_rooms.html:1561
 msgid "الروم اتقفلت"
 msgstr "The room has closed"
 
-#: frontend/website/base.html:3765
+#: frontend/website/base.html:3977
 #: frontend/website/pages/songs/detail.html:4301
 msgid "سجل دخولك عشان تقدر تعمل إعجاب"
 msgstr "Sign in to like this"
 
-#: frontend/website/base.html:3787
+#: frontend/website/base.html:3999
 msgid "تمت الإضافة إلى المفضلة"
 msgstr "Added to favorites"
 
-#: frontend/website/base.html:3787
+#: frontend/website/base.html:3999
 msgid "تمت الإزالة من المفضلة"
 msgstr "Removed from favorites"
 
-#: frontend/website/base.html:3794
+#: frontend/website/base.html:4006
 #: frontend/website/pages/songs/detail.html:4482
 #: frontend/website/pages/songs/detail.html:4488
 #: frontend/website/pages/songs/detail.html:4504
@@ -3964,227 +3993,227 @@ msgstr "Removed from favorites"
 msgid "حدث خطأ"
 msgstr "Something went wrong"
 
-#: frontend/website/base.html:3986 frontend/website/base.html:4046
+#: frontend/website/base.html:4208 frontend/website/base.html:4268
 #: frontend/website/pages/player/index.html:1210
 #: frontend/website/pages/songs/detail.html:4293
 msgid "تسجيل الدخول"
 msgstr "Log In"
 
-#: frontend/website/base.html:3987 frontend/website/base.html:4321
+#: frontend/website/base.html:4209 frontend/website/base.html:4607
 msgid "سجل دخولك عشان تقدر تسمع وتحفظ المفضلة عندك"
 msgstr "Sign in to listen and save your favorites"
 
-#: frontend/website/base.html:3991 frontend/website/base.html:4020
+#: frontend/website/base.html:4213 frontend/website/base.html:4242
 msgid "المتابعة بجوجل"
 msgstr "Continue with Google"
 
-#: frontend/website/base.html:3994 frontend/website/base.html:4023
+#: frontend/website/base.html:4216 frontend/website/base.html:4245
 msgid "أو"
 msgstr "Or"
 
-#: frontend/website/base.html:4002 frontend/website/base.html:4039
+#: frontend/website/base.html:4224 frontend/website/base.html:4261
 msgid "كلمة السر"
 msgstr "Password"
 
-#: frontend/website/base.html:4006
+#: frontend/website/base.html:4228
 msgid "دخول"
 msgstr "Sign in"
 
-#: frontend/website/base.html:4009
+#: frontend/website/base.html:4231
 msgid "نسيت كلمة السر؟"
 msgstr "Forgot password?"
 
-#: frontend/website/base.html:4010
+#: frontend/website/base.html:4232
 msgid "مش عندي حساب"
 msgstr "I don't have an account"
 
-#: frontend/website/base.html:4010 frontend/website/base.html:4015
+#: frontend/website/base.html:4232 frontend/website/base.html:4237
 msgid "إنشاء حساب"
 msgstr "Create account"
 
-#: frontend/website/base.html:4016
+#: frontend/website/base.html:4238
 msgid "انضم لأرشيف تامر حسني"
 msgstr "Join the Tamer Hosny Archive"
 
-#: frontend/website/base.html:4043
+#: frontend/website/base.html:4265
 msgid "إنشاء الحساب"
 msgstr "Create Account"
 
-#: frontend/website/base.html:4046
+#: frontend/website/base.html:4268
 msgid "عندي حساب بالفعل"
 msgstr "I already have an account"
 
-#: frontend/website/base.html:4051
+#: frontend/website/base.html:4273
 msgid "استعادة كلمة السر"
 msgstr "Reset Password"
 
-#: frontend/website/base.html:4054
+#: frontend/website/base.html:4276
 msgid "اكتب بريدك الإلكتروني وهنبعتلك كود"
 msgstr "Enter your email and we'll send you a code"
 
-#: frontend/website/base.html:4061
+#: frontend/website/base.html:4283
 msgid "إرسال الكود"
 msgstr "Send Code"
 
-#: frontend/website/base.html:4066
+#: frontend/website/base.html:4288
 msgid "اكتب الكود اللي وصلك على بريدك"
 msgstr "Enter the code sent to your email"
 
-#: frontend/website/base.html:4073
+#: frontend/website/base.html:4295
 msgid "تأكيد"
 msgstr "Confirm"
 
-#: frontend/website/base.html:4078
+#: frontend/website/base.html:4300
 msgid "اكتب كلمة السر الجديدة"
 msgstr "Enter your new password"
 
-#: frontend/website/base.html:4081
+#: frontend/website/base.html:4303
 msgid "كلمة السر الجديدة"
 msgstr "New Password"
 
-#: frontend/website/base.html:4085
+#: frontend/website/base.html:4307
 msgid "حفظ كلمة السر"
 msgstr "Save Password"
 
-#: frontend/website/base.html:4089
+#: frontend/website/base.html:4311
 msgid "رجوع لتسجيل الدخول"
 msgstr "Back to Log In"
 
-#: frontend/website/base.html:4397 frontend/website/base.html:4435
-#: frontend/website/base.html:4452 frontend/website/base.html:4470
-#: frontend/website/base.html:4485
+#: frontend/website/base.html:4683 frontend/website/base.html:4721
+#: frontend/website/base.html:4738 frontend/website/base.html:4756
+#: frontend/website/base.html:4771
 msgid "حدث خطأ، حاول تاني"
 msgstr "Something went wrong, try again"
 
-#: frontend/website/base.html:4518
+#: frontend/website/base.html:4804
 msgid "تسجيل الدخول بجوجل مش متاح دلوقتي، جرب بالبريد الإلكتروني"
 msgstr "Google sign-in isn't available right now, try email instead"
 
-#: frontend/website/base.html:4863
+#: frontend/website/base.html:5149
 msgid "أنا هنا... قول أمرك"
 msgstr "I am here... go ahead"
 
-#: frontend/website/base.html:4873
+#: frontend/website/base.html:5159
 #, fuzzy
 #| msgid "أووبس، معنديش حاجة أشغلها دلوقتي"
 msgid "أووبس، مسمعتش حاجة - قول TH تاني"
 msgstr "Oops, I have nothing to play right now"
 
-#: frontend/website/base.html:4886
+#: frontend/website/base.html:5172
 msgid "وقفت الأغنية"
 msgstr "Paused the song"
 
-#: frontend/website/base.html:4894
+#: frontend/website/base.html:5180
 msgid "تمام، كملنا"
 msgstr "Okay, resumed"
 
-#: frontend/website/base.html:4931
+#: frontend/website/base.html:5217
 msgid "مفيش أغنية شغالة عشان أعمللها لايك"
 msgstr "No song is playing to like"
 
-#: frontend/website/base.html:4968
+#: frontend/website/base.html:5254
 msgid "تمام ❤️"
 msgstr "Done ❤️"
 
-#: frontend/website/base.html:4982 frontend/website/base.html:5015
+#: frontend/website/base.html:5268 frontend/website/base.html:5301
 msgid "مفيش أغنية شغالة دلوقتي"
 msgstr "No song is playing right now"
 
-#: frontend/website/base.html:4985
+#: frontend/website/base.html:5271
 msgid "تمام، بافتحلك صفحتها"
 msgstr "Okay, opening its page"
 
-#: frontend/website/base.html:5005 frontend/website/base.html:5327
+#: frontend/website/base.html:5291 frontend/website/base.html:5613
 msgid "تمام"
 msgstr "Okay"
 
-#: frontend/website/base.html:5007
+#: frontend/website/base.html:5293
 msgid "افتح صفحة الأغنية أو صفحة البلاير الأول عشان تقدر تشوف مين بيسمع"
 msgstr "Open the song page or the player page first to see who is listening"
 
-#: frontend/website/base.html:5020
+#: frontend/website/base.html:5306
 msgid "تمام، جريت شوية ⏩"
 msgstr "Okay, skipped ahead ⏩"
 
-#: frontend/website/base.html:5021
+#: frontend/website/base.html:5307
 msgid "تمام، رجعت شوية ⏪"
 msgstr "Okay, rewound a bit ⏪"
 
-#: frontend/website/base.html:5028
+#: frontend/website/base.html:5314
 msgid "وأنا كمان بحبك ❤️"
 msgstr "Love you too ❤️"
 
-#: frontend/website/base.html:5029
+#: frontend/website/base.html:5315
 msgid "تامر حسني بيحبك برضو يا قمر ❤️"
 msgstr "Tamer Hosny loves you too ❤️"
 
-#: frontend/website/base.html:5030
+#: frontend/website/base.html:5316
 msgid "ربنا يخليك ليا يا حبيبي ❤️"
 msgstr "Bless you too, my dear ❤️"
 
-#: frontend/website/base.html:5104
+#: frontend/website/base.html:5390
 msgid "بدور على الأغنية..."
 msgstr "Looking for the song..."
 
-#: frontend/website/base.html:5119
+#: frontend/website/base.html:5405
 msgid "أووبس، مش لاقي أغنية بالاسم ده"
 msgstr "Oops, could not find a song by that name"
 
-#: frontend/website/base.html:5153 frontend/website/base.html:5179
-#: frontend/website/base.html:5208 frontend/website/base.html:5238
-#: frontend/website/base.html:5270
+#: frontend/website/base.html:5439 frontend/website/base.html:5465
+#: frontend/website/base.html:5494 frontend/website/base.html:5524
+#: frontend/website/base.html:5556
 msgid "حصل خطأ، حاول تاني"
 msgstr "Something went wrong, try again"
 
-#: frontend/website/base.html:5160
+#: frontend/website/base.html:5446
 msgid "بدور على أغاني تناسب مزاجك..."
 msgstr "Looking for songs that match your mood..."
 
-#: frontend/website/base.html:5166
+#: frontend/website/base.html:5452
 msgid "أووبس، مش لاقي أغاني للمزاج ده"
 msgstr "Oops, could not find songs for that mood"
 
-#: frontend/website/base.html:5189
+#: frontend/website/base.html:5475
 #, fuzzy
 #| msgid "بدور على الأغنية..."
 msgid "بدور على الألبوم..."
 msgstr "Looking for the song..."
 
-#: frontend/website/base.html:5195
+#: frontend/website/base.html:5481
 #, fuzzy
 #| msgid "أووبس، مش لاقي أغنية بالاسم ده"
 msgid "أووبس، مش لاقي الألبوم ده"
 msgstr "Oops, could not find a song by that name"
 
-#: frontend/website/base.html:5218
+#: frontend/website/base.html:5504
 #, fuzzy
 #| msgid "بدور على حاجة تعجبك..."
 msgid "بدور على حاجة..."
 msgstr "Looking for something you will like..."
 
-#: frontend/website/base.html:5225
+#: frontend/website/base.html:5511
 #, fuzzy
 #| msgid "أووبس، مش لاقي أغاني للمزاج ده"
 msgid "أووبس، مش لاقي أغاني تناسب الفترة دي"
 msgstr "Oops, could not find songs for that mood"
 
-#: frontend/website/base.html:5248
+#: frontend/website/base.html:5534
 msgid "بدور على حاجة تعجبك..."
 msgstr "Looking for something you will like..."
 
-#: frontend/website/base.html:5253
+#: frontend/website/base.html:5539
 msgid "أووبس، معنديش حاجة أشغلها دلوقتي"
 msgstr "Oops, I have nothing to play right now"
 
-#: frontend/website/base.html:5348 frontend/website/base.html:5964
+#: frontend/website/base.html:5634 frontend/website/base.html:6250
 msgid "بفكر..."
 msgstr "Thinking..."
 
-#: frontend/website/base.html:5365 frontend/website/base.html:5372
+#: frontend/website/base.html:5651 frontend/website/base.html:5658
 msgid "أووبس، مش لاقيها! جرب تاني"
 msgstr "Oops, could not find that! Try again"
 
-#: frontend/website/base.html:5612 frontend/website/base.html:5945
+#: frontend/website/base.html:5898 frontend/website/base.html:6231
 msgid ""
 "الميكروفون متبلوك من إعدادات المتصفح - افتح إعدادات الموقع 🔒 جنب شريط "
 "العنوان وفعّله يدوي، وبعدين جرب تاني"
@@ -4192,92 +4221,92 @@ msgstr ""
 "Microphone access is blocked in your browser settings - open the site "
 "settings 🔒 next to the address bar, allow it manually, then try again"
 
-#: frontend/website/base.html:5670 frontend/website/base.html:5981
+#: frontend/website/base.html:5956 frontend/website/base.html:6267
 msgid "مش قادر أردّ عليك دلوقتي - الإنترنت ضعيف 📶"
 msgstr "Cannot respond right now - your connection is too weak 📶"
 
-#: frontend/website/base.html:5703
+#: frontend/website/base.html:5989
 msgid "حصلت مشكلة في المايكروفون - جرب تفصله وتشغله تاني"
 msgstr "There is a microphone issue - try turning it off and back on"
 
-#: frontend/website/base.html:5835
+#: frontend/website/base.html:6121
 msgid "ثبّت التطبيق: من زر المشاركة، اختر «إضافة إلى الشاشة الرئيسية»"
 msgstr ""
 
-#: frontend/website/base.html:5836
+#: frontend/website/base.html:6122
 msgid "ثبّت الموقع كتطبيق على شاشتك الرئيسية"
 msgstr ""
 
-#: frontend/website/base.html:5838
+#: frontend/website/base.html:6124
 msgid "تثبيت"
 msgstr ""
 
-#: frontend/website/base.html:5902
+#: frontend/website/base.html:6188
 msgid "اضغط على أيقونة الميكروفون وقول اللي عايزه"
 msgstr "Tap the microphone icon and say what you want"
 
-#: frontend/website/base.html:5960
+#: frontend/website/base.html:6246
 #, fuzzy
 #| msgid "أووبس، مش لاقيها! جرب تاني"
 msgid "أووبس، مسمعتش حاجة - جرب تاني"
 msgstr "Oops, could not find that! Try again"
 
-#: frontend/website/base.html:5988
+#: frontend/website/base.html:6274
 msgid "بسمعك... قول اللي عايزه"
 msgstr "Listening... go ahead"
 
-#: frontend/website/base.html:6013 frontend/website/base.html:6067
+#: frontend/website/base.html:6299 frontend/website/base.html:6353
 msgid "سجل دخولك عشان تقدر تستخدم المساعد الصوتي"
 msgstr "Sign in to use the voice assistant"
 
-#: frontend/website/base.html:6078
+#: frontend/website/base.html:6364
 #, fuzzy
 #| msgid "المساعد الصوتي - قول TH"
 msgid "المساعد الصوتي شغال - قول TH وقولنا عايز تسمع إيه"
 msgstr "Voice assistant - say TH"
 
-#: frontend/website/base.html:6142
+#: frontend/website/base.html:6428
 msgid "أقدر أوقف الأغنية لو قولتلي"
 msgstr "I can stop the song if you ask me to"
 
-#: frontend/website/base.html:6143
+#: frontend/website/base.html:6429
 msgid "أقدر أعمل لايك للأغنية اللي شغالة لو قولتلي"
 msgstr "I can like the song that is playing if you ask me to"
 
-#: frontend/website/base.html:6144
+#: frontend/website/base.html:6430
 msgid "قولي اللي بعدها وهغيّر الأغنية"
 msgstr "Say the next one and I will change the song"
 
-#: frontend/website/base.html:6145
+#: frontend/website/base.html:6431
 msgid "قولي اقترح أغنية لو مش عارف تسمع إيه"
 msgstr "Say suggest a song if you do not know what to listen to"
 
-#: frontend/website/base.html:6146
+#: frontend/website/base.html:6432
 msgid "قولي شغل أغنية واسمها وهجيبهالك"
 msgstr "Say play a song and its name and I will bring it to you"
 
-#: frontend/website/base.html:6147
+#: frontend/website/base.html:6433
 msgid "أقدر أفتحلك صفحة الأغنية اللي شغالة لو قولتلي"
 msgstr "I can open the page of the song that is playing if you ask me to"
 
-#: frontend/website/base.html:6149
+#: frontend/website/base.html:6435
 msgid "قولي اقترح أغنية لو عايز تسمع حاجة دلوقتي"
 msgstr "Say suggest a song if you want to hear something right now"
 
-#: frontend/website/base.html:6273
+#: frontend/website/base.html:6559
 msgid "الإشعارات مفعّلة"
 msgstr "Notifications enabled"
 
-#: frontend/website/base.html:6275
+#: frontend/website/base.html:6561
 msgid "الإشعارات متمنوعة من إعدادات المتصفح"
 msgstr "Notifications are blocked in your browser settings"
 
-#: frontend/website/base.html:6276 frontend/website/partials/header.html:34
-#: frontend/website/partials/header.html:110
+#: frontend/website/base.html:6562 frontend/website/partials/header.html:33
+#: frontend/website/partials/header.html:109
 msgid "فعّل الإشعارات"
 msgstr "Enable Notifications"
 
-#: frontend/website/base.html:6299
+#: frontend/website/base.html:6585
 msgid "تم تفعيل الإشعارات"
 msgstr "Notifications enabled"
 
@@ -4300,7 +4329,7 @@ msgstr "Album"
 #: frontend/website/pages/albums/detail.html:120
 #: frontend/website/pages/concerts/detail.html:115
 #: frontend/website/pages/concerts/detail.html:157
-#: frontend/website/pages/live_rooms.html:824
+#: frontend/website/pages/live_rooms.html:1899
 #: frontend/website/pages/media/detail.html:107
 #: frontend/website/pages/media/detail.html:154
 #: frontend/website/pages/people/detail.html:33
@@ -4327,10 +4356,11 @@ msgstr "Other Albums"
 
 #: frontend/website/pages/albums/detail.html:179
 #: frontend/website/pages/concerts/detail.html:204
-#: frontend/website/pages/home.html:191 frontend/website/pages/home.html:230
-#: frontend/website/pages/home.html:262 frontend/website/pages/home.html:295
-#: frontend/website/pages/home.html:327 frontend/website/pages/home.html:360
-#: frontend/website/pages/home.html:424 frontend/website/pages/home.html:463
+#: frontend/website/pages/home.html:274 frontend/website/pages/home.html:312
+#: frontend/website/pages/home.html:351 frontend/website/pages/home.html:383
+#: frontend/website/pages/home.html:416 frontend/website/pages/home.html:448
+#: frontend/website/pages/home.html:481 frontend/website/pages/home.html:545
+#: frontend/website/pages/home.html:584
 #: frontend/website/pages/people/detail.html:60
 #: frontend/website/pages/people/detail.html:92
 #: frontend/website/pages/people/detail.html:125
@@ -4531,7 +4561,7 @@ msgid "القادمة"
 msgstr "Menu"
 
 #: frontend/website/pages/concerts/list.html:40
-#: frontend/website/pages/live_rooms.html:867
+#: frontend/website/pages/live_rooms.html:1793
 msgid "السابقة"
 msgstr "Previous"
 
@@ -4628,15 +4658,15 @@ msgid "لسه ما لعبتش خمّن الأغنية"
 msgstr "You haven't played Guess the Song yet"
 
 #: frontend/website/pages/daily_guess_history.html:59
-#: frontend/website/pages/home.html:172
+#: frontend/website/pages/home.html:256
 msgid "العب دلوقتي"
 msgstr "Play now"
 
-#: frontend/website/pages/home.html:129 frontend/website/pages/home.html:229
+#: frontend/website/pages/home.html:213 frontend/website/pages/home.html:350
 msgid "أحدث الأغاني"
 msgstr "Latest Songs"
 
-#: frontend/website/pages/home.html:156
+#: frontend/website/pages/home.html:240
 #: frontend/website/partials/footer.html:10
 msgid ""
 "الأرشيف الفني الكامل — الأفلام، المسلسلات، الأغاني، الألبومات، الإعلانات "
@@ -4645,64 +4675,94 @@ msgstr ""
 "Tamer Hosny's complete artistic archive — movies, series, songs, albums, "
 "commercials and concerts."
 
-#: frontend/website/pages/home.html:170
+#: frontend/website/pages/home.html:254
 msgid "أغنية جديدة كل يوم - خمّن اسمها من 3 اختيارات"
 msgstr "A new song every day - guess its name from 3 choices"
 
-#: frontend/website/pages/home.html:179
+#: frontend/website/pages/home.html:263
 msgid "اكسب نقط وشوف ترتيبك بين الجمهور"
 msgstr "Earn points and see your rank among fans"
 
-#: frontend/website/pages/home.html:181
+#: frontend/website/pages/home.html:265
 msgid "شوف ترتيبك"
 msgstr "See your rank"
 
-#: frontend/website/pages/home.html:190
+#: frontend/website/pages/home.html:273
+msgid "رومات اسمع معاه دلوقتي"
+msgstr "Listen Together Rooms Now"
+
+#: frontend/website/pages/home.html:283 frontend/website/pages/home.html:755
+#: frontend/website/pages/live_rooms.html:1603
+#: frontend/website/pages/live_rooms.html:1746
+#: frontend/website/pages/player/index.html:980
+#: frontend/website/pages/songs/detail.html:2956
+msgid "مباشر"
+msgstr "Live"
+
+#: frontend/website/pages/home.html:292 frontend/website/pages/home.html:769
+msgid "انت مستضيف دلوقتي"
+msgstr "You're Hosting Now"
+
+#: frontend/website/pages/home.html:293 frontend/website/pages/home.html:770
+msgid "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي"
+msgstr ""
+
+#: frontend/website/pages/home.html:298 frontend/website/pages/home.html:776
+#: frontend/website/pages/live_rooms.html:13
+#: frontend/website/pages/live_rooms.html:19
+msgid "رومات اسمع معاه"
+msgstr "Listen Together Rooms"
+
+#: frontend/website/pages/home.html:299 frontend/website/pages/home.html:777
+msgid "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد"
+msgstr "No one's listening right now - open a room and be the first"
+
+#: frontend/website/pages/home.html:311
 #: frontend/website/pages/songs/trending.html:3
 #: frontend/website/pages/songs/trending.html:77
 msgid "ترند دلوقتي"
 msgstr "Trending Now"
 
-#: frontend/website/pages/home.html:252
+#: frontend/website/pages/home.html:373
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد أغاني متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:261
+#: frontend/website/pages/home.html:382
 msgid "أحدث الأفلام"
 msgstr "Latest Movies"
 
-#: frontend/website/pages/home.html:285
+#: frontend/website/pages/home.html:406
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد أفلام متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:317
+#: frontend/website/pages/home.html:438
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد ألبومات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:326
+#: frontend/website/pages/home.html:447
 msgid "أحدث المسلسلات"
 msgstr "Latest TV Series"
 
-#: frontend/website/pages/home.html:350
+#: frontend/website/pages/home.html:471
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد مسلسلات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:382
+#: frontend/website/pages/home.html:503
 #: frontend/website/pages/media/commercials_list.html:29
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد إعلانات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:394 frontend/website/pages/home.html:411
+#: frontend/website/pages/home.html:515 frontend/website/pages/home.html:532
 #: frontend/website/pages/sing-with-tamer/index.html:1058
 #: frontend/website/pages/songs/detail.html:2293
 #: frontend/website/pages/songs/detail.html:2710
@@ -4710,13 +4770,13 @@ msgstr "No data available yet"
 msgid "غني مع تامر"
 msgstr "Sing With Tamer"
 
-#: frontend/website/pages/home.html:453
+#: frontend/website/pages/home.html:574
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا توجد حفلات متاحة حالياً"
 msgstr "No data available yet"
 
-#: frontend/website/pages/home.html:479
+#: frontend/website/pages/home.html:600
 #, fuzzy
 #| msgid "لا توجد بيانات متاحة حالياً"
 msgid "لا يوجد فنانون متاحون حالياً"
@@ -4803,107 +4863,173 @@ msgstr "points"
 msgid "لسه مفيش نقط اتسجلت"
 msgstr "No points recorded yet"
 
-#: frontend/website/pages/live_rooms.html:6
-msgid "جروبات سماع مباشرة - انضم لحد بيسمع دلوقتي واسمعوا مع بعض."
-msgstr ""
-"Live listening rooms - join someone who's listening now and listen together."
+#: frontend/website/pages/live_rooms.html:13
+#: frontend/website/pages/live_rooms.html:19
+#, python-format
+msgid "استمع مع %(host)s دلوقتي"
+msgstr "Listen with %(host)s Now"
 
-#: frontend/website/pages/live_rooms.html:369
+#: frontend/website/pages/live_rooms.html:16
+#: frontend/website/pages/live_rooms.html:21
+#, python-format
+msgid ""
+"%(host)s بيسمع %(song)s دلوقتي في رومات اسمع معاه - انضم واسمعوا مع بعض لايف."
+msgstr ""
+
+#: frontend/website/pages/live_rooms.html:16
+#: frontend/website/pages/live_rooms.html:21
+msgid "رومات اسمع معاه - انضم لحد بيسمع دلوقتي واسمعوا مع بعض لايف."
+msgstr "Listen Together rooms - join someone who's listening now and listen together live."
+
+#: frontend/website/pages/live_rooms.html:658
 msgid "مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد."
 msgstr "No one's listening right now - be the first to start."
 
-#: frontend/website/pages/live_rooms.html:378
+#: frontend/website/pages/live_rooms.html:667
 #, fuzzy
 #| msgid "تعديل القائمة"
 msgid "تحديث القائمة"
 msgstr "Edit Playlist"
 
-#: frontend/website/pages/live_rooms.html:379
+#: frontend/website/pages/live_rooms.html:668
 msgid "تحديث"
 msgstr "Refresh"
 
-#: frontend/website/pages/live_rooms.html:386
-#, fuzzy
-#| msgid "ابحث في الريمكسات..."
-msgid "بنجهزلك الروم..."
-msgstr "Search remixes..."
+#: frontend/website/pages/live_rooms.html:675
+msgid "جاري بدء الروم..."
+msgstr "Starting the room..."
 
-#: frontend/website/pages/live_rooms.html:450
+#: frontend/website/pages/live_rooms.html:681
+msgid "الناس في الروم"
+msgstr "People in the Room"
+
+#: frontend/website/pages/live_rooms.html:776
 msgid "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي"
-msgstr "Search for a song and play it - you will automatically get your own room"
+msgstr ""
+"Search for a song and play it - you will automatically get your own room"
 
-#: frontend/website/pages/live_rooms.html:597
+#: frontend/website/pages/live_rooms.html:980
 msgid "بعدها"
 msgstr "Up next"
 
-#: frontend/website/pages/live_rooms.html:658
+#: frontend/website/pages/live_rooms.html:1043
 #, fuzzy
 #| msgid "مفيش أغنية شغالة دلوقتي"
 msgid "هتشتغل بعد اللي شغال دلوقتي"
 msgstr "No song is playing right now"
 
-#: frontend/website/pages/live_rooms.html:700
-msgid "بدأ روم جديدة - ادخل اسمع"
-msgstr ""
-
-#: frontend/website/pages/live_rooms.html:738
+#: frontend/website/pages/live_rooms.html:1089
 msgid "الروم اللي فات"
 msgstr "Previous room"
 
-#: frontend/website/pages/live_rooms.html:739
+#: frontend/website/pages/live_rooms.html:1090
 msgid "الروم اللي بعده"
 msgstr "Next room"
 
-#: frontend/website/pages/live_rooms.html:825
+#: frontend/website/pages/live_rooms.html:1190
+msgid "بدأ روم جديدة - ادخل اسمع"
+msgstr ""
+
+#: frontend/website/pages/live_rooms.html:1280
+msgid "اضغط عشان الصوت يشتغل"
+msgstr "Tap to start the audio"
+
+#: frontend/website/pages/live_rooms.html:1538
+#: frontend/website/pages/live_rooms.html:1542
+msgid "متوقفة مؤقتًا"
+msgstr ""
+
+#: frontend/website/pages/live_rooms.html:1569
+msgid "الفرفشة انتهت هنا - يلا لروم تانية"
+msgstr ""
+
+#: frontend/website/pages/live_rooms.html:1570
+msgid "روم تانية"
+msgstr "Another Room"
+
+#: frontend/website/pages/live_rooms.html:1607
+#: frontend/website/pages/live_rooms.html:2118
+msgid "بتسمع هنا دلوقتي"
+msgstr "You are listening here now"
+
+#: frontend/website/pages/live_rooms.html:1685
+#: frontend/website/partials/ad_banner.html:7
+#: frontend/website/partials/ad_slider.html:11
+msgid "إعلان"
+msgstr "Ad"
+
+#: frontend/website/pages/live_rooms.html:1744
 msgid "إنهاء الروم"
 msgstr "End Room"
 
-#: frontend/website/pages/live_rooms.html:825
+#: frontend/website/pages/live_rooms.html:1744
 msgid "إنهاء"
 msgstr "End"
 
-#: frontend/website/pages/live_rooms.html:826
+#: frontend/website/pages/live_rooms.html:1745
 msgid "غرفتي"
 msgstr "My Room"
 
-#: frontend/website/pages/live_rooms.html:827
-#: frontend/website/pages/player/index.html:980
-#: frontend/website/pages/songs/detail.html:2956
-msgid "مباشر"
-msgstr "Live"
+#: frontend/website/pages/live_rooms.html:1748
+msgid "طلبات"
+msgstr ""
 
-#: frontend/website/pages/live_rooms.html:861
+#: frontend/website/pages/live_rooms.html:1787
 msgid "دلوقتي بيسمع"
 msgstr "Now playing"
 
-#: frontend/website/pages/live_rooms.html:868
+#: frontend/website/pages/live_rooms.html:1794
 #: frontend/website/pages/player/index.html:914
 msgid "تشغيل/إيقاف"
 msgstr "Play/Pause"
 
-#: frontend/website/pages/live_rooms.html:869
+#: frontend/website/pages/live_rooms.html:1795
 msgid "التالية"
 msgstr "Next"
 
-#: frontend/website/pages/live_rooms.html:876
+#: frontend/website/pages/live_rooms.html:1802
 msgid "كتم الصوت"
 msgstr "Mute"
 
-#: frontend/website/pages/live_rooms.html:941
+#: frontend/website/pages/live_rooms.html:1871
 msgid "شغّل كمان"
 msgstr "Play more"
 
-#: frontend/website/pages/live_rooms.html:976
+#: frontend/website/pages/live_rooms.html:1982
 msgid "اكتب تعليق..."
 msgstr "Write a comment..."
 
-#: frontend/website/pages/live_rooms.html:1034
+#: frontend/website/pages/live_rooms.html:2009
+msgid "روم خاصة - محتاج موافقة صاحبها"
+msgstr "Private room - needs the host's approval"
+
+#: frontend/website/pages/live_rooms.html:2015
+msgid "إلغاء الطلب"
+msgstr "Cancel Request"
+
+#: frontend/website/pages/live_rooms.html:2018
+msgid "محدش رد على طلبك - اطلب تاني ولا اسكرول لروم تانية"
+msgstr ""
+
+#: frontend/website/pages/live_rooms.html:2019
+msgid "اطلب تاني"
+msgstr "Request Again"
+
+#: frontend/website/pages/live_rooms.html:2101
 msgid "دي غرفتك"
 msgstr "This is your room"
 
-#: frontend/website/pages/live_rooms.html:1051
-msgid "بتسمع هنا دلوقتي"
-msgstr "You are listening here now"
+#: frontend/website/pages/live_rooms.html:2371
+msgid "مفيش حد لسه"
+msgstr "No one yet"
+
+#: frontend/website/pages/live_rooms.html:2387
+msgid "امنع"
+msgstr "Block"
+
+#: frontend/website/pages/live_rooms.html:2487
+msgid "مفيش طلبات دلوقتي"
+msgstr "No requests right now"
 
 #: frontend/website/pages/media/detail.html:6
 #, python-format
@@ -5102,7 +5228,7 @@ msgid "نتائج البحث عن \"%(query)s\""
 msgstr "Search results for \"%(query)s\""
 
 #: frontend/website/pages/search/results.html:167
-#: frontend/website/partials/header.html:312
+#: frontend/website/partials/header.html:310
 msgid "قصدك"
 msgstr "You might mean"
 
@@ -5112,36 +5238,36 @@ msgstr "All"
 
 #: frontend/website/pages/search/results.html:178
 #: frontend/website/pages/search/results.html:202
-#: frontend/website/partials/header.html:247
+#: frontend/website/partials/header.html:245
 msgid "أغاني"
 msgstr "Songs"
 
 #: frontend/website/pages/search/results.html:181
 #: frontend/website/pages/search/results.html:224
-#: frontend/website/partials/header.html:248
+#: frontend/website/partials/header.html:246
 msgid "ألبومات"
 msgstr "Albums"
 
 #: frontend/website/pages/search/results.html:184
 #: frontend/website/pages/search/results.html:244
-#: frontend/website/partials/header.html:249
+#: frontend/website/partials/header.html:247
 msgid "أفلام ومسلسلات"
 msgstr "Movies & Series"
 
 #: frontend/website/pages/search/results.html:187
 #: frontend/website/pages/search/results.html:264
-#: frontend/website/partials/header.html:250
+#: frontend/website/partials/header.html:248
 msgid "حفلات"
 msgstr "Concerts"
 
 #: frontend/website/pages/search/results.html:190
 #: frontend/website/pages/search/results.html:284
-#: frontend/website/partials/header.html:251
+#: frontend/website/partials/header.html:249
 msgid "أشخاص"
 msgstr "People"
 
 #: frontend/website/pages/search/results.html:197
-#: frontend/website/partials/header.html:328
+#: frontend/website/partials/header.html:326
 msgid "مفيش نتائج، جرب كلمة تانية"
 msgstr "No results, try another word"
 
@@ -5523,7 +5649,7 @@ msgid "لسه معندناش بيانات كفاية لحساب الترند - �
 msgstr "Not enough data yet to calculate trends - check back soon"
 
 #: frontend/website/pages/user/blocked_listeners.html:3
-#: frontend/website/partials/header.html:91
+#: frontend/website/partials/header.html:90
 #, fuzzy
 #| msgid "المستخدمون الحاليون"
 msgid "المستخدمون الممنوعون"
@@ -5854,8 +5980,8 @@ msgid "مفيش نشاط عام يتعرض هنا لسه"
 msgstr "No public activity to show here yet"
 
 #: frontend/website/pages/user/recap.html:3
-#: frontend/website/partials/header.html:67
-#: frontend/website/partials/header.html:167
+#: frontend/website/partials/header.html:66
+#: frontend/website/partials/header.html:165
 msgid "ملخصي"
 msgstr "My Recap"
 
@@ -5955,8 +6081,8 @@ msgstr "Songs you listened to in full"
 
 #: frontend/website/pages/user/recently_played.html:3
 #: frontend/website/pages/user/recently_played.html:7
-#: frontend/website/partials/header.html:73
-#: frontend/website/partials/header.html:173
+#: frontend/website/partials/header.html:72
+#: frontend/website/partials/header.html:171
 msgid "استمعت مؤخراً"
 msgstr "Recently Played"
 
@@ -5966,8 +6092,8 @@ msgstr "You haven't listened to any songs yet"
 
 #: frontend/website/pages/user/remixes.html:3
 #: frontend/website/pages/user/remixes.html:45
-#: frontend/website/partials/header.html:79
-#: frontend/website/partials/header.html:179
+#: frontend/website/partials/header.html:78
+#: frontend/website/partials/header.html:177
 msgid "الريمكسات"
 msgstr "Remixes"
 
@@ -5978,11 +6104,6 @@ msgstr "Search remixes..."
 #: frontend/website/pages/user/remixes.html:135
 msgid "لم تقم بإنشاء أي ريمكس بعد"
 msgstr "You haven't created any remixes yet"
-
-#: frontend/website/partials/ad_banner.html:7
-#: frontend/website/partials/ad_slider.html:11
-msgid "إعلان"
-msgstr "Ad"
 
 #: frontend/website/partials/concert_date_card.html:18
 #, fuzzy
@@ -5996,7 +6117,7 @@ msgstr "Content"
 
 #: frontend/website/partials/footer.html:24
 #: frontend/website/partials/header.html:20
-#: frontend/website/partials/header.html:133
+#: frontend/website/partials/header.html:132
 msgid "الإعلانات"
 msgstr "Ads"
 
@@ -6023,43 +6144,43 @@ msgstr ""
 "we hope it becomes the official site under his supervision one day 😄"
 
 #: frontend/website/partials/header.html:15
-#: frontend/website/partials/header.html:128
+#: frontend/website/partials/header.html:127
 msgid "عن تامر"
 msgstr "About Tamer"
 
-#: frontend/website/partials/header.html:39
+#: frontend/website/partials/header.html:38
 msgid "المساعد الصوتي - قول TH"
 msgstr "Voice assistant - say TH"
 
-#: frontend/website/partials/header.html:95
-#: frontend/website/partials/header.html:190
+#: frontend/website/partials/header.html:94
+#: frontend/website/partials/header.html:188
 msgid "تسجيل خروج"
 msgstr "Log Out"
 
-#: frontend/website/partials/header.html:101
+#: frontend/website/partials/header.html:100
 msgid "تسجيل دخول"
 msgstr "Log In"
 
-#: frontend/website/partials/header.html:114
+#: frontend/website/partials/header.html:113
 msgid "القائمة"
 msgstr "Menu"
 
-#: frontend/website/partials/header.html:123
+#: frontend/website/partials/header.html:122
 msgid "التصفح"
 msgstr "Browse"
 
-#: frontend/website/partials/header.html:197
+#: frontend/website/partials/header.html:195
 msgid "تسجيل دخول / إنشاء حساب"
 msgstr "Sign in / Create account"
 
-#: frontend/website/partials/header.html:210
+#: frontend/website/partials/header.html:208
 msgid "دوّر على أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان..."
 msgstr "Search for a song, album, movie, series, concert or artist..."
 
-#: frontend/website/partials/header.html:330
+#: frontend/website/partials/header.html:328
 msgid "شوف كل النتائج"
 msgstr "See all results"
 
-#: frontend/website/partials/header.html:353
+#: frontend/website/partials/header.html:351
 msgid "اكتب اسم أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان"
 msgstr "Type a song, album, movie, series, concert or artist name"

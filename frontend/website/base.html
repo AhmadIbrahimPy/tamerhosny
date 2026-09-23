@@ -3796,6 +3796,16 @@
     function thSendListenTogetherState(playingOverride, songOverride) {
       if (!thHostSocket || thHostSocket.readyState !== WebSocket.OPEN) return;
       if (!currentSongId || !globalAudio || !globalAudio.src) return;
+      // While following someone else (body.th-following-room -
+      // connectGlobalListenerSocket's own identical check, above),
+      // playAudio() mirroring their song still fires songChanged/
+      // audioPlayPause on this browser same as any real local play -
+      // without this, the always-on host socket broadcast THAT as if
+      // this browser had just started hosting its own room with the
+      // followed song, reopening it server-side (room_opened) and
+      // showing the "بتستضيف جروب دلوقتي" hosting row right alongside
+      // the "بتسمع مع" following row for the entire mirrored session.
+      if (document.body.classList.contains('th-following-room')) return;
 
       var song = songOverride;
       if (!song) {
