@@ -2868,6 +2868,25 @@ def _suggested_song_groups_for_empty_feed(request):
     base_qs = Song.visible_queryset(Song.objects.exclude(audio_file=''))
 
     groups = []
+
+    # Trending first, same chart /songs/trending/ and the homepage's own
+    # "ترند دلوقتي" slider already show - a visitor deciding what to
+    # start a room with is exactly who'd want "what's popular right
+    # now" as an option alongside a mood, not just genre/vibe picks.
+    from backend.main_app.shared_utils.trending import get_trending
+
+    trending_songs = [
+        rank.song for rank in get_trending(limit=SUGGESTED_SONGS_MOOD_POOL)
+        if rank.song.audio_file
+    ]
+    if len(trending_songs) >= SUGGESTED_SONGS_MIN_PER_MOOD:
+        songs = random.sample(trending_songs, min(len(trending_songs), SUGGESTED_SONGS_PER_MOOD))
+        groups.append({
+            'mood': 'TRENDING',
+            'label': _('📈 ترند دلوقتي'),
+            'songs': [_serialize_song_for_listen_together(song) for song in songs],
+        })
+
     for mood_value, label in _SUGGESTED_MOOD_ORDER:
         pool = list(
             base_qs.filter(mood=mood_value)

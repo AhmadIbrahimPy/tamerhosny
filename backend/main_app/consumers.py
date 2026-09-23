@@ -833,6 +833,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'kind': comment.kind,
             'text': comment.text,
             'author': author.username if author else '',
+            'authorAvatar': author.profile_image.url if author and author.profile_image else '',
         })
 
     def _post_comment(self, text):
@@ -866,6 +867,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
                     'kind': c.kind,
                     'text': c.text,
                     'author': c.author.username if c.author else '',
+                    'authorAvatar': c.author.profile_image.url if c.author and c.author.profile_image else '',
                 }
                 for c in comments
             ],
@@ -1219,6 +1221,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'kind': event.get('kind'),
             'text': event.get('text'),
             'author': event.get('author'),
+            'authorAvatar': event.get('authorAvatar'),
         }))
 
     def room_tapped(self, event):

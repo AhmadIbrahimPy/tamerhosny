@@ -445,6 +445,19 @@ generic "رومات اسمع معاه" copy.
   .th-room-comment { font-size: 13px; line-height: 1.4; }
   .th-room-comment .author { font-weight: 800; margin-inline-end: 4px; }
   .th-room-comment.system { opacity: .75; font-style: italic; }
+  /* Not shown at all for a system comment ("X انضم") - those have no
+     real author (ListenTogetherComment.author is null), so
+     thAppendCommentEl skips building any avatar for that branch. */
+  .th-room-comment:not(.system) { display: flex; align-items: flex-start; gap: 6px; }
+  .th-room-comment-avatar, .th-room-comment-avatar-fallback {
+    width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .th-room-comment-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.15); color: #fff; font-size: 11px; font-weight: 900;
+  }
+  .th-room-comment-body { min-width: 0; overflow-wrap: break-word; }
   .th-room-comment-form { display: flex; gap: 8px; }
   .th-room-comment-form input {
     flex: 1; border-radius: 999px; border: 1px solid rgba(255,255,255,.3);
@@ -715,17 +728,24 @@ generic "رومات اسمع معاه" copy.
      what to play, and "أنهي نوع أغاني عايز؟" is a much more actionable
      question than an undifferentiated pile of songs. */
   .th-mood-groups {
-    display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 420px;
+    display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: min(92vw, 460px);
     max-height: 44vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
     padding-block: 2px;
   }
   .th-mood-groups::-webkit-scrollbar { display: none; }
-  /* Mobile's 420px cap was carried straight over to desktop too -
-     plenty of screen width to spare there, so it only ever showed
-     about 3 cards per row before forcing a horizontal scroll for the
-     rest, on a screen easily wide enough to show more at once. */
-  @media (min-width: 768px) {
-    .th-mood-groups { max-width: 720px; }
+  /* A flat 420px cap on every screen only ever showed ~3 cards before
+     forcing a horizontal scroll for the rest, even on a screen easily
+     wide enough to show more at once - scales up in steps instead
+     (min() with a vw share keeps it from ever touching the screen
+     edges on anything in between two breakpoints too). */
+  @media (min-width: 600px) {
+    .th-mood-groups { max-width: min(88vw, 640px); }
+  }
+  @media (min-width: 900px) {
+    .th-mood-groups { max-width: min(85vw, 820px); }
+  }
+  @media (min-width: 1200px) {
+    .th-mood-groups { max-width: 960px; }
   }
   .th-mood-group {
     animation: thMoodGroupIn .5s ease both;
@@ -954,7 +974,14 @@ generic "رومات اسمع معاه" copy.
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var list = document.getElementById('thSuggestedSongGroups');
-        if (list && data.html) list.innerHTML = data.html;
+        if (list && data.html) {
+          list.innerHTML = data.html;
+          // DOMContentLoaded/htmx:afterSettle (base.html) already wire
+          // up every .th-slider on a normal page load/boosted nav - this
+          // swap is neither, so the freshly-rendered sliders' prev/next
+          // arrows need this call by hand or they'd just sit inert.
+          if (typeof initSliderArrows === 'function') initSliderArrows();
+        }
       })
       .catch(function () {})
       .finally(function () {
@@ -1097,8 +1124,32 @@ generic "رومات اسمع معاه" copy.
 
     if (window.thIsHostingRoom) {
       // Already hosting (e.g. switching songs while your room's already
-      // live) - no new room to wait for, it's already there.
-      goToMyRoom();
+      // live) - no NEW room to wait for (thRoomOpened only ever fires
+      // the first time a room goes live, not on every later song
+      // change), but the picked song's own CurrentSongListener row is
+      // still an async WS round trip away (connectGlobalListenerSocket,
+      // base.html) - navigating synchronously here used to reliably
+      // race it: the boosted nav's GET could reach the server before
+      // 'start' had even been sent, let alone processed, and
+      // get_current_song_for_user(you) came back empty for that one
+      // request - landing back on "دور على أغنية" instead of the room
+      // you were already hosting. thListenerStarted (dispatched right
+      // after 'start' is actually sent) plus a short buffer for the
+      // server to actually process it closes that gap; the timeout is
+      // just a safety net in case that event never fires for some
+      // reason.
+      var songId = String(row.dataset.songId);
+      var listenerStarted = false;
+      function onListenerStarted(evt) {
+        if (listenerStarted || String(evt.detail.songId) !== songId) return;
+        listenerStarted = true;
+        setTimeout(goToMyRoom, 250);
+      }
+      document.addEventListener('thListenerStarted', onListenerStarted);
+      if (window.thOnTeardown) {
+        window.thOnTeardown(function () { document.removeEventListener('thListenerStarted', onListenerStarted); });
+      }
+      setTimeout(goToMyRoom, 1500);
     } else {
       // The room only actually exists server-side once room_opened
       // reaches this browser (an async WebSocket round-trip after
@@ -2886,11 +2937,30 @@ generic "رومات اسمع معاه" copy.
     if (c.kind === 'system') {
       row.textContent = c.text;
     } else {
+      // Same avatar/fallback-letter pattern as .th-room-viewer-avatar
+      // (the "الناس في الروم" list) - a system comment ("X انضم") has no
+      // real author (ListenTogetherComment.author is null for those),
+      // so this whole avatar is skipped for it, not just left blank.
+      if (c.authorAvatar) {
+        var avatarImg = document.createElement('img');
+        avatarImg.className = 'th-room-comment-avatar';
+        avatarImg.src = c.authorAvatar;
+        avatarImg.alt = '';
+        row.appendChild(avatarImg);
+      } else {
+        var avatarFallback = document.createElement('span');
+        avatarFallback.className = 'th-room-comment-avatar-fallback';
+        avatarFallback.textContent = (c.author || '?').slice(0, 1).toUpperCase();
+        row.appendChild(avatarFallback);
+      }
+      var body = document.createElement('span');
+      body.className = 'th-room-comment-body';
       var authorSpan = document.createElement('span');
       authorSpan.className = 'author';
       authorSpan.textContent = c.author || '';
-      row.appendChild(authorSpan);
-      row.appendChild(document.createTextNode(c.text));
+      body.appendChild(authorSpan);
+      body.appendChild(document.createTextNode(c.text));
+      row.appendChild(body);
     }
     list.appendChild(row);
   }

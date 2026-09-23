@@ -2975,6 +2975,20 @@
       // appeared even though playback itself worked fine.
       globalListenerSocket.addEventListener('open', function () {
         sendGlobalListenerAction('start');
+        // Own-room pages (thPlaySuggestedSong/thQueueSuggestedSong,
+        // live_rooms.html) that are ALREADY hosting and just switched to
+        // a different song have no equivalent of thRoomOpened to wait
+        // on - SongListenerConsumer._maybe_open_room only broadcasts
+        // room_opened the first time a room goes live, not on every
+        // later song change while it's already live. Without some
+        // signal that 'start' (just sent above) has actually gone out,
+        // a boosted nav to /live-rooms/<you>/ fired right after calling
+        // this function - before the socket even finished connecting,
+        // let alone the server processing 'start' - could reach the
+        // server while get_current_song_for_user(you) still saw nothing
+        // for a beat, rendering the empty "دور على أغنية" state instead
+        // of your own room you very much were already hosting.
+        document.dispatchEvent(new CustomEvent('thListenerStarted', { detail: { songId: songId } }));
       });
       globalListenerSocket.addEventListener('close', function() {
         globalListenerSocket = null;
