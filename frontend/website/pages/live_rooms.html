@@ -1403,14 +1403,19 @@ generic "رومات اسمع معاه" copy.
     // a comment - each one a brand new "feed/" WebSocket in the network
     // panel for genuinely nothing, since this page was never going to
     // use it anyway.
-    if (viewingOwnRoom) return;
-    if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) return;
+    if (viewingOwnRoom) { console.log('[TH-DEBUG] thConnectFeedSocket() skipped - viewingOwnRoom=true'); return; }
+    if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) { console.log('[TH-DEBUG] thConnectFeedSocket() no-op, already have a feedSocket, readyState=', feedSocket.readyState); return; }
+    console.log('[TH-DEBUG] thConnectFeedSocket() OPENING NEW feedSocket');
     try {
       var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
     } catch (e) { feedSocket = null; return; }
 
-    feedSocket.addEventListener('close', function () { feedSocket = null; });
+    feedSocket.addEventListener('open', function () { console.log('[TH-DEBUG] feedSocket OPEN'); });
+    feedSocket.addEventListener('close', function (evt) {
+      console.log('[TH-DEBUG] feedSocket CLOSED - code=', evt.code, 'reason=', evt.reason, 'wasClean=', evt.wasClean);
+      feedSocket = null;
+    });
     feedSocket.addEventListener('message', function (evt) {
       var data;
       try { data = JSON.parse(evt.data); } catch (e) { return; }
@@ -1565,6 +1570,7 @@ generic "رومات اسمع معاه" copy.
 
   function thHandleListenTogetherMessage(evt) {
     var data = evt.detail;
+    console.log('[TH-DEBUG] thHandleListenTogetherMessage() received type=', data.type);
     if (data.type === 'comment_history') thRenderCommentHistory(data.comments);
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
@@ -2245,6 +2251,7 @@ generic "رومات اسمع معاه" copy.
     form.innerHTML = '<input type="text" maxlength="300" placeholder="{% translate 'اكتب تعليق...' %}">' +
       '<button type="submit"><i class="bi bi-send-fill"></i></button>';
     form.addEventListener('submit', function (e) {
+      console.log('[TH-DEBUG] comment form submit fired, defaultPrevented(before)=', e.defaultPrevented, 'isOwnRoom=', isOwnRoom);
       e.preventDefault();
       // <body hx-boost="true"> (base.html) means ANY <form> under it is
       // fair game for htmx's own boosted-submit handling, which doesn't
@@ -2262,10 +2269,12 @@ generic "رومات اسمع معاه" copy.
       // the fresh page's own empty-until-comment_history-arrives state,
       // not because anything was actually lost.
       e.stopPropagation();
+      console.log('[TH-DEBUG] comment form submit - after preventDefault/stopPropagation, defaultPrevented=', e.defaultPrevented);
       var input = form.querySelector('input');
       var text = input.value.trim();
       if (!text) return;
-      if (window.requireAuth && window.requireAuth(null, null)) return;
+      if (window.requireAuth && window.requireAuth(null, null)) { console.log('[TH-DEBUG] comment form submit - blocked by requireAuth'); return; }
+      console.log('[TH-DEBUG] comment form submit - sending comment:', text);
       window.thSendListenTogetherMessage({ action: 'comment', text: text });
       input.value = '';
     });
@@ -2847,17 +2856,19 @@ generic "رومات اسمع معاه" copy.
   // are simply left alone, so a resync can only ever ADD to what's on
   // screen, never remove or blank it.
   function thRenderCommentHistory(comments) {
-    if (activeIndex === -1) return;
+    console.log('[TH-DEBUG] thRenderCommentHistory() called with', (comments || []).length, 'comments, activeIndex=', activeIndex, comments);
+    if (activeIndex === -1) { console.log('[TH-DEBUG] thRenderCommentHistory() bailing, activeIndex===-1'); return; }
     var list = slideEls[activeIndex].querySelector('.th-room-comment-list');
-    if (!list) return;
+    if (!list) { console.log('[TH-DEBUG] thRenderCommentHistory() bailing, no .th-room-comment-list found'); return; }
     (comments || []).forEach(function (c) { thAppendCommentEl(list, c); });
     list.scrollTop = list.scrollHeight;
   }
 
   function thAppendComment(data) {
-    if (activeIndex === -1) return;
+    console.log('[TH-DEBUG] thAppendComment() called, activeIndex=', activeIndex, data);
+    if (activeIndex === -1) { console.log('[TH-DEBUG] thAppendComment() bailing, activeIndex===-1'); return; }
     var list = slideEls[activeIndex].querySelector('.th-room-comment-list');
-    if (!list) return;
+    if (!list) { console.log('[TH-DEBUG] thAppendComment() bailing, no .th-room-comment-list found'); return; }
     thAppendCommentEl(list, data);
     list.scrollTop = list.scrollHeight;
   }
