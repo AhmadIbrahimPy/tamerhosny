@@ -378,19 +378,21 @@ generic "رومات اسمع معاه" copy.
   .th-room-suggest-cards { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
   .th-room-suggest-cards::-webkit-scrollbar { display: none; }
   .th-room-suggest-cards .th-suggested-song-row {
-    flex-direction: column; align-items: flex-start; gap: 6px; width: 96px; flex-shrink: 0;
+    flex-direction: column; align-items: flex-start; gap: 8px; width: 128px; flex-shrink: 0;
     background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; position: relative;
+    padding: 10px;
   }
-  .th-room-suggest-cards .th-suggested-song-cover-wrap { width: 100%; height: 90px; }
+  .th-room-suggest-cards .th-suggested-song-cover-wrap { width: 100%; height: 118px; }
   .th-room-suggest-cards .th-suggested-song-info { width: 100%; }
+  .th-room-suggest-cards .th-suggested-song-title { font-size: 13px; }
   .th-room-suggest-cards .th-suggested-song-artist { display: none; }
   /* Centered on the cover image inside the room's suggest strip */
   .th-room-suggest-cards .th-suggested-song-cover-wrap { position: relative; }
   .th-room-suggest-cards .th-suggested-song-play {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 28px; height: 28px; border-radius: 50%; border: none;
+    width: 32px; height: 32px; border-radius: 50%; border: none;
     display: flex; align-items: center; justify-content: center; padding: 0;
-    background: var(--accent); color: #0b0c12; font-size: 12px; cursor: pointer;
+    background: var(--accent); color: #0b0c12; font-size: 13px; cursor: pointer;
     z-index: 2;
   }
 
@@ -534,14 +536,62 @@ generic "رومات اسمع معاه" copy.
 
   /* Shown while thPlaySuggestedSong waits for the async room_opened
      round-trip before navigating to the room view - otherwise that gap
-     (up to the 4s timeout fallback) looks like nothing happened. */
+     (up to the 4s timeout fallback) looks like nothing happened. Built
+     around the actual song just picked (thPlaySuggestedSong fills in
+     the hero cover/title/artist right before this shows) instead of a
+     generic spinner, so tapping a song visibly leads somewhere instead
+     of just going dark. */
   .th-room-loading-overlay {
-    position: fixed; inset: 0; z-index: 50; background: #0b0c12;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    position: fixed; inset: 0; z-index: 50;
+    background: radial-gradient(circle at 50% 35%, #241a3a, #0b0c12 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
     color: #fff;
   }
-  .th-room-loading-overlay i { font-size: 40px; color: var(--accent); }
-  .th-room-loading-overlay p { font-size: 14px; font-weight: 700; opacity: .85; margin: 0; }
+  .th-room-loading-hero {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+    animation: thRoomHeroIn .5s cubic-bezier(.22,.68,0,1) both;
+  }
+  .th-room-loading-hero-cover-wrap {
+    width: 168px; height: 168px; border-radius: 20px; overflow: hidden;
+    background: #1e2130; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 20px 50px -12px rgba(138,92,255,.6), 0 0 0 3px rgba(212,175,55,.35);
+    animation: thRoomHeroCoverPulse 2.4s ease-in-out infinite;
+  }
+  .th-room-loading-hero-cover { width: 100%; height: 100%; object-fit: cover; }
+  .th-room-loading-hero-fallback { font-size: 44px; color: var(--muted); }
+  .th-room-loading-hero-title { font-size: 18px; font-weight: 900; max-width: 80vw; }
+  .th-room-loading-hero-artist { font-size: 13px; font-weight: 600; opacity: .7; }
+  .th-room-loading-flag {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 999px;
+    background: rgba(212,175,55,.14); border: 1px solid rgba(212,175,55,.4);
+    font-size: 13px; font-weight: 800; color: var(--accent);
+    animation: thRoomHeroIn .5s cubic-bezier(.22,.68,0,1) .1s both;
+  }
+  .th-room-loading-flag-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+    animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes thRoomHeroIn {
+    from { opacity: 0; transform: translateY(16px) scale(.92); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes thRoomHeroCoverPulse {
+    0%, 100% { box-shadow: 0 20px 50px -12px rgba(138,92,255,.6), 0 0 0 3px rgba(212,175,55,.35); }
+    50% { box-shadow: 0 20px 50px -12px rgba(138,92,255,.8), 0 0 0 6px rgba(212,175,55,.2); }
+  }
+
+  /* thPlaySuggestedSong adds this right as the overlay above appears -
+     the whole "أنهي نوع أغاني عايز؟" screen scatters/fades out instead
+     of just sitting there frozen under the overlay for however long the
+     room_opened round-trip takes. */
+  .th-mood-groups.th-mood-groups-exiting .th-mood-group {
+    animation: thMoodGroupOut .4s ease both;
+    pointer-events: none;
+  }
+  @keyframes thMoodGroupOut {
+    to { opacity: 0; transform: translateY(-14px) scale(.96); }
+  }
 
   /* Opened by tapping the viewer-count badge - thShowRoomViewers. */
   .th-room-viewer-badge { cursor: pointer; }
@@ -729,8 +779,18 @@ generic "رومات اسمع معاه" copy.
   </div>
 </div>
 <div id="thRoomLoadingOverlay" class="th-room-loading-overlay" style="display:none;">
-  <i class="bi bi-arrow-repeat icon-spin"></i>
-  <p>{% translate "جاري بدء الروم..." %}</p>
+  <div class="th-room-loading-hero">
+    <div class="th-room-loading-hero-cover-wrap">
+      <img class="th-room-loading-hero-cover" alt="" style="display:none;">
+      <i class="bi bi-music-note-beamed th-room-loading-hero-fallback"></i>
+    </div>
+    <div class="th-room-loading-hero-title"></div>
+    <div class="th-room-loading-hero-artist"></div>
+  </div>
+  <div class="th-room-loading-flag">
+    <span class="th-room-loading-flag-dot"></span>
+    <span>{% translate "جاري بدء الروم..." %}</span>
+  </div>
 </div>
 <div id="thRoomViewersModal" class="th-room-viewers-modal" style="display:none;">
   <div class="th-room-viewers-backdrop"></div>
@@ -958,13 +1018,36 @@ generic "رومات اسمع معاه" copy.
       }
     }
 
-    // Shown either way now (not just the "wait for room_opened" branch
-    // below) - the "already hosting" branch still does a real boosted-
-    // nav fetch that takes a moment on a slow connection, and with
-    // nothing on screen explaining why, that moment used to just look
-    // like the tap did nothing at all.
+    // The mood sliders scatter/fade away and the picked song's own
+    // cover+title become the overlay's centerpiece - a plain generic
+    // spinner used to show no connection at all between "I tapped this
+    // song" and what happened next. Class only (not removed here) - the
+    // whole empty-state screen, sliders included, is getting replaced
+    // by the boosted-nav swap in goToMyRoom() below anyway, nothing
+    // needs to reset this back.
+    var groups = document.getElementById('thSuggestedSongGroups');
+    if (groups) groups.classList.add('th-mood-groups-exiting');
+
     var overlay = document.getElementById('thRoomLoadingOverlay');
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+      var heroCover = overlay.querySelector('.th-room-loading-hero-cover');
+      var heroFallback = overlay.querySelector('.th-room-loading-hero-fallback');
+      var heroTitle = overlay.querySelector('.th-room-loading-hero-title');
+      var heroArtist = overlay.querySelector('.th-room-loading-hero-artist');
+      if (heroCover) {
+        if (row.dataset.image) {
+          heroCover.src = row.dataset.image;
+          heroCover.style.display = 'block';
+          if (heroFallback) heroFallback.style.display = 'none';
+        } else {
+          heroCover.style.display = 'none';
+          if (heroFallback) heroFallback.style.display = 'flex';
+        }
+      }
+      if (heroTitle) heroTitle.textContent = row.dataset.title || '';
+      if (heroArtist) heroArtist.textContent = row.dataset.artist || '';
+      overlay.style.display = 'flex';
+    }
 
     if (window.thIsHostingRoom) {
       // Already hosting (e.g. switching songs while your room's already
@@ -989,15 +1072,34 @@ generic "رومات اسمع معاه" copy.
   };
 
   // An explicit pick (thQueueSuggestedSong) always wins; otherwise, a
-  // best-effort automatic preview off the exact same queue next/prev
-  // already reads (window.otherSongsList, base.html) - previously
-  // "بعدها" only ever showed anything after you deliberately queued a
-  // song, which meant it usually stayed empty even though the site
-  // already knows what would play next for a plain next-click.
-  function thComputeUpNextArgs() {
+  // best-effort automatic preview - "بعدها" should always be showing
+  // SOMETHING once you're hosting, not just after you deliberately
+  // picked one. Two fallbacks, in order:
+  //   1. Whatever's first in "شغّل كمان" right now (headerEl's own
+  //      suggestions strip) - the actual, real thing that would start
+  //      playing if this browser's own audio ever just ran out with
+  //      nothing queued, since base.html has no other "what's next"
+  //      source for a room that didn't start from an album/tracklist.
+  //   2. window.otherSongsList (base.html's own next/prev queue) - only
+  //      ever populated when playback DID start from some tracklist
+  //      context (an album page, a "songs" grid...), so still worth
+  //      trying when a room-specific suggestion isn't there yet either
+  //      (e.g. thLoadSuggestCards' own fetch hasn't resolved yet).
+  function thComputeUpNextArgs(headerEl) {
     if (window.thHostQueue && window.thHostQueue.length) {
       return window.thHostQueue[0];
     }
+
+    var suggestRow = headerEl ? headerEl.querySelector('.th-room-suggest-cards .th-suggested-song-row') : null;
+    if (suggestRow) {
+      return [
+        suggestRow.dataset.audioUrl, null, suggestRow.dataset.title, '',
+        suggestRow.dataset.image ? [suggestRow.dataset.image] : null,
+        suggestRow.dataset.link, suggestRow.dataset.artist, suggestRow.dataset.album,
+        false, suggestRow.dataset.songId, suggestRow.dataset.albumLink, false,
+      ];
+    }
+
     var list = window.otherSongsList;
     if (!list || !list.length || window.currentSongId == null || typeof window.pickAdjacentIndex !== 'function') {
       return null;
@@ -1014,13 +1116,16 @@ generic "رومات اسمع معاه" copy.
     ];
   }
 
-  // "بعدها" card - own room only. Callable both when the slide is
-  // first built (queue/queue-able list already exists from before) and
-  // right after a pick or a song change (no reload - updates the
-  // existing card, or creates it the first time there's anything to
-  // show).
+  // "بعدها" card - own room only, always showing something once
+  // thComputeUpNextArgs above has anything to go on (an explicit queue
+  // pick, "شغّل كمان"'s own first suggestion, or the ordinary next/prev
+  // queue). Callable both when the slide is first built and again right
+  // after a pick, a song change, or "شغّل كمان" finishing its own async
+  // fetch (thLoadSuggestCards) - updates the existing card, removes it
+  // if there's truly nothing to show yet, or creates it the first time
+  // there is.
   function thRenderUpNextCard(headerEl) {
-    var nextArgs = thComputeUpNextArgs();
+    var nextArgs = thComputeUpNextArgs(headerEl);
     var upNext = headerEl.querySelector('.th-room-up-next');
 
     if (!nextArgs) {
@@ -1080,6 +1185,16 @@ generic "رومات اسمع معاه" copy.
           var coverWrap = btn.closest('.th-suggested-song-row').querySelector('.th-suggested-song-cover-wrap');
           if (coverWrap) coverWrap.appendChild(btn);
         });
+        // thComputeUpNextArgs' own "شغّل كمان" fallback had nothing to
+        // read on the very first render (this fetch hadn't resolved
+        // yet) - re-render now that it does, so "بعدها" actually picks
+        // up the freshly (re-)loaded first suggestion instead of
+        // staying stuck on "nothing to show" until the next unrelated
+        // song change.
+        var headerEl = suggestWrap.closest('.th-room-slide-header');
+        if (headerEl && !(window.thHostQueue && window.thHostQueue.length)) {
+          thRenderUpNextCard(headerEl);
+        }
       })
       .catch(function () {});
   }
@@ -1088,17 +1203,27 @@ generic "رومات اسمع معاه" copy.
     var row = btn.closest('.th-suggested-song-row');
     var suggestWrap = btn.closest('.th-room-suggest-strip');
     var headerEl = btn.closest('.th-room-slide-header');
-    if (!row || !headerEl) return;
+    if (!row || !suggestWrap || !headerEl) return;
 
-    window.thHostQueue = [[
-      row.dataset.audioUrl, null, row.dataset.title, '',
-      row.dataset.image ? [row.dataset.image] : null,
-      row.dataset.link, row.dataset.artist, row.dataset.album,
-      false, row.dataset.songId, row.dataset.albumLink, false,
-    ]];
+    // The whole "شغّل كمان" batch queues up, not just the one card
+    // tapped - clicked song first (that's the one actually asked for),
+    // the rest of what's currently showing right after it in the same
+    // order, so "بعدها" keeps having something real once this one
+    // finishes instead of falling back to a single slot that empties
+    // out after one song.
+    var rows = Array.prototype.slice.call(suggestWrap.querySelectorAll('.th-suggested-song-row'));
+    rows.sort(function (a, b) { return (a === row ? -1 : b === row ? 1 : 0); });
+    window.thHostQueue = rows.map(function (r) {
+      return [
+        r.dataset.audioUrl, null, r.dataset.title, '',
+        r.dataset.image ? [r.dataset.image] : null,
+        r.dataset.link, r.dataset.artist, r.dataset.album,
+        false, r.dataset.songId, r.dataset.albumLink, false,
+      ];
+    });
 
     thRenderUpNextCard(headerEl);
-    if (suggestWrap) thLoadSuggestCards(suggestWrap);
+    thLoadSuggestCards(suggestWrap);
 
     if (window.showToast) {
       showToast('{% translate "هتشتغل بعد اللي شغال دلوقتي" %}', 'success');
@@ -1110,7 +1235,7 @@ generic "رومات اسمع معاه" copy.
     var headerEl = upNext ? upNext.closest('.th-room-slide-header') : null;
     if (!headerEl) return;
 
-    var nextArgs = thComputeUpNextArgs();
+    var nextArgs = thComputeUpNextArgs(headerEl);
     if (!nextArgs) return;
     toggleAudio(
       nextArgs[0], null, nextArgs[2], '',
