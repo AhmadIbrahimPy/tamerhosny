@@ -1,10 +1,26 @@
 {% extends "website/base.html" %}
 {% load static i18n %}
-{% block title %}{% translate "اسمع معاه" %}{% endblock %}
+{% comment %}
+Every /live-rooms/<username>/ URL used to render this block's generic
+copy no matter whose room it was - identical <title>/description across
+every room page, which search engines treat as duplicate content and
+rank neither. `target_room` (views.live_rooms) is only set when the URL
+names a specific host whose room is actually live right now, so each
+room page gets its own title naming the host + what they're playing;
+the bare /live-rooms/ feed and a dead room link both fall back to the
+generic "رومات اسمع معاه" copy.
+{% endcomment %}
+{% block title %}{% if target_room %}{% blocktranslate with host=target_room.hostUsername %}استمع مع {{ host }} دلوقتي{% endblocktranslate %}{% else %}{% translate "رومات اسمع معاه" %}{% endif %}{% endblock %}
 
 {% block meta_description %}
-<meta name="description" content="{% translate 'جروبات سماع مباشرة - انضم لحد بيسمع دلوقتي واسمعوا مع بعض.' %}">
+<meta name="description" content="{% if target_room %}{% blocktranslate with host=target_room.hostUsername song=target_room.song.title %}{{ host }} بيسمع {{ song }} دلوقتي في رومات اسمع معاه - انضم واسمعوا مع بعض لايف.{% endblocktranslate %}{% else %}{% translate 'رومات اسمع معاه - انضم لحد بيسمع دلوقتي واسمعوا مع بعض لايف.' %}{% endif %}">
 {% endblock %}
+
+{% block og_title %}{% if target_room %}{% blocktranslate with host=target_room.hostUsername %}استمع مع {{ host }} دلوقتي{% endblocktranslate %}{% else %}{% translate "رومات اسمع معاه" %}{% endif %}{% endblock %}
+
+{% block og_description %}{% if target_room %}{% blocktranslate with host=target_room.hostUsername song=target_room.song.title %}{{ host }} بيسمع {{ song }} دلوقتي في رومات اسمع معاه - انضم واسمعوا مع بعض لايف.{% endblocktranslate %}{% else %}{% translate 'رومات اسمع معاه - انضم لحد بيسمع دلوقتي واسمعوا مع بعض لايف.' %}{% endif %}{% endblock %}
+
+{% block og_image %}{% if target_room.hostAvatar %}{{ request.scheme }}://{{ request.get_host }}{{ target_room.hostAvatar }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>

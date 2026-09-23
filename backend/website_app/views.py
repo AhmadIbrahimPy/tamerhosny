@@ -115,11 +115,19 @@ def home(request):
     from backend.main_app.shared_utils.listen_together import get_current_song_for_user
 
     live_rooms = []
+    own_live_room = None
     live_room_qs = ListenTogetherRoom.objects.filter(
         is_public=True, is_live=True,
     ).select_related('host')
     if request.user.is_authenticated:
         live_room_qs = live_room_qs.exclude(host=request.user)
+        # Own room is excluded from the feed above (can't meaningfully join
+        # yourself), but the idle "مفيش حد بيسمع - افتح روم وابدأ إنت أول
+        # واحد" placeholder is wrong if you're the one already hosting -
+        # this lets home.html swap in a "you're already live" card instead.
+        own_live_room = ListenTogetherRoom.objects.filter(
+            host=request.user, is_live=True,
+        ).first()
     for room in live_room_qs.order_by('-tap_score', '-created_at')[:10]:
         song = get_current_song_for_user(room.host)
         if song is None:
@@ -148,6 +156,7 @@ def home(request):
         'mid_ad': home_ads[1] if len(home_ads) > 1 else (home_ads[0] if home_ads else None),
         'bottom_ad': home_ads[-1] if home_ads else None,
         'live_rooms': live_rooms,
+        'own_live_room': own_live_room,
     })
 
 
@@ -2709,10 +2718,22 @@ def live_rooms(request, username=None):
         serialize_ad(ad, request) for ad in _ads_for(Advertisement.Placement.LIVE_ROOMS)[:8]
     ]
 
+    # For SEO: every /live-rooms/<username>/ URL was rendering the exact
+    # same generic title/description regardless of whose room it was -
+    # duplicate-content across every room page. `rooms` is already
+    # sorted so the requested username's entry is first (see the sort
+    # above), so this just names it for live_rooms.html's title/meta
+    # blocks; falls back to the generic copy when the room already
+    # ended by the time the link is opened.
+    target_room = None
+    if username and rooms and rooms[0]['hostUsername'].lower() == username.lower():
+        target_room = rooms[0]
+
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
         'suggested_songs': suggested_songs,
         'room_ads': room_ads,
+        'target_room': target_room,
     })
 
 

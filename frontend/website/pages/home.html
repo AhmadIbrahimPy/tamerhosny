@@ -104,7 +104,14 @@
     animation: thLiveRoomCardPulse 2.4s ease-in-out infinite;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
   }
-  .th-live-room-card.idle {
+  /* Idle placeholder (no live rooms) is the slider's only child - it
+     should read as an empty-state banner spanning the row, not a card
+     the same width as a real live one, so it overrides the fixed
+     190px above (extra .idle class wins on specificity). Once a real
+     room opens this card is removed entirely, so nothing here affects
+     the normal multi-card layout. */
+  .th-slider > .th-live-room-card.idle {
+    flex: 1 1 100%; width: 100%;
     background: var(--card); animation: none; justify-content: center;
   }
   .th-live-room-card-avatar, .th-live-room-card-avatar-fallback {
@@ -262,8 +269,8 @@
 
   <div class="th-section">
     <div class="th-section-head">
-      <h2 class="th-section-title">🔴 {% translate "اسمع معاه دلوقتي" %}</h2>
-      <a href="{% url 'website_app:live-rooms' %}" class="th-see-all">{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
+      <h2 class="th-section-title">🔴 {% translate "رومات اسمع معاه دلوقتي" %}</h2>
+      <a href="{% url 'website_app:live-rooms' %}" class="th-see-all" id="thLiveRoomsSeeAll"{% if not live_rooms %} hidden{% endif %}>{% translate "عرض الكل" %} <i class="bi bi-arrow-left"></i></a>
     </div>
     <div class="th-slider-row">
       <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
@@ -278,11 +285,19 @@
           <div class="th-live-room-card-taps"><i class="bi bi-heart-fill"></i> {{ room.tapScore }}</div>
         </a>
         {% empty %}
+        {% if own_live_room %}
+        <a href="{% url 'website_app:live-room-detail' request.user.username %}" class="th-card th-live-room-card plain idle hosting">
+          <div class="th-live-room-card-icon"><i class="bi bi-broadcast"></i></div>
+          <div class="th-live-room-card-name">{% translate "انت مستضيف دلوقتي" %}</div>
+          <div class="th-live-room-card-song">{% translate "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي" %}</div>
+        </a>
+        {% else %}
         <a href="{% url 'website_app:live-rooms' %}" class="th-card th-live-room-card plain idle">
           <div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>
-          <div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>
+          <div class="th-live-room-card-name">{% translate "رومات اسمع معاه" %}</div>
           <div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>
         </a>
+        {% endif %}
         {% endfor %}
       </div>
       <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
@@ -717,8 +732,13 @@
   // feed itself excluding it - you can't meaningfully join yourself.
   var slider = document.getElementById('thLiveRoomsSlider');
   if (!slider) return;
+  var seeAll = document.getElementById('thLiveRoomsSeeAll');
 
   var MAX_CARDS = 10;
+  // Set server-side only when the viewer is currently hosting their own
+  // public live room - lets buildIdleCard() below tell "you're already
+  // live" apart from the real "nobody's live, be the first" empty state.
+  var ownLiveRoomUsername = {% if own_live_room %}'{{ request.user.username|escapejs }}'{% else %}null{% endif %};
 
   function buildCard(room) {
     var a = document.createElement('a');
@@ -740,12 +760,21 @@
 
   function buildIdleCard() {
     var a = document.createElement('a');
-    a.href = '{% url "website_app:live-rooms" %}';
-    a.className = 'th-card th-live-room-card plain idle';
-    a.innerHTML =
-      '<div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>' +
-      '<div class="th-live-room-card-name">{% translate "اسمع معاه" %}</div>' +
-      '<div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>';
+    if (ownLiveRoomUsername) {
+      a.href = '/live-rooms/' + ownLiveRoomUsername + '/';
+      a.className = 'th-card th-live-room-card plain idle hosting';
+      a.innerHTML =
+        '<div class="th-live-room-card-icon"><i class="bi bi-broadcast"></i></div>' +
+        '<div class="th-live-room-card-name">{% translate "انت مستضيف دلوقتي" %}</div>' +
+        '<div class="th-live-room-card-song">{% translate "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي" %}</div>';
+    } else {
+      a.href = '{% url "website_app:live-rooms" %}';
+      a.className = 'th-card th-live-room-card plain idle';
+      a.innerHTML =
+        '<div class="th-live-room-card-icon"><i class="bi bi-headphones"></i></div>' +
+        '<div class="th-live-room-card-name">{% translate "رومات اسمع معاه" %}</div>' +
+        '<div class="th-live-room-card-song">{% translate "مفيش حد بيسمع دلوقتي - افتح روم وابدأ إنت أول واحد" %}</div>';
+    }
     return a;
   }
 
@@ -754,6 +783,7 @@
     if (!cards.length) {
       slider.innerHTML = '';
       slider.appendChild(buildIdleCard());
+      if (seeAll) seeAll.hidden = true;
     } else {
       var idle = slider.querySelector('.th-live-room-card.idle');
       if (idle) idle.remove();
@@ -764,6 +794,7 @@
       while (slider.children.length > MAX_CARDS) {
         slider.removeChild(slider.lastElementChild);
       }
+      if (seeAll) seeAll.hidden = false;
     }
     if (typeof initSliderArrows === 'function') initSliderArrows();
   }
