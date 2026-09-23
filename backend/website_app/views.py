@@ -2755,6 +2755,7 @@ def live_rooms(request, username=None):
         'suggested_song_groups': suggested_song_groups,
         'room_ads': room_ads,
         'target_room': target_room,
+        'viewing_own_room': viewing_own_room,
     })
 
 

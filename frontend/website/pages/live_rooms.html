@@ -869,6 +869,15 @@ generic "رومات اسمع معاه" copy.
 
   var dataEl = document.getElementById('thRoomsFeedData');
   var rooms = dataEl ? JSON.parse(dataEl.textContent) : [];
+  // /live-rooms/<own-username>/ specifically (views.live_rooms) - `rooms`
+  // above is already scoped server-side to ONLY your own room in this
+  // case (never sent the rest of the feed to begin with), but that alone
+  // didn't stop OTHER rooms from arriving live afterwards (feedSocket's
+  // own 'room_opened' push, below) and turning into scrollable slides
+  // right next to yours - this is what actually gates that, and hides
+  // the nav arrows entirely (thEnsureFeedChrome) rather than just
+  // leaving them disabled with nothing to switch to.
+  var viewingOwnRoom = {% if viewing_own_room %}true{% else %}false{% endif %};
   var adsDataEl = document.getElementById('thRoomAdsData');
   var roomAds = adsDataEl ? JSON.parse(adsDataEl.textContent) : [];
   // Declared here (not down by thBuildRoomAdSlot/thScheduleRoomAd's own
@@ -1286,20 +1295,27 @@ generic "رومات اسمع معاه" copy.
 
     if (emptyEl) emptyEl.style.display = 'none';
 
-    var navWrap = document.createElement('div');
-    navWrap.className = 'th-room-feed-nav-arrows';
-    navWrap.innerHTML =
-      '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
-      '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
-    document.body.appendChild(navWrap);
-    if (window.thOnTeardown) {
-      window.thOnTeardown(function () { navWrap.remove(); });
-    }
+    // Browsing other rooms (prev/next) is a guest-only thing - your own
+    // room's slide is a destination, not a stop along a feed, so no
+    // arrows to switch away from it at all (see viewingOwnRoom's own
+    // comment above for the other half of this: nothing new gets added
+    // to switch to in the first place either).
+    if (!viewingOwnRoom) {
+      var navWrap = document.createElement('div');
+      navWrap.className = 'th-room-feed-nav-arrows';
+      navWrap.innerHTML =
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
+      document.body.appendChild(navWrap);
+      if (window.thOnTeardown) {
+        window.thOnTeardown(function () { navWrap.remove(); });
+      }
 
-    upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
-    downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
-    upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
-    downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
+      upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
+      downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
+      upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
+      downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
+    }
 
     observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -1371,6 +1387,12 @@ generic "رومات اسمع معاه" copy.
       if (data.type === 'room_opened') {
         var room = data.room;
         if (!room || room.hostUserId === window.thUserId) return;
+        // Locked to just your own room's slide (viewingOwnRoom, see its
+        // own comment above) - some OTHER host's room opening live
+        // elsewhere on the site shouldn't turn into a banner or a
+        // scrollable slide here, or that lock would only ever hold
+        // until the next room happened to open anywhere on the site.
+        if (viewingOwnRoom) return;
         if (rooms.some(function (r) { return r.hostUserId === room.hostUserId; })) return;
 
         if (!observer && emptyEl && emptyEl.style.display !== 'none') {
