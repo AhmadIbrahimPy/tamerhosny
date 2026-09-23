@@ -521,21 +521,38 @@ generic "رومات اسمع معاه" copy.
     .th-room-requests-badge{ order: 7; margin-inline-start: auto; }
   }
 
-  /* Desktop/web only - the nav arrows move off the fixed left edge and
-     into the exact spot the tap rail used to occupy (inset-inline-end,
-     vertically centered on the lower half of the slide), instead of
-     staying pinned to the left on wide screens too. Mobile keeps them
-     where they've always been. */
+  /* Desktop/web only - horizontal slider with left/right arrows */
   @media (min-width:768px){
     .th-room-feed-nav-arrows{
       display: flex;
-      top: auto; bottom: 32vh; transform: none;
-      inset-inline-start: auto; inset-inline-end: 10px;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      inset-inline-start: auto; inset-inline-end: auto;
+      flex-direction: row;
+      gap: 20px;
+    }
+    .th-room-feed {
+      height: 92dvh;
+      overflow-x: scroll;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      flex-direction: row;
+    }
+    .th-room-feed::-webkit-scrollbar { display: none; }
+    .th-room-slide {
+      height: 92dvh;
+      width: 100vw;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+    .th-room-feed-empty {
+      height: 92dvh;
+      width: 100vw;
     }
   }
 
   .th-room-feed-empty {
-    /* Same 106dvh (mobile) / 92dvh (desktop, min-width:768px below) as
+    /* Same 106dvh (mobile) / 92dvh (desktop, min-width:768px above) as
        .th-room-feed/.th-room-slide above. */
     height: 106dvh;
     /* Visible by default (not hidden-until-JS-says-so) - the same
@@ -1346,7 +1363,14 @@ generic "رومات اسمع معاه" copy.
 
   var upBtn = null, downBtn = null;
   function thScrollToSlide(index) {
-    if (slideEls[index]) slideEls[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (slideEls[index]) {
+      var isDesktop = window.innerWidth >= 768;
+      slideEls[index].scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: isDesktop ? 'start' : 'start'
+      });
+    }
   }
   function thUpdateNavArrows() {
     if (!upBtn || !downBtn) return;
@@ -1375,26 +1399,31 @@ generic "رومات اسمع معاه" copy.
       var navWrap = document.createElement('div');
       navWrap.className = 'th-room-feed-nav-arrows';
       navWrap.innerHTML =
-        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedUpBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-up"></i></button>' +
-        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedDownBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-down"></i></button>';
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedPrevBtn" title="{% translate "الروم اللي فات" %}"><i class="bi bi-chevron-left"></i></button>' +
+        '<button type="button" class="th-room-feed-nav-btn" id="thRoomFeedNextBtn" title="{% translate "الروم اللي بعده" %}"><i class="bi bi-chevron-right"></i></button>';
       document.body.appendChild(navWrap);
       if (window.thOnTeardown) {
         window.thOnTeardown(function () { navWrap.remove(); });
       }
 
-      upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
-      downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
+      upBtn = navWrap.querySelector('#thRoomFeedPrevBtn');
+      downBtn = navWrap.querySelector('#thRoomFeedNextBtn');
       upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
       downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
     }
 
+    var isDesktop = window.innerWidth >= 768;
     observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
           thActivateSlide(parseInt(entry.target.dataset.index, 10));
         }
       });
-    }, { root: feedEl, threshold: 0.6 });
+    }, {
+      root: feedEl,
+      threshold: 0.6,
+      rootMargin: isDesktop ? '0px' : '0px'
+    });
   }
 
   // Appends one more slide at the end of the feed - used both for the
