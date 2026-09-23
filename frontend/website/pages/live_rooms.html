@@ -1403,19 +1403,14 @@ generic "رومات اسمع معاه" copy.
     // a comment - each one a brand new "feed/" WebSocket in the network
     // panel for genuinely nothing, since this page was never going to
     // use it anyway.
-    if (viewingOwnRoom) { console.log('[TH-DEBUG] thConnectFeedSocket() skipped - viewingOwnRoom=true'); return; }
-    if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) { console.log('[TH-DEBUG] thConnectFeedSocket() no-op, already have a feedSocket, readyState=', feedSocket.readyState); return; }
-    console.log('[TH-DEBUG] thConnectFeedSocket() OPENING NEW feedSocket');
+    if (viewingOwnRoom) return;
+    if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) return;
     try {
       var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       feedSocket = new WebSocket(feedProtocol + '//' + window.location.host + '/ws/live-rooms/feed/');
     } catch (e) { feedSocket = null; return; }
 
-    feedSocket.addEventListener('open', function () { console.log('[TH-DEBUG] feedSocket OPEN'); });
-    feedSocket.addEventListener('close', function (evt) {
-      console.log('[TH-DEBUG] feedSocket CLOSED - code=', evt.code, 'reason=', evt.reason, 'wasClean=', evt.wasClean);
-      feedSocket = null;
-    });
+    feedSocket.addEventListener('close', function () { feedSocket = null; });
     feedSocket.addEventListener('message', function (evt) {
       var data;
       try { data = JSON.parse(evt.data); } catch (e) { return; }
@@ -1570,7 +1565,6 @@ generic "رومات اسمع معاه" copy.
 
   function thHandleListenTogetherMessage(evt) {
     var data = evt.detail;
-    console.log('[TH-DEBUG] thHandleListenTogetherMessage() received type=', data.type);
     if (data.type === 'comment_history') thRenderCommentHistory(data.comments);
     else if (data.type === 'comment') thAppendComment(data);
     else if (data.type === 'tapped') thUpdateTapCount(data.tap_score);
@@ -2248,33 +2242,45 @@ generic "رومات اسمع معاه" copy.
     comments.appendChild(list);
     var form = document.createElement('form');
     form.className = 'th-room-comment-form';
+    // Confirmed via console.log tracing (thConnectFeedSocket etc. below)
+    // that stopPropagation() alone genuinely did NOT stop this - htmx
+    // still fired its own boosted request for this exact form right
+    // after (htmx:beforeRequest, boosted:true). stopPropagation() only
+    // ever stops an event reaching OTHER elements up the tree; it does
+    // nothing about a SECOND listener already attached to this same
+    // <form> - which is what htmx's own boost handling turned out to
+    // be, not ancestor-level delegation like .th-play-icon's click
+    // handler (base.html) assumed for anchors. hx-boost="false" is the
+    // actual, documented way to opt an element out of an inherited
+    // hx-boost - set here so htmx never wires this form up as boosted
+    // in the first place, regardless of listener order or how its
+    // internals happen to attach.
+    form.setAttribute('hx-boost', 'false');
     form.innerHTML = '<input type="text" maxlength="300" placeholder="{% translate 'اكتب تعليق...' %}">' +
       '<button type="submit"><i class="bi bi-send-fill"></i></button>';
     form.addEventListener('submit', function (e) {
-      console.log('[TH-DEBUG] comment form submit fired, defaultPrevented(before)=', e.defaultPrevented, 'isOwnRoom=', isOwnRoom);
       e.preventDefault();
-      // <body hx-boost="true"> (base.html) means ANY <form> under it is
-      // fair game for htmx's own boosted-submit handling, which doesn't
-      // check whether something else already called preventDefault() -
-      // only stopping the event from ever reaching htmx's own delegated
-      // listener actually keeps it from firing. Same exact gap, same
-      // fix, as .th-play-icon's click delegate (base.html) - without
-      // this, submitting a comment fired a REAL htmx-boosted GET of the
-      // current URL (this form has no action/method of its own, so it
-      // defaulted to "reload this same page") right alongside the
+      // hx-boost="false" above is the real fix - this is just a second
+      // line of defense. stopImmediatePropagation(), not plain
+      // stopPropagation(): confirmed via console tracing that htmx was
+      // firing a boosted request for this EXACT form (htmx:beforeRequest,
+      // boosted:true) even with stopPropagation() already called here -
+      // it only ever stops an event reaching OTHER elements up the tree,
+      // never a second listener already attached to this SAME <form>
+      // (which is what htmx's own boost handling turned out to be).
+      // Without either fix, submitting fired a REAL htmx-boosted GET of
+      // the current URL (this form has no action/method of its own, so
+      // it defaulted to "reload this same page") right alongside the
       // WebSocket send below: #th-page-root got swapped for a freshly
-      // server-rendered copy - a brand new feedSocket connection and
-      // all - felt exactly like the page reloaded (because it did), and
-      // the comment list was empty for a beat because it genuinely was
-      // the fresh page's own empty-until-comment_history-arrives state,
-      // not because anything was actually lost.
-      e.stopPropagation();
-      console.log('[TH-DEBUG] comment form submit - after preventDefault/stopPropagation, defaultPrevented=', e.defaultPrevented);
+      // server-rendered copy - felt exactly like the page reloaded
+      // (because it did), and the comment list was empty for a beat
+      // because it genuinely was the fresh page's own empty-until-
+      // comment_history-arrives state, not because anything was lost.
+      e.stopImmediatePropagation();
       var input = form.querySelector('input');
       var text = input.value.trim();
       if (!text) return;
-      if (window.requireAuth && window.requireAuth(null, null)) { console.log('[TH-DEBUG] comment form submit - blocked by requireAuth'); return; }
-      console.log('[TH-DEBUG] comment form submit - sending comment:', text);
+      if (window.requireAuth && window.requireAuth(null, null)) return;
       window.thSendListenTogetherMessage({ action: 'comment', text: text });
       input.value = '';
     });
@@ -2856,19 +2862,17 @@ generic "رومات اسمع معاه" copy.
   // are simply left alone, so a resync can only ever ADD to what's on
   // screen, never remove or blank it.
   function thRenderCommentHistory(comments) {
-    console.log('[TH-DEBUG] thRenderCommentHistory() called with', (comments || []).length, 'comments, activeIndex=', activeIndex, comments);
-    if (activeIndex === -1) { console.log('[TH-DEBUG] thRenderCommentHistory() bailing, activeIndex===-1'); return; }
+    if (activeIndex === -1) return;
     var list = slideEls[activeIndex].querySelector('.th-room-comment-list');
-    if (!list) { console.log('[TH-DEBUG] thRenderCommentHistory() bailing, no .th-room-comment-list found'); return; }
+    if (!list) return;
     (comments || []).forEach(function (c) { thAppendCommentEl(list, c); });
     list.scrollTop = list.scrollHeight;
   }
 
   function thAppendComment(data) {
-    console.log('[TH-DEBUG] thAppendComment() called, activeIndex=', activeIndex, data);
-    if (activeIndex === -1) { console.log('[TH-DEBUG] thAppendComment() bailing, activeIndex===-1'); return; }
+    if (activeIndex === -1) return;
     var list = slideEls[activeIndex].querySelector('.th-room-comment-list');
-    if (!list) { console.log('[TH-DEBUG] thAppendComment() bailing, no .th-room-comment-list found'); return; }
+    if (!list) return;
     thAppendCommentEl(list, data);
     list.scrollTop = list.scrollHeight;
   }
