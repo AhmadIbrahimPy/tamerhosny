@@ -2753,11 +2753,27 @@ generic "رومات اسمع معاه" copy.
     }
   }
 
+  // Merged in, never a blind wipe-and-replace - comment_history gets
+  // re-sent in full every time the host/follow socket (re)connects, and
+  // a mobile browser's on-screen keyboard opening/closing while typing
+  // OR sending a comment is a known trigger for a spurious reconnect
+  // (see thReconnectLiveSockets' own docs, base.html) even though
+  // nothing actually dropped. Replacing the whole list on every one of
+  // those used to flash it empty for a moment - or worse, leave it
+  // empty for good if that particular re-sync happened to race the
+  // comment this exact tab just posted and came back without it yet -
+  // even though the comment was never actually lost server-side (every
+  // OTHER tab in the room never sees any of this: they only ever get
+  // the single comment.posted push, never a full re-sync, so this whole
+  // class of bug only ever showed up for whoever's OWN connection
+  // happened to reconnect). Keyed by ListenTogetherComment.pk (`id` on
+  // every comment payload, history or live) - already-shown comments
+  // are simply left alone, so a resync can only ever ADD to what's on
+  // screen, never remove or blank it.
   function thRenderCommentHistory(comments) {
     if (activeIndex === -1) return;
     var list = slideEls[activeIndex].querySelector('.th-room-comment-list');
     if (!list) return;
-    list.innerHTML = '';
     (comments || []).forEach(function (c) { thAppendCommentEl(list, c); });
     list.scrollTop = list.scrollHeight;
   }
@@ -2771,8 +2787,11 @@ generic "رومات اسمع معاه" copy.
   }
 
   function thAppendCommentEl(list, c) {
+    if (c.id != null && list.querySelector('[data-comment-id="' + c.id + '"]')) return;
+
     var row = document.createElement('div');
     row.className = 'th-room-comment' + (c.kind === 'system' ? ' system' : '');
+    if (c.id != null) row.dataset.commentId = c.id;
     if (c.kind === 'system') {
       row.textContent = c.text;
     } else {
