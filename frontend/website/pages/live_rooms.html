@@ -2208,6 +2208,22 @@ generic "رومات اسمع معاه" copy.
       '<button type="submit"><i class="bi bi-send-fill"></i></button>';
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      // <body hx-boost="true"> (base.html) means ANY <form> under it is
+      // fair game for htmx's own boosted-submit handling, which doesn't
+      // check whether something else already called preventDefault() -
+      // only stopping the event from ever reaching htmx's own delegated
+      // listener actually keeps it from firing. Same exact gap, same
+      // fix, as .th-play-icon's click delegate (base.html) - without
+      // this, submitting a comment fired a REAL htmx-boosted GET of the
+      // current URL (this form has no action/method of its own, so it
+      // defaulted to "reload this same page") right alongside the
+      // WebSocket send below: #th-page-root got swapped for a freshly
+      // server-rendered copy - a brand new feedSocket connection and
+      // all - felt exactly like the page reloaded (because it did), and
+      // the comment list was empty for a beat because it genuinely was
+      // the fresh page's own empty-until-comment_history-arrives state,
+      // not because anything was actually lost.
+      e.stopPropagation();
       var input = form.querySelector('input');
       var text = input.value.trim();
       if (!text) return;
