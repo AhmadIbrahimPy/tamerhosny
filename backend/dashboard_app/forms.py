@@ -466,18 +466,20 @@ class UserAccountForm(forms.ModelForm):
 
     class Meta:
         model = UserAccount
-        fields = ['username', 'email', 'role', 'is_active']
+        fields = ['username', 'email', 'role', 'is_active', 'profile_image']
         labels = {
             'username': _('اسم المستخدم'),
             'email': _('البريد الإلكتروني'),
             'role': _('الدور'),
             'is_active': _('مفعّل'),
+            'profile_image': _('صورة الملف الشخصي'),
         }
         widgets = {
             'username': forms.TextInput(attrs=WIDGET_ATTRS),
             'email': forms.EmailInput(attrs=WIDGET_ATTRS),
             'role': forms.Select(attrs=SELECT_ATTRS),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'profile_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def save(self, commit=True):
