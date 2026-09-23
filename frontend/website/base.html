@@ -4651,6 +4651,31 @@
       return false;
     };
 
+    // Live-room cards (home.html's #thLiveRoomsSlider, both the initial
+    // server-rendered ones and buildCard()'s own JS-inserted ones as
+    // rooms open live) used to just be a plain <a href> - a guest could
+    // click straight through to /live-rooms/<host>/ and land there
+    // logged out, same as browsing any other page. That page itself
+    // already gates the actual join/listen action behind requireAuth
+    // (live_rooms.html), but with retry=null there - clicking that own
+    // room card again after logging in was the only way back in. Gating
+    // the click itself here instead means a guest sees the login modal
+    // BEFORE ever navigating away, and lands inside the exact room they
+    // clicked right after logging in, same "retry" pattern as
+    // thPlatformLinkClick above.
+    window.thLiveRoomCardClick = function (event, href) {
+      if (window.isAuthenticated) return true;
+      event.preventDefault();
+      window.requireAuth(function () {
+        if (window.thBoostedNavigate) {
+          window.thBoostedNavigate(href);
+        } else {
+          window.location.href = href;
+        }
+      });
+      return false;
+    };
+
     window.openAuthModal = function (view, message) {
       const overlay = document.getElementById('authModalOverlay');
       if (!overlay) return;
