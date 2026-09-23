@@ -287,6 +287,14 @@
       text-decoration:none; color:inherit; cursor:pointer; transition:background .15s ease;
     }
     .th-search-row:hover{ background:rgba(255,255,255,.05); }
+    /* A song row is a <button> (not an <a>) while "browsing for a room"
+       (thStartRoomFromSearchRow) - resets the browser's own default
+       button chrome (border/background/centered text/system font) so it
+       reads identically to every other .th-search-row, which is
+       otherwise always an <a>. */
+    button.th-search-row{
+      border:none; background:transparent; width:100%; text-align:start; font:inherit;
+    }
     .th-search-row-thumb{
       width:40px; height:40px; border-radius:10px; object-fit:cover; flex-shrink:0;
       background:rgba(255,255,255,.06);

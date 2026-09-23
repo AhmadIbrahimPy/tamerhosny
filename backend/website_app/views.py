@@ -815,6 +815,16 @@ def _search_songs(query_norm, limit):
                 'url': f'/songs/{song.slug}/',
                 'songId': song.pk,
                 'audioUrl': song.audio_file.url if song.audio_file else '',
+                # Only actually used by the navbar search overlay's own
+                # "browsing for a room" mode (thStartRoomWithSong,
+                # live_rooms.html) - a search result needs the same full
+                # arg set toggleAudio expects as a .th-suggested-song-row's
+                # own dataset does, or the room's "state" broadcast to
+                # followers (thSendListenTogetherState) would go out
+                # missing the album/artist it normally carries.
+                'artist': ', '.join(singers),
+                'album': localized_field(song.album, 'title') if song.album else '',
+                'albumLink': f'/albums/{song.album.slug}/' if song.album else '',
             }))
     scored.sort(key=lambda pair: pair[0], reverse=True)
     return scored[:limit]
@@ -910,7 +920,7 @@ def _search_ai_correction(query):
     return corrected
 
 
-def _run_search(query, limit_per_type=_SEARCH_RESULT_LIMIT_PER_TYPE, allow_ai_fallback=True):
+def _run_search(query, limit_per_type=_SEARCH_RESULT_LIMIT_PER_TYPE, allow_ai_fallback=True, types=None):
     query = (query or '').strip()
     if not query:
         return {'query': query, 'corrected_query': None, 'counts': {}, 'results': {}}
@@ -924,6 +934,14 @@ def _run_search(query, limit_per_type=_SEARCH_RESULT_LIMIT_PER_TYPE, allow_ai_fa
         'concerts': _search_concerts,
         'people': _search_people,
     }
+    # Room-browsing search (thRoomFeedCreateRoom/thStartRoomWithSong,
+    # live_rooms.html) only ever wants songs - a room is started FROM a
+    # song, so a movie/album/person result there is just something to
+    # tap that does nothing. Restricts the search itself, not just what
+    # renders, so a query only matching e.g. a movie title correctly
+    # comes back empty instead of a dead-end result.
+    if types:
+        finders = {key: finder for key, finder in finders.items() if key in types}
 
     results = {key: [item for _score, item in finder(query_norm, limit_per_type)] for key, finder in finders.items()}
     total = sum(len(v) for v in results.values())
@@ -961,8 +979,12 @@ def search_view(request):
     """
     query = (request.GET.get('q') or '').strip()
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    # Only the AJAX dropdown ever sends this (thStartRoomWithSong's own
+    # "browsing for a room" search mode) - the full results page always
+    # searches everything regardless.
+    types = set(request.GET.get('types', '').split(',')) - {''}
 
-    data = _run_search(query, limit_per_type=6 if is_ajax else _SEARCH_RESULT_LIMIT_PER_TYPE)
+    data = _run_search(query, limit_per_type=6 if is_ajax else _SEARCH_RESULT_LIMIT_PER_TYPE, types=types or None)
 
     if is_ajax:
         return JsonResponse(data)

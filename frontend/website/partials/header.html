@@ -257,10 +257,22 @@
     people: 'bi-person-fill'
   };
 
+  // window.thBrowsingForRoom (base.html) is set right before this overlay
+  // opens from "تصفح" on a live-rooms empty state/own-room strip
+  // (thRoomFeedCreateRoom, live_rooms.html) - read fresh everywhere below
+  // instead of copied into a local var, so it always reflects whatever's
+  // actually true right now rather than a stale snapshot from whenever
+  // the overlay happened to open.
+  var DEFAULT_PLACEHOLDER = input.placeholder;
+  var ROOM_PLACEHOLDER = '{% translate "دوّر على أغنية عشان تبدأ بيها الروم..." %}';
+  var DEFAULT_HINT = '{% translate "اكتب اسم أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان" %}';
+  var ROOM_HINT = '{% translate "اكتب اسم أغنية" %}';
+
   window.thToggleSearch = function () {
     if (overlay.classList.contains('show')) {
       window.thCloseSearch();
     } else {
+      input.placeholder = window.thBrowsingForRoom ? ROOM_PLACEHOLDER : DEFAULT_PLACEHOLDER;
       overlay.classList.add('show');
       setTimeout(function () { input.focus(); }, 30);
     }
@@ -268,6 +280,15 @@
 
   window.thCloseSearch = function () {
     overlay.classList.remove('show');
+    // Scopes "browsing for a room" to exactly the one search session it
+    // was opened for - without this, closing the overlay without
+    // actually picking a song left it stuck true, and the NEXT,
+    // completely unrelated navbar search would wrongly stay locked to
+    // songs-only/room-starting mode too. thStartRoomFromSearchRow below
+    // already reads this flag (via thStartRoomWithSong, live_rooms.html)
+    // before calling this, so resetting it here never affects a pick
+    // that's already in flight.
+    window.thBrowsingForRoom = false;
   };
 
   overlay.addEventListener('click', function (e) {
@@ -286,23 +307,59 @@
     return div.innerHTML;
   }
 
-  function renderRow(item) {
+  // Room mode (window.thBrowsingForRoom) turns a song result from a
+  // plain link to its own /songs/.../ page into a button that starts the
+  // room with it right here instead - thStartRoomWithSong is defined on
+  // live_rooms.html's own script, only ever reachable while this flag is
+  // true (thRoomFeedCreateRoom sets it before opening this exact
+  // overlay), so the guard below is never actually reachable as a no-op
+  // in practice, just defensive.
+  window.thStartRoomFromSearchRow = function (btn) {
+    if (window.thStartRoomWithSong) {
+      window.thStartRoomWithSong({
+        audioUrl: btn.dataset.audioUrl, title: btn.dataset.title,
+        image: btn.dataset.image, link: btn.dataset.link,
+        artist: btn.dataset.artist, album: btn.dataset.album,
+        albumLink: btn.dataset.albumLink, songId: btn.dataset.songId,
+      });
+    }
+    window.thCloseSearch();
+  };
+
+  function renderRow(item, roomMode) {
     var thumb = item.image
       ? '<img class="th-search-row-thumb" src="' + escapeHtml(item.image) + '" alt="">'
       : '<div class="th-search-row-thumb-fallback"><i class="bi ' + GROUP_ICONS[item.type] + '"></i></div>';
-    return (
-      '<a class="th-search-row" href="' + escapeHtml(item.url) + '">' +
-        thumb +
+    var inner = thumb +
         '<div>' +
           '<div class="th-search-row-title">' + escapeHtml(item.title) + '</div>' +
           (item.subtitle ? '<div class="th-search-row-subtitle">' + escapeHtml(item.subtitle) + '</div>' : '') +
-        '</div>' +
-      '</a>'
-    );
+        '</div>';
+
+    if (roomMode && item.type === 'songs') {
+      return (
+        '<button type="button" class="th-search-row"' +
+          ' data-audio-url="' + escapeHtml(item.audioUrl) + '" data-title="' + escapeHtml(item.title) + '"' +
+          ' data-image="' + escapeHtml(item.image) + '" data-link="' + escapeHtml(item.url) + '"' +
+          ' data-artist="' + escapeHtml(item.artist) + '" data-album="' + escapeHtml(item.album) + '"' +
+          ' data-album-link="' + escapeHtml(item.albumLink) + '" data-song-id="' + escapeHtml(item.songId) + '"' +
+          ' onclick="window.thStartRoomFromSearchRow(this);">' +
+          inner +
+        '</button>'
+      );
+    }
+
+    return '<a class="th-search-row" href="' + escapeHtml(item.url) + '">' + inner + '</a>';
   }
 
   function renderResults(data, query) {
-    var order = ['songs', 'albums', 'media', 'concerts', 'people'];
+    var roomMode = !!window.thBrowsingForRoom;
+    // Room mode only ever wants something to start the room with - a
+    // movie/album/person result there is a dead end (thStartRoomWithSong
+    // only knows what to do with a song), and the backend itself already
+    // only searched songs to begin with (runSearch's own &types=songs),
+    // so this is really just picking which single group to render.
+    var order = roomMode ? ['songs'] : ['songs', 'albums', 'media', 'concerts', 'people'];
     var total = 0;
     var html = '';
 
@@ -316,15 +373,19 @@
       total += items.length;
       html += '<div class="th-search-group">';
       html += '<div class="th-search-group-label">' + GROUP_LABELS[type] + '</div>';
-      items.slice(0, 4).forEach(function (item) {
-        html += renderRow(item);
+      items.slice(0, roomMode ? 8 : 4).forEach(function (item) {
+        html += renderRow(item, roomMode);
       });
       html += '</div>';
     });
 
     if (total === 0) {
       html += '<div class="th-search-empty">{% translate "مفيش نتائج، جرب كلمة تانية" %}</div>';
-    } else {
+    } else if (!roomMode) {
+      // "شوف كل النتائج" would navigate away from the room entirely -
+      // pointless (and actively unwanted) once you're picking a song
+      // specifically to start/queue one, so it's dropped in room mode
+      // rather than just quietly leading somewhere that abandons it.
       html += '<a class="th-search-see-all" href="/search/?q=' + encodeURIComponent(query) + '">{% translate "شوف كل النتائج" %}</a>';
     }
 
@@ -333,7 +394,9 @@
 
   function runSearch(query) {
     var requestId = ++activeRequestId;
-    fetch('/search/?q=' + encodeURIComponent(query), {
+    var url = '/search/?q=' + encodeURIComponent(query);
+    if (window.thBrowsingForRoom) url += '&types=songs';
+    fetch(url, {
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
       .then(function (r) { return r.json(); })
@@ -348,7 +411,7 @@
     var query = input.value.trim();
     clearTimeout(debounceTimer);
     if (!query) {
-      resultsEl.innerHTML = '<div class="th-search-hint">{% translate "اكتب اسم أغنية، ألبوم، فيلم، مسلسل، حفلة أو فنان" %}</div>';
+      resultsEl.innerHTML = '<div class="th-search-hint">' + (window.thBrowsingForRoom ? ROOM_HINT : DEFAULT_HINT) + '</div>';
       return;
     }
     debounceTimer = setTimeout(function () { runSearch(query); }, 280);
@@ -356,6 +419,11 @@
 
   window.thSubmitSearch = function (e) {
     e.preventDefault();
+    // Room mode has nowhere sensible to send a plain Enter to - "كل
+    // النتائج" would leave the room (same reasoning as dropping the
+    // link itself above); picking one of the dropdown's own rows is the
+    // only way to actually start something while it's on.
+    if (window.thBrowsingForRoom) return;
     var query = input.value.trim();
     if (!query) return;
     window.location.href = '/search/?q=' + encodeURIComponent(query);

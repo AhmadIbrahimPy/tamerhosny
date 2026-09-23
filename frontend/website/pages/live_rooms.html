@@ -114,7 +114,7 @@ generic "رومات اسمع معاه" copy.
     padding: 6px 12px; background: rgba(229,72,77,.85); color: #fff;
     font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
   }
-  .th-room-top-my-room-btn {
+  .th-room-top-my-room-btn, .th-room-top-leave-btn {
     display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,.35);
     border-radius: 999px; padding: 6px 12px; background: rgba(0,0,0,.35); color: #fff;
     font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
@@ -464,7 +464,7 @@ generic "رومات اسمع معاه" copy.
   }
   .th-room-comment-form input {
     flex: 1; border-radius: 999px; border: 1px solid rgba(255,255,255,.3);
-    background: rgba(0,0,0,.35); color: #fff; padding: 9px 45px 9px 14px; font-size: 13px;
+    background: rgba(0,0,0,.35); color: #fff; padding-inline: 14px 45px; padding-block: 9px; font-size: 13px;
     width: 100%;
   }
   .th-room-comment-form input::placeholder { color: rgba(255,255,255,.6); }
@@ -472,8 +472,11 @@ generic "رومات اسمع معاه" copy.
     width: 38px; height: 38px; border-radius: 50%; border: none;
     color: #0b0c12; flex-shrink: 0; cursor: pointer;
   }
+  /* inset-inline-end, not right - a hardcoded physical side put the
+     icon (and the input's own matching padding, above) on the wrong
+     side of the field entirely under RTL. */
   .th-room-emoji-btn {
-    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    position: absolute; inset-inline-end: 8px; top: 50%; transform: translateY(-50%);
     width: 32px; height: 32px; border-radius: 50%; border: none;
     background: transparent; color: rgba(255,255,255,.6); cursor: pointer;
     display: flex; align-items: center; justify-content: center; font-size: 16px;
@@ -481,17 +484,23 @@ generic "رومات اسمع معاه" copy.
   }
   .th-room-emoji-btn:hover { color: rgba(255,255,255,.9); }
   .th-room-emoji-popup {
-    position: absolute; bottom: 50px; right: 0;
+    position: absolute; bottom: 50px; inset-inline-end: 0;
     background: rgba(30,33,48,.95); border: 1px solid rgba(255,255,255,.2);
     border-radius: 12px; padding: 8px; display: none;
-    grid-template-columns: repeat(6, 1fr); gap: 4px;
-    max-width: 280px; max-height: 200px; overflow-y: auto;
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+    gap: 4px; grid-auto-rows: 34px;
+    /* min(…, 82vw) instead of a flat max-width - a fixed 280px could
+       still run past the edge of a narrow phone screen, since this
+       whole popup is inset-inline-end:0 off the comment field rather
+       than centered. */
+    width: min(288px, 82vw); max-height: 45vh; overflow-y: auto;
     z-index: 100; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    box-shadow: 0 14px 34px rgba(0,0,0,.45);
   }
   .th-room-emoji-popup.show { display: grid; }
   .th-room-emoji-item {
-    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-    font-size: 20px; cursor: pointer; border-radius: 6px; padding: 0;
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; cursor: pointer; border-radius: 6px; padding: 0;
     background: transparent; border: none; transition: background .2s;
   }
   .th-room-emoji-item:hover { background: rgba(255,255,255,.1); }
@@ -544,7 +553,7 @@ generic "رومات اسمع معاه" copy.
     .th-room-tap-badge{ order: 3; }
     .th-room-viewer-badge{ order: 4; }
     .th-room-slide-top::after{ content: ''; flex-basis: 100%; order: 5; }
-    .th-room-top-end-btn, .th-room-top-my-room-btn{ order: 6; }
+    .th-room-top-end-btn, .th-room-top-my-room-btn, .th-room-top-leave-btn{ order: 6; }
     .th-room-requests-badge{ order: 7; margin-inline-start: auto; }
   }
 
@@ -1095,9 +1104,14 @@ generic "رومات اسمع معاه" copy.
     }
   };
 
-  window.thPlaySuggestedSong = function (btn) {
-    var row = btn.closest('.th-suggested-song-row');
-    if (!row) return;
+  // Shared by thPlaySuggestedSong below (a .th-suggested-song-row's own
+  // dataset) and the navbar search overlay's "browsing for a room" mode
+  // (header.html's thStartRoomWithSong call, once window.thBrowsingForRoom
+  // is set - see thRoomFeedCreateRoom) - a search result needs to start
+  // the room exactly the same way a card pick does, not a second,
+  // slightly-different implementation. `args`: {audioUrl, title, image,
+  // link, artist, album, albumLink, songId}.
+  function thStartRoomWithSong(args) {
     // Playing a suggested song here is what actually spins up a room
     // (SongListenerConsumer._maybe_open_room only runs for a logged-in
     // user) - an anonymous visitor could tap this, hear the song, and
@@ -1107,10 +1121,10 @@ generic "رومات اسمع معاه" copy.
     if (window.requireAuth && window.requireAuth(null, null)) return;
 
     toggleAudio(
-      row.dataset.audioUrl, btn, row.dataset.title, '',
-      row.dataset.image ? [row.dataset.image] : null,
-      row.dataset.link, row.dataset.artist, row.dataset.album,
-      false, row.dataset.songId, row.dataset.albumLink, false
+      args.audioUrl, null, args.title, '',
+      args.image ? [args.image] : null,
+      args.link, args.artist, args.album,
+      false, args.songId, args.albumLink, false
     );
 
     // /live-rooms/<own-username>/ specifically, not the plain feed -
@@ -1152,8 +1166,8 @@ generic "رومات اسمع معاه" copy.
       var heroTitle = overlay.querySelector('.th-room-loading-hero-title');
       var heroArtist = overlay.querySelector('.th-room-loading-hero-artist');
       if (heroCover) {
-        if (row.dataset.image) {
-          heroCover.src = row.dataset.image;
+        if (args.image) {
+          heroCover.src = args.image;
           heroCover.style.display = 'block';
           if (heroFallback) heroFallback.style.display = 'none';
         } else {
@@ -1161,8 +1175,8 @@ generic "رومات اسمع معاه" copy.
           if (heroFallback) heroFallback.style.display = 'flex';
         }
       }
-      if (heroTitle) heroTitle.textContent = row.dataset.title || '';
-      if (heroArtist) heroArtist.textContent = row.dataset.artist || '';
+      if (heroTitle) heroTitle.textContent = args.title || '';
+      if (heroArtist) heroArtist.textContent = args.artist || '';
       overlay.style.display = 'flex';
     }
 
@@ -1182,7 +1196,7 @@ generic "رومات اسمع معاه" copy.
       // server to actually process it closes that gap; the timeout is
       // just a safety net in case that event never fires for some
       // reason.
-      var songId = String(row.dataset.songId);
+      var songId = String(args.songId);
       var listenerStarted = false;
       function onListenerStarted(evt) {
         if (listenerStarted || String(evt.detail.songId) !== songId) return;
@@ -1210,6 +1224,18 @@ generic "رومات اسمع معاه" copy.
       }
       setTimeout(goToMyRoom, 4000);
     }
+  }
+  window.thStartRoomWithSong = thStartRoomWithSong;
+
+  window.thPlaySuggestedSong = function (btn) {
+    var row = btn.closest('.th-suggested-song-row');
+    if (!row) return;
+    thStartRoomWithSong({
+      audioUrl: row.dataset.audioUrl, title: row.dataset.title,
+      image: row.dataset.image, link: row.dataset.link,
+      artist: row.dataset.artist, album: row.dataset.album,
+      albumLink: row.dataset.albumLink, songId: row.dataset.songId,
+    });
   };
 
   // An explicit pick (thQueueSuggestedSong) always wins; otherwise, a
@@ -2113,6 +2139,16 @@ generic "رومات اسمع معاه" copy.
       '</a>' +
       (isOwnRoom ? '<button type="button" class="th-room-top-end-btn" title="{% translate "إنهاء الروم" %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>' : '') +
       (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-my-room-btn" title="{% translate "غرفتي" %}"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>' : '') +
+      // #globalAudioPlayer's own "Leave" (thFollowingStatsRow, base.html)
+      // is the ONLY other place this action exists, and it's fully
+      // hidden on this exact page (.th-hide-controls, base.html - the
+      // feed already has its own per-slide UI) - a guest actually
+      // looking at the room they're following had no visible way to
+      // stop without it, short of scrolling away (and even that's
+      // blocked in some contexts - see viewingOwnRoom elsewhere on this
+      // page). stopListeningWith is the same disconnect either button
+      // triggers.
+      (!isOwnRoom && window.isAuthenticated ? '<button type="button" class="th-room-top-leave-btn" title="{% translate "خروج" %}"><i class="bi bi-box-arrow-right"></i> {% translate "خروج" %}</button>' : '') +
       '<span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>' +
       (isOwnRoom && !room.isPublic
         ? '<span class="th-room-requests-badge"><i class="bi bi-person-plus-fill"></i> {% translate "طلبات" %} <span class="th-room-requests-count-num">' +
@@ -2130,6 +2166,10 @@ generic "رومات اسمع معاه" copy.
       top.querySelector('.th-room-top-my-room-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         window.thGoToMyRoom();
+      });
+      top.querySelector('.th-room-top-leave-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.stopListeningWith) window.stopListeningWith();
       });
     }
     top.querySelector('.th-room-viewer-badge').addEventListener('click', function (e) {
@@ -2401,8 +2441,20 @@ generic "رومات اسمع معاه" copy.
     var emojiPopup = form.querySelector('.th-room-emoji-popup');
     var input = form.querySelector('input');
 
-    // Common emojis
-    var emojis = ['😀', '😂', '😍', '🥰', '😎', '🤔', '👍', '👎', '❤️', '💔', '🔥', '✨', '🎉', '🎵', '🎶', '💯', '🙌', '👏', '😢', '😭', '😡', '🤣', '😊', '😘', '💕', '💖', '🌟', '⭐', '💪', '🙏', '👋', '🤝'];
+    // A much bigger set (faces/hearts/hands/celebration/music/nature/
+    // food) than the original 32 - a room chat's own comment box is
+    // exactly the kind of casual context people reach for more than
+    // just the basics.
+    var emojis = [
+      '😀', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘', '😜', '🤪',
+      '😎', '🤩', '🥳', '😇', '🙂', '🤔', '😴', '🤗', '🤭', '🫠',
+      '😢', '😭', '😡', '😱', '😳', '🥺', '😅', '😏', '🙄', '😤',
+      '👍', '👎', '👏', '🙌', '🙏', '👋', '🤝', '💪', '✌️', '🤙',
+      '❤️', '💔', '💕', '💖', '💗', '💛', '💚', '💙', '💜', '🧡',
+      '🔥', '✨', '⭐', '🌟', '💯', '🎉', '🎊', '🥳', '🎵', '🎶',
+      '🎤', '🎧', '🎸', '🕺', '💃', '👑', '💎', '🌹', '🌙', '☀️',
+      '🍕', '🍔', '☕', '🍿', '🍫', '🐐', '🐱', '🐶', '🦋', '🌈',
+    ];
 
     emojis.forEach(function(emoji) {
       var btn = document.createElement('button');
@@ -2411,8 +2463,11 @@ generic "رومات اسمع معاه" copy.
       btn.type = 'button';
       btn.addEventListener('click', function(e) {
         e.preventDefault();
+        // Stays open - closing on every single pick made stringing a
+        // few emojis together (or fixing a misclick) reopen the whole
+        // popup from scratch each time. Only the outside-click handler
+        // below ever closes it now.
         input.value += emoji;
-        emojiPopup.classList.remove('show');
         input.focus();
       });
       emojiPopup.appendChild(btn);
@@ -2420,7 +2475,14 @@ generic "رومات اسمع معاه" copy.
 
     emojiBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      emojiPopup.classList.toggle('show');
+      e.stopPropagation();
+      // Always opens, never toggles itself closed - re-tapping the
+      // smiley while already open used to close it, which fought with
+      // the "stays open across picks" change above (tapping the icon a
+      // second time by habit, expecting it to still be there, closed it
+      // instead). Closing is exclusively the outside-click handler's
+      // job now, matching how every other popover on this page behaves.
+      emojiPopup.classList.add('show');
     });
 
     // Close popup when clicking outside
