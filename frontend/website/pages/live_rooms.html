@@ -559,33 +559,18 @@ generic "رومات اسمع معاه" copy.
     .th-room-requests-badge{ order: 7; margin-inline-start: auto; }
   }
 
-  /* Desktop/web only - horizontal slider with left/right arrows */
+  /* Desktop/web keeps the exact same vertical scroll-snap feed as
+     mobile (still one room filling the screen at a time, still
+     up/down) - only the nav arrows move, into the exact spot the tap
+     rail used to occupy (inset-inline-end, vertically off-center
+     toward the lower half of the slide) instead of staying pinned to
+     the left on wide screens too. Mobile keeps them where they've
+     always been. */
   @media (min-width:768px){
     .th-room-feed-nav-arrows{
       display: flex;
-      top: 50%; left: 50%; transform: translate(-50%, -50%);
-      inset-inline-start: auto; inset-inline-end: auto;
-      flex-direction: row;
-      gap: 20px;
-    }
-    .th-room-feed {
-      height: 92dvh;
-      overflow-x: scroll;
-      overflow-y: hidden;
-      scroll-snap-type: x mandatory;
-      display: flex;
-      flex-direction: row;
-    }
-    .th-room-feed::-webkit-scrollbar { display: none; }
-    .th-room-slide {
-      height: 92dvh;
-      width: 100vw;
-      flex-shrink: 0;
-      scroll-snap-align: start;
-    }
-    .th-room-feed-empty {
-      height: 92dvh;
-      width: 100vw;
+      top: auto; bottom: 32vh; transform: none;
+      inset-inline-start: auto; inset-inline-end: 10px;
     }
   }
 
