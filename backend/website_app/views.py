@@ -2759,7 +2759,7 @@ def live_rooms(request, username=None):
     })
 
 
-SUGGESTED_SONGS_COUNT = 12
+SUGGESTED_SONGS_COUNT = 14
 # Pull a wider pool than we actually show and pick randomly from it -
 # without this, the list would be byte-for-byte identical every time
 # (page refresh or the "تحديث" button), since the underlying
