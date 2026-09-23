@@ -116,15 +116,20 @@ def home(request):
 
     live_rooms = []
     own_live_room = None
+    # Unlike /live-rooms/'s own feed, your own room is deliberately NOT
+    # excluded here - this slider is a status/discovery strip, not a
+    # join list, so there's no "can't join yourself" reason to hide it;
+    # showing it is what actually confirms your room is live.
     live_room_qs = ListenTogetherRoom.objects.filter(
         is_public=True, is_live=True,
     ).select_related('host')
     if request.user.is_authenticated:
-        live_room_qs = live_room_qs.exclude(host=request.user)
-        # Own room is excluded from the feed above (can't meaningfully join
-        # yourself), but the idle "مفيش حد بيسمع - افتح روم وابدأ إنت أول
-        # واحد" placeholder is wrong if you're the one already hosting -
-        # this lets home.html swap in a "you're already live" card instead.
+        # Kept regardless of whether the room above ends up in live_rooms
+        # (e.g. private, or no song playing right now) - the idle "مفيش حد
+        # بيسمع - افتح روم وابدأ إنت أول واحد" placeholder is wrong if
+        # you're the one already hosting, so home.html swaps in a "you're
+        # already live" card instead whenever your room doesn't otherwise
+        # make it into the list below.
         own_live_room = ListenTogetherRoom.objects.filter(
             host=request.user, is_live=True,
         ).first()

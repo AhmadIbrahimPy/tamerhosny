@@ -4705,7 +4705,7 @@ msgstr "You Are Hosting Now"
 
 #: frontend/website/pages/home.html:293 frontend/website/pages/home.html:770
 msgid "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي"
-msgstr ""
+msgstr "Head over and listen together - no one else has a room open right now"
 
 #: frontend/website/pages/home.html:298 frontend/website/pages/home.html:776
 #: frontend/website/pages/live_rooms.html:13
@@ -4905,8 +4905,7 @@ msgstr "People in the Room"
 
 #: frontend/website/pages/live_rooms.html:776
 msgid "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي"
-msgstr ""
-"Search for a song and play it - you will automatically get your own room"
+msgstr "Pick a song and play it - you will automatically get a room"
 
 #: frontend/website/pages/live_rooms.html:980
 msgid "بعدها"
@@ -4928,7 +4927,7 @@ msgstr "Next room"
 
 #: frontend/website/pages/live_rooms.html:1190
 msgid "بدأ روم جديدة - ادخل اسمع"
-msgstr ""
+msgstr "started a new room - tap in"
 
 #: frontend/website/pages/live_rooms.html:1280
 msgid "اضغط عشان الصوت يشتغل"
@@ -4937,11 +4936,11 @@ msgstr "Tap to start the audio"
 #: frontend/website/pages/live_rooms.html:1538
 #: frontend/website/pages/live_rooms.html:1542
 msgid "متوقفة مؤقتًا"
-msgstr ""
+msgstr "Paused"
 
 #: frontend/website/pages/live_rooms.html:1569
 msgid "الفرفشة انتهت هنا - يلا لروم تانية"
-msgstr ""
+msgstr "Nothing more happening here - check out another room"
 
 #: frontend/website/pages/live_rooms.html:1570
 msgid "روم تانية"
@@ -4972,7 +4971,7 @@ msgstr "My Room"
 
 #: frontend/website/pages/live_rooms.html:1748
 msgid "طلبات"
-msgstr ""
+msgstr "Requests"
 
 #: frontend/website/pages/live_rooms.html:1787
 msgid "دلوقتي بيسمع"
@@ -5009,7 +5008,7 @@ msgstr "Cancel Request"
 
 #: frontend/website/pages/live_rooms.html:2018
 msgid "محدش رد على طلبك - اطلب تاني ولا اسكرول لروم تانية"
-msgstr ""
+msgstr "No response to your request yet - try again or scroll to another room"
 
 #: frontend/website/pages/live_rooms.html:2019
 msgid "اطلب تاني"

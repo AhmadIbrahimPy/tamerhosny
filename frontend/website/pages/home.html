@@ -727,9 +727,9 @@
   // Keeps the "اسمع معاه" card slider in sync with whatever's actually
   // live, without a page reload - same feed socket live_rooms.html
   // itself uses for the exact same "a public room just opened/closed"
-  // push (LiveRoomsFeedConsumer). Own room (window.thUserId hosting) is
-  // deliberately never shown here, same reasoning as the /live-rooms/
-  // feed itself excluding it - you can't meaningfully join yourself.
+  // push (LiveRoomsFeedConsumer). Unlike /live-rooms/'s own feed, your
+  // own room IS shown here (see views.home's own comment) - this is a
+  // status strip, not a join list.
   var slider = document.getElementById('thLiveRoomsSlider');
   if (!slider) return;
   var seeAll = document.getElementById('thLiveRoomsSeeAll');
@@ -813,7 +813,7 @@
 
     if (data.type === 'room_opened') {
       var room = data.room;
-      if (!room || room.hostUserId === window.thUserId) return;
+      if (!room) return;
       if (slider.querySelector('.th-live-room-card[data-host-user-id="' + room.hostUserId + '"]')) return;
       slider.appendChild(buildCard(room));
       refresh();
