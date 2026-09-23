@@ -1,0 +1,27 @@
+{% load i18n %}
+{% for group in suggested_song_groups %}
+<div class="th-mood-group" style="--i:{{ forloop.counter0 }}">
+  <div class="th-mood-group-head"><span class="th-mood-group-label">{{ group.label }}</span></div>
+  <div class="th-mood-group-track">
+    {% for song in group.songs %}
+    <div class="th-suggested-song-row"
+       data-song-id="{{ song.songId }}" data-audio-url="{{ song.url }}"
+       data-title="{{ song.title }}" data-artist="{{ song.artist }}"
+       data-album="{{ song.album }}" data-album-link="{{ song.albumLink }}"
+       data-image="{{ song.image }}" data-link="{{ song.link }}"
+       style="--i:{{ forloop.counter0 }}">
+      <div class="th-suggested-song-cover-wrap">
+        {% if song.image %}<img src="{{ song.image }}" class="th-suggested-song-cover" alt="">{% else %}<i class="bi bi-music-note-beamed"></i>{% endif %}
+      </div>
+      <div class="th-suggested-song-info">
+        <div class="th-suggested-song-title">{{ song.title }}</div>
+        <div class="th-suggested-song-artist">{{ song.artist }}</div>
+      </div>
+      <button type="button" class="th-suggested-song-play" onclick="window.thPlaySuggestedSong(this);" title="{% translate 'تشغيل' %}">
+        <i class="bi bi-play-fill"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}

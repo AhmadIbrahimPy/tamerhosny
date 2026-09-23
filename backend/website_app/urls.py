@@ -83,6 +83,7 @@ urlpatterns = [
     path('live-rooms/settings/', views.update_room_settings, name='update-room-settings'),
     path('live-rooms/viewer-stats/', views.live_room_viewer_stats, name='live-room-viewer-stats'),
     path('live-rooms/suggested-songs/', views.live_rooms_suggested_songs, name='live-rooms-suggested-songs'),
+    path('live-rooms/suggested-song-groups/', views.live_rooms_suggested_song_groups, name='live-rooms-suggested-song-groups'),
     # Must stay after the literal 'settings/' path above - <str:username>
     # would otherwise swallow it first.
     path('live-rooms/<str:username>/', views.live_rooms, name='live-room-detail'),

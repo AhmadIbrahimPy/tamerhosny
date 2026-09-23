@@ -601,12 +601,12 @@ generic "رومات اسمع معاه" copy.
   .th-room-join-reject-btn { background: rgba(229,72,77,.15); color: #e5484d; }
   .th-room-join-reject-btn:hover { background: rgba(229,72,77,.28); }
 
-  .th-suggested-songs {
-    display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px;
-    padding-inline: 20px; max-height: 42vh; overflow-y: auto;
-    scrollbar-width: none; -ms-overflow-style: none;
-  }
-  .th-suggested-songs::-webkit-scrollbar { display: none; }
+  /* Base row - a plain horizontal item, never actually shown un-wrapped
+     any more (both places that render .th-suggested-song-row - the
+     mood sliders below and .th-room-suggest-cards, the own-room "شغّل
+     كمان" strip - override it into a column card). Kept as the shared
+     base the two descendant overrides build on instead of duplicating
+     the cover/info/play markup styling twice. */
   .th-suggested-song-row {
     display: flex; align-items: center; gap: 12px; padding: 8px 10px;
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
@@ -626,7 +626,6 @@ generic "رومات اسمع معاه" copy.
   .th-suggested-song-artist {
     font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  /* Default: button outside cover-wrap (empty state) */
   .th-suggested-song-play {
     flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: none;
     display: flex; align-items: center; justify-content: center; padding: 0;
@@ -639,6 +638,65 @@ generic "رومات اسمع معاه" copy.
   }
   .th-suggested-songs-refresh.spinning i { animation: thSpin .7s linear infinite; }
   @keyframes thSpin { to { transform: rotate(360deg); } }
+
+  /* "دور على أغنية وشغلها" as a pick-a-vibe screen: one horizontal
+     slider per Song.Mood (_suggested_song_groups_for_empty_feed,
+     views.py) instead of one flat list - starting a room is choosing
+     what to play, and "أنهي نوع أغاني عايز؟" is a much more actionable
+     question than an undifferentiated pile of songs. */
+  .th-mood-groups {
+    display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 420px;
+    max-height: 44vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
+    padding-block: 2px;
+  }
+  .th-mood-groups::-webkit-scrollbar { display: none; }
+  .th-mood-group {
+    animation: thMoodGroupIn .5s ease both;
+    animation-delay: calc(var(--i, 0) * 80ms);
+  }
+  .th-mood-group-head { padding-inline: 20px; margin-bottom: 8px; text-align: start; }
+  .th-mood-group-label { font-size: 13px; font-weight: 800; color: var(--text); }
+  .th-mood-group-track {
+    display: flex; gap: 10px; overflow-x: auto; padding-inline: 20px;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .th-mood-group-track::-webkit-scrollbar { display: none; }
+  .th-mood-group-track .th-suggested-song-row {
+    flex-direction: column; align-items: flex-start; gap: 8px; width: 112px; flex-shrink: 0;
+    padding: 10px; position: relative;
+    animation: thMoodCardIn .45s ease both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  .th-mood-group-track .th-suggested-song-cover-wrap { width: 100%; height: 100px; border-radius: 10px; }
+  .th-mood-group-track .th-suggested-song-info { width: 100%; }
+  .th-mood-group-track .th-suggested-song-artist { display: none; }
+  .th-mood-group-track .th-suggested-song-play {
+    position: absolute; bottom: 8px; inset-inline-end: 8px;
+    width: 28px; height: 28px; box-shadow: 0 6px 16px -4px rgba(0,0,0,.5);
+  }
+  @keyframes thMoodGroupIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes thMoodCardIn {
+    from { opacity: 0; transform: translateY(8px) scale(.94); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Floating emoji + a soft fade-up for the whole screen - the "بحث عن
+     روم" empty state used to just appear flat/instant, which read as
+     unfinished next to every other live-feeling part of this page
+     (pulsing live dots, the loading spinner...). */
+  .th-room-feed-empty { animation: thEmptyFadeIn .5s ease both; }
+  .th-room-feed-empty-emoji { font-size: 48px; animation: thEmptyEmojiFloat 2.6s ease-in-out infinite; }
+  @keyframes thEmptyFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes thEmptyEmojiFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
 
   .leaderboard-live-dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
@@ -654,17 +712,17 @@ generic "رومات اسمع معاه" copy.
 {% block content %}
 <div id="thRoomFeed" class="th-room-feed"></div>
 <div id="thRoomFeedEmpty" class="th-room-feed-empty">
-  <div style="font-size:48px;">🎧</div>
+  <div class="th-room-feed-empty-emoji">🎧</div>
   <p>{% translate "مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد." %}</p>
-  {% if suggested_songs %}
-  <div class="th-suggested-songs" id="thSuggestedSongs">
-    {% include "website/partials/_suggested_songs_items.html" %}
+  {% if suggested_song_groups %}
+  <div class="th-mood-groups" id="thSuggestedSongGroups">
+    {% include "website/partials/_suggested_song_groups.html" %}
   </div>
   {% endif %}
   <div style="display:flex; gap:8px;">
     <button type="button" onclick="thRoomFeedCreateRoom()">{% translate "تصفح" %}</button>
-    {% if suggested_songs %}
-    <button type="button" class="th-suggested-songs-refresh" onclick="thRefreshSuggestedSongs(this)" title="{% translate 'تحديث القائمة' %}">
+    {% if suggested_song_groups %}
+    <button type="button" class="th-suggested-songs-refresh" onclick="thRefreshSuggestedSongGroups(this)" title="{% translate 'تحديث القائمة' %}">
       <i class="bi bi-arrow-clockwise"></i> {% translate "تحديث" %}
     </button>
     {% endif %}
@@ -777,16 +835,19 @@ generic "رومات اسمع معاه" copy.
     }
   };
 
-  // "تحديث" next to "تصفح" - swaps in a freshly (re-randomized
-  // server-side) picked batch of suggestions in place, no reload.
-  window.thRefreshSuggestedSongs = function (btn) {
+  // "تحديث" next to "تصفح" - swaps in a freshly (re-randomized server-
+  // side) set of mood sliders in place, no reload. Separate endpoint/
+  // target from thLoadSuggestCards' own AJAX fetch below (the own-
+  // room's small flat "شغّل كمان" strip) - see live_rooms_suggested_
+  // song_groups's own docstring for why that one stays flat.
+  window.thRefreshSuggestedSongGroups = function (btn) {
     if (btn) btn.classList.add('spinning');
-    fetch('{% url "website_app:live-rooms-suggested-songs" %}', {
+    fetch('{% url "website_app:live-rooms-suggested-song-groups" %}', {
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var list = document.getElementById('thSuggestedSongs');
+        var list = document.getElementById('thSuggestedSongGroups');
         if (list && data.html) list.innerHTML = data.html;
       })
       .catch(function () {})

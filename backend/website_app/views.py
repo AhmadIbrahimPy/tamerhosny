@@ -2726,7 +2726,7 @@ def live_rooms(request, username=None):
         # link is opened, just fall back to the normal feed order.
         rooms.sort(key=lambda r: r['hostUsername'].lower() != username.lower())
 
-    suggested_songs = _suggested_songs_for_empty_feed(request) if not rooms else []
+    suggested_song_groups = _suggested_song_groups_for_empty_feed(request) if not rooms else []
 
     # Shown to both the host (below their own "شغّل كمان" strip) and every
     # guest (below "دلوقتي بيسمع") on each room slide - see thBuildSlide's
@@ -2752,7 +2752,7 @@ def live_rooms(request, username=None):
 
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
-        'suggested_songs': suggested_songs,
+        'suggested_song_groups': suggested_song_groups,
         'room_ads': room_ads,
         'target_room': target_room,
     })
@@ -2809,13 +2809,95 @@ def _suggested_songs_for_empty_feed(request):
 
 
 def live_rooms_suggested_songs(request):
-    """AJAX - "تحديث" next to the live-rooms empty state's "تصفح" button:
-    swaps in a freshly (re-randomized, see _suggested_songs_for_empty_
-    feed) picked batch without a page reload."""
+    """AJAX - own-room slide's own "شغّل كمان" strip (thLoadSuggestCards,
+    live_rooms.html), fetched fresh both on first load and after a pick
+    so a song just queued doesn't linger in the list it came from. A
+    flat, unlabeled batch is exactly right for that small strip - see
+    live_rooms_suggested_song_groups below for the mood-grouped version
+    the empty-state screen itself uses instead."""
     return JsonResponse({
         'html': render_to_string(
             'website/partials/_suggested_songs_items.html',
             {'suggested_songs': _suggested_songs_for_empty_feed(request)},
+            request=request,
+        ),
+    })
+
+
+SUGGESTED_SONGS_PER_MOOD = 8
+SUGGESTED_SONGS_MOOD_POOL = 20
+# At least this many songs actually tagged with a mood before it earns
+# its own slider - a category with one or two songs would look broken
+# (a near-empty row) rather than like a real "pick a vibe" option.
+SUGGESTED_SONGS_MIN_PER_MOOD = 3
+
+# Fixed, curated order (not "however many rows Genre.choices happens to
+# define") - a room-starting screen is a mood picker, not an admin form;
+# genre order there means nothing to a visitor deciding "دور على أغنية
+# وشغلها" between casual browsing.
+_SUGGESTED_MOOD_ORDER = [
+    (Song.Mood.ENERGETIC_UPBEAT, _('🎉 فرفشة وطاقة عالية')),
+    (Song.Mood.ROMANTIC, _('❤️ رومانسي')),
+    (Song.Mood.SAD_HEARTBREAK, _('💔 حزينة')),
+    (Song.Mood.CHILL_RELAXING, _('😌 رايقة')),
+    (Song.Mood.NOSTALGIC, _('✨ ذكريات وحنين')),
+    (Song.Mood.MOTIVATIONAL_HOPEFUL, _('🔥 تحفيزي')),
+    (Song.Mood.CONFIDENT_PLAYFUL, _('😎 واثق وفريش')),
+]
+
+
+def _suggested_song_groups_for_empty_feed(request):
+    """Same "give the empty state something more useful to do than just
+    say so" job as _suggested_songs_for_empty_feed above, but split into
+    one slider per Song.Mood instead of a single flat list - "دور على
+    أغنية وشغلها" is a lot easier to actually act on when it's "أنهي نوع
+    أغاني عايز؟" (pick a vibe) instead of one undifferentiated pile.
+    Random sample per mood (not the catalog's stable order) for the same
+    reason _suggested_songs_for_empty_feed's own pool/sample does - so
+    "تحديث" actually changes something.
+
+    Falls back to the OLD flat single-list behavior (as one untitled
+    group) when moods aren't populated yet (a fresh catalog, or - like
+    local dev data - too few songs tagged per mood to fill even one real
+    slider) - a mood-grouped screen with every row skipped for being too
+    short would just look broken, not "no data yet".
+    """
+    import random
+
+    base_qs = Song.visible_queryset(Song.objects.exclude(audio_file=''))
+
+    groups = []
+    for mood_value, label in _SUGGESTED_MOOD_ORDER:
+        pool = list(
+            base_qs.filter(mood=mood_value)
+            .select_related('album')[:SUGGESTED_SONGS_MOOD_POOL]
+        )
+        if len(pool) < SUGGESTED_SONGS_MIN_PER_MOOD:
+            continue
+        songs = random.sample(pool, min(len(pool), SUGGESTED_SONGS_PER_MOOD))
+        groups.append({
+            'mood': mood_value,
+            'label': label,
+            'songs': [_serialize_song_for_listen_together(song) for song in songs],
+        })
+
+    if groups:
+        return groups
+
+    flat = _suggested_songs_for_empty_feed(request)
+    if not flat:
+        return []
+    return [{'mood': '', 'label': _('🎵 جرب دول'), 'songs': flat}]
+
+
+def live_rooms_suggested_song_groups(request):
+    """AJAX - "تحديث" next to the live-rooms empty state's "تصفح" button:
+    swaps in a freshly (re-randomized, see _suggested_song_groups_for_
+    empty_feed) set of mood sliders without a page reload."""
+    return JsonResponse({
+        'html': render_to_string(
+            'website/partials/_suggested_song_groups.html',
+            {'suggested_song_groups': _suggested_song_groups_for_empty_feed(request)},
             request=request,
         ),
     })
