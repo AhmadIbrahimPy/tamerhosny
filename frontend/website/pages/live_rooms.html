@@ -420,6 +420,26 @@ generic "رومات اسمع معاه" copy.
     max-height: 30vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
     margin-bottom: 10px;
     scrollbar-width: none; -ms-overflow-style: none;
+    transition: max-height .4s ease;
+  }
+  /* .th-room-slide-header (pinned to the slide's top edge) and
+     .th-room-slide-comments (bunched at the bottom, .th-room-slide's
+     own justify-content:flex-end) are two independently-positioned
+     groups sharing the same slide - normally with enough clearance
+     between them, but the ad card (thShowRoomAd, only actually taking
+     up real height for its ~12s on screen) could push the header's
+     effective bottom edge down far enough to paint underneath a long
+     comment list, since both share the same z-index and comments comes
+     later in the DOM (paints on top, hiding the bottom of the ad card
+     it was overlapping instead of the other way around). Shrinking the
+     comment list for exactly as long as the ad is actually showing -
+     toggled by thShowRoomAd alongside its own .show class - guarantees
+     real clearance instead of guessing a fixed height that's wrong for
+     everyone whenever the room's own font size/comment count/screen
+     height inevitably vary. */
+  .th-room-slide.th-ad-showing .th-room-comment-list { max-height: 10vh; }
+  @media (min-width: 768px) {
+    .th-room-slide.th-ad-showing .th-room-comment-list { max-height: 14vh; }
   }
   .th-room-comment-list::-webkit-scrollbar { display: none; }
   .th-room-comment { font-size: 13px; line-height: 1.4; }
@@ -1924,6 +1944,12 @@ generic "رومات اسمع معاه" copy.
     slot.appendChild(card);
     if (window.thTrack) thTrack('VIEW', 'ad', ad.id);
 
+    // See .th-ad-showing's own CSS comment - gives the comment list
+    // room to shrink out of the ad's way for exactly as long as it's
+    // actually visible, host or guest either way.
+    var roomSlide = slot.closest('.th-room-slide');
+    if (roomSlide) roomSlide.classList.add('th-ad-showing');
+
     // Two rAFs (not one) - the browser needs to actually paint the
     // freshly-inserted .th-room-ad-card at opacity:0 first, or adding
     // .show on the very next frame can get coalesced into the same
@@ -1935,6 +1961,7 @@ generic "رومات اسمع معاه" copy.
 
     var hideId = setTimeout(function () {
       card.classList.remove('show');
+      if (roomSlide) roomSlide.classList.remove('th-ad-showing');
       var clearId = setTimeout(function () {
         if (slot.isConnected) slot.innerHTML = '';
         thScheduleRoomAd(slot);
