@@ -1105,8 +1105,10 @@ generic "رومات اسمع معاه" copy.
   // (with its "دور على أغنية" suggestions) is exactly where you'd want
   // to land anyway to start one.
   window.thGoToMyRoom = function () {
+    console.log('[TH-DEBUG] thGoToMyRoom() called');
     if (window.stopListeningWith) window.stopListeningWith();
     var url = window.thUsername ? ('/live-rooms/' + window.thUsername + '/') : '/live-rooms/';
+    console.log('[TH-DEBUG] thGoToMyRoom() navigating to', url);
     if (window.thBoostedNavigate) {
       window.thBoostedNavigate(url);
     } else {
@@ -1477,8 +1479,15 @@ generic "رومات اسمع معاه" copy.
 
       upBtn = navWrap.querySelector('#thRoomFeedUpBtn');
       downBtn = navWrap.querySelector('#thRoomFeedDownBtn');
-      upBtn.addEventListener('click', function () { thScrollToSlide(Math.max(0, activeIndex - 1)); });
-      downBtn.addEventListener('click', function () { thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1)); });
+      upBtn.addEventListener('click', function () {
+        console.log('[TH-DEBUG] upBtn clicked, activeIndex=', activeIndex, 'disabled=', upBtn.disabled, 'target=', Math.max(0, activeIndex - 1), 'slideEls[target]=', slideEls[Math.max(0, activeIndex - 1)]);
+        thScrollToSlide(Math.max(0, activeIndex - 1));
+      });
+      downBtn.addEventListener('click', function () {
+        console.log('[TH-DEBUG] downBtn clicked, activeIndex=', activeIndex, 'disabled=', downBtn.disabled, 'target=', Math.min(slideEls.length - 1, activeIndex + 1), 'slideEls.length=', slideEls.length);
+        thScrollToSlide(Math.min(slideEls.length - 1, activeIndex + 1));
+      });
+      console.log('[TH-DEBUG] nav arrows built, computed display=', getComputedStyle(navWrap).display, 'innerWidth=', window.innerWidth);
     }
 
     var isDesktop = window.innerWidth >= 768;
@@ -2180,6 +2189,7 @@ generic "رومات اسمع معاه" copy.
       });
     } else if (window.isAuthenticated) {
       top.querySelector('.th-room-top-my-room-btn').addEventListener('click', function (e) {
+        console.log('[TH-DEBUG] My Room button clicked, thUsername=', window.thUsername, 'thBoostedNavigate=', typeof window.thBoostedNavigate);
         e.stopPropagation();
         window.thGoToMyRoom();
       });
