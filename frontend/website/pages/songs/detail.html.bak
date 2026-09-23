@@ -3626,7 +3626,7 @@
 
     const rowsHtml = entries.map(function (entry) {
       const trendClass = entry.trend ? 'trend-' + entry.trend.toLowerCase() : 'trend-live';
-      const trendIcon = entry.trend ? (TREND_ICON[entry.trend] || TREND_ICON.SAME) : '<i class="bi bi-broadcast"></i>';
+      const trendIcon = entry.trend ? (TREND_ICON[entry.trend] || TREND_ICON.SAME) : '';
       const avatar = entry.avatar_url
         ? `<img class="leaderboard-avatar" src="${escapeHtml(entry.avatar_url)}" alt="">`
         : `<div class="leaderboard-avatar-fallback">${entry.is_anonymous ? '<i class="bi bi-person-fill"></i>' : escapeHtml(entry.display_name.slice(0, 1).toUpperCase())}</div>`;
