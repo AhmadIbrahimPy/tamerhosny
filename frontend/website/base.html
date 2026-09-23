@@ -3921,6 +3921,24 @@
       });
     });
 
+    // Keeps this browser's own ListenTogetherViewer row (whichever room
+    // it's currently a follower/pending-requester of) from going stale
+    // server-side (see that model's own docstring on why - disconnect()
+    // alone isn't 100% reliable) - independent of audio playback, since
+    // still being in the room (reading comments, watching taps) doesn't
+    // require the audio to keep firing timeupdate. Tied to thFollowSocket
+    // specifically, not thHostSocket - the host's own aliveness is
+    // already covered by CurrentSongListener's own heartbeat/sweep.
+    // Harmless no-op server-side before request_join is actually
+    // approved (ListenTogetherConsumer._heartbeat only touches a row
+    // that exists), so this can just always run rather than tracking
+    // approval state here too.
+    setInterval(function () {
+      if (thFollowSocket && thFollowSocket.readyState === WebSocket.OPEN) {
+        thFollowSocket.send(JSON.stringify({ action: 'heartbeat' }));
+      }
+    }, 25000);
+
     function checkLikeStatus(songId) {
       if (!songId) return;
       // Switching songs quickly fires a new check before the previous

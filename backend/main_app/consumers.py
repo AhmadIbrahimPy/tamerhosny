@@ -499,6 +499,15 @@ class DuetVideoStatusConsumer(WebsocketConsumer):
         }))
 
 
+# Safety net only, same reasoning as STALE_LISTENER_CUTOFF above - a
+# normal tab close/navigation already runs disconnect() reliably. Tighter
+# than that one (viewers ping every 25s from thFollowSocket, see
+# base.html, vs. song listeners' much lower-frequency traffic) so a
+# genuinely gone viewer clears from "الناس في الروم" reasonably quickly
+# instead of sitting there for minutes.
+STALE_VIEWER_CUTOFF = timedelta(seconds=90)
+
+
 class ListenTogetherConsumer(WebsocketConsumer):
     """"اسمع معاه" - live-mirrors one user's ("the host") playback to
     anyone who joins their group from their public profile ("followers").
@@ -662,6 +671,8 @@ class ListenTogetherConsumer(WebsocketConsumer):
                 self._post_comment(data.get('text'))
             elif action == 'tap':
                 self._tap()
+            elif action == 'heartbeat':
+                self._heartbeat()
 
     # =========================================================
     # HOST -> GROUP
@@ -704,7 +715,17 @@ class ListenTogetherConsumer(WebsocketConsumer):
             # for why every client needs to read from this instead of
             # just accumulating follower_joined/left events from
             # whenever THEIR OWN connection happened to open.
-            ListenTogetherViewer.objects.get_or_create(room=room, user=self.user)
+            viewer, created = ListenTogetherViewer.objects.get_or_create(room=room, user=self.user)
+            if not created:
+                # get_or_create's own save() only runs (bumping
+                # last_heartbeat via auto_now) on the CREATE path - a
+                # reconnect finding an existing row (backgrounded tab,
+                # brief network drop) needs this explicit touch too, or
+                # a viewer who's been away for a while would reconnect
+                # only to have _sweep_stale_viewers evict them moments
+                # later anyway, before their own heartbeat loop got a
+                # chance to run.
+                ListenTogetherViewer.objects.filter(pk=viewer.pk).update(last_heartbeat=timezone.now())
 
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'follower.joined',
@@ -728,6 +749,12 @@ class ListenTogetherConsumer(WebsocketConsumer):
         if room is None:
             viewers = []
         else:
+            # Swept here too, not just from the periodic heartbeat below -
+            # every fresh connection (host reconnecting, a new follower
+            # joining) reads this, so a stale row never has to wait for
+            # someone else's heartbeat to happen to land before it stops
+            # showing up as still "in the room".
+            self._sweep_stale_viewers(room)
             viewers = [
                 {'user_id': v.user_id, 'username': v.user.username}
                 for v in ListenTogetherViewer.objects.filter(room=room).select_related('user')
@@ -737,6 +764,52 @@ class ListenTogetherConsumer(WebsocketConsumer):
             'type': 'viewers_snapshot',
             'viewers': viewers,
         }))
+
+    def _heartbeat(self):
+        # Host has no ListenTogetherViewer row of its own (it's not a
+        # "viewer" of itself) - nothing to touch, and no room to sweep
+        # on behalf of that isn't already covered by every OTHER
+        # follower's own heartbeat/join/reconnect in that same room.
+        if self.is_host:
+            return
+
+        from backend.main_app.models import ListenTogetherRoom
+
+        room = ListenTogetherRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is None:
+            return
+
+        from backend.main_app.models import ListenTogetherViewer
+
+        ListenTogetherViewer.objects.filter(room=room, user=self.user).update(
+            last_heartbeat=timezone.now(),
+        )
+        self._sweep_stale_viewers(room)
+
+    def _sweep_stale_viewers(self, room):
+        """Deletes any ListenTogetherViewer row for `room` that's gone
+        quiet past STALE_VIEWER_CUTOFF and tells the group they left -
+        the lazy, read-triggered safety net for whatever skipped
+        disconnect() (see ListenTogetherViewer.last_heartbeat's own
+        docstring), same pattern SongListenerConsumer._maybe_close_room
+        already uses for CurrentSongListener. Broadcasting follower.left
+        for each one (not just silently deleting) is what actually
+        clears them from anyone ELSE's already-open "الناس في الروم"
+        list too, not just the next snapshot request's."""
+        from backend.main_app.models import ListenTogetherViewer
+
+        cutoff = timezone.now() - STALE_VIEWER_CUTOFF
+        stale = ListenTogetherViewer.objects.filter(room=room, last_heartbeat__lt=cutoff)
+        stale_user_ids = list(stale.values_list('user_id', flat=True))
+        if not stale_user_ids:
+            return
+
+        stale.delete()
+        for user_id in stale_user_ids:
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'follower.left',
+                'user_id': user_id,
+            })
 
     # =========================================================
     # COMMENTS + TAPS (host or any approved follower)

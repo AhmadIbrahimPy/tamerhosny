@@ -2683,7 +2683,23 @@ def live_rooms(request, username=None):
         is_live=True,
     ).select_related('host').order_by('-tap_score', '-created_at')
 
-    if request.user.is_authenticated and not viewing_own_room:
+    if viewing_own_room:
+        # Scoped to ONLY your own room - not just sorted first among
+        # everyone else's like before. The feed's own scroll-snap has no
+        # concept of "you may look but not leave"; sending the rest of
+        # the feed here meant the host could swipe straight off their
+        # own slide into someone else's room while still, server-side,
+        # very much still hosting/playing - thHostSocket doesn't care
+        # which slide is on screen, it keeps relaying THIS browser's
+        # actual playback regardless. A guest scrolling away mid-listen
+        # to another room is exactly what following elsewhere is meant
+        # to do; a host doing the same is just a host who wandered off
+        # their own room without ending it, which is what actually
+        # confused a follower still in it (state pings/room lifecycle
+        # kept firing from a tab that no longer looked, to the host
+        # themselves, like it was showing their room at all).
+        rooms_qs = rooms_qs.filter(host=request.user)
+    elif request.user.is_authenticated:
         rooms_qs = rooms_qs.exclude(host=request.user)
 
     if request.user.is_authenticated:

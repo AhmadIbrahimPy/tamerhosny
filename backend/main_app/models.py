@@ -335,11 +335,28 @@ class ListenTogetherViewer(models.Model):
 
     joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الدخول'))
 
+    # ListenTogetherConsumer.disconnect() is reliable for a normal tab
+    # close (same as CurrentSongListener's own docstring already notes
+    # for the identical situation), but it's not the only way a row like
+    # this ends up orphaned - a hard browser/process kill, a network
+    # drop that never completes the WebSocket close handshake, or a
+    # server restart mid-connection all skip disconnect() entirely, and
+    # nothing else ever deleted the row after that. Bumped by a periodic
+    # 'heartbeat' action from the follower's own socket (thFollowSocket,
+    # base.html) - ListenTogetherConsumer._heartbeat/_sweep_stale_viewers
+    # sweep anything older than STALE_VIEWER_CUTOFF, same lazy-on-read
+    # pattern CurrentSongListener already uses for the same class of
+    # problem, not a separate scheduled job.
+    last_heartbeat = models.DateTimeField(auto_now=True, verbose_name=_('آخر نبض'))
+
     class Meta:
         verbose_name = _('متابع اسمع معاه')
         verbose_name_plural = _('متابعين اسمع معاه')
         constraints = [
             models.UniqueConstraint(fields=['room', 'user'], name='unique_room_viewer_user'),
+        ]
+        indexes = [
+            models.Index(fields=['last_heartbeat']),
         ]
 
     def __str__(self):
