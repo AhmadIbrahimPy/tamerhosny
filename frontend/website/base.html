@@ -3329,6 +3329,18 @@
 
       var row = document.getElementById('thHostingStatsRow');
       if (row) row.remove();
+
+      // room_closed only reaches this browser once the room's stop has
+      // actually been processed server-side (is_live really flipped to
+      // False) - the same "don't guess, wait for the real signal"
+      // reasoning thRoomOpened already exists for on the way in. Without
+      // this, live_rooms.html's own thEndOwnRoom navigated to the bare
+      // /live-rooms/ URL right after sending 'stop', not after it was
+      // actually processed - live_rooms's own redirect-to-your-room-if-
+      // still-live check (views.py) could still see is_live=True for
+      // that one request and bounce straight back into the room "إنهاء"
+      // was supposed to have just ended.
+      document.dispatchEvent(new CustomEvent('thRoomClosed'));
     }
 
     function thUpdateHostingJoinCount() {

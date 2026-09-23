@@ -1081,11 +1081,34 @@ generic "رومات اسمع معاه" copy.
     // room never depends on that side effect actually firing.
     if (window.sendGlobalListenerAction) sendGlobalListenerAction('stop');
     if (globalAudio) globalAudio.pause();
-    if (window.thBoostedNavigate) {
-      window.thBoostedNavigate('/live-rooms/');
-    } else {
-      window.location.href = '/live-rooms/';
+
+    var navigated = false;
+    function goToFeed() {
+      if (navigated) return;
+      navigated = true;
+      if (window.thBoostedNavigate) {
+        window.thBoostedNavigate('/live-rooms/');
+      } else {
+        window.location.href = '/live-rooms/';
+      }
     }
+
+    // 'stop' above is async (a WebSocket send with nothing here waiting
+    // on it) - navigating to the bare /live-rooms/ right away used to
+    // reliably race it: that URL redirects straight back to your own
+    // room for as long as is_live is still True (views.py), and the
+    // request could reach the server before 'stop' had actually been
+    // processed and flipped it False. "إنهاء" then looked like it just
+    // refreshed and left you exactly where you were - which, briefly,
+    // it genuinely had. thRoomClosed (dispatched from
+    // thExitHostingMode, base.html - only once room_closed actually
+    // confirms is_live is really False now) is the real signal; the
+    // timeout is only a safety net in case it never arrives.
+    document.addEventListener('thRoomClosed', goToFeed, { once: true });
+    if (window.thOnTeardown) {
+      window.thOnTeardown(function () { document.removeEventListener('thRoomClosed', goToFeed); });
+    }
+    setTimeout(goToFeed, 2000);
   };
 
   // "غرفتي" - shown on anyone ELSE's room slide. Leaves whatever's
