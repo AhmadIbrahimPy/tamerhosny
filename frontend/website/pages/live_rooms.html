@@ -1373,6 +1373,17 @@ generic "رومات اسمع معاه" copy.
   // that happens.
   var feedSocket = null;
   function thConnectFeedSocket() {
+    // Nothing this socket ever reports (some OTHER host's room opening/
+    // closing/renaming site-wide) is acted on while locked to just your
+    // own room (viewingOwnRoom - every handler below already bails out
+    // on it), so there's no reason to hold it open here at all. Beyond
+    // being pointless, an idle connection is also one more thing
+    // thReconnectLiveSockets (base.html) can reopen on every
+    // visibilitychange it sees while you're sitting here typing/sending
+    // a comment - each one a brand new "feed/" WebSocket in the network
+    // panel for genuinely nothing, since this page was never going to
+    // use it anyway.
+    if (viewingOwnRoom) return;
     if (feedSocket && feedSocket.readyState !== WebSocket.CLOSED) return;
     try {
       var feedProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
