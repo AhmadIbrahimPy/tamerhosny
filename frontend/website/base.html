@@ -1091,10 +1091,9 @@
 
     /* The gear only ever does anything for whoever's actually hosting a
        room right now (update_room_settings 400s otherwise) - shown only
-       while #globalAudioPlayer carries .th-hosting (thEnterHostingMode/
-       thExitHostingMode), not to every logged-in visitor. */
-    #thRoomSettingsBtn{ display: none; }
-    #globalAudioPlayer.th-hosting #thRoomSettingsBtn{ display: flex; }
+       while it's living inside #thHostingStatsRow (thRenderHostingStatsRow
+       moves it there; #thRoomSettingsAnchor, its home the rest of the
+       time, is itself display:none), not to every logged-in visitor. */
 
     /* While actively listening along with someone (body.th-following-
        room - set/cleared alongside thListeningWithHostId), playback is
@@ -2200,6 +2199,29 @@
   <!-- Global Audio Player Bar -->
   <div id="globalAudioPlayer" style="display:none; position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:8px 16px; z-index:1000; box-shadow:0 -4px 20px rgba(0,0,0,.3);">
     <audio id="globalAudioElement" preload="auto" style="display:none;"></audio>
+    {% if user.is_authenticated %}
+    <!-- Home for #thRoomSettingsWrap while not hosting - thRenderHostingStatsRow
+         (below) moves it into the hosting stats row for the entire time a room
+         of yours is live, and thExitHostingMode puts it back here. Hidden via
+         this ancestor's display:none rather than its own, so the gear needs no
+         inline style juggling on the way in/out - live_rooms.html's own
+         thBuildSlide relocates the exact same node again from wherever it
+         happens to be sitting (see that page's own comment on it). -->
+    <span id="thRoomSettingsAnchor" style="display:none;">
+      <div style="position:relative;" id="thRoomSettingsWrap">
+        <button onclick="window.thToggleRoomSettings()" id="thRoomSettingsBtn" title="{% translate 'إعدادات جروب اسمع معاه' %}" style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.08); color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:color 0.2s ease;">
+          <i class="bi bi-gear"></i>
+        </button>
+        <div id="thRoomSettingsPopover" class="th-room-settings-popover">
+          <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--muted);">{% translate "جروب اسمع معاه" %}</div>
+          <input type="text" id="thRoomNameInput" placeholder="{% translate 'اسم الجروب (اختياري)' %}" maxlength="60">
+          <label><input type="radio" name="thRoomVisibility" value="public" checked> {% translate "عام - أي حد يقدر ينضم" %}</label>
+          <label><input type="radio" name="thRoomVisibility" value="private"> {% translate "خاص - محتاج موافقتك" %}</label>
+          <button type="button" onclick="window.thSaveRoomSettings()">{% translate "حفظ" %}</button>
+        </div>
+      </div>
+    </span>
+    {% endif %}
     <div class="container-xl" style="display:flex; align-items:center; gap:16px; height:56px;" dir="ltr">
 
       <!-- Left Controls -->
@@ -2234,20 +2256,6 @@
         <button onclick="toggleLike()" id="playerLikeBtn" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
           <i class="bi bi-heart"></i>
         </button>
-        {% if user.is_authenticated %}
-        <div style="position:relative;" id="thRoomSettingsWrap">
-          <button onclick="window.thToggleRoomSettings()" id="thRoomSettingsBtn" title="{% translate 'إعدادات جروب اسمع معاه' %}" style="width:32px; height:32px; border-radius:50%; background:transparent; color:var(--text); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:color 0.2s ease;">
-            <i class="bi bi-gear"></i>
-          </button>
-          <div id="thRoomSettingsPopover" class="th-room-settings-popover">
-            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--muted);">{% translate "جروب اسمع معاه" %}</div>
-            <input type="text" id="thRoomNameInput" placeholder="{% translate 'اسم الجروب (اختياري)' %}" maxlength="60">
-            <label><input type="radio" name="thRoomVisibility" value="public" checked> {% translate "عام - أي حد يقدر ينضم" %}</label>
-            <label><input type="radio" name="thRoomVisibility" value="private"> {% translate "خاص - محتاج موافقتك" %}</label>
-            <button type="button" onclick="window.thSaveRoomSettings()">{% translate "حفظ" %}</button>
-          </div>
-        </div>
-        {% endif %}
       </div>
 
       <!-- Right Controls -->
@@ -3288,6 +3296,15 @@
       var bar = document.getElementById('globalAudioPlayer');
       if (bar) bar.classList.remove('th-hosting');
 
+      // Move the gear back to its hidden home BEFORE removing the row
+      // below - row.remove() would otherwise take the real
+      // #thRoomSettingsWrap node down with it (thRenderHostingStatsRow
+      // relocated it in, not copied it), leaving no node left for the
+      // next room to move back out again.
+      var settingsWrap = document.getElementById('thRoomSettingsWrap');
+      var settingsAnchor = document.getElementById('thRoomSettingsAnchor');
+      if (settingsWrap && settingsAnchor) settingsAnchor.appendChild(settingsWrap);
+
       var row = document.getElementById('thHostingStatsRow');
       if (row) row.remove();
     }
@@ -3340,11 +3357,39 @@
       // thEnterFollowedRoom above) builds a real anchor, processes it
       // with htmx, and clicks it - a boosted navigation in every way
       // that matters.
-      row.innerHTML =
+      //
+      // The stats/browse-button text lives in its own child (rebuilt via
+      // innerHTML on every call - tap/join counts, current path) rather
+      // than replacing the row's own innerHTML directly, so the relocated
+      // #thRoomSettingsWrap (appended straight to `row`, below) survives
+      // every one of those re-renders instead of getting wiped and
+      // losing whatever the host was mid-typing into the name field.
+      // display:contents keeps its own children acting as `row`'s direct
+      // flex items, same layout as before this was split out.
+      var info = document.getElementById('thHostingStatsInfo');
+      if (!info) {
+        info = document.createElement('span');
+        info.id = 'thHostingStatsInfo';
+        info.style.display = 'contents';
+        row.insertBefore(info, row.firstChild);
+      }
+      info.innerHTML =
         '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + window.thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
         '<button type="button" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true; window.thBoostedNavigate(\'' + browseHref + '\');">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></button>';
+
+      // Only ever reachable while actually hosting (this whole function
+      // returns early otherwise) - moving the real #thRoomSettingsWrap
+      // node in here is what makes it "شيّل من بار الأغنية، وحطه في صف
+      // الاستضافة، ويظهر لصاحب الروم بس" (moved out of the song bar, into
+      // the hosting row, shown only to the room's own host): anyone not
+      // currently hosting never has this row at all, so the gear never
+      // renders for them either.
+      var settingsWrap = document.getElementById('thRoomSettingsWrap');
+      if (settingsWrap && settingsWrap.parentElement !== row) {
+        row.appendChild(settingsWrap);
+      }
     }
 
     // ---------------------------------------------------------
