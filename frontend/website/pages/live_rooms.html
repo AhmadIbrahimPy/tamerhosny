@@ -700,6 +700,13 @@ generic "رومات اسمع معاه" copy.
     padding-block: 2px;
   }
   .th-mood-groups::-webkit-scrollbar { display: none; }
+  /* Mobile's 420px cap was carried straight over to desktop too -
+     plenty of screen width to spare there, so it only ever showed
+     about 3 cards per row before forcing a horizontal scroll for the
+     rest, on a screen easily wide enough to show more at once. */
+  @media (min-width: 768px) {
+    .th-mood-groups { max-width: 720px; }
+  }
   .th-mood-group {
     animation: thMoodGroupIn .5s ease both;
     animation-delay: calc(var(--i, 0) * 80ms);
@@ -720,9 +727,19 @@ generic "رومات اسمع معاه" copy.
   .th-mood-group-track .th-suggested-song-cover-wrap { width: 100%; height: 100px; border-radius: 10px; }
   .th-mood-group-track .th-suggested-song-info { width: 100%; }
   .th-mood-group-track .th-suggested-song-artist { display: none; }
+  /* Centered on the cover image, not the row's own corner - the button
+     is a sibling of .th-suggested-song-cover-wrap in the markup (not
+     nested inside it), so this is positioned off the row itself: the
+     row's own 10px padding plus half the cover's fixed 100px height
+     (padding-top + 50px) puts it dead center on the image every time,
+     the same visual result .th-room-suggest-cards gets by actually
+     moving the button into the cover-wrap via JS (thLoadSuggestCards) -
+     not worth doing here too for a fixed, known card size. */
   .th-mood-group-track .th-suggested-song-play {
-    position: absolute; bottom: 8px; inset-inline-end: 8px;
-    width: 28px; height: 28px; box-shadow: 0 6px 16px -4px rgba(0,0,0,.5);
+    position: absolute; top: 60px; inset-inline-start: 50%;
+    transform: translate(-50%, -50%);
+    width: 34px; height: 34px; font-size: 13px;
+    box-shadow: 0 6px 16px -4px rgba(0,0,0,.6);
   }
   @keyframes thMoodGroupIn {
     from { opacity: 0; transform: translateY(12px); }
