@@ -2403,6 +2403,14 @@
                             {{ song.duration_seconds|floordiv:60 }}:{{ song.duration_seconds|modulo:60|stringformat:"02d" }}
                         </span>
                         {% endif %}
+                        <span class="song-info-item">
+                            <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
+                            <span data-like-count="{{ like_count }}">{{ like_count }}</span> {% translate "إعجاب" %}
+                        </span>
+                        <span class="song-info-item">
+                            <i class="bi bi-play-circle"></i>
+                            <span data-play-count="{{ song.play_count }}">{{ song.play_count }}</span> {% translate "تشغيل" %}
+                        </span>
                     </div>
                 </div>
                 {% if song.title_en %}<p class="song-alt-title">{{ song.title_en }}</p>{% endif %}
