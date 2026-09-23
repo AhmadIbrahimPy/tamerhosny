@@ -459,9 +459,13 @@ generic "رومات اسمع معاه" copy.
   }
   .th-room-comment-body { min-width: 0; overflow-wrap: break-word; }
   .th-room-comment-form { display: flex; gap: 8px; position: relative; }
+  .th-room-comment-input-wrap {
+    flex: 1; position: relative; display: flex; align-items: center;
+  }
   .th-room-comment-form input {
     flex: 1; border-radius: 999px; border: 1px solid rgba(255,255,255,.3);
-    background: rgba(0,0,0,.35); color: #fff; padding: 9px 50px 9px 14px; font-size: 13px;
+    background: rgba(0,0,0,.35); color: #fff; padding: 9px 45px 9px 14px; font-size: 13px;
+    width: 100%;
   }
   .th-room-comment-form input::placeholder { color: rgba(255,255,255,.6); }
   .th-room-comment-form button {
@@ -2359,8 +2363,10 @@ generic "رومات اسمع معاه" copy.
     // in the first place, regardless of listener order or how its
     // internals happen to attach.
     form.setAttribute('hx-boost', 'false');
-    form.innerHTML = '<input type="text" maxlength="300" placeholder="{% translate 'اكتب تعليق...' %}">' +
+    form.innerHTML = '<div class="th-room-comment-input-wrap">' +
+      '<input type="text" maxlength="300" placeholder="{% translate 'اكتب تعليق...' %}">' +
       '<button type="button" class="th-room-emoji-btn"><i class="bi bi-emoji-smile"></i></button>' +
+      '</div>' +
       '<button type="submit"><i class="bi bi-send-fill"></i></button>' +
       '<div class="th-room-emoji-popup"></div>';
     form.addEventListener('submit', function (e) {
