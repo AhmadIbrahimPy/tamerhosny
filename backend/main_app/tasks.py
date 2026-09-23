@@ -2,6 +2,8 @@
 config/celery.py's beat_schedule for when it fires) and the voice
 assistant's background command-learning analysis.
 """
+import random
+
 from celery import shared_task
 
 
@@ -78,3 +80,62 @@ def generate_room_name_task(user_id):
         'name': room.display_name,
         'is_public': room.is_public,
     })
+
+
+@shared_task
+def keep_seed_rooms_alive():
+    """The 60s-interval beat companion to the seed_fake_live_rooms
+    management command - nothing fake ever opens a real WebSocket, so
+    nothing would otherwise ever refresh CurrentSongListener/
+    ListenTogetherViewer's own last_heartbeat, and the exact same
+    staleness sweeps that clean up genuinely abandoned real rooms
+    (STALE_LISTENER_CUTOFF=5min, STALE_VIEWER_CUTOFF=90s - consumers.py)
+    would eventually take these fake ones down too. Scoped entirely to
+    accounts tagged with SEED_EMAIL_DOMAIN - never touches a real
+    room/viewer/tap. A no-op (one query, no writes) once nobody's ever
+    run that command, so this is safe to leave in the beat schedule
+    permanently rather than something to remember to remove.
+    """
+    from django.db.models import F
+    from django.utils import timezone
+
+    from backend.main_app.models import (
+        CurrentSongListener, ListenTogetherRoom, ListenTogetherTap, ListenTogetherViewer, UserAccount,
+    )
+    from backend.main_app.shared_utils.listen_together import SEED_EMAIL_DOMAIN
+
+    seed_user_ids = list(
+        UserAccount.objects.filter(email__iendswith=f'@{SEED_EMAIL_DOMAIN}').values_list('id', flat=True)
+    )
+    if not seed_user_ids:
+        return
+
+    now = timezone.now()
+    CurrentSongListener.objects.filter(user_id__in=seed_user_ids).update(last_heartbeat=now)
+    ListenTogetherViewer.objects.filter(user_id__in=seed_user_ids).update(last_heartbeat=now)
+    # Safety net only - shouldn't actually be needed as long as the
+    # CurrentSongListener refresh above keeps is_live from ever
+    # naturally flipping false in the first place.
+    ListenTogetherRoom.objects.filter(host_id__in=seed_user_ids, is_live=False).update(is_live=True)
+
+    # Randomly bumps a handful of rooms' tap_score each cycle, same
+    # aggregate+per-user-breakdown update ListenTogetherConsumer._tap
+    # does for a real tap - a totally static count sitting there forever
+    # would be the one obvious tell that these rooms aren't real.
+    rooms = ListenTogetherRoom.objects.filter(host_id__in=seed_user_ids)
+    for room in rooms:
+        if random.random() > 0.5:
+            continue
+        viewer_id = (
+            ListenTogetherViewer.objects.filter(room=room)
+            .order_by('?').values_list('user_id', flat=True).first()
+        )
+        if viewer_id is None:
+            continue
+        bump = random.randint(1, 3)
+        ListenTogetherRoom.objects.filter(pk=room.pk).update(tap_score=F('tap_score') + bump)
+        tap, created = ListenTogetherTap.objects.get_or_create(
+            room=room, user_id=viewer_id, defaults={'count': bump},
+        )
+        if not created:
+            ListenTogetherTap.objects.filter(pk=tap.pk).update(count=F('count') + bump)

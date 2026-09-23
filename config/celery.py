@@ -47,4 +47,13 @@ app.conf.beat_schedule = {
         'task': 'backend.music_app.tasks.cleanup_expired_duet_videos',
         'schedule': crontab(minute=30),
     },
+    # Keeps seed_fake_live_rooms' own fake rooms (management command,
+    # backend.main_app) from aging out of ListenTogetherViewer's 90s
+    # staleness cutoff - has to run well under that, not just "often
+    # enough to feel live". A no-op query when nobody's ever run that
+    # command, so always-on here rather than something to toggle.
+    'keep-seed-rooms-alive': {
+        'task': 'backend.main_app.tasks.keep_seed_rooms_alive',
+        'schedule': 60.0,
+    },
 }

@@ -293,7 +293,6 @@
         {% empty %}
         {% if own_live_room %}
         <a href="{% url 'website_app:live-room-detail' request.user.username %}" class="th-card th-live-room-card plain idle hosting">
-          <div class="th-live-room-card-icon"><i class="bi bi-broadcast"></i></div>
           <div class="th-live-room-card-name">{% translate "انت مستضيف دلوقتي" %}</div>
           <div class="th-live-room-card-song">{% translate "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي" %}</div>
         </a>
@@ -787,7 +786,6 @@
       a.href = '/live-rooms/' + ownLiveRoomUsername + '/';
       a.className = 'th-card th-live-room-card plain idle hosting';
       a.innerHTML =
-        '<div class="th-live-room-card-icon"><i class="bi bi-broadcast"></i></div>' +
         '<div class="th-live-room-card-name">{% translate "انت مستضيف دلوقتي" %}</div>' +
         '<div class="th-live-room-card-song">{% translate "روحلك اسمع مع اللي معاك - مفيش حد تاني فاتح روم دلوقتي" %}</div>';
     } else {

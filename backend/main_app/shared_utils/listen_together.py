@@ -18,6 +18,18 @@ from backend.main_app.models import CurrentSongListener
 # without waiting for a clean disconnect (a hard process kill skips it).
 STALE_LISTENER_CUTOFF = timedelta(minutes=5)
 
+# Shared between seed_fake_live_rooms (the management command that
+# creates these) and keep_seed_rooms_alive (backend.main_app.tasks, the
+# celery-beat task that keeps them from aging out of the exact same
+# staleness sweeps above) - every fake account either of them touches is
+# tagged with this email domain, nothing else. Living here (not defined
+# in the command module itself) so the task doesn't need to import from
+# backend.main_app.management.commands.*, and so
+# `UserAccount.objects.filter(email__iendswith='@' + SEED_EMAIL_DOMAIN).delete()`
+# is the one line that ever needs to find every seeded account to wipe
+# them back out again.
+SEED_EMAIL_DOMAIN = 'thseed.local'
+
 
 def get_current_song_for_user(user):
     """The Song `user` is actively listening to right now, or None.

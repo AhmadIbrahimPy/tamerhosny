@@ -3396,7 +3396,7 @@
         row.insertBefore(info, row.firstChild);
       }
       info.innerHTML =
-        '<span><i class="bi bi-broadcast"></i> <span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
+        '<span><span class="th-hosting-label-text">{% translate "بتستضيف جروب دلوقتي" %}</span></span>' +
         '<span><i class="bi bi-headphones"></i> ' + window.thFollowers.length + '</span>' +
         '<span><i class="bi bi-heart-fill"></i> ' + thHostingTapScore + '</span>' +
         '<button type="button" class="th-hosting-browse-btn" onclick="window.thBrowsingForRoom=true; window.thBoostedNavigate(\'' + browseHref + '\');">' + browseLabel + ' <i class="bi ' + browseIcon + '"></i></button>';
