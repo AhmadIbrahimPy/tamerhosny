@@ -59,6 +59,10 @@ VIEWER_NAME_POOL = [
     ('سيف', 'seif', False), ('عادل', 'adel', False), ('طارق', 'tarek', False),
 ]
 
+# Index-matched to HOSTS (room i gets name i), not picked randomly per
+# host - independent random.choice() calls collided ("أغاني وذكريات"
+# landed on 3 different hosts the first run), and there's no reason for
+# 5 fixed hosts to ever fight over which of 5 fixed names they get.
 ROOM_NAMES = ['سهرة ولا أحلى', 'كل يوم تامر', 'مزاج مساء', 'أغاني وذكريات', 'جلسة سمر']
 
 # Verified against https://api.dicebear.com/7.x/avataaars/schema.json -
@@ -120,7 +124,7 @@ class Command(BaseCommand):
             self._viewer_specs(options['viewer_pool']), 'fan',
         )
 
-        for host in hosts:
+        for index, host in enumerate(hosts):
             song = random.choice(songs)
             CurrentSongListener.objects.update_or_create(user=host, song=song, defaults={})
             # A stale row for some OTHER song this same host "had playing"
@@ -132,8 +136,13 @@ class Command(BaseCommand):
                 host=host,
                 defaults={'is_public': True, 'is_live': True},
             )
-            if not room.custom_name and not room.generated_name:
-                room.custom_name = random.choice(ROOM_NAMES)
+            # Always reasserted (not just set-if-empty) - self-heals a
+            # name collision from before this fix landed on a re-run,
+            # rather than leaving whatever random.choice() had already
+            # written stuck there forever.
+            desired_name = ROOM_NAMES[index % len(ROOM_NAMES)]
+            if room.custom_name != desired_name:
+                room.custom_name = desired_name
                 room.save(update_fields=['custom_name'])
 
             room_size = random.randint(10, 50)
