@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 06:17+0300\n"
+"POT-Creation-Date: 2026-09-24 06:29+0300\n"
 "PO-Revision-Date: 2026-08-25 13:08+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -1405,8 +1405,8 @@ msgstr "Username"
 #: backend/main_app/models.py:122 frontend/dashboard/pages/song_detail.html:312
 #: frontend/dashboard/pages/user_detail.html:272
 #: frontend/dashboard/pages/user_detail.html:493
-#: frontend/website/pages/live_rooms.html:1948
-#: frontend/website/pages/live_rooms.html:2549
+#: frontend/website/pages/live_rooms.html:1957
+#: frontend/website/pages/live_rooms.html:2558
 #: frontend/website/pages/songs/detail.html:2949
 #: frontend/website/pages/user/duet_detail.html:87
 #: frontend/website/pages/user/duet_detail.html:90
@@ -1489,14 +1489,14 @@ msgstr "Status"
 msgid "وقت الطلب"
 msgstr "Start Time"
 
-#: backend/main_app/models.py:217 frontend/website/pages/live_rooms.html:2695
-#: frontend/website/pages/live_rooms.html:2698
+#: backend/main_app/models.py:217 frontend/website/pages/live_rooms.html:2704
+#: frontend/website/pages/live_rooms.html:2707
 #, fuzzy
 #| msgid "تاريخ الانضمام"
 msgid "طلب انضمام"
 msgstr "Join Date"
 
-#: backend/main_app/models.py:218 frontend/website/pages/live_rooms.html:1020
+#: backend/main_app/models.py:218 frontend/website/pages/live_rooms.html:1023
 #, fuzzy
 #| msgid "تاريخ الانضمام"
 msgid "طلبات الانضمام"
@@ -1568,7 +1568,7 @@ msgstr "Max Participants"
 msgid "شغالة دلوقتي"
 msgstr "Currently Live"
 
-#: backend/main_app/models.py:399 frontend/website/pages/live_rooms.html:923
+#: backend/main_app/models.py:399 frontend/website/pages/live_rooms.html:929
 msgid "روم صوتية"
 msgstr "Voice Room"
 
@@ -2229,49 +2229,49 @@ msgstr "Confident and correct - amazing"
 msgid "ده مستوى تاني خالص، تحفة"
 msgstr "That's a whole different level, superb"
 
-#: backend/website_app/views.py:2911
+#: backend/website_app/views.py:2929
 msgid "🎉 فرفشة وطاقة عالية"
 msgstr "🎉 Upbeat & Energetic"
 
-#: backend/website_app/views.py:2912
+#: backend/website_app/views.py:2930
 msgid "❤️ رومانسي"
 msgstr "❤️ Romantic"
 
-#: backend/website_app/views.py:2913
+#: backend/website_app/views.py:2931
 msgid "💔 حزينة"
 msgstr "💔 Sad"
 
-#: backend/website_app/views.py:2914
+#: backend/website_app/views.py:2932
 msgid "😌 رايقة"
 msgstr "😌 Chill"
 
-#: backend/website_app/views.py:2915
+#: backend/website_app/views.py:2933
 msgid "✨ ذكريات وحنين"
 msgstr "✨ Nostalgic"
 
-#: backend/website_app/views.py:2916
+#: backend/website_app/views.py:2934
 msgid "🔥 تحفيزي"
 msgstr "🔥 Motivational"
 
-#: backend/website_app/views.py:2917
+#: backend/website_app/views.py:2935
 msgid "😎 واثق وفريش"
 msgstr "😎 Confident & Playful"
 
-#: backend/website_app/views.py:2957
+#: backend/website_app/views.py:2975
 msgid "📈 ترند دلوقتي"
 msgstr "📈 Trending Now"
 
-#: backend/website_app/views.py:2981
+#: backend/website_app/views.py:2999
 msgid "🎵 جرب دول"
 msgstr "🎵 Try These"
 
-#: backend/website_app/views.py:3011
+#: backend/website_app/views.py:3029
 #, fuzzy
 #| msgid "محدش بيسمعها دلوقتي"
 msgid "لازم تكون بتسمع دلوقتي."
 msgstr "No one is listening right now"
 
-#: backend/website_app/views.py:3166
+#: backend/website_app/views.py:3184
 msgid "اسم المستخدم ده مأخوذ بالفعل."
 msgstr "This username is already taken."
 
@@ -3416,8 +3416,8 @@ msgstr "Processing Status"
 #: frontend/dashboard/pages/song_detail.html:313
 #: frontend/dashboard/pages/user_detail.html:273
 #: frontend/dashboard/pages/user_detail.html:493
-#: frontend/website/pages/live_rooms.html:1949
-#: frontend/website/pages/live_rooms.html:2550
+#: frontend/website/pages/live_rooms.html:1958
+#: frontend/website/pages/live_rooms.html:2559
 #: frontend/website/pages/songs/detail.html:2948
 #: frontend/website/pages/user/duet_detail.html:87
 #: frontend/website/pages/user/duet_detail.html:90
@@ -3971,9 +3971,9 @@ msgstr "Close"
 msgid "بتسمع مع"
 msgstr "Listening with"
 
-#: frontend/website/base.html:3158 frontend/website/pages/live_rooms.html:2328
-#: frontend/website/pages/live_rooms_audio.html:107
-#: frontend/website/pages/live_rooms_audio.html:116
+#: frontend/website/base.html:3158 frontend/website/pages/live_rooms.html:2337
+#: frontend/website/pages/live_rooms_audio.html:97
+#: frontend/website/pages/live_rooms_audio.html:106
 msgid "خروج"
 msgstr "Leave"
 
@@ -3981,16 +3981,16 @@ msgstr "Leave"
 msgid "عايز ينضم لجروبك"
 msgstr "wants to join your room"
 
-#: frontend/website/base.html:3316 frontend/website/pages/live_rooms.html:3192
+#: frontend/website/base.html:3316 frontend/website/pages/live_rooms.html:3201
 msgid "قبول"
 msgstr "Accept"
 
-#: frontend/website/base.html:3317 frontend/website/pages/live_rooms.html:3193
+#: frontend/website/base.html:3317 frontend/website/pages/live_rooms.html:3202
 msgid "رفض"
 msgstr "Reject"
 
-#: frontend/website/base.html:3437 frontend/website/pages/live_rooms.html:984
-#: frontend/website/pages/live_rooms.html:2466
+#: frontend/website/base.html:3437 frontend/website/pages/live_rooms.html:987
+#: frontend/website/pages/live_rooms.html:2475
 msgid "تصفح"
 msgstr "Browse"
 
@@ -4039,7 +4039,7 @@ msgstr "Request to Join"
 msgid "اتقبلت في الجروب - يلا اسمع"
 msgstr "You are in - start listening"
 
-#: frontend/website/base.html:3833 frontend/website/pages/live_rooms.html:2773
+#: frontend/website/base.html:3833 frontend/website/pages/live_rooms.html:2782
 #: frontend/website/pages/user/public_profile.html:207
 msgid "اسمع معاه"
 msgstr "Listen Together"
@@ -4050,9 +4050,9 @@ msgstr "Listen Together"
 msgid "المستخدم ده منعك من الاستماع المشترك"
 msgstr "Notifications are blocked in your browser settings"
 
-#: frontend/website/base.html:3911 frontend/website/pages/live_rooms.html:1693
-#: frontend/website/pages/live_rooms.html:2123
-#: frontend/website/pages/live_rooms.html:2127
+#: frontend/website/base.html:3911 frontend/website/pages/live_rooms.html:1702
+#: frontend/website/pages/live_rooms.html:2132
+#: frontend/website/pages/live_rooms.html:2136
 msgid "الروم اتقفلت"
 msgstr "The room has closed"
 
@@ -4418,7 +4418,7 @@ msgstr "Album"
 #: frontend/website/pages/albums/detail.html:120
 #: frontend/website/pages/concerts/detail.html:115
 #: frontend/website/pages/concerts/detail.html:157
-#: frontend/website/pages/live_rooms.html:2493
+#: frontend/website/pages/live_rooms.html:2502
 #: frontend/website/pages/media/detail.html:107
 #: frontend/website/pages/media/detail.html:154
 #: frontend/website/pages/people/detail.html:33
@@ -4652,7 +4652,7 @@ msgid "القادمة"
 msgstr "Menu"
 
 #: frontend/website/pages/concerts/list.html:40
-#: frontend/website/pages/live_rooms.html:2387
+#: frontend/website/pages/live_rooms.html:2396
 msgid "السابقة"
 msgstr "Previous"
 
@@ -4783,8 +4783,8 @@ msgid "رومات اسمع معاه دلوقتي"
 msgstr "Listen Together Rooms Now"
 
 #: frontend/website/pages/home.html:289 frontend/website/pages/home.html:777
-#: frontend/website/pages/live_rooms.html:2169
-#: frontend/website/pages/live_rooms.html:2329
+#: frontend/website/pages/live_rooms.html:2178
+#: frontend/website/pages/live_rooms.html:2338
 #: frontend/website/pages/player/index.html:980
 #: frontend/website/pages/songs/detail.html:2964
 msgid "مباشر"
@@ -4974,17 +4974,13 @@ msgstr ""
 "Listen Together rooms - join someone who's listening now and listen together "
 "live."
 
-#: frontend/website/pages/live_rooms.html:920
+#: frontend/website/pages/live_rooms.html:926
 msgid "روم أغاني"
 msgstr "Song Room"
 
-#: frontend/website/pages/live_rooms.html:932
-msgid "روحلك روم صوتية شغالة دلوقتي"
-msgstr "You have a voice room live right now"
-
-#: frontend/website/pages/live_rooms.html:933
-msgid "روح للروم"
-msgstr "Go to Room"
+#: frontend/website/pages/live_rooms.html:938
+msgid "عايز تبقوا كام في الروم؟"
+msgstr "How many people do you want in the room?"
 
 #: frontend/website/pages/live_rooms.html:938
 msgid "ابدأ روم صوتية جديدة"
@@ -4994,164 +4990,168 @@ msgstr "Start a new voice room"
 msgid "ابدأ الروم"
 msgstr "Start Room"
 
-#: frontend/website/pages/live_rooms.html:952
+#: frontend/website/pages/live_rooms.html:950
+msgid "أو روح لروحك الشغالة دلوقتي"
+msgstr "Or go to your room that's already live"
+
+#: frontend/website/pages/live_rooms.html:955
 msgid "رومات صوتية شغالة دلوقتي"
 msgstr "Voice rooms live right now"
 
-#: frontend/website/pages/live_rooms.html:965
+#: frontend/website/pages/live_rooms.html:968
 msgid "مكتملة"
 msgstr "Full"
 
-#: frontend/website/pages/live_rooms.html:968
+#: frontend/website/pages/live_rooms.html:971
 msgid "مفيش رومات صوتية شغالة دلوقتي"
 msgstr "No voice rooms live right now"
 
-#: frontend/website/pages/live_rooms.html:977
+#: frontend/website/pages/live_rooms.html:980
 msgid "مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد."
 msgstr "No one's listening right now - be the first to start."
 
-#: frontend/website/pages/live_rooms.html:986
+#: frontend/website/pages/live_rooms.html:989
 #, fuzzy
 #| msgid "تعديل القائمة"
 msgid "تحديث القائمة"
 msgstr "Edit Playlist"
 
-#: frontend/website/pages/live_rooms.html:987
+#: frontend/website/pages/live_rooms.html:990
 msgid "تحديث"
 msgstr "Refresh"
 
-#: frontend/website/pages/live_rooms.html:1003
+#: frontend/website/pages/live_rooms.html:1006
 msgid "جاري بدء الروم..."
 msgstr "Starting the room..."
 
-#: frontend/website/pages/live_rooms.html:1010
+#: frontend/website/pages/live_rooms.html:1013
 msgid "الناس في الروم"
 msgstr "People in the Room"
 
-#: frontend/website/pages/live_rooms.html:1152
+#: frontend/website/pages/live_rooms.html:1161
 msgid "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي"
 msgstr "Pick a song and play it - you will automatically get a room"
 
-#: frontend/website/pages/live_rooms.html:1477
+#: frontend/website/pages/live_rooms.html:1486
 msgid "بعدها"
 msgstr "Up next"
 
-#: frontend/website/pages/live_rooms.html:1560
+#: frontend/website/pages/live_rooms.html:1569
 #, fuzzy
 #| msgid "مفيش أغنية شغالة دلوقتي"
 msgid "هتشتغل بعد اللي شغال دلوقتي"
 msgstr "No song is playing right now"
 
-#: frontend/website/pages/live_rooms.html:1625
+#: frontend/website/pages/live_rooms.html:1634
 msgid "الروم اللي فات"
 msgstr "Previous room"
 
-#: frontend/website/pages/live_rooms.html:1626
+#: frontend/website/pages/live_rooms.html:1635
 msgid "الروم اللي بعده"
 msgstr "Next room"
 
-#: frontend/website/pages/live_rooms.html:1756
+#: frontend/website/pages/live_rooms.html:1765
 msgid "بدأ روم جديدة - ادخل اسمع"
 msgstr "started a new room - tap in"
 
-#: frontend/website/pages/live_rooms.html:1846
+#: frontend/website/pages/live_rooms.html:1855
 msgid "اضغط عشان الصوت يشتغل"
 msgstr "Tap to start the audio"
 
-#: frontend/website/pages/live_rooms.html:2104
-#: frontend/website/pages/live_rooms.html:2108
+#: frontend/website/pages/live_rooms.html:2113
+#: frontend/website/pages/live_rooms.html:2117
 msgid "متوقفة مؤقتًا"
 msgstr "Paused"
 
-#: frontend/website/pages/live_rooms.html:2135
+#: frontend/website/pages/live_rooms.html:2144
 msgid "الفرفشة انتهت هنا - يلا لروم تانية"
 msgstr "Nothing more happening here - check out another room"
 
-#: frontend/website/pages/live_rooms.html:2136
+#: frontend/website/pages/live_rooms.html:2145
 msgid "روم تانية"
 msgstr "Another Room"
 
-#: frontend/website/pages/live_rooms.html:2173
-#: frontend/website/pages/live_rooms.html:2803
+#: frontend/website/pages/live_rooms.html:2182
+#: frontend/website/pages/live_rooms.html:2812
 msgid "بتسمع هنا دلوقتي"
 msgstr "You are listening here now"
 
-#: frontend/website/pages/live_rooms.html:2251
+#: frontend/website/pages/live_rooms.html:2260
 #: frontend/website/partials/ad_banner.html:7
 #: frontend/website/partials/ad_slider.html:11
 msgid "إعلان"
 msgstr "Ad"
 
-#: frontend/website/pages/live_rooms.html:2317
+#: frontend/website/pages/live_rooms.html:2326
 msgid "إنهاء الروم"
 msgstr "End Room"
 
-#: frontend/website/pages/live_rooms.html:2317
+#: frontend/website/pages/live_rooms.html:2326
 msgid "إنهاء"
 msgstr "End"
 
-#: frontend/website/pages/live_rooms.html:2318
+#: frontend/website/pages/live_rooms.html:2327
 msgid "غرفتي"
 msgstr "My Room"
 
-#: frontend/website/pages/live_rooms.html:2331
+#: frontend/website/pages/live_rooms.html:2340
 msgid "طلبات"
 msgstr "Requests"
 
-#: frontend/website/pages/live_rooms.html:2381
+#: frontend/website/pages/live_rooms.html:2390
 msgid "دلوقتي بيسمع"
 msgstr "Now playing"
 
-#: frontend/website/pages/live_rooms.html:2388
+#: frontend/website/pages/live_rooms.html:2397
 #: frontend/website/pages/player/index.html:914
 msgid "تشغيل/إيقاف"
 msgstr "Play/Pause"
 
-#: frontend/website/pages/live_rooms.html:2389
+#: frontend/website/pages/live_rooms.html:2398
 msgid "التالية"
 msgstr "Next"
 
-#: frontend/website/pages/live_rooms.html:2396
+#: frontend/website/pages/live_rooms.html:2405
 msgid "كتم الصوت"
 msgstr "Mute"
 
-#: frontend/website/pages/live_rooms.html:2465
+#: frontend/website/pages/live_rooms.html:2474
 msgid "شغّل كمان"
 msgstr "Play more"
 
-#: frontend/website/pages/live_rooms.html:2591
+#: frontend/website/pages/live_rooms.html:2600
 msgid "اكتب تعليق..."
 msgstr "Write a comment..."
 
-#: frontend/website/pages/live_rooms.html:2694
+#: frontend/website/pages/live_rooms.html:2703
 msgid "روم خاصة - محتاج موافقة صاحبها"
 msgstr "Private room - needs the host to approve"
 
-#: frontend/website/pages/live_rooms.html:2700
+#: frontend/website/pages/live_rooms.html:2709
 msgid "إلغاء الطلب"
 msgstr "Cancel Request"
 
-#: frontend/website/pages/live_rooms.html:2703
+#: frontend/website/pages/live_rooms.html:2712
 msgid "محدش رد على طلبك - اطلب تاني ولا اسكرول لروم تانية"
 msgstr "No response to your request yet - try again or scroll to another room"
 
-#: frontend/website/pages/live_rooms.html:2704
+#: frontend/website/pages/live_rooms.html:2713
 msgid "اطلب تاني"
 msgstr "Request Again"
 
-#: frontend/website/pages/live_rooms.html:2786
+#: frontend/website/pages/live_rooms.html:2795
 msgid "دي غرفتك"
 msgstr "This is your room"
 
-#: frontend/website/pages/live_rooms.html:3056
+#: frontend/website/pages/live_rooms.html:3065
 msgid "مفيش حد لسه"
 msgstr "No one yet"
 
-#: frontend/website/pages/live_rooms.html:3072
+#: frontend/website/pages/live_rooms.html:3081
 msgid "امنع"
 msgstr "Block"
 
-#: frontend/website/pages/live_rooms.html:3172
+#: frontend/website/pages/live_rooms.html:3181
 msgid "مفيش طلبات دلوقتي"
 msgstr "No requests right now"
 
@@ -5160,44 +5160,44 @@ msgstr "No requests right now"
 msgid "روم صوتية مع %(host)s"
 msgstr "Voice room with %(host)s"
 
-#: frontend/website/pages/live_rooms_audio.html:97
+#: frontend/website/pages/live_rooms_audio.html:87
 msgid "الروم دي خلصت أو مش موجودة."
 msgstr "This room has ended or doesn't exist."
 
-#: frontend/website/pages/live_rooms_audio.html:97
+#: frontend/website/pages/live_rooms_audio.html:87
 msgid "الروم مكتملة دلوقتي - كل المقاعد متحجزة."
 msgstr "The room is full right now - every seat is taken."
 
-#: frontend/website/pages/live_rooms_audio.html:98
+#: frontend/website/pages/live_rooms_audio.html:88
 msgid "رجوع للرومات"
 msgstr "Back to Rooms"
 
-#: frontend/website/pages/live_rooms_audio.html:104
+#: frontend/website/pages/live_rooms_audio.html:94
 #, python-format
 msgid "روم %(host)s"
 msgstr "%(host)s's Room"
 
-#: frontend/website/pages/live_rooms_audio.html:105
+#: frontend/website/pages/live_rooms_audio.html:95
 msgid "بيتوصل..."
 msgstr "Connecting..."
 
-#: frontend/website/pages/live_rooms_audio.html:113
+#: frontend/website/pages/live_rooms_audio.html:103
 msgid "كتم"
 msgstr "Mute"
 
-#: frontend/website/pages/live_rooms_audio.html:175
+#: frontend/website/pages/live_rooms_audio.html:165
 msgid "الهوست"
 msgstr "Host"
 
-#: frontend/website/pages/live_rooms_audio.html:288
+#: frontend/website/pages/live_rooms_audio.html:278
 msgid "محتاج إذن المايك عشان تدخل الروم"
 msgstr "Microphone permission is needed to join the room"
 
-#: frontend/website/pages/live_rooms_audio.html:296
+#: frontend/website/pages/live_rooms_audio.html:286
 msgid "لايف دلوقتي"
 msgstr "Live Now"
 
-#: frontend/website/pages/live_rooms_audio.html:301
+#: frontend/website/pages/live_rooms_audio.html:291
 msgid "الاتصال اتقطع"
 msgstr "Connection lost"
 

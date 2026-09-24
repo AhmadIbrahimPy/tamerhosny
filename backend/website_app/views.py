@@ -2795,6 +2795,8 @@ def audio_room_start(request):
     if max_participants not in valid_sizes:
         max_participants = 4
 
+    was_live = AudioRoom.objects.filter(host=request.user, is_live=True).exists()
+
     room, _created = AudioRoom.objects.update_or_create(
         host=request.user,
         defaults={'max_participants': max_participants, 'is_live': True},
@@ -2805,6 +2807,22 @@ def audio_room_start(request):
     # clean end, this is just the safety net for a session that never
     # closed cleanly (hard kill, server restart mid-call).
     AudioRoomParticipant.objects.filter(room=room).delete()
+
+    if was_live:
+        # Reconfiguring (a new seat count) while guests are still
+        # actually connected to the OLD call - without this they'd be
+        # silently orphaned: still holding a live WebRTC connection to a
+        # room whose DB row just got wiped out from under them, with no
+        # signal ever telling their browser to hang up. Same room.ended
+        # broadcast AudioRoomConsumer itself sends when the host
+        # properly ends the room.
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'audio_room_{request.user.id}', {'type': 'room.ended'},
+        )
 
     return redirect('website_app:audio-room-detail', username=request.user.username)
 

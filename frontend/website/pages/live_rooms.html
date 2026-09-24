@@ -78,6 +78,10 @@ generic "رومات اسمع معاه" copy.
     font-weight: 800; padding: 12px 28px; border-radius: 999px; cursor: pointer;
     text-decoration: none; font-size: 14px;
   }
+  .th-audio-hub-resume-link {
+    display: block; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,.6);
+    text-decoration: underline;
+  }
   .th-audio-hub-list-title { font-weight: 800; opacity: .8; font-size: 14px; }
   .th-audio-hub-list { display: flex; flex-direction: column; gap: 10px; }
   .th-audio-hub-room-card {
@@ -928,26 +932,23 @@ generic "رومات اسمع معاه" copy.
 
 <div id="thAudioRoomsHub" class="th-audio-hub" style="display:none;">
   <div class="th-audio-hub-inner">
-    {% if own_audio_room %}
-    <div class="th-audio-hub-start-card">
-      <i class="bi bi-broadcast-pin"></i>
-      <p>{% translate "روحلك روم صوتية شغالة دلوقتي" %}</p>
-      <a href="/live-rooms/audio/{{ request.user.username }}/" class="th-audio-hub-start-btn">{% translate "روح للروم" %}</a>
-    </div>
-    {% elif request.user.is_authenticated %}
+    {% if request.user.is_authenticated %}
     <div class="th-audio-hub-start-card">
       <i class="bi bi-people-fill"></i>
-      <p>{% translate "ابدأ روم صوتية جديدة" %}</p>
+      <p>{% if own_audio_room %}{% translate "عايز تبقوا كام في الروم؟" %}{% else %}{% translate "ابدأ روم صوتية جديدة" %}{% endif %}</p>
       <div class="th-audio-hub-size-picker" id="thAudioHubSizePicker">
         {% for size, label in audio_room_sizes %}
-        <button type="button" class="th-audio-hub-size-btn{% if size == 4 %} active{% endif %}" data-size="{{ size }}">{{ size }}</button>
+        <button type="button" class="th-audio-hub-size-btn{% if own_audio_room.max_participants == size or not own_audio_room and size == 4 %} active{% endif %}" data-size="{{ size }}">{{ size }}</button>
         {% endfor %}
       </div>
       <form method="post" action="{% url 'website_app:audio-room-start' %}" id="thAudioHubStartForm">
         {% csrf_token %}
-        <input type="hidden" name="max_participants" id="thAudioHubSizeInput" value="4">
+        <input type="hidden" name="max_participants" id="thAudioHubSizeInput" value="{{ own_audio_room.max_participants|default:4 }}">
         <button type="submit" class="th-audio-hub-start-btn">{% translate "ابدأ الروم" %}</button>
       </form>
+      {% if own_audio_room %}
+      <a href="/live-rooms/audio/{{ request.user.username }}/" class="th-audio-hub-resume-link">{% translate "أو روح لروحك الشغالة دلوقتي" %}</a>
+      {% endif %}
     </div>
     {% endif %}
 
@@ -1039,10 +1040,16 @@ generic "رومات اسمع معاه" copy.
   var typeTabs = document.getElementById('thRoomTypeTabs');
   var audioHub = document.getElementById('thAudioRoomsHub');
   if (typeTabs && audioHub) {
+    // thRoomLoadingOverlay deliberately excluded - it's only ever shown
+    // by thPlaySuggestedSong's own async round-trip (see its own
+    // comment further down), not by tab switching. Clearing its inline
+    // display:none here (style.display = '') used to fall back to its
+    // CSS class's own `display:flex`, which made switching from audio
+    // back to the songs tab show it permanently stuck open even though
+    // nothing was actually loading.
     var songPanels = [
       document.getElementById('thRoomFeed'),
       document.getElementById('thRoomFeedEmpty'),
-      document.getElementById('thRoomLoadingOverlay'),
     ].filter(Boolean);
 
     typeTabs.querySelectorAll('.th-room-type-tab').forEach(function (tab) {

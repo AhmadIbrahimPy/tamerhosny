@@ -380,10 +380,10 @@ class AudioRoom(models.Model):
         verbose_name=_('صاحب الروم')
     )
 
-    # 2/4/6/8/12 - العدد الكلي شامل صاحب الروم نفسه (slot 0)، مش عدد
-    # الضيوف بس.
+    # 1/2/4/6/8/12 - العدد الكلي شامل صاحب الروم نفسه (slot 0)، مش عدد
+    # الضيوف بس. 1 يعني "لوحدي" - مفيش مقاعد فاضية للضيوف خالص.
     max_participants = models.PositiveSmallIntegerField(
-        choices=[(n, str(n)) for n in (2, 4, 6, 8, 12)],
+        choices=[(n, str(n)) for n in (1, 2, 4, 6, 8, 12)],
         default=4,
         verbose_name=_('أقصى عدد أشخاص'),
     )
