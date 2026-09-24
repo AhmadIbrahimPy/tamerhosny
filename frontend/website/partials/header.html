@@ -64,7 +64,9 @@
         </button>
       </div>
       {% endif %}
-
+      URL NAME: {{ request.resolver_match.url_name }}
+      <br>
+      PATH: {{ request.path }}
       {% if user.is_authenticated %}
       <div class="th-user-menu">
         <button type="button" class="th-user-btn" onclick="toggleUserMenu()">
