@@ -363,6 +363,87 @@ class ListenTogetherViewer(models.Model):
         return f'{self.user.username} - {self.room}'
 
 
+class AudioRoom(models.Model):
+    """"روم صوتية" - مكالمة صوت جماعية حية (WebRTC مباشر بين المتصفحات،
+    مفيش سيرفر وسيط بيسمع الصوت - انظر AudioRoomConsumer، اللي دوره
+    بس تبادل رسائل الـ signaling بين المتصفحات، مش نقل الصوت نفسه).
+
+    منفصل تمامًا عن ListenTogetherRoom (روم الأغاني) - مفيش أغنية بتتشغل
+    هنا خالص، بس ناس بتتكلم مع بعض. صاحب الروم بياخد دايمًا slot 0 (زي
+    ما ListenTogetherRoom.host مالوش صف ListenTogetherViewer لنفسه) -
+    باقي الناس في AudioRoomParticipant."""
+
+    host = models.OneToOneField(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='audio_room',
+        verbose_name=_('صاحب الروم')
+    )
+
+    # 2/4/6/8/12 - العدد الكلي شامل صاحب الروم نفسه (slot 0)، مش عدد
+    # الضيوف بس.
+    max_participants = models.PositiveSmallIntegerField(
+        choices=[(n, str(n)) for n in (2, 4, 6, 8, 12)],
+        default=4,
+        verbose_name=_('أقصى عدد أشخاص'),
+    )
+
+    # False لما الهوست يقفل الروم أو يقطع الاتصال - زي
+    # ListenTogetherRoom.is_live بالظبط، نفس السبب (الصف نفسه بيفضل
+    # موجود، مش بيتشال، عشان أي إعدادات محفوظة تفضل لو رجع تاني).
+    is_live = models.BooleanField(default=True, verbose_name=_('شغالة دلوقتي'))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإنشاء'))
+
+    class Meta:
+        verbose_name = _('روم صوتية')
+        verbose_name_plural = _('رومات صوتية')
+        indexes = [
+            models.Index(fields=['is_live']),
+        ]
+
+    def __str__(self):
+        return f'{self.host.username} - {self.get_max_participants_display()}'
+
+
+class AudioRoomParticipant(models.Model):
+    """ضيف داخل روم صوتية دلوقتي - مش شامل الهوست نفسه (انظر
+    AudioRoom.host). slot_index هو مكان الكارد في الشبكة (1..max-1،
+    0 محجوز للهوست دايمًا) - بيتحدد وقت الانضمام كأول رقم فاضي، فبيفضل
+    ثابت طول ما هو موجود حتى لو حد قبله خرج."""
+
+    room = models.ForeignKey(
+        AudioRoom,
+        on_delete=models.CASCADE,
+        related_name='participants',
+        verbose_name=_('الروم')
+    )
+
+    user = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='audio_room_participations',
+        verbose_name=_('المستخدم')
+    )
+
+    slot_index = models.PositiveSmallIntegerField(verbose_name=_('رقم المقعد'))
+
+    is_muted = models.BooleanField(default=False, verbose_name=_('مكتوم'))
+
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الدخول'))
+
+    class Meta:
+        verbose_name = _('مشارك روم صوتية')
+        verbose_name_plural = _('مشاركين روم صوتية')
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'user'], name='unique_audio_room_user'),
+            models.UniqueConstraint(fields=['room', 'slot_index'], name='unique_audio_room_slot'),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.room} (slot {self.slot_index})'
+
+
 class UserSongPlay(models.Model):
     """نموذج لتتبع تشغيل كل مستخدم لكل أغنية"""
 

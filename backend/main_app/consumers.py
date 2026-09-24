@@ -1296,6 +1296,212 @@ class ListenTogetherConsumer(WebsocketConsumer):
         self.close()
 
 
+class AudioRoomConsumer(WebsocketConsumer):
+    """"روم صوتية" - مكالمة جماعية حية بين N شخص (2/4/6/8/12، انظر
+    AudioRoom.max_participants). الصوت نفسه بيعدي مباشرة متصفح-لمتصفح
+    (WebRTC mesh) - السيرفر هنا بس "الحمام الزاجل" اللي بيوصّل رسائل
+    الـ signaling (offer/answer/ice candidates) بين كل زوج، مش بيسمع
+    ولا بيلمس الصوت نفسه خالص. لغرفة من N ناس، كل متصفح بيفتح N-1
+    اتصال WebRTC مباشر مع الباقيين - كويس لحد 12 شخص (أقصى حجم مسموح
+    به هنا أصلاً)، مش هيتقاس لأكتر من كده.
+
+    نفس فكرة الـ signal relay البسيطة: أي رسالة {action:'signal', to,
+    data} بتتبعت لكل الجروب (group_send)، وكل متصفح بيتجاهلها لو مش
+    هو الـ 'to' - أبسط من تتبع channel_name لكل مستخدم، ومقبولة تمامًا
+    على الحجم الصغير ده (أقصى 12 اتصال).
+
+    الهوست بياخد slot 0 دايمًا وملوش صف AudioRoomParticipant لنفسه -
+    نفس تصميم ListenTogetherRoom.host/ListenTogetherViewer بالظبط."""
+
+    def connect(self):
+        user = self.scope.get('user')
+        if not user or not user.is_authenticated:
+            self.close()
+            return
+
+        try:
+            host_user_id = int(self.scope['url_route']['kwargs']['host_user_id'])
+        except (KeyError, TypeError, ValueError):
+            self.close()
+            return
+
+        from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+        room = AudioRoom.objects.filter(host_id=host_user_id, is_live=True).first()
+        if room is None:
+            self.close()
+            return
+
+        self.user = user
+        self.host_user_id = host_user_id
+        self.is_host = (user.id == host_user_id)
+        self.group_name = f'audio_room_{host_user_id}'
+        self.slot_index = 0 if self.is_host else None
+        self._joined = False
+
+        if not self.is_host:
+            existing = AudioRoomParticipant.objects.filter(room=room, user=user).first()
+            if existing is not None:
+                self.slot_index = existing.slot_index
+            else:
+                taken = set(
+                    AudioRoomParticipant.objects.filter(room=room).values_list('slot_index', flat=True)
+                )
+                free_slots = [i for i in range(1, room.max_participants) if i not in taken]
+                if not free_slots:
+                    # الروم مكتملة - مفيش مقعد فاضي.
+                    self.close()
+                    return
+                self.slot_index = free_slots[0]
+                AudioRoomParticipant.objects.create(room=room, user=user, slot_index=self.slot_index)
+
+        self._joined = True
+
+        async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
+        self.accept()
+
+        # Roster snapshot - everyone already in the room, BEFORE this
+        # connection's own join is broadcast below, same ordering
+        # ListenTogetherConsumer._send_viewers_snapshot/
+        # _announce_follower_joined use and for the same reason (a fresh
+        # connection's baseline should be "everyone already here", with
+        # its own join arriving right after as the first live delta on
+        # top of that).
+        participants = list(
+            AudioRoomParticipant.objects.filter(room=room).exclude(user=user).select_related('user')
+        )
+        roster = [{
+            'userId': room.host_id,
+            'username': room.host.username,
+            'avatar': room.host.profile_image.url if room.host.profile_image else '',
+            'slotIndex': 0,
+            'isMuted': False,
+        }] if not self.is_host else []
+        roster += [{
+            'userId': p.user_id,
+            'username': p.user.username,
+            'avatar': p.user.profile_image.url if p.user.profile_image else '',
+            'slotIndex': p.slot_index,
+            'isMuted': p.is_muted,
+        } for p in participants]
+
+        self.send(text_data=json.dumps({
+            'type': 'roster',
+            'maxParticipants': room.max_participants,
+            'youAre': {'userId': user.id, 'slotIndex': self.slot_index},
+            'participants': roster,
+        }))
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.joined',
+            'user_id': user.id,
+            'username': user.username,
+            'avatar': user.profile_image.url if user.profile_image else '',
+            'slot_index': self.slot_index,
+            'sender_channel': self.channel_name,
+        })
+
+    def disconnect(self, close_code):
+        if not getattr(self, '_joined', False):
+            return
+
+        from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+        if self.is_host:
+            AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
+            AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
+        else:
+            AudioRoomParticipant.objects.filter(
+                room__host_id=self.host_user_id, user=self.user,
+            ).delete()
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'participant.left',
+                'user_id': self.user.id,
+            })
+
+        async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
+
+    def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except ValueError:
+            return
+
+        action = data.get('action')
+
+        if action == 'signal':
+            # Pure relay - the server never inspects offer/answer/ice
+            # payloads, just forwards them to whichever peer 'to' names.
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'webrtc.signal',
+                'from_user_id': self.user.id,
+                'to_user_id': data.get('to'),
+                'data': data.get('data'),
+                'sender_channel': self.channel_name,
+            })
+        elif action == 'mute':
+            self._set_muted(bool(data.get('muted')))
+        elif action == 'end_room' and self.is_host:
+            from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+            AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
+            AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
+
+    def _set_muted(self, muted):
+        from backend.main_app.models import AudioRoomParticipant
+
+        if not self.is_host:
+            AudioRoomParticipant.objects.filter(
+                room__host_id=self.host_user_id, user=self.user,
+            ).update(is_muted=muted)
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.muted',
+            'user_id': self.user.id,
+            'muted': muted,
+        })
+
+    # =========================================================
+    # GROUP -> THIS CONNECTION
+    # =========================================================
+
+    def participant_joined(self, event):
+        if event.get('sender_channel') == self.channel_name:
+            return
+        self.send(text_data=json.dumps({
+            'type': 'participant_joined',
+            'userId': event['user_id'],
+            'username': event['username'],
+            'avatar': event['avatar'],
+            'slotIndex': event['slot_index'],
+        }))
+
+    def participant_left(self, event):
+        self.send(text_data=json.dumps({'type': 'participant_left', 'userId': event['user_id']}))
+
+    def participant_muted(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'participant_muted', 'userId': event['user_id'], 'muted': event['muted'],
+        }))
+
+    def webrtc_signal(self, event):
+        if event.get('sender_channel') == self.channel_name:
+            return
+        if event.get('to_user_id') != self.user.id:
+            return
+        self.send(text_data=json.dumps({
+            'type': 'signal',
+            'fromUserId': event['from_user_id'],
+            'data': event['data'],
+        }))
+
+    def room_ended(self, event):
+        self.send(text_data=json.dumps({'type': 'room_ended'}))
+        self.close()
+
+
 def _ws_headers(scope):
     return {
         key.decode('latin1').lower(): value.decode('latin1')

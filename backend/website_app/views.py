@@ -2746,12 +2746,87 @@ def live_rooms(request, username=None):
     if username and rooms and rooms[0]['hostUsername'].lower() == username.lower():
         target_room = rooms[0]
 
+    from django.db.models import Count as _Count
+
+    from backend.main_app.models import AudioRoom
+
+    audio_rooms_qs = AudioRoom.objects.filter(is_live=True).select_related('host').annotate(
+        _participant_count=_Count('participants'),
+    ).order_by('-created_at')
+    own_audio_room = None
+    if request.user.is_authenticated:
+        own_audio_room = AudioRoom.objects.filter(host=request.user, is_live=True).first()
+        audio_rooms_qs = audio_rooms_qs.exclude(host=request.user)
+    audio_rooms = [{
+        'hostUsername': room.host.username,
+        'hostAvatar': room.host.profile_image.url if room.host.profile_image else '',
+        'maxParticipants': room.max_participants,
+        # +1 for the host, who has no AudioRoomParticipant row of their own.
+        'currentCount': room._participant_count + 1,
+        'isFull': room._participant_count + 1 >= room.max_participants,
+    } for room in audio_rooms_qs]
+
     return render(request, 'website/pages/live_rooms.html', {
         'rooms': rooms,
         'suggested_song_groups': suggested_song_groups,
         'room_ads': room_ads,
         'target_room': target_room,
         'viewing_own_room': viewing_own_room,
+        'audio_rooms': audio_rooms,
+        'own_audio_room': own_audio_room,
+        'audio_room_sizes': AudioRoom._meta.get_field('max_participants').choices,
+    })
+
+
+@login_required
+@require_POST
+def audio_room_start(request):
+    """تصفير/إنشاء روم صوتية للمستخدم الحالي بعدد المقاعد اللي اختاره،
+    وتحويله على شاشتها على طول - نفس فكرة ListenTogetherRoom
+    (update_or_create، مش حذف وإعادة إنشاء)، فأي إعدادات لاحقة على
+    الروم تتحفظ بين جلسة وتانية."""
+    from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+    valid_sizes = {choice[0] for choice in AudioRoom._meta.get_field('max_participants').choices}
+    try:
+        max_participants = int(request.POST.get('max_participants', 4))
+    except (TypeError, ValueError):
+        max_participants = 4
+    if max_participants not in valid_sizes:
+        max_participants = 4
+
+    room, _created = AudioRoom.objects.update_or_create(
+        host=request.user,
+        defaults={'max_participants': max_participants, 'is_live': True},
+    )
+    # A stale room re-opened after everyone left the last session
+    # shouldn't start with yesterday's participants still occupying
+    # seats - AudioRoomConsumer.disconnect() already clears these on a
+    # clean end, this is just the safety net for a session that never
+    # closed cleanly (hard kill, server restart mid-call).
+    AudioRoomParticipant.objects.filter(room=room).delete()
+
+    return redirect('website_app:audio-room-detail', username=request.user.username)
+
+
+@login_required
+def audio_room_detail(request, username):
+    from backend.main_app.models import AudioRoom, AudioRoomParticipant, UserAccount
+
+    account = get_object_or_404(UserAccount, username__iexact=username)
+    room = AudioRoom.objects.filter(host=account, is_live=True).first()
+
+    is_host = request.user.is_authenticated and request.user.id == account.id
+    is_full = False
+    if room is not None and not is_host:
+        current_count = AudioRoomParticipant.objects.filter(room=room).count() + 1
+        is_full = current_count >= room.max_participants
+
+    return render(request, 'website/pages/live_rooms_audio.html', {
+        'room': room,
+        'room_host': account,
+        'is_host': is_host,
+        'is_full': is_full,
     })
 
 

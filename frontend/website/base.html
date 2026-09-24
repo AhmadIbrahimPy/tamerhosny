@@ -4669,6 +4669,7 @@
     window.isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
     window.thUserId = {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %};
     window.thUsername = {% if user.is_authenticated %}'{{ user.username|escapejs }}'{% else %}null{% endif %};
+    window.thUserAvatar = {% if user.is_authenticated and user.profile_image %}'{{ user.profile_image.url|escapejs }}'{% else %}''{% endif %};
     // Always-on "اسمع معاه" host channel - see thConnectListenTogetherHost's
     // own comment (near connectGlobalListenerSocket) for why this opens
     // unconditionally for every logged-in visitor, not just while

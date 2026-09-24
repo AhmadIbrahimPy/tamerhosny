@@ -40,6 +40,64 @@ generic "رومات اسمع معاه" copy.
      integrated into the room instead of floating disconnected from it. */
   body.th-live-rooms-page #thListenTogetherJoinRequests { display: none !important; }
 
+  .th-room-type-tabs {
+    position: fixed; top: 14px; inset-inline-start: 50%; transform: translateX(-50%);
+    z-index: 1002; display: flex; gap: 4px; background: rgba(0,0,0,.5);
+    border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 4px;
+    backdrop-filter: blur(6px);
+  }
+  body:not([dir="rtl"]) .th-room-type-tabs { transform: translateX(-50%); }
+  .th-room-type-tab {
+    border: none; background: transparent; color: rgba(255,255,255,.7);
+    font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 999px;
+    cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .th-room-type-tab.active { background: var(--accent); color: #fff; }
+
+  .th-audio-hub {
+    height: 106dvh; overflow-y: auto; background: #000; color: #fff;
+    padding: 76px 16px 32px;
+  }
+  .th-audio-hub-inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  .th-audio-hub-start-card {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 24px; text-align: center;
+  }
+  .th-audio-hub-start-card > i { font-size: 34px; color: var(--accent); }
+  .th-audio-hub-start-card > p { margin: 10px 0 16px; font-weight: 700; }
+  .th-audio-hub-size-picker { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .th-audio-hub-size-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2);
+    background: transparent; color: #fff; font-weight: 800; cursor: pointer;
+  }
+  .th-audio-hub-size-btn.active { background: var(--accent); border-color: var(--accent); }
+  .th-audio-hub-start-btn {
+    display: inline-block; border: none; background: var(--accent); color: #fff;
+    font-weight: 800; padding: 12px 28px; border-radius: 999px; cursor: pointer;
+    text-decoration: none; font-size: 14px;
+  }
+  .th-audio-hub-list-title { font-weight: 800; opacity: .8; font-size: 14px; }
+  .th-audio-hub-list { display: flex; flex-direction: column; gap: 10px; }
+  .th-audio-hub-room-card {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; text-decoration: none; color: #fff;
+  }
+  .th-audio-hub-room-card.is-full { opacity: .5; }
+  .th-audio-hub-room-card img, .th-audio-hub-room-fallback {
+    width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #22263a; color: var(--accent); font-weight: 900;
+  }
+  .th-audio-hub-room-meta { flex: 1; min-width: 0; }
+  .th-audio-hub-room-name { font-weight: 700; }
+  .th-audio-hub-room-count { font-size: 12px; opacity: .7; }
+  .th-audio-hub-room-full-badge {
+    font-size: 11px; font-weight: 700; background: rgba(255,255,255,.12);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .th-audio-hub-empty { text-align: center; opacity: .6; padding: 24px 0; }
+
   .th-room-feed-nav-arrows {
     /* Mobile scrolls the feed by hand (swipe) - the arrows are
        desktop-only, unhidden by the min-width:768px rule below. */
@@ -857,6 +915,62 @@ generic "رومات اسمع معاه" copy.
 {% endblock %}
 
 {% block content %}
+<div class="th-room-type-tabs" id="thRoomTypeTabs">
+  <button type="button" class="th-room-type-tab active" data-tab="songs">
+    <i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}
+  </button>
+  <button type="button" class="th-room-type-tab" data-tab="audio">
+    <i class="bi bi-mic-fill"></i> {% translate "روم صوتية" %}
+  </button>
+</div>
+
+<div id="thAudioRoomsHub" class="th-audio-hub" style="display:none;">
+  <div class="th-audio-hub-inner">
+    {% if own_audio_room %}
+    <div class="th-audio-hub-start-card">
+      <i class="bi bi-broadcast-pin"></i>
+      <p>{% translate "روحلك روم صوتية شغالة دلوقتي" %}</p>
+      <a href="/live-rooms/audio/{{ request.user.username }}/" class="th-audio-hub-start-btn">{% translate "روح للروم" %}</a>
+    </div>
+    {% elif request.user.is_authenticated %}
+    <div class="th-audio-hub-start-card">
+      <i class="bi bi-people-fill"></i>
+      <p>{% translate "ابدأ روم صوتية جديدة" %}</p>
+      <div class="th-audio-hub-size-picker" id="thAudioHubSizePicker">
+        {% for size, label in audio_room_sizes %}
+        <button type="button" class="th-audio-hub-size-btn{% if size == 4 %} active{% endif %}" data-size="{{ size }}">{{ size }}</button>
+        {% endfor %}
+      </div>
+      <form method="post" action="{% url 'website_app:audio-room-start' %}" id="thAudioHubStartForm">
+        {% csrf_token %}
+        <input type="hidden" name="max_participants" id="thAudioHubSizeInput" value="4">
+        <button type="submit" class="th-audio-hub-start-btn">{% translate "ابدأ الروم" %}</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="th-audio-hub-list-title">{% translate "رومات صوتية شغالة دلوقتي" %}</div>
+    <div class="th-audio-hub-list" id="thAudioHubList">
+      {% for room in audio_rooms %}
+      <a href="/live-rooms/audio/{{ room.hostUsername }}/" class="th-audio-hub-room-card{% if room.isFull %} is-full{% endif %}">
+        {% if room.hostAvatar %}
+          <img src="{{ room.hostAvatar }}" alt="{{ room.hostUsername }}">
+        {% else %}
+          <span class="th-audio-hub-room-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>
+        {% endif %}
+        <div class="th-audio-hub-room-meta">
+          <div class="th-audio-hub-room-name">{{ room.hostUsername }}</div>
+          <div class="th-audio-hub-room-count"><i class="bi bi-person-fill"></i> {{ room.currentCount }}/{{ room.maxParticipants }}</div>
+        </div>
+        {% if room.isFull %}<span class="th-audio-hub-room-full-badge">{% translate "مكتملة" %}</span>{% endif %}
+      </a>
+      {% empty %}
+      <div class="th-audio-hub-empty">{% translate "مفيش رومات صوتية شغالة دلوقتي" %}</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
 <div id="thRoomFeed" class="th-room-feed"></div>
 <div id="thRoomFeedEmpty" class="th-room-feed-empty">
   <div class="th-room-feed-empty-emoji">🎧</div>
@@ -916,6 +1030,44 @@ generic "رومات اسمع معاه" copy.
 {% block extra_js %}
 <script>
 (function () {
+  // Song-room tab (default) vs audio-room tab - swaps which full-screen
+  // panel is visible; #thRoomFeed's own scroll-snap/thBuildSlide logic
+  // further down is completely untouched either way, this only toggles
+  // display on its container vs #thAudioRoomsHub.
+  var typeTabs = document.getElementById('thRoomTypeTabs');
+  var audioHub = document.getElementById('thAudioRoomsHub');
+  if (typeTabs && audioHub) {
+    var songPanels = [
+      document.getElementById('thRoomFeed'),
+      document.getElementById('thRoomFeedEmpty'),
+      document.getElementById('thRoomLoadingOverlay'),
+    ].filter(Boolean);
+
+    typeTabs.querySelectorAll('.th-room-type-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var showAudio = tab.dataset.tab === 'audio';
+        typeTabs.querySelectorAll('.th-room-type-tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+        });
+        audioHub.style.display = showAudio ? 'block' : 'none';
+        songPanels.forEach(function (el) { el.style.display = showAudio ? 'none' : ''; });
+      });
+    });
+
+    var sizePicker = document.getElementById('thAudioHubSizePicker');
+    var sizeInput = document.getElementById('thAudioHubSizeInput');
+    if (sizePicker && sizeInput) {
+      sizePicker.querySelectorAll('.th-audio-hub-size-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          sizePicker.querySelectorAll('.th-audio-hub-size-btn').forEach(function (b) {
+            b.classList.toggle('active', b === btn);
+          });
+          sizeInput.value = btn.dataset.size;
+        });
+      });
+    }
+  }
+
   // This feed already shows each room's own song/host/join-status
   // inline per slide - the persistent bottom player bar's normal
   // controls (cover, title, play/pause, progress) just duplicate that

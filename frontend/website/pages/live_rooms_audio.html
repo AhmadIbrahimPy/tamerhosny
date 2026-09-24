@@ -1,0 +1,360 @@
+{% extends "website/base.html" %}
+{% load static i18n %}
+{% block title %}{% blocktranslate with host=room_host.username %}روم صوتية مع {{ host }}{% endblocktranslate %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  body.th-audio-room-page { overflow: hidden; }
+  body.th-audio-room-page .th-footer,
+  body.th-audio-room-page #globalAudioPlayer,
+  body.th-audio-room-page .th-mic-fab { display: none !important; }
+
+  .th-audio-room-screen {
+    height: 100dvh; background: #0b0b12; color: #fff;
+    display: flex; flex-direction: column;
+  }
+  .th-audio-room-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; flex-shrink: 0;
+  }
+  .th-audio-room-title { font-weight: 800; font-size: 15px; }
+  .th-audio-room-title small { display: block; font-weight: 400; opacity: .6; font-size: 12px; }
+  .th-audio-room-leave-btn {
+    border: none; background: rgba(255,255,255,.1); color: #fff;
+    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .th-audio-room-grid {
+    flex: 1; display: grid; gap: 14px; padding: 8px 18px 18px;
+    align-content: center; overflow-y: auto;
+  }
+  .th-audio-room-grid[data-cols="2"] { grid-template-columns: repeat(1, minmax(0,1fr)); }
+  .th-audio-room-grid[data-cols="4"] { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .th-audio-room-grid[data-cols="6"] { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .th-audio-room-grid[data-cols="8"] { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .th-audio-room-grid[data-cols="12"] { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  @media (min-width: 640px) {
+    .th-audio-room-grid[data-cols="6"] { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .th-audio-room-grid[data-cols="8"] { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .th-audio-room-grid[data-cols="12"] { grid-template-columns: repeat(4, minmax(0,1fr)); }
+  }
+
+  .th-audio-card {
+    aspect-ratio: 1; border-radius: 20px; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px; position: relative;
+    padding: 10px; text-align: center;
+  }
+  .th-audio-card.is-empty { border-style: dashed; opacity: .5; }
+  .th-audio-card-plus { font-size: 26px; opacity: .5; }
+  .th-audio-card-avatar, .th-audio-card-fallback {
+    width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+    display: flex; align-items: center; justify-content: center;
+    background: #22263a; color: var(--accent); font-weight: 900; font-size: 20px;
+  }
+  .th-audio-card-name { font-size: 12px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-audio-card-host-badge {
+    position: absolute; top: 8px; inset-inline-start: 8px; font-size: 10px; font-weight: 800;
+    background: var(--accent); padding: 2px 8px; border-radius: 999px;
+  }
+  .th-audio-card-mic {
+    position: absolute; bottom: 8px; inset-inline-end: 8px; font-size: 12px;
+    width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .th-audio-card-mic.is-muted { color: #ff6b6b; }
+
+  .th-audio-room-controls {
+    flex-shrink: 0; display: flex; justify-content: center; gap: 16px;
+    padding: 18px; padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .th-audio-room-ctrl-btn {
+    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: rgba(255,255,255,.1); color: #fff;
+  }
+  .th-audio-room-ctrl-btn.is-muted { background: #ff6b6b; }
+  .th-audio-room-ctrl-btn.end { background: #ff3b3b; }
+
+  .th-audio-room-blocked {
+    height: 100dvh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; color: #fff; text-align: center; padding: 24px;
+  }
+  .th-audio-room-blocked i { font-size: 40px; opacity: .6; }
+  .th-audio-room-blocked a {
+    background: var(--accent); color: #fff; text-decoration: none; font-weight: 700;
+    padding: 10px 24px; border-radius: 999px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not room or is_full %}
+<div class="th-audio-room-blocked">
+  <i class="bi bi-mic-mute-fill"></i>
+  <p>{% if not room %}{% translate "الروم دي خلصت أو مش موجودة." %}{% else %}{% translate "الروم مكتملة دلوقتي - كل المقاعد متحجزة." %}{% endif %}</p>
+  <a href="/live-rooms/">{% translate "رجوع للرومات" %}</a>
+</div>
+{% else %}
+<div class="th-audio-room-screen">
+  <div class="th-audio-room-header">
+    <div class="th-audio-room-title">
+      {% blocktranslate with host=room_host.username %}روم {{ host }}{% endblocktranslate %}
+      <small id="thAudioRoomStatus">{% translate "بيتوصل..." %}</small>
+    </div>
+    <button type="button" class="th-audio-room-leave-btn" id="thAudioRoomLeaveBtn" title="{% translate 'خروج' %}">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+  </div>
+  <div class="th-audio-room-grid" id="thAudioRoomGrid" data-cols="{{ room.max_participants }}"></div>
+  <div class="th-audio-room-controls">
+    <button type="button" class="th-audio-room-ctrl-btn" id="thAudioRoomMuteBtn" title="{% translate 'كتم' %}">
+      <i class="bi bi-mic-fill"></i>
+    </button>
+    <button type="button" class="th-audio-room-ctrl-btn end" id="thAudioRoomEndBtn" title="{% translate 'خروج' %}">
+      <i class="bi bi-telephone-x-fill"></i>
+    </button>
+  </div>
+</div>
+
+<audio id="thAudioRoomRemoteAudioPool" style="display:none;"></audio>
+{{ room.max_participants|json_script:"thAudioRoomMaxSlots" }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if room and not is_full %}
+<script>
+(function () {
+  document.body.classList.add('th-audio-room-page');
+  if (window.thOnTeardown) {
+    window.thOnTeardown(function () { document.body.classList.remove('th-audio-room-page'); });
+  }
+
+  var maxSlots = {{ room.max_participants }};
+  var isHost = {{ is_host|yesno:"true,false" }};
+  var hostUserId = {{ room_host.pk }};
+  var myUserId = window.thUserId;
+  var grid = document.getElementById('thAudioRoomGrid');
+  var statusEl = document.getElementById('thAudioRoomStatus');
+  var muteBtn = document.getElementById('thAudioRoomMuteBtn');
+  var endBtn = document.getElementById('thAudioRoomEndBtn');
+  var leaveBtn = document.getElementById('thAudioRoomLeaveBtn');
+  var remoteAudioPool = document.getElementById('thAudioRoomRemoteAudioPool');
+
+  // slotIndex -> {userId, username, avatar, isHost, muted}
+  var slots = {};
+  // userId -> RTCPeerConnection
+  var peers = {};
+  // userId -> <audio> element playing their remote stream
+  var remoteAudioEls = {};
+  var localStream = null;
+  var isMuted = false;
+  var socket = null;
+  var left = false;
+
+  var ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+
+  function initials(name) { return (name || '?').slice(0, 1).toUpperCase(); }
+
+  function renderGrid() {
+    grid.innerHTML = '';
+    for (var i = 0; i < maxSlots; i++) {
+      var occupant = slots[i];
+      var card = document.createElement('div');
+      card.className = 'th-audio-card' + (occupant ? '' : ' is-empty');
+      card.id = 'thAudioCardSlot' + i;
+      if (occupant) {
+        card.innerHTML =
+          (occupant.avatar
+            ? '<img class="th-audio-card-avatar" src="' + occupant.avatar + '" alt="">'
+            : '<span class="th-audio-card-fallback">' + initials(occupant.username) + '</span>') +
+          '<span class="th-audio-card-name">' + occupant.username + '</span>' +
+          (occupant.isHost ? '<span class="th-audio-card-host-badge">{% translate "الهوست" %}</span>' : '') +
+          '<span class="th-audio-card-mic' + (occupant.muted ? ' is-muted' : '') + '"><i class="bi ' + (occupant.muted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i></span>';
+      } else {
+        card.innerHTML = '<span class="th-audio-card-plus">+</span>';
+      }
+      grid.appendChild(card);
+    }
+  }
+
+  function setSlot(slotIndex, data) {
+    slots[slotIndex] = data;
+    renderGrid();
+  }
+
+  function clearSlotByUserId(userId) {
+    for (var idx in slots) {
+      if (slots[idx] && slots[idx].userId === userId) {
+        delete slots[idx];
+      }
+    }
+    renderGrid();
+  }
+
+  function updateMicIcon(userId, muted) {
+    for (var idx in slots) {
+      if (slots[idx] && slots[idx].userId === userId) {
+        slots[idx].muted = muted;
+      }
+    }
+    renderGrid();
+  }
+
+  function send(payload) {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload));
+  }
+
+  function closePeer(userId) {
+    if (peers[userId]) {
+      try { peers[userId].close(); } catch (e) {}
+      delete peers[userId];
+    }
+    if (remoteAudioEls[userId]) {
+      remoteAudioEls[userId].remove();
+      delete remoteAudioEls[userId];
+    }
+  }
+
+  function attachRemoteStream(userId, stream) {
+    var el = document.createElement('audio');
+    el.autoplay = true;
+    el.srcObject = stream;
+    remoteAudioPool.appendChild(el);
+    remoteAudioEls[userId] = el;
+  }
+
+  function createPeerConnection(userId) {
+    var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    peers[userId] = pc;
+
+    if (localStream) {
+      localStream.getTracks().forEach(function (track) { pc.addTrack(track, localStream); });
+    }
+
+    pc.ontrack = function (event) {
+      attachRemoteStream(userId, event.streams[0]);
+    };
+
+    pc.onicecandidate = function (event) {
+      if (event.candidate) {
+        send({ action: 'signal', to: userId, data: { kind: 'ice', candidate: event.candidate } });
+      }
+    };
+
+    return pc;
+  }
+
+  async function makeOfferTo(userId) {
+    var pc = createPeerConnection(userId);
+    var offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    send({ action: 'signal', to: userId, data: { kind: 'offer', sdp: offer } });
+  }
+
+  async function handleSignal(fromUserId, data) {
+    var pc = peers[fromUserId] || createPeerConnection(fromUserId);
+
+    if (data.kind === 'offer') {
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      var answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      send({ action: 'signal', to: fromUserId, data: { kind: 'answer', sdp: answer } });
+    } else if (data.kind === 'answer') {
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    } else if (data.kind === 'ice' && data.candidate) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) {}
+    }
+  }
+
+  function endAndLeave(navigateHome) {
+    if (left) return;
+    left = true;
+    Object.keys(peers).forEach(function (uid) { closePeer(uid); });
+    if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
+    if (socket) { try { socket.close(); } catch (e) {} }
+    if (navigateHome) {
+      if (window.thBoostedNavigate) { window.thBoostedNavigate('/live-rooms/'); } else { window.location.href = '/live-rooms/'; }
+    }
+  }
+
+  async function start() {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    } catch (e) {
+      statusEl.textContent = '{% translate "محتاج إذن المايك عشان تدخل الروم" %}';
+      return;
+    }
+
+    var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    socket = new WebSocket(protocol + window.location.host + '/ws/audio-room/' + hostUserId + '/');
+
+    socket.onopen = function () {
+      statusEl.textContent = '{% translate "لايف دلوقتي" %}';
+    };
+
+    socket.onclose = function () {
+      if (!left) {
+        statusEl.textContent = '{% translate "الاتصال اتقطع" %}';
+      }
+    };
+
+    socket.onmessage = function (event) {
+      var msg = JSON.parse(event.data);
+
+      if (msg.type === 'roster') {
+        setSlot(msg.youAre.slotIndex, {
+          userId: myUserId, username: window.thUsername, avatar: window.thUserAvatar || '',
+          isHost: msg.youAre.slotIndex === 0, muted: isMuted,
+        });
+        msg.participants.forEach(function (p) {
+          setSlot(p.slotIndex, {
+            userId: p.userId, username: p.username, avatar: p.avatar,
+            isHost: p.slotIndex === 0, muted: p.isMuted,
+          });
+          if (p.userId !== myUserId) makeOfferTo(p.userId);
+        });
+      } else if (msg.type === 'participant_joined') {
+        setSlot(msg.slotIndex, {
+          userId: msg.userId, username: msg.username, avatar: msg.avatar,
+          isHost: msg.slotIndex === 0, muted: false,
+        });
+      } else if (msg.type === 'participant_left') {
+        closePeer(msg.userId);
+        clearSlotByUserId(msg.userId);
+      } else if (msg.type === 'participant_muted') {
+        updateMicIcon(msg.userId, msg.muted);
+      } else if (msg.type === 'signal') {
+        handleSignal(msg.fromUserId, msg.data);
+      } else if (msg.type === 'room_ended') {
+        endAndLeave(true);
+      }
+    };
+  }
+
+  muteBtn.addEventListener('click', function () {
+    isMuted = !isMuted;
+    if (localStream) localStream.getAudioTracks().forEach(function (t) { t.enabled = !isMuted; });
+    muteBtn.classList.toggle('is-muted', isMuted);
+    muteBtn.innerHTML = '<i class="bi ' + (isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i>';
+    send({ action: 'mute', muted: isMuted });
+    updateMicIcon(myUserId, isMuted);
+  });
+
+  function leaveClicked() {
+    if (isHost) send({ action: 'end_room' });
+    endAndLeave(true);
+  }
+  endBtn.addEventListener('click', leaveClicked);
+  leaveBtn.addEventListener('click', leaveClicked);
+
+  window.addEventListener('beforeunload', function () { endAndLeave(false); });
+
+  renderGrid();
+  start();
+})();
+</script>
+{% endif %}
+{% endblock %}

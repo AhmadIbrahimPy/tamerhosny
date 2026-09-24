@@ -39,4 +39,8 @@ websocket_urlpatterns = [
         r'^ws/live-rooms/feed/$',
         consumers.LiveRoomsFeedConsumer.as_asgi(),
     ),
+    re_path(
+        r'^ws/audio-room/(?P<host_user_id>\d+)/$',
+        consumers.AudioRoomConsumer.as_asgi(),
+    ),
 ]
