@@ -6302,8 +6302,7 @@ msgstr ""
 #: frontend/website/partials/footer.html:49
 msgid "ونتمنى أن يكون يوماً ما الموقع الرسمي وتحت إشرافه 😄"
 msgstr ""
-"and we hope it becomes his official site under his supervision one day 😄And "
-"we hope it becomes the official site under his supervision one day 😄"
+"and we hope it becomes his official site under his supervision one day 😄"
 
 #: frontend/website/partials/header.html:15
 #: frontend/website/partials/header.html:127

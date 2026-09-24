@@ -44,18 +44,6 @@ generic "رومات اسمع معاه" copy.
      nav (.th-nav, itself position:sticky) as a plain block. A fixed
      pill here used to float on TOP of the nav instead (same stacking
      context, no room reserved for it), covering it. */
-  .th-room-type-tabs {
-    display: flex; gap: 4px; justify-content: center;
-    background: #000; padding: 10px 16px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-  .th-room-type-tab {
-    border: none; background: transparent; color: rgba(255,255,255,.7);
-    font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 999px;
-    cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
-  }
-  .th-room-type-tab.active { background: var(--accent); color: #fff; }
-
   .th-audio-hub {
     height: 106dvh; overflow-y: auto; background: #000; color: #fff;
     padding: 16px 16px 32px;
@@ -921,15 +909,6 @@ generic "رومات اسمع معاه" copy.
 {% endblock %}
 
 {% block content %}
-<div class="th-room-type-tabs" id="thRoomTypeTabs">
-  <button type="button" class="th-room-type-tab active" data-tab="songs">
-    <i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}
-  </button>
-  <button type="button" class="th-room-type-tab" data-tab="audio">
-    <i class="bi bi-mic-fill"></i> {% translate "روم صوتية" %}
-  </button>
-</div>
-
 <div id="thAudioRoomsHub" class="th-audio-hub" style="display:none;">
   <div class="th-audio-hub-inner">
     {% if request.user.is_authenticated %}

@@ -1,4 +1,17 @@
 {% load static i18n %}
+<style>
+  .th-room-type-tabs {
+    display: flex; gap: 4px; justify-content: center;
+    background: #000; padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .th-room-type-tab {
+    border: none; background: transparent; color: rgba(255,255,255,.7);
+    font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 999px;
+    cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .th-room-type-tab.active { background: var(--accent); color: #fff; }
+</style>
 <form id="langSwitchForm" action="{% url 'set_language' %}" method="post" class="d-none">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ request.path }}">
@@ -11,6 +24,7 @@
       <img src="{% static 'images/logos/logo_d.jpeg' %}" alt="{% translate 'تامر حسني' %}">
     </a>
     <div class="th-nav-links">
+      {% if 'live_rooms' not in request.resolver_match.url_name %}
       <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
       <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
       <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
@@ -38,6 +52,18 @@
       <button type="button" class="th-mic-btn" id="thMicBtn" onclick="thToggleVoiceAssistant()" title="{% translate 'المساعد الصوتي - قول TH' %}">
         <i class="bi bi-mic-mute"></i>
       </button>
+      {% endif %}
+
+      {% if 'live_rooms' in request.resolver_match.url_name %}
+      <div class="th-room-type-tabs" id="thRoomTypeTabs">
+        <button type="button" class="th-room-type-tab active" data-tab="songs">
+          <i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}
+        </button>
+        <button type="button" class="th-room-type-tab" data-tab="audio">
+          <i class="bi bi-mic-fill"></i> {% translate "روم صوتية" %}
+        </button>
+      </div>
+      {% endif %}
 
       {% if user.is_authenticated %}
       <div class="th-user-menu">
