@@ -24,7 +24,7 @@
       <img src="{% static 'images/logos/logo_d.jpeg' %}" alt="{% translate 'تامر حسني' %}">
     </a>
     <div class="th-nav-links">
-      {% if 'live_rooms' not in request.resolver_match.url_name %}
+      {% if 'live-rooms' not in request.resolver_match.url_name %}
       <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
       <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
       <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
@@ -54,7 +54,7 @@
       </button>
       {% endif %}
 
-      {% if 'live_rooms' in request.resolver_match.url_name %}
+      {% if 'live-rooms' in request.resolver_match.url_name %}
       <div class="th-room-type-tabs" id="thRoomTypeTabs">
         <button type="button" class="th-room-type-tab active" data-tab="songs">
           <i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}
