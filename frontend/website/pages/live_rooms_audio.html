@@ -272,6 +272,17 @@
   }
 
   async function start() {
+    // Can't be "في روم" two ways at once - following someone's song
+    // room (thFollowSocket, base.html) or hosting your own (playback
+    // still running) both have to end before joining a voice call.
+    // stopListeningWith() already does exactly this: closes the follow
+    // socket if there is one, and unconditionally pauses globalAudio,
+    // whose own 'pause' listener is what actually ends YOUR song room
+    // server-side (sendGlobalListenerAction('stop') ->
+    // SongListenerConsumer._maybe_close_room) - safe to call even if
+    // neither was happening.
+    if (window.stopListeningWith) window.stopListeningWith();
+
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
     } catch (e) {

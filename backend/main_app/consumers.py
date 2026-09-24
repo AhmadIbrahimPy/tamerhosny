@@ -138,8 +138,18 @@ class SongListenerConsumer(WebsocketConsumer):
 
     @staticmethod
     def _maybe_open_room(user):
-        from backend.main_app.models import ListenTogetherRoom
+        from backend.main_app.models import AudioRoom, ListenTogetherRoom
         from backend.main_app.tasks import generate_room_name_task
+
+        # A user hosting a live voice room can still play music privately
+        # (this only gates the listen-together SONG room from opening
+        # around that playback, not playback itself) - otherwise a plain
+        # song play while on a call would silently spin up a second,
+        # public "room" of the other kind at the same time. See
+        # audio_room_start (website_app/views.py) for the mirror image
+        # of this same rule.
+        if AudioRoom.objects.filter(host=user, is_live=True).exists():
+            return
 
         room, created = ListenTogetherRoom.objects.get_or_create(host=user)
         if created:

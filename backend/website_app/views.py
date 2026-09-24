@@ -2785,7 +2785,18 @@ def audio_room_start(request):
     وتحويله على شاشتها على طول - نفس فكرة ListenTogetherRoom
     (update_or_create، مش حذف وإعادة إنشاء)، فأي إعدادات لاحقة على
     الروم تتحفظ بين جلسة وتانية."""
-    from backend.main_app.models import AudioRoom, AudioRoomParticipant
+    from backend.main_app.models import AudioRoom, AudioRoomParticipant, ListenTogetherRoom
+
+    # Mirror image of the guard in SongListenerConsumer._maybe_open_room -
+    # can't host both kinds of room at once. A live song room takes
+    # priority here (go straight to it instead of silently failing);
+    # entering a voice room from live_rooms_audio.html's own JS already
+    # calls stopListeningWith() first, which is what actually ends a
+    # song room (pausing playback) before a guest or host would ever
+    # reach this view for the voice side.
+    song_room = ListenTogetherRoom.objects.filter(host=request.user, is_live=True).first()
+    if song_room is not None:
+        return redirect('website_app:live-room-detail', username=request.user.username)
 
     valid_sizes = {choice[0] for choice in AudioRoom._meta.get_field('max_participants').choices}
     try:
