@@ -2750,9 +2750,13 @@ def live_rooms(request, username=None):
 
     from backend.main_app.models import AudioRoom
 
-    audio_rooms_qs = AudioRoom.objects.filter(is_live=True).select_related('host').annotate(
+    # is_public=True only - a private voice room has no join-request/
+    # approval flow (unlike ListenTogetherRoom), so there's no way to
+    # meaningfully show it here at all; it's still reachable by whoever
+    # already has the direct /live-rooms/audio/<username>/ link.
+    audio_rooms_qs = AudioRoom.objects.filter(is_live=True, is_public=True).select_related('host').annotate(
         _participant_count=_Count('participants'),
-    ).order_by('-created_at')
+    ).order_by('-tap_score', '-created_at')
     own_audio_room = None
     if request.user.is_authenticated:
         own_audio_room = AudioRoom.objects.filter(host=request.user, is_live=True).first()
@@ -2760,6 +2764,7 @@ def live_rooms(request, username=None):
     audio_rooms = [{
         'hostUsername': room.host.username,
         'hostAvatar': room.host.profile_image.url if room.host.profile_image else '',
+        'roomName': room.display_name,
         'maxParticipants': room.max_participants,
         # +1 for the host, who has no AudioRoomParticipant row of their own.
         'currentCount': room._participant_count + 1,

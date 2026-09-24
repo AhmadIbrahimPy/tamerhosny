@@ -286,8 +286,17 @@
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
     } catch (e) {
-      statusEl.textContent = '{% translate "محتاج إذن المايك عشان تدخل الروم" %}';
-      return;
+      // No mic (denied, none present, blocked by the browser) shouldn't
+      // be a dead end - you still take your seat and can listen, just
+      // start out muted (no local track to send at all, so 'muted' here
+      // is really "nothing to unmute yet" until a mic actually shows
+      // up). Previously this returned early and the WebSocket never
+      // even opened - the host's own slot 0 stayed a "+" forever,
+      // looking like they weren't in their own room.
+      isMuted = true;
+      muteBtn.classList.add('is-muted');
+      muteBtn.innerHTML = '<i class="bi bi-mic-mute-fill"></i>';
+      statusEl.textContent = '{% translate "الميكروفون مش متاح - هتقدر تسمع بس" %}';
     }
 
     var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';

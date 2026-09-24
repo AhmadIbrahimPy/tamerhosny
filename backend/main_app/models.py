@@ -388,6 +388,16 @@ class AudioRoom(models.Model):
         verbose_name=_('أقصى عدد أشخاص'),
     )
 
+    # اسم اختاره صاحب الروم - زي ListenTogetherRoom.custom_name بالظبط،
+    # بس من غير توليد بالذكاء الاصطناعي (مفيش أغنية هنا يتولد منها اسم).
+    custom_name = models.CharField(max_length=60, blank=True, verbose_name=_('اسم الروم'))
+
+    is_public = models.BooleanField(default=True, verbose_name=_('عامة'))
+
+    # بيتزود كل مرة أي حد (الهوست أو ضيف) يكبس على الشاشة - نفس فكرة
+    # ListenTogetherRoom.tap_score بالظبط (انظر AudioRoomTap تحت).
+    tap_score = models.PositiveIntegerField(default=0, verbose_name=_('نقاط التكبيس'))
+
     # False لما الهوست يقفل الروم أو يقطع الاتصال - زي
     # ListenTogetherRoom.is_live بالظبط، نفس السبب (الصف نفسه بيفضل
     # موجود، مش بيتشال، عشان أي إعدادات محفوظة تفضل لو رجع تاني).
@@ -401,6 +411,10 @@ class AudioRoom(models.Model):
         indexes = [
             models.Index(fields=['is_live']),
         ]
+
+    @property
+    def display_name(self):
+        return self.custom_name or f'{_("روم")} {self.host.username}'
 
     def __str__(self):
         return f'{self.host.username} - {self.get_max_participants_display()}'
@@ -442,6 +456,80 @@ class AudioRoomParticipant(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.room} (slot {self.slot_index})'
+
+
+class AudioRoomComment(models.Model):
+    """رسالة شات في روم صوتية - نفس فكرة ListenTogetherComment بالظبط،
+    بس لـ AudioRoom بدل ListenTogetherRoom. بتتشال مع الروم نفسها
+    (on_delete=CASCADE) فكل مكالمة جديدة تبدأ بشات فاضي."""
+
+    class Kind(models.TextChoices):
+        MESSAGE = 'message', _('رسالة')
+        SYSTEM = 'system', _('نظام')
+
+    room = models.ForeignKey(
+        AudioRoom,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name=_('الروم')
+    )
+
+    author = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='audio_room_comments',
+        null=True,
+        blank=True,
+        verbose_name=_('الكاتب')
+    )
+
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.MESSAGE, verbose_name=_('النوع'))
+
+    text = models.CharField(max_length=300, verbose_name=_('النص'))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإرسال'))
+
+    class Meta:
+        verbose_name = _('تعليق روم صوتية')
+        verbose_name_plural = _('تعليقات روم صوتية')
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['room', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.room} - {self.text[:30]}'
+
+
+class AudioRoomTap(models.Model):
+    """كام مرة كل مستخدم كبس في روم صوتية معينة - نفس فكرة
+    ListenTogetherTap بالظبط، لـ AudioRoom بدل ListenTogetherRoom."""
+
+    room = models.ForeignKey(
+        AudioRoom,
+        on_delete=models.CASCADE,
+        related_name='taps',
+        verbose_name=_('الروم')
+    )
+
+    user = models.ForeignKey(
+        UserAccount,
+        on_delete=models.CASCADE,
+        related_name='audio_room_taps',
+        verbose_name=_('المستخدم')
+    )
+
+    count = models.PositiveIntegerField(default=0, verbose_name=_('عدد الكبسات'))
+
+    class Meta:
+        verbose_name = _('كبسة روم صوتية')
+        verbose_name_plural = _('كبسات روم صوتية')
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'user'], name='unique_audio_room_tap_user'),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.room} - {self.count}'
 
 
 class UserSongPlay(models.Model):

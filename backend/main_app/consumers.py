@@ -1402,6 +1402,13 @@ class AudioRoomConsumer(WebsocketConsumer):
             'participants': roster,
         }))
 
+        # History BEFORE the join announcement below - same ordering/
+        # reasoning as ListenTogetherConsumer.connect (its own comment
+        # explains why: the join announcement's own group_send reaches
+        # this exact connection too, so sending history after it would
+        # double-show this connection's own "X انضم" line).
+        self._send_comment_history()
+
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'participant.joined',
             'user_id': user.id,
@@ -1410,6 +1417,9 @@ class AudioRoomConsumer(WebsocketConsumer):
             'slot_index': self.slot_index,
             'sender_channel': self.channel_name,
         })
+
+        if not self.is_host:
+            self._create_comment(kind='system', text=f'{user.username} انضم')
 
     def disconnect(self, close_code):
         if not getattr(self, '_joined', False):
@@ -1452,6 +1462,12 @@ class AudioRoomConsumer(WebsocketConsumer):
             })
         elif action == 'mute':
             self._set_muted(bool(data.get('muted')))
+        elif action == 'comment':
+            self._post_comment(data.get('text'))
+        elif action == 'tap':
+            self._tap()
+        elif action == 'update_settings' and self.is_host:
+            self._update_settings(data)
         elif action == 'end_room' and self.is_host:
             from backend.main_app.models import AudioRoom, AudioRoomParticipant
 
@@ -1473,9 +1489,118 @@ class AudioRoomConsumer(WebsocketConsumer):
             'muted': muted,
         })
 
+    def _create_comment(self, kind, text, author=None):
+        from backend.main_app.models import AudioRoom, AudioRoomComment
+
+        room = AudioRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is None:
+            return
+
+        comment = AudioRoomComment.objects.create(room=room, author=author, kind=kind, text=text)
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'comment.posted',
+            'id': comment.pk,
+            'kind': comment.kind,
+            'text': comment.text,
+            'author': author.username if author else '',
+            'authorAvatar': author.profile_image.url if author and author.profile_image else '',
+        })
+
+    def _post_comment(self, text):
+        text = (text or '').strip()[:300]
+        if not text:
+            return
+        self._create_comment(kind='message', text=text, author=self.user)
+
+    def _send_comment_history(self):
+        from backend.main_app.models import AudioRoom, AudioRoomComment
+
+        room = AudioRoom.objects.filter(host_id=self.host_user_id).first()
+        if room is None:
+            return
+
+        comments = list(
+            AudioRoomComment.objects.filter(room=room).select_related('author').order_by('-created_at')[:50]
+        )
+        comments.reverse()
+
+        self.send(text_data=json.dumps({
+            'type': 'comment_history',
+            'comments': [{
+                'id': c.pk,
+                'kind': c.kind,
+                'text': c.text,
+                'author': c.author.username if c.author else '',
+                'authorAvatar': c.author.profile_image.url if c.author and c.author.profile_image else '',
+            } for c in comments],
+        }))
+
+    def _tap(self):
+        from django.db.models import F
+
+        from backend.main_app.models import AudioRoom, AudioRoomTap
+
+        updated = AudioRoom.objects.filter(host_id=self.host_user_id).update(tap_score=F('tap_score') + 1)
+        if not updated:
+            return
+
+        room = AudioRoom.objects.filter(host_id=self.host_user_id).only('tap_score').first()
+
+        tap_row, tap_created = AudioRoomTap.objects.get_or_create(
+            room=room, user=self.user, defaults={'count': 1},
+        )
+        if not tap_created:
+            AudioRoomTap.objects.filter(pk=tap_row.pk).update(count=F('count') + 1)
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'room.tapped',
+            'tap_score': room.tap_score if room else None,
+        })
+
+    def _update_settings(self, data):
+        from backend.main_app.models import AudioRoom
+
+        updates = {}
+        if 'name' in data:
+            updates['custom_name'] = (data.get('name') or '').strip()[:60]
+        if 'isPublic' in data:
+            updates['is_public'] = bool(data.get('isPublic'))
+
+        if not updates:
+            return
+
+        AudioRoom.objects.filter(host_id=self.host_user_id).update(**updates)
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'settings.updated',
+            'name': updates.get('custom_name'),
+            'is_public': updates.get('is_public'),
+        })
+
     # =========================================================
     # GROUP -> THIS CONNECTION
     # =========================================================
+
+    def comment_posted(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'comment',
+            'id': event['id'],
+            'kind': event['kind'],
+            'text': event['text'],
+            'author': event['author'],
+            'authorAvatar': event['authorAvatar'],
+        }))
+
+    def room_tapped(self, event):
+        self.send(text_data=json.dumps({'type': 'tapped', 'tap_score': event.get('tap_score')}))
+
+    def settings_updated(self, event):
+        self.send(text_data=json.dumps({
+            'type': 'settings_updated',
+            'name': event.get('name'),
+            'isPublic': event.get('is_public'),
+        }))
 
     def participant_joined(self, event):
         if event.get('sender_channel') == self.channel_name:
