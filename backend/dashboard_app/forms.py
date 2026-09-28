@@ -466,13 +466,17 @@ class UserAccountForm(forms.ModelForm):
 
     class Meta:
         model = UserAccount
-        fields = ['username', 'email', 'role', 'is_active', 'profile_image']
+        fields = ['username', 'email', 'role', 'is_active', 'profile_image', 'team_title']
         labels = {
             'username': _('اسم المستخدم'),
             'email': _('البريد الإلكتروني'),
             'role': _('الدور'),
             'is_active': _('مفعّل'),
             'profile_image': _('صورة الملف الشخصي'),
+            'team_title': _('لقب فريق العمل'),
+        }
+        help_texts = {
+            'team_title': _('مثلاً: Data Entry - اتركه فاضي عشان المستخدم مش يظهر في سلايدر "فريق العمل" بالهوم بيج، أو اكتب فيه أي لقب عشان يظهر.'),
         }
         widgets = {
             'username': forms.TextInput(attrs=WIDGET_ATTRS),
@@ -480,6 +484,7 @@ class UserAccountForm(forms.ModelForm):
             'role': forms.Select(attrs=SELECT_ATTRS),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'profile_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'team_title': forms.TextInput(attrs=WIDGET_ATTRS),
         }
 
     def save(self, commit=True):

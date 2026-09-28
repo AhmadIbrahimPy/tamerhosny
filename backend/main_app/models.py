@@ -18,6 +18,17 @@ class UserAccount(AbstractUser):
     role = models.PositiveSmallIntegerField(choices=Role.choices, default=Role.EDITOR)
     profile_image = models.ImageField(upload_to='users/profile_images/', blank=True, null=True, verbose_name=_('صورة الملف الشخصي'))
 
+    # Purely a "show this user in the public homepage's فريق العمل slider"
+    # switch, dressed up as their job title instead of a plain checkbox -
+    # blank (the default) means not on the team at all; home() only ever
+    # queries UserAccount.objects.exclude(team_title='') for that slider,
+    # so filling this in is what makes someone appear there and clearing
+    # it is what removes them, with no separate on/off flag to keep in
+    # sync with it.
+    team_title = models.CharField(
+        max_length=80, blank=True, default='', verbose_name=_('لقب فريق العمل (يظهر في الهوم بيج لو مش فاضي)'),
+    )
+
     # Roles allowed to log into the internal dashboard.
     DASHBOARD_ROLES = (Role.ADMIN, Role.EDITOR)
 

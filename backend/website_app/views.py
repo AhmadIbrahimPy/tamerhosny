@@ -85,6 +85,7 @@ def robots_txt(request):
 
 
 def home(request):
+    from backend.main_app.models import UserAccount
     from backend.main_app.shared_utils.trending import get_trending
 
     trending_ranks = get_trending(limit=12)
@@ -101,6 +102,11 @@ def home(request):
     albums = Album.visible_queryset(Album.objects.all())[:7]
     concerts = Concert.visible_queryset(Concert.objects.all())[:4]
     people = Person.objects.all()[:8]
+    # فريق العمل slider (home.html, right after "الفنانون") - purely
+    # opt-in per dashboard_app.UserAccountForm's own team_title field:
+    # blank (the default for every account) excludes them here, so
+    # nothing else needs to flag someone as "on the team" separately.
+    team_members = UserAccount.objects.exclude(team_title='').order_by('username')[:12]
     home_ads = list(_ads_for(Advertisement.Placement.HOME)[:8])
     guess_played_today = request.user.is_authenticated and DailyGuessAttempt.objects.filter(
         user=request.user, challenge__date=timezone.localdate(),
@@ -158,6 +164,7 @@ def home(request):
         'albums': albums,
         'concerts': concerts,
         'people': people,
+        'team_members': team_members,
         'home_ads': home_ads,
         'mid_ad': home_ads[1] if len(home_ads) > 1 else (home_ads[0] if home_ads else None),
         'bottom_ad': home_ads[-1] if home_ads else None,
