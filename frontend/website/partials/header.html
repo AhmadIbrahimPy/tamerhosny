@@ -22,7 +22,19 @@
       <img src="{% static 'images/logos/logo_d.jpeg' %}" alt="{% translate 'تامر حسني' %}">
     </a>
     <div class="th-nav-links">
-      {% if request.path|slice:":12" != "/live-rooms/" %}
+      {# Both bundles below are always rendered - only ONE is ever meant
+         to be visible, chosen by whether the current path is under
+         /live-rooms/. This header lives outside #th-page-root (see
+         base.html), so htmx boosted navigation never re-renders it -
+         a plain {% if request.path %} here only ever reflected whatever
+         path was current on the last REAL page load, and then sat
+         frozen (still showing the old bundle) through however many
+         boosted navigations followed, in both directions, until an
+         actual refresh. The inline display below still picks the
+         right bundle for that one real load; thSyncNavForPath's own
+         htmx:afterSettle listener (this file, further down) re-picks
+         it after every boosted navigation from then on. #}
+      <div id="thNavDefaultLinks" style="display:{% if request.path|slice:':12' == '/live-rooms/' %}none{% else %}contents{% endif %};">
       <a href="{% url 'website_app:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% translate "الرئيسية" %}</a>
       <a href="{% url 'website_app:tamer-bio' %}" class="{% if request.resolver_match.url_name == 'tamer-bio' %}active{% endif %}">{% translate "عن تامر" %}</a>
       <a href="{% url 'website_app:songs' %}" class="{% if 'song' in request.resolver_match.url_name %}active{% endif %}">{% translate "الأغاني" %}</a>
@@ -50,8 +62,8 @@
       <button type="button" class="th-mic-btn" id="thMicBtn" onclick="thToggleVoiceAssistant()" title="{% translate 'المساعد الصوتي - قول TH' %}">
         <i class="bi bi-mic-mute"></i>
       </button>
-      {% endif %}
-      {% if request.path|slice:":12" == "/live-rooms/" %}
+      </div>
+      <div id="thNavRoomLinks" style="display:{% if request.path|slice:':12' == '/live-rooms/' %}contents{% else %}none{% endif %};">
       <div class="th-room-type-tabs" id="thRoomTypeTabs">
         <button type="button" class="th-room-type-tab active" data-tab="songs">
           <i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}
@@ -60,7 +72,7 @@
           <i class="bi bi-mic-fill"></i> {% translate "روم صوتية" %}
         </button>
       </div>
-      {% endif %}
+      </div>
       {% if user.is_authenticated %}
       <div class="th-user-menu">
         <button type="button" class="th-user-btn" onclick="toggleUserMenu()">
@@ -238,6 +250,28 @@
 </nav>
 
 <script>
+(function () {
+  'use strict';
+  // thNavDefaultLinks/thNavRoomLinks (above) both always exist in the
+  // DOM now - this picks which one is visible from the CURRENT path,
+  // re-run on every boosted navigation (htmx:afterSettle, base.html
+  // fires this on <body> for every hx-boost swap). This header sits
+  // outside #th-page-root, so it's never itself re-rendered by htmx;
+  // without this, whichever bundle the last real page load happened to
+  // render just stayed on screen through however many boosted
+  // navigations followed, in and out of /live-rooms/, until a real
+  // refresh forced the template's own {% if request.path %} to run again.
+  function thSyncNavForPath() {
+    var isLiveRooms = window.location.pathname.slice(0, 12) === '/live-rooms/';
+    var normal = document.getElementById('thNavDefaultLinks');
+    var roomLinks = document.getElementById('thNavRoomLinks');
+    if (normal) normal.style.display = isLiveRooms ? 'none' : 'contents';
+    if (roomLinks) roomLinks.style.display = isLiveRooms ? 'contents' : 'none';
+  }
+  document.body.addEventListener('htmx:afterSettle', thSyncNavForPath);
+  thSyncNavForPath();
+})();
+
 (function() {
   'use strict';
   var mobileSections = document.querySelectorAll('.th-mobile-section');
