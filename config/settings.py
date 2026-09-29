@@ -96,9 +96,14 @@ INSTALLED_APPS = [
 
 LOGIN_URL = 'dashboard_app:login'
 
+# Public website is parked behind an "under development" page; set
+# MAINTENANCE_MODE=false in credentials/.env to reopen it.
+MAINTENANCE_MODE = env_bool('MAINTENANCE_MODE', True)
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'config.custom_packages.maintenance.MaintenanceMiddleware',
     # Compresses every response (HTML/CSS/JS/JSON) - base.html alone is
     # ~2000 lines before a single page's own content, so this is a large,
     # free win on every request. Must sit this early (right after
