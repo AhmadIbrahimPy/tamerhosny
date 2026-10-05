@@ -103,7 +103,7 @@ MAINTENANCE_MODE = env_bool('MAINTENANCE_MODE', True)
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'config.custom_packages.maintenance.MaintenanceMiddleware',
+    # 'config.custom_packages.maintenance.MaintenanceMiddleware',
     # Compresses every response (HTML/CSS/JS/JSON) - base.html alone is
     # ~2000 lines before a single page's own content, so this is a large,
     # free win on every request. Must sit this early (right after
