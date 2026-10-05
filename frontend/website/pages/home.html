@@ -608,30 +608,30 @@
     </div>
   </div>
 
-  {% if team_members %}
-  <div class="th-section">
-    <div class="th-section-head">
-      <h2 class="th-section-title">{% translate "فريق العمل" %}</h2>
-    </div>
-    <div class="th-slider-row">
-      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>
-      <div class="th-slider">
-        {% for member in team_members %}
-        <a href="{% url 'website_app:public-profile' member.username %}" class="th-card th-person-card plain">
-          {% if member.profile_image %}
-            <img src="{{ member.profile_image.url }}" alt="{{ member.username }}" loading="lazy" decoding="async">
-          {% else %}
-            <div class="avatar-fallback">{{ member.username|slice:":1"|upper }}</div>
-          {% endif %}
-          <div class="th-title">{{ member.username }}</div>
-          <div class="th-meta">{{ member.team_title }}</div>
-        </a>
-        {% endfor %}
-      </div>
-      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>
-    </div>
-  </div>
-  {% endif %}
+<!--  {% if team_members %}-->
+<!--  <div class="th-section">-->
+<!--    <div class="th-section-head">-->
+<!--      <h2 class="th-section-title">{% translate "فريق العمل" %}</h2>-->
+<!--    </div>-->
+<!--    <div class="th-slider-row">-->
+<!--      <button type="button" class="th-slider-arrow prev" aria-label="{% translate 'السابق' %}"><i class="bi bi-chevron-left"></i></button>-->
+<!--      <div class="th-slider">-->
+<!--        {% for member in team_members %}-->
+<!--        <a href="{% url 'website_app:public-profile' member.username %}" class="th-card th-person-card plain">-->
+<!--          {% if member.profile_image %}-->
+<!--            <img src="{{ member.profile_image.url }}" alt="{{ member.username }}" loading="lazy" decoding="async">-->
+<!--          {% else %}-->
+<!--            <div class="avatar-fallback">{{ member.username|slice:":1"|upper }}</div>-->
+<!--          {% endif %}-->
+<!--          <div class="th-title">{{ member.username }}</div>-->
+<!--          <div class="th-meta">{{ member.team_title }}</div>-->
+<!--        </a>-->
+<!--        {% endfor %}-->
+<!--      </div>-->
+<!--      <button type="button" class="th-slider-arrow next" aria-label="{% translate 'التالي' %}"><i class="bi bi-chevron-right"></i></button>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--  {% endif %}-->
 
   {% if bottom_ad %}{% include "website/partials/ad_banner.html" with ad=bottom_ad %}{% endif %}
 
