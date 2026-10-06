@@ -3214,6 +3214,7 @@
         try { data = JSON.parse(evt.data); } catch (e) { return; }
         if (data.type === 'follower_joined') thHandleFollowerJoined(data);
         else if (data.type === 'follower_left') thHandleFollowerLeft(data);
+        else if (data.type === 'audio_invite') thShowAudioInvite(data);
         else if (data.type === 'join_requested') thHandleJoinRequested(data);
         else if (data.type === 'join_expired') thHandleJoinExpired(data);
         else if (data.type === 'room_renamed') {
@@ -3307,6 +3308,51 @@
     // live_rooms.html's own "طلبات" badge (thBuildSlide) reads this
     // directly to show a live count next to "مباشر".
     window.thJoinRequests = []; // people asking to join a private room of mine
+
+    // A voice-room host invited you to a seat (AudioRoomConsumer._invite ->
+    // ListenTogetherConsumer.audio_invite). Valid 60s; accepting just opens
+    // the room with ?invite=<id> - the room page sends the actual accept.
+    function thShowAudioInvite(data) {
+      var old = document.getElementById('thAudioInviteCard');
+      if (old) old.remove();
+      var left = data.expiresIn || 60;
+      var card = document.createElement('div');
+      card.id = 'thAudioInviteCard';
+      card.style.cssText = 'position:fixed; top:16px; inset-inline:12px; margin-inline:auto; max-width:380px; z-index:3000;' +
+        'background:rgba(24,26,40,.96); color:#fff; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:14px 16px;' +
+        'box-shadow:0 18px 44px rgba(0,0,0,.5); display:flex; flex-direction:column; gap:10px; backdrop-filter:blur(12px);';
+      var title = document.createElement('div');
+      title.style.cssText = 'font-weight:800; font-size:14px;';
+      title.textContent = '@' + data.hostUsername + ' {% translate "بيدعوك تقعد على مقعد في روم صوتية" %}';
+      var sub = document.createElement('div');
+      sub.style.cssText = 'font-size:12px; opacity:.7;';
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex; gap:8px;';
+      function mk(label, bg) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = label;
+        b.style.cssText = 'flex:1; border:none; border-radius:999px; padding:9px; font-weight:800; font-size:13px; cursor:pointer; color:#fff; background:' + bg + ';';
+        return b;
+      }
+      var accept = mk('{% translate "قبول" %}', 'var(--accent)');
+      var decline = mk('{% translate "رفض" %}', 'rgba(255,255,255,.14)');
+      row.appendChild(accept); row.appendChild(decline);
+      card.appendChild(title); card.appendChild(sub); card.appendChild(row);
+      document.body.appendChild(card);
+
+      var timer = setInterval(function () {
+        left -= 1;
+        sub.textContent = data.roomName + ' - ' + left + '{% translate "ث" %}';
+        if (left <= 0) { clearInterval(timer); card.remove(); }
+      }, 1000);
+      sub.textContent = data.roomName + ' - ' + left + '{% translate "ث" %}';
+      decline.addEventListener('click', function () { clearInterval(timer); card.remove(); });
+      accept.addEventListener('click', function () {
+        clearInterval(timer); card.remove();
+        var url = '/live-rooms/audio/' + encodeURIComponent(data.hostUsername) + '/?invite=' + data.requestId;
+        if (window.thBoostedNavigate) window.thBoostedNavigate(url); else window.location.href = url;
+      });
+    }
 
     function thHandleJoinRequested(data) {
       if (!window.thJoinRequests.some(function (r) { return r.userId === data.user_id; })) {

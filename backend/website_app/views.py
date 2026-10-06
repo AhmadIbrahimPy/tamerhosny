@@ -2762,7 +2762,7 @@ def live_rooms(request, username=None):
     # meaningfully show it here at all; it's still reachable by whoever
     # already has the direct /live-rooms/audio/<username>/ link.
     audio_rooms_qs = AudioRoom.objects.filter(is_live=True, is_public=True).select_related('host').annotate(
-        _participant_count=_Count('participants'),
+        _participant_count=_Count('participants', filter=Q(participants__slot_index__isnull=False)),
     ).order_by('-tap_score', '-created_at')
     own_audio_room = None
     if request.user.is_authenticated:
@@ -2851,6 +2851,26 @@ def audio_room_start(request):
 
 
 @login_required
+def audio_room_user_search(request):
+    """Username search for the voice-room host's "invite to a seat" box."""
+    from django.http import JsonResponse
+
+    from backend.main_app.models import UserAccount
+
+    q = (request.GET.get('q') or '').strip()
+    if len(q) < 1:
+        return JsonResponse({'users': []})
+    users = UserAccount.objects.filter(username__icontains=q, is_active=True).exclude(
+        pk=request.user.pk,
+    ).order_by('username')[:8]
+    return JsonResponse({'users': [{
+        'id': u.pk,
+        'username': u.username,
+        'avatar': u.profile_image.url if u.profile_image else '',
+    } for u in users]})
+
+
+@login_required
 def audio_room_detail(request, username):
     from backend.main_app.models import AudioRoom, AudioRoomParticipant, UserAccount
 
@@ -2858,14 +2878,13 @@ def audio_room_detail(request, username):
     room = AudioRoom.objects.filter(host=account, is_live=True).first()
 
     is_host = request.user.is_authenticated and request.user.id == account.id
+    # Listeners never need a free seat to walk in - a full stage only
+    # means no more seat requests/invites can be approved.
     is_full = False
-    if room is not None and not is_host:
-        current_count = AudioRoomParticipant.objects.filter(room=room).count() + 1
-        is_full = current_count >= room.max_participants
 
     # Up/down navigation between live public voice rooms (same order as
-    # the live-rooms audio tab: most tapped first). Full rooms and your
-    # own room are skipped - you can't take a seat in either.
+    # the live-rooms audio tab: most tapped first). Your own room is
+    # skipped.
     prev_username = next_username = None
     if room is not None and not is_host:
         from django.db.models import Count as _Count
@@ -2873,12 +2892,9 @@ def audio_room_detail(request, username):
         candidates = AudioRoom.objects.filter(is_live=True, is_public=True).exclude(
             host=request.user,
         ).select_related('host').annotate(
-            _participant_count=_Count('participants'),
+            _participant_count=_Count('participants', filter=Q(participants__slot_index__isnull=False)),
         ).order_by('-tap_score', '-created_at')
-        usernames = [
-            r.host.username for r in candidates
-            if r.pk == room.pk or r._participant_count + 1 < r.max_participants
-        ]
+        usernames = [r.host.username for r in candidates]
         if account.username in usernames:
             i = usernames.index(account.username)
             prev_username = usernames[i - 1] if i > 0 else None

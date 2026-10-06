@@ -85,6 +85,7 @@ urlpatterns = [
     path('live-rooms/suggested-songs/', views.live_rooms_suggested_songs, name='live-rooms-suggested-songs'),
     path('live-rooms/suggested-song-groups/', views.live_rooms_suggested_song_groups, name='live-rooms-suggested-song-groups'),
     path('live-rooms/audio/start/', views.audio_room_start, name='audio-room-start'),
+    path('live-rooms/audio/user-search/', views.audio_room_user_search, name='audio-room-user-search'),
     # Must stay before the generic <str:username> song-room route below -
     # otherwise 'audio' itself would be swallowed as a song-room username.
     path('live-rooms/audio/<str:username>/', views.audio_room_detail, name='audio-room-detail'),

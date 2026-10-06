@@ -451,7 +451,10 @@ class AudioRoomParticipant(models.Model):
         verbose_name=_('المستخدم')
     )
 
-    slot_index = models.PositiveSmallIntegerField(verbose_name=_('رقم المقعد'))
+    # None = مستمع بس (جوه الروم من غير مقعد - بيسمع ويعلّق ويكبّس
+    # لكن مفيش ميك)؛ رقم = قاعد على مقعد. بيتحدد لما الهوست يوافق على
+    # طلب مقعد أو الضيف يقبل دعوة (AudioRoomSeatRequest).
+    slot_index = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_('رقم المقعد'))
 
     is_muted = models.BooleanField(default=False, verbose_name=_('مكتوم'))
 
@@ -467,6 +470,26 @@ class AudioRoomParticipant(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.room} (slot {self.slot_index})'
+
+
+class AudioRoomSeatRequest(models.Model):
+    """طلب مقعد (مستمع -> هوست) أو دعوة (هوست -> يوزر). صالح 60 ثانية
+    من created_at - الفحص بيتعمل وقت الرد (consumers.SEAT_REQUEST_TTL)،
+    مفيش تاسك بيمسحه."""
+
+    class Kind(models.TextChoices):
+        REQUEST = 'request', _('طلب مقعد')
+        INVITE = 'invite', _('دعوة')
+
+    room = models.ForeignKey(AudioRoom, on_delete=models.CASCADE, related_name='seat_requests')
+    # الطرف التاني: اللي طلب المقعد (REQUEST) أو اللي اتدعى (INVITE).
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='audio_seat_requests')
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['room', 'user', 'is_resolved'])]
 
 
 class AudioRoomComment(models.Model):

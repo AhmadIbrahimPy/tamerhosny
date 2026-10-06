@@ -33,6 +33,9 @@ from backend.music_app.models import Song
 # idle this long is abandoned, not just a slow network.
 STALE_LISTENER_CUTOFF = timedelta(minutes=5)
 
+# How long a voice-room seat request / invite stays answerable.
+SEAT_REQUEST_TTL = timedelta(seconds=60)
+
 
 class SongListenerConsumer(WebsocketConsumer):
 
@@ -1231,6 +1234,20 @@ class ListenTogetherConsumer(WebsocketConsumer):
         # either way.
         self.send(text_data=json.dumps({'type': 'room_closed'}))
 
+    def audio_invite(self, event):
+        # Delivered to the invited user's own always-open socket (the
+        # group is listen_together_<their id>) - never to someone who is
+        # merely following that user's song room.
+        if not self.is_host:
+            return
+        self.send(text_data=json.dumps({
+            'type': 'audio_invite',
+            'requestId': event['request_id'],
+            'hostUsername': event['host_username'],
+            'roomName': event['room_name'],
+            'expiresIn': int(SEAT_REQUEST_TTL.total_seconds()),
+        }))
+
     def room_ended(self, event):
         # See _end_room's own docstring - sent once, right when "إنهاء"
         # is pressed, ahead of (not instead of) the ordinary room_closed
@@ -1364,20 +1381,15 @@ class AudioRoomConsumer(WebsocketConsumer):
         self._joined = False
 
         if not self.is_host:
+            # Everyone who walks in starts as a listener (no seat, no
+            # mic). A seat only comes from the host approving a request
+            # or the user accepting an invite - see _seat_user.
             existing = AudioRoomParticipant.objects.filter(room=room, user=user).first()
             if existing is not None:
                 self.slot_index = existing.slot_index
             else:
-                taken = set(
-                    AudioRoomParticipant.objects.filter(room=room).values_list('slot_index', flat=True)
-                )
-                free_slots = [i for i in range(1, room.max_participants) if i not in taken]
-                if not free_slots:
-                    # الروم مكتملة - مفيش مقعد فاضي.
-                    self.close()
-                    return
-                self.slot_index = free_slots[0]
-                AudioRoomParticipant.objects.create(room=room, user=user, slot_index=self.slot_index)
+                self.slot_index = None
+                AudioRoomParticipant.objects.create(room=room, user=user, slot_index=None)
 
         self._joined = True
 
@@ -1488,6 +1500,18 @@ class AudioRoomConsumer(WebsocketConsumer):
             self._post_comment(data.get('text'))
         elif action == 'tap':
             self._tap()
+        elif action == 'request_seat' and not self.is_host:
+            self._request_seat()
+        elif action == 'cancel_request' and not self.is_host:
+            self._cancel_request()
+        elif action == 'respond_seat' and self.is_host:
+            self._respond_seat(data.get('requestId'), bool(data.get('approve')))
+        elif action == 'invite' and self.is_host:
+            self._invite(data.get('userId'))
+        elif action == 'accept_invite' and not self.is_host:
+            self._accept_invite(data.get('requestId'))
+        elif action == 'kick' and self.is_host:
+            self._kick(data.get('target'))
         elif action == 'force_mute' and self.is_host:
             # Host-only: asks one guest's own browser to mute itself (the
             # mic track lives client-side, so the server can only relay).
@@ -1503,6 +1527,189 @@ class AudioRoomConsumer(WebsocketConsumer):
             AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
             AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
             async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
+
+    # =========================================================
+    # SEATS: request / invite / approve / kick
+    # =========================================================
+
+    def _room(self):
+        from backend.main_app.models import AudioRoom
+
+        return AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).first()
+
+    @staticmethod
+    def _free_slots(room):
+        from backend.main_app.models import AudioRoomParticipant
+
+        taken = set(
+            AudioRoomParticipant.objects.filter(room=room, slot_index__isnull=False)
+            .values_list('slot_index', flat=True)
+        )
+        return [i for i in range(1, room.max_participants) if i not in taken]
+
+    def _pending(self, room, request_id, kind, user=None):
+        """The still-valid (unresolved, <60s old) request/invite row, or
+        None. Resolves it as a side effect when it already expired."""
+        from backend.main_app.models import AudioRoomSeatRequest
+
+        try:
+            row = AudioRoomSeatRequest.objects.filter(
+                pk=int(request_id), room=room, kind=kind, is_resolved=False,
+            ).first()
+        except (TypeError, ValueError):
+            return None
+        if row is None or (user is not None and row.user_id != user.id):
+            return None
+        if timezone.now() - row.created_at > SEAT_REQUEST_TTL:
+            row.is_resolved = True
+            row.save(update_fields=['is_resolved'])
+            return None
+        return row
+
+    def _seat_user(self, room, user_id):
+        """Gives this connected listener the lowest free seat. Returns the
+        slot or None (room full / user isn't in the room right now)."""
+        from django.db import IntegrityError, transaction
+
+        from backend.main_app.models import AudioRoomParticipant
+
+        for slot in self._free_slots(room):
+            try:
+                with transaction.atomic():
+                    updated = AudioRoomParticipant.objects.filter(
+                        room=room, user_id=user_id, slot_index__isnull=True,
+                    ).update(slot_index=slot)
+            except IntegrityError:
+                continue
+            if not updated:
+                return None
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'participant.seated', 'user_id': user_id, 'slot_index': slot,
+            })
+            return slot
+        return None
+
+    def _request_seat(self):
+        from backend.main_app.models import AudioRoomSeatRequest
+
+        room = self._room()
+        if room is None or self.slot_index is not None:
+            return
+        if not self._free_slots(room):
+            self.send(text_data=json.dumps({'type': 'seat_rejected', 'reason': 'full'}))
+            return
+
+        AudioRoomSeatRequest.objects.filter(
+            room=room, user=self.user, kind='request', is_resolved=False,
+        ).update(is_resolved=True)
+        req = AudioRoomSeatRequest.objects.create(room=room, user=self.user, kind='request')
+
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'seat.requested',
+            'request_id': req.pk,
+            'user_id': self.user.id,
+            'username': self.user.username,
+            'avatar': self.user.profile_image.url if self.user.profile_image else '',
+        })
+
+    def _cancel_request(self):
+        from backend.main_app.models import AudioRoomSeatRequest
+
+        rows = list(AudioRoomSeatRequest.objects.filter(
+            room__host_id=self.host_user_id, user=self.user, kind='request', is_resolved=False,
+        ))
+        for row in rows:
+            row.is_resolved = True
+            row.save(update_fields=['is_resolved'])
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'seat.request.cancelled', 'request_id': row.pk,
+            })
+
+    def _respond_seat(self, request_id, approve):
+        room = self._room()
+        if room is None:
+            return
+        req = self._pending(room, request_id, 'request')
+        if req is None:
+            # Expired (or already handled) - tell the host's UI to drop it.
+            self.send(text_data=json.dumps({'type': 'seat_request_cancelled', 'requestId': request_id}))
+            return
+        req.is_resolved = True
+        req.save(update_fields=['is_resolved'])
+
+        if approve:
+            if self._seat_user(room, req.user_id) is None:
+                approve = False
+        if not approve:
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'seat.rejected', 'target_user_id': req.user_id, 'reason': 'rejected',
+            })
+
+    def _invite(self, user_id):
+        from backend.main_app.models import AudioRoomParticipant, AudioRoomSeatRequest, UserAccount
+
+        room = self._room()
+        invitee = UserAccount.objects.filter(pk=user_id).first() if user_id else None
+        if room is None or invitee is None or invitee.pk == self.user.pk:
+            return
+        if not self._free_slots(room):
+            self.send(text_data=json.dumps({'type': 'invite_failed', 'userId': invitee.pk, 'reason': 'full'}))
+            return
+        if AudioRoomParticipant.objects.filter(room=room, user=invitee, slot_index__isnull=False).exists():
+            self.send(text_data=json.dumps({'type': 'invite_failed', 'userId': invitee.pk, 'reason': 'seated'}))
+            return
+
+        AudioRoomSeatRequest.objects.filter(
+            room=room, user=invitee, kind='invite', is_resolved=False,
+        ).update(is_resolved=True)
+        inv = AudioRoomSeatRequest.objects.create(room=room, user=invitee, kind='invite')
+
+        async_to_sync(self.channel_layer.group_send)(f'listen_together_{invitee.pk}', {
+            'type': 'audio.invite',
+            'request_id': inv.pk,
+            'host_username': self.user.username,
+            'room_name': room.display_name,
+        })
+        self.send(text_data=json.dumps({
+            'type': 'invite_sent', 'userId': invitee.pk, 'username': invitee.username,
+            'avatar': invitee.profile_image.url if invitee.profile_image else '',
+        }))
+
+    def _accept_invite(self, request_id):
+        room = self._room()
+        if room is None:
+            return
+        inv = self._pending(room, request_id, 'invite', user=self.user)
+        if inv is None:
+            self.send(text_data=json.dumps({'type': 'seat_rejected', 'reason': 'expired'}))
+            return
+        inv.is_resolved = True
+        inv.save(update_fields=['is_resolved'])
+        if self._seat_user(room, self.user.id) is None:
+            self.send(text_data=json.dumps({'type': 'seat_rejected', 'reason': 'full'}))
+
+    def _kick(self, target_id):
+        from backend.main_app.models import AudioRoomParticipant
+
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            return
+        if target_id == self.user.id:
+            return
+        deleted, _ = AudioRoomParticipant.objects.filter(
+            room__host_id=self.host_user_id, user_id=target_id,
+        ).delete()
+        if not deleted:
+            return
+        # Everyone's roster/WebRTC for that person drops at once, and the
+        # kicked browser itself is told to leave.
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.left', 'user_id': target_id,
+        })
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.kicked', 'target_user_id': target_id,
+        })
 
     def _set_muted(self, muted):
         from backend.main_app.models import AudioRoomParticipant
@@ -1623,6 +1830,36 @@ class AudioRoomConsumer(WebsocketConsumer):
 
     def room_tapped(self, event):
         self.send(text_data=json.dumps({'type': 'tapped', 'tap_score': event.get('tap_score')}))
+
+    def seat_requested(self, event):
+        if not self.is_host:
+            return
+        self.send(text_data=json.dumps({
+            'type': 'seat_requested', 'requestId': event['request_id'], 'userId': event['user_id'],
+            'username': event['username'], 'avatar': event['avatar'],
+            'expiresIn': int(SEAT_REQUEST_TTL.total_seconds()),
+        }))
+
+    def seat_request_cancelled(self, event):
+        if self.is_host:
+            self.send(text_data=json.dumps({'type': 'seat_request_cancelled', 'requestId': event['request_id']}))
+
+    def seat_rejected(self, event):
+        if event.get('target_user_id') == self.user.id:
+            self.send(text_data=json.dumps({'type': 'seat_rejected', 'reason': event.get('reason')}))
+
+    def participant_seated(self, event):
+        if event['user_id'] == self.user.id:
+            self.slot_index = event['slot_index']
+        self.send(text_data=json.dumps({
+            'type': 'participant_seated', 'userId': event['user_id'], 'slotIndex': event['slot_index'],
+        }))
+
+    def participant_kicked(self, event):
+        if event.get('target_user_id') != self.user.id:
+            return
+        self.send(text_data=json.dumps({'type': 'kicked'}))
+        self.close()
 
     def force_mute(self, event):
         if event.get('target_user_id') != self.user.id:
