@@ -567,19 +567,19 @@
   var inviteIdFromUrl = new URLSearchParams(window.location.search).get('invite');
 
   var T = {
-    host: '{% translate "الهوست" %}', onStage: '{% translate "على المسرح" %}', block: '{% translate "امنع" %}', mute: '{% translate "كتم" %}', kick: '{% translate "طرد" %}',
-    freeSeat: '{% translate "مقعد فاضي" %}', invite: '{% translate "ادعو" %}', request: '{% translate "اطلب" %}',
-    noListeners: '{% translate "مفيش مستمعين دلوقتي" %}', sec: '{% translate "ث" %}',
-    wantsSeat: '{% translate "عايز يقعد على مقعد" %}', invited: '{% translate "اتدعى - مستني الرد" %}',
-    sentReq: '{% translate "طلبك اتبعت للهوست - مستني الرد" %}', cancel: '{% translate "إلغاء" %}',
-    seatFull: '{% translate "المقاعد كلها محجوزة" %}', rejected: '{% translate "الهوست رفض الطلب" %}',
-    expired: '{% translate "الطلب أو الدعوة انتهت" %}', kicked: '{% translate "الهوست أخرجك من الروم" %}',
-    gotSeat: '{% translate "بقيت على المسرح - الميك بتاعك شغال" %}', onlyHost: '{% translate "الهوست بس اللي يقدر يدعو" %}',
-    micDenied: '{% translate "الميكروفون مش متاح - فعّل صلاحية المايك من إعدادات المتصفح" %}',
-    live: '{% translate "لايف دلوقتي" %}', cut: '{% translate "الاتصال اتقطع" %}',
-    listenOnly: '{% translate "بتسمع بس - اضغط على مقعد فاضي عشان تطلب مقعد" %}',
-    noMic: '{% translate "الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله" %}',
-    inRoom: '{% translate "اللي في الروم" %}', searchResults: '{% translate "نتايج البحث" %}', noResults: '{% translate "مفيش نتايج" %}', invitedBtn: '{% translate "اتبعت" %}'
+    host: '{{ _("الهوست")|escapejs }}', onStage: '{{ _("على المسرح")|escapejs }}', block: '{{ _("امنع")|escapejs }}', mute: '{{ _("كتم")|escapejs }}', kick: '{{ _("طرد")|escapejs }}',
+    freeSeat: '{{ _("مقعد فاضي")|escapejs }}', invite: '{{ _("ادعو")|escapejs }}', request: '{{ _("اطلب")|escapejs }}',
+    noListeners: '{{ _("مفيش مستمعين دلوقتي")|escapejs }}', sec: '{{ _("ث")|escapejs }}',
+    wantsSeat: '{{ _("عايز يقعد على مقعد")|escapejs }}', invited: '{{ _("اتدعى - مستني الرد")|escapejs }}',
+    sentReq: '{{ _("طلبك اتبعت للهوست - مستني الرد")|escapejs }}', cancel: '{{ _("إلغاء")|escapejs }}',
+    seatFull: '{{ _("المقاعد كلها محجوزة")|escapejs }}', rejected: '{{ _("الهوست رفض الطلب")|escapejs }}',
+    expired: '{{ _("الطلب أو الدعوة انتهت")|escapejs }}', kicked: '{{ _("الهوست أخرجك من الروم")|escapejs }}',
+    gotSeat: '{{ _("بقيت على المسرح - الميك بتاعك شغال")|escapejs }}', onlyHost: '{{ _("الهوست بس اللي يقدر يدعو")|escapejs }}',
+    micDenied: '{{ _("الميكروفون مش متاح - فعّل صلاحية المايك من إعدادات المتصفح")|escapejs }}',
+    live: '{{ _("لايف دلوقتي")|escapejs }}', cut: '{{ _("الاتصال اتقطع")|escapejs }}',
+    listenOnly: '{{ _("بتسمع بس - اضغط على مقعد فاضي عشان تطلب مقعد")|escapejs }}',
+    noMic: '{{ _("الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله")|escapejs }}',
+    inRoom: '{{ _("اللي في الروم")|escapejs }}', searchResults: '{{ _("نتايج البحث")|escapejs }}', noResults: '{{ _("مفيش نتايج")|escapejs }}', invitedBtn: '{{ _("اتبعت")|escapejs }}'
   };
 
   // userId -> {userId, username, avatar, slotIndex (null = listener), muted}
@@ -1189,7 +1189,7 @@
         myRequestExpiresAt = 0; renderMyRequest();
         toast(msg.reason === 'full' ? T.seatFull : (msg.reason === 'expired' ? T.expired : T.rejected));
       } else if (msg.type === 'moved') {
-        toast('{% translate "دخلت روم تانية - اتقفلت الروم الصوتية" %}');
+        toast('{{ _("دخلت روم تانية - اتقفلت الروم الصوتية")|escapejs }}');
         endAndLeave(false);
       } else if (msg.type === 'kicked') {
         toast(T.kicked);
@@ -1206,7 +1206,7 @@
         }
         if (msg.isPublic !== null && msg.isPublic !== undefined) {
           document.getElementById('thAudioVis').innerHTML = msg.isPublic
-            ? '<i class="bi bi-globe2"></i> {% translate "عام" %}' : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
+            ? '<i class="bi bi-globe2"></i> {{ _("عام")|escapejs }}' : '<i class="bi bi-lock-fill"></i> {{ _("خاص")|escapejs }}';
         }
       } else if (msg.type === 'comment_history') {
         (msg.comments || []).forEach(appendComment);
@@ -1274,7 +1274,7 @@
   var viewersModal = document.getElementById('thAudioViewersModal');
   var viewersList = document.getElementById('thAudioViewersList');
   var statsById = null;
-  var defaultRoomName = '{% translate "روم" %} {{ room_host.username|escapejs }}';
+  var defaultRoomName = '{{ _("روم")|escapejs }} {{ room_host.username|escapejs }}';
 
   function roleOf(m) { return m.slotIndex === 0 ? 'host' : (m.slotIndex != null ? 'seat' : 'listener'); }
 
@@ -1353,12 +1353,12 @@
     var box = document.getElementById('thAudioBlockedList');
     if (!box) return;
     box.innerHTML = '';
-    if (!users.length) { box.appendChild(el('div', 'th-audio-empty-note', '{% translate "مفيش حد محظور" %}')); return; }
+    if (!users.length) { box.appendChild(el('div', 'th-audio-empty-note', '{{ _("مفيش حد محظور")|escapejs }}')); return; }
     users.forEach(function (u) {
       var row = el('div', 'th-audio-result');
       row.appendChild(avatarEl(u, '', 'fb'));
       row.appendChild(el('div', 'who', '@' + u.username));
-      var b = el('button', '', '{% translate "فك المنع" %}'); b.type = 'button';
+      var b = el('button', '', '{{ _("فك المنع")|escapejs }}'); b.type = 'button';
       b.addEventListener('click', function () { send({ action: 'unblock', target: u.userId }); });
       row.appendChild(b);
       box.appendChild(row);

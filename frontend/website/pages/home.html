@@ -812,14 +812,14 @@
       ? '<img src="' + escapeHtml(room.hostAvatar) + '" alt="" class="th-live-room-card-avatar">'
       : '<span class="th-live-room-card-avatar-fallback">' + escapeHtml(room.hostUsername.slice(0, 1).toUpperCase()) + '</span>';
     var kindChip = isAudio
-      ? '<span class="th-live-room-card-kind"><i class="bi bi-mic-fill"></i> {% translate "صوت" %}</span>'
-      : '<span class="th-live-room-card-kind"><i class="bi bi-music-note-beamed"></i> {% translate "موسيقى" %}</span>';
+      ? '<span class="th-live-room-card-kind"><i class="bi bi-mic-fill"></i> {{ _("صوت")|escapejs }}</span>'
+      : '<span class="th-live-room-card-kind"><i class="bi bi-music-note-beamed"></i> {{ _("موسيقى")|escapejs }}</span>';
     var line = isAudio
-      ? '<i class="bi bi-people-fill"></i> ' + (parseInt(room.seats, 10) || 0) + ' {% translate "مقاعد" %}'
+      ? '<i class="bi bi-people-fill"></i> ' + (parseInt(room.seats, 10) || 0) + ' {{ _("مقاعد")|escapejs }}'
       : '<i class="bi bi-soundwave"></i> ' + escapeHtml(room.song ? room.song.title : '');
     a.innerHTML =
       avatar +
-      '<div class="th-live-room-card-tags"><span class="th-live-room-card-live-tag"><span class="th-live-room-card-dot"></span> {% translate "مباشر" %}</span>' + kindChip + '</div>' +
+      '<div class="th-live-room-card-tags"><span class="th-live-room-card-live-tag"><span class="th-live-room-card-dot"></span> {{ _("مباشر")|escapejs }}</span>' + kindChip + '</div>' +
       '<div class="th-live-room-card-name">' + escapeHtml(room.roomName) + '</div>' +
       '<div class="th-live-room-card-song">' + line + '</div>' +
       '<div class="th-live-room-card-taps"><i class="bi bi-heart-fill"></i> ' + (room.tapScore || 0) + '</div>';
