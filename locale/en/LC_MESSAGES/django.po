@@ -6353,3 +6353,191 @@ msgstr "Type a song name"
 #: frontend/website/partials/header.html:389
 msgid "شوف كل النتائج"
 msgstr "See all results"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "التعليقات"
+msgstr "Comments"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "لسه مفيش تعليقات"
+msgstr "No comments yet"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "إعدادات الروم"
+msgstr "Room settings"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "على المسرح"
+msgstr "On stage"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "المستمعين"
+msgstr "Listeners"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "إرسال"
+msgstr "Send"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "تكبيس"
+msgstr "Tap"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اطلب مقعد"
+msgstr "Request a seat"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "كتم / تشغيل الميك"
+msgstr "Mute / unmute mic"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "ادعو حد لمقعد"
+msgstr "Invite someone to a seat"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "ابحث باسم المستخدم..."
+msgstr "Search by username..."
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اللي في الروم"
+msgstr "In the room"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اسم الروم"
+msgstr "Room name"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "عامة - بتظهر في قايمة الرومات"
+msgstr "Public - listed in the rooms list"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "خاصة - بالرابط بس"
+msgstr "Private - link only"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "المحظورين"
+msgstr "Blocked"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "طرد"
+msgstr "Remove"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "مقعد فاضي"
+msgstr "open seat"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "ادعو"
+msgstr "Invite"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اطلب"
+msgstr "Request"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "مفيش مستمعين دلوقتي"
+msgstr "No listeners right now"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "ث"
+msgstr "s"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "عايز يقعد على مقعد"
+msgstr "wants a seat"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اتدعى - مستني الرد"
+msgstr "invited - waiting for a reply"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "طلبك اتبعت للهوست - مستني الرد"
+msgstr "Request sent to the host - waiting for a reply"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "المقاعد كلها محجوزة"
+msgstr "All seats are taken"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست رفض الطلب"
+msgstr "The host declined your request"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الطلب أو الدعوة انتهت"
+msgstr "The request or invite expired"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست أخرجك من الروم"
+msgstr "The host removed you from the room"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "بقيت على المسرح - الميك بتاعك شغال"
+msgstr "You're on stage - your mic is on"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست بس اللي يقدر يدعو"
+msgstr "Only the host can invite"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الميكروفون مش متاح - فعّل صلاحية المايك من إعدادات المتصفح"
+msgstr "Microphone unavailable - enable mic permission in your browser settings"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "بتسمع بس - اضغط على مقعد فاضي عشان تطلب مقعد"
+msgstr "Listening only - tap an open seat to request one"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله"
+msgstr "Microphone unavailable - you can listen, and the mic button will try to enable it"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "نتايج البحث"
+msgstr "Search results"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "مفيش نتايج"
+msgstr "No results"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "اتبعت"
+msgstr "Sent"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "دخلت روم تانية - اتقفلت الروم الصوتية"
+msgstr "You joined another room - the voice room was closed"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "روم"
+msgstr "Room"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "مفيش حد محظور"
+msgstr "No one is blocked"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "فك المنع"
+msgstr "Unblock"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "صوت"
+msgstr "Voice"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "مقاعد"
+msgstr "seats"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "بيدعوك تقعد على مقعد في روم صوتية"
+msgstr "invites you to a seat in a voice room"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "دور على أغنية وشغلها - وهتبدأ بيها جروبك"
+msgstr "Search for a song and play it - it starts your group"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "بتظهر في قايمة الرومات"
+msgstr "Listed in the rooms list"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "بالرابط بس"
+msgstr "Link only"

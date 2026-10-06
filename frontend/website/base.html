@@ -3349,7 +3349,13 @@
       decline.addEventListener('click', function () { clearInterval(timer); card.remove(); });
       accept.addEventListener('click', function () {
         clearInterval(timer); card.remove();
-        var url = '/live-rooms/audio/' + encodeURIComponent(data.hostUsername) + '/?invite=' + data.requestId;
+        var path = '/live-rooms/audio/' + encodeURIComponent(data.hostUsername) + '/';
+        // Already inside that room: the page itself sends the accept.
+        if (decodeURIComponent(window.location.pathname).toLowerCase() === decodeURIComponent(path).toLowerCase()) {
+          document.dispatchEvent(new CustomEvent('thAudioInviteAccepted', { detail: { requestId: data.requestId } }));
+          return;
+        }
+        var url = path + '?invite=' + data.requestId;
         if (window.thBoostedNavigate) window.thBoostedNavigate(url); else window.location.href = url;
       });
     }

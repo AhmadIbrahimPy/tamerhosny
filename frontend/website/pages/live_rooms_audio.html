@@ -104,7 +104,20 @@
     background: rgba(138,92,255,.4); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; flex-shrink: 0;
   }
   .th-room-viewer-badge { cursor: pointer; }
-  .th-audio-radio { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .th-audio-field-label { font-size: 12px; font-weight: 800; opacity: .75; margin: 2px 4px -4px; }
+  .th-audio-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .th-audio-opt { position: relative; cursor: pointer; display: block; }
+  .th-audio-opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .th-audio-opt .box {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 10px; text-align: center;
+    border-radius: 16px; border: 1.5px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05);
+    transition: border-color .15s, background .15s;
+  }
+  .th-audio-opt .box i { font-size: 20px; }
+  .th-audio-opt .box b { font-size: 13px; }
+  .th-audio-opt .box small { font-size: 11px; opacity: .65; }
+  .th-audio-opt input:checked + .box { border-color: var(--accent); background: rgba(212,175,55,.14); }
+  .th-audio-opt input:checked + .box i { color: var(--accent); }
   .th-audio-primary-btn { border: none; border-radius: 999px; padding: 11px; background: var(--accent); color: #fff; font-weight: 800; cursor: pointer; }
   .th-audio-viewer-stats { font-size: 11px; opacity: .8; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
   .th-audio-viewer-stats i { color: #e5484d; }
@@ -237,12 +250,12 @@
   }
   .th-audio-modal.show { display: flex; }
   .th-audio-modal-card {
-    width: min(480px, 100%); max-height: 80dvh; background: #151728; border: 1px solid rgba(255,255,255,.14);
+    width: min(400px, 100%); max-height: 80dvh; background: #151728; border: 1px solid rgba(255,255,255,.14);
     border-radius: 24px 24px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 12px;
   }
   .th-audio-modal-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; }
   .th-audio-modal-head button { border: none; background: rgba(255,255,255,.1); color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
-  .th-audio-modal input {
+  .th-audio-modal input[type="text"] {
     width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.35);
     color: #fff; padding: 11px 16px; font-size: 14px;
   }
@@ -250,6 +263,18 @@
   .th-audio-result { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.06); border-radius: 14px; padding: 8px 10px; font-weight: 700; font-size: 13px; }
   .th-audio-result img, .th-audio-result .fb { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #22263a; display: flex; align-items: center; justify-content: center; font-weight: 900; }
   .th-audio-result .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-audio-result button.th-audio-mini-btn {
+    width: 32px; height: 32px; padding: 0; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .th-audio-result button.th-audio-mini-btn.danger { background: rgba(255,59,59,.75); }
+  .th-audio-result.viewer { gap: 10px; padding: 10px; }
+  .th-audio-result.viewer img, .th-audio-result.viewer .fb { width: 42px; height: 42px; flex-shrink: 0; }
+  .th-audio-result.viewer .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .th-audio-result.viewer .name { color: inherit; text-decoration: none; font-weight: 800; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-audio-result.viewer .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .th-audio-result.viewer .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .th-audio-modal-head .count { background: rgba(255,255,255,.14); font-size: 12px; font-weight: 800; border-radius: 999px; padding: 2px 10px; margin-inline: 6px auto; }
   .th-audio-result button { border: none; border-radius: 999px; padding: 7px 14px; background: var(--accent); color: #fff; font-weight: 800; cursor: pointer; }
   .th-audio-result button:disabled { opacity: .5; cursor: default; }
 
@@ -354,6 +379,8 @@
     .th-audio-seats[data-seats="7"], .th-audio-seats[data-seats="8"], .th-audio-seats[data-seats="9"] { --av: 60px; --seat-w: 136px; }
     .th-audio-seats.many { --av: 52px; --seat-w: 120px; }
     .th-audio-panel-title { font-size: 13px; }
+    .th-audio-modal { align-items: center; }
+    .th-audio-modal-card { border-radius: 24px; min-height: 320px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
   }
 
   .th-audio-room-blocked {
@@ -439,7 +466,7 @@
 
   <div class="th-audio-room-controls">
     <button type="button" class="th-audio-room-ctrl-btn hand" id="thAudioRequestBtn" title="{% translate 'اطلب مقعد' %}" style="display:none;">
-      <i class="bi bi-hand-index-thumb-fill"></i>
+      <i class="bi bi-person-plus-fill"></i>
     </button>
     <button type="button" class="th-audio-room-ctrl-btn" id="thAudioRoomMuteBtn" title="{% translate 'كتم / تشغيل الميك' %}" style="display:none;">
       <i class="bi bi-mic-fill"></i>
@@ -461,7 +488,7 @@
 
   <div class="th-audio-modal" id="thAudioViewersModal">
     <div class="th-audio-modal-card">
-      <div class="th-audio-modal-head">{% translate "اللي في الروم" %} <span id="thAudioViewersTotal" style="opacity:.6; font-weight:700; font-size:12px;"></span>
+      <div class="th-audio-modal-head"><span>{% translate "اللي في الروم" %}</span> <span class="count" id="thAudioViewersTotal"></span>
         <button type="button" id="thAudioViewersClose"><i class="bi bi-x-lg"></i></button>
       </div>
       <div class="th-audio-results" id="thAudioViewersList"></div>
@@ -474,9 +501,14 @@
       <div class="th-audio-modal-head">{% translate "إعدادات الروم" %}
         <button type="button" id="thAudioSettingsClose"><i class="bi bi-x-lg"></i></button>
       </div>
-      <input type="text" id="thAudioNameInput" maxlength="60" placeholder="{% translate 'اسم الروم' %}" value="{{ room.custom_name }}">
-      <label class="th-audio-radio"><input type="radio" name="thAudioVisibility" value="public"{% if room.is_public %} checked{% endif %}> <i class="bi bi-globe2"></i> {% translate "عامة - بتظهر في قايمة الرومات" %}</label>
-      <label class="th-audio-radio"><input type="radio" name="thAudioVisibility" value="private"{% if not room.is_public %} checked{% endif %}> <i class="bi bi-lock-fill"></i> {% translate "خاصة - بالرابط بس" %}</label>
+      <div class="th-audio-field-label">{% translate "اسم الروم" %}</div>
+      <input type="text" id="thAudioNameInput" maxlength="60" placeholder="{{ room.display_name }}" value="{{ room.custom_name }}">
+      <div class="th-audio-opts">
+        <label class="th-audio-opt"><input type="radio" name="thAudioVisibility" value="public"{% if room.is_public %} checked{% endif %}>
+          <span class="box"><i class="bi bi-globe2"></i><b>{% translate "عامة" %}</b><small>{% translate "بتظهر في قايمة الرومات" %}</small></span></label>
+        <label class="th-audio-opt"><input type="radio" name="thAudioVisibility" value="private"{% if not room.is_public %} checked{% endif %}>
+          <span class="box"><i class="bi bi-lock-fill"></i><b>{% translate "خاصة" %}</b><small>{% translate "بالرابط بس" %}</small></span></label>
+      </div>
       <button type="button" class="th-audio-primary-btn" id="thAudioSettingsSave">{% translate "حفظ" %}</button>
       <div class="th-audio-panel-title" style="margin:6px 2px 0;">{% translate "المحظورين" %}</div>
       <div class="th-audio-results" id="thAudioBlockedList" style="max-height:24dvh;"></div>
@@ -535,7 +567,7 @@
   var inviteIdFromUrl = new URLSearchParams(window.location.search).get('invite');
 
   var T = {
-    host: '{% translate "الهوست" %}', mute: '{% translate "كتم" %}', kick: '{% translate "طرد" %}',
+    host: '{% translate "الهوست" %}', onStage: '{% translate "على المسرح" %}', block: '{% translate "امنع" %}', mute: '{% translate "كتم" %}', kick: '{% translate "طرد" %}',
     freeSeat: '{% translate "مقعد فاضي" %}', invite: '{% translate "ادعو" %}', request: '{% translate "اطلب" %}',
     noListeners: '{% translate "مفيش مستمعين دلوقتي" %}', sec: '{% translate "ث" %}',
     wantsSeat: '{% translate "عايز يقعد على مقعد" %}', invited: '{% translate "اتدعى - مستني الرد" %}',
@@ -547,7 +579,7 @@
     live: '{% translate "لايف دلوقتي" %}', cut: '{% translate "الاتصال اتقطع" %}',
     listenOnly: '{% translate "بتسمع بس - اضغط على مقعد فاضي عشان تطلب مقعد" %}',
     noMic: '{% translate "الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله" %}',
-    searchHint: '{% translate "اكتب اسم المستخدم" %}', noResults: '{% translate "مفيش نتايج" %}', invitedBtn: '{% translate "اتبعت" %}'
+    inRoom: '{% translate "اللي في الروم" %}', searchResults: '{% translate "نتايج البحث" %}', noResults: '{% translate "مفيش نتايج" %}', invitedBtn: '{% translate "اتبعت" %}'
   };
 
   // userId -> {userId, username, avatar, slotIndex (null = listener), muted}
@@ -735,8 +767,7 @@
     if (isHost) {
       inviteModal.classList.add('show');
       inviteSearch.value = '';
-      inviteResults.innerHTML = '';
-      inviteResults.appendChild(el('div', 'th-audio-empty-note', T.searchHint));
+      renderInviteList('', []);
       setTimeout(function () { inviteSearch.focus(); }, 50);
     } else if (!isSeated()) {
       if (myRequestExpiresAt > Date.now()) return;
@@ -749,36 +780,71 @@
   document.getElementById('thAudioInviteClose').addEventListener('click', function () { inviteModal.classList.remove('show'); });
   inviteModal.addEventListener('click', function (e) { if (e.target === inviteModal) inviteModal.classList.remove('show'); });
 
-  function renderResults(users) {
-    inviteResults.innerHTML = '';
-    if (!users.length) { inviteResults.appendChild(el('div', 'th-audio-empty-note', T.noResults)); return; }
-    users.forEach(function (u) {
-      var row = el('div', 'th-audio-result');
-      row.appendChild(avatarEl(u, '', 'fb'));
-      row.appendChild(el('div', 'who', '@' + u.username));
-      var b = el('button', '', T.invite); b.type = 'button';
-      var already = members[u.id] && members[u.id].slotIndex != null;
-      if (already || invites[u.id]) { b.disabled = true; b.textContent = T.invitedBtn; }
-      b.addEventListener('click', function () {
-        send({ action: 'invite', userId: u.id });
-        b.disabled = true; b.textContent = T.invitedBtn;
-      });
-      row.appendChild(b);
-      inviteResults.appendChild(row);
+  function refreshInviteListIfOpen() {
+    if (inviteModal.classList.contains('show')) renderInviteList(inviteSearch.value.trim(), []);
+  }
+
+  function inviteRow(u) {
+    var row = el('div', 'th-audio-result');
+    row.appendChild(avatarEl(u, '', 'fb'));
+    row.appendChild(el('div', 'who', '@' + u.username));
+    var b = el('button', '', T.invite); b.type = 'button';
+    if (invites[u.id]) { b.disabled = true; b.textContent = T.invitedBtn; }
+    b.addEventListener('click', function () {
+      send({ action: 'invite', userId: u.id });
+      b.disabled = true; b.textContent = T.invitedBtn;
     });
+    row.appendChild(b);
+    return row;
+  }
+
+  // The list is the people already in the room (listeners, not seated) -
+  // pick straight from it - filtered by what's typed, then anyone else
+  // matching the search below it.
+  function renderInviteList(q, remoteUsers) {
+    inviteResults.innerHTML = '';
+    var needle = q.toLowerCase();
+    var inRoom = Object.keys(members).map(function (k) { return members[k]; })
+      .filter(function (m) { return m.slotIndex == null && m.userId !== myUserId && (!needle || m.username.toLowerCase().indexOf(needle) !== -1); })
+      .map(function (m) { return { id: m.userId, username: m.username, avatar: m.avatar }; });
+
+    inviteResults.appendChild(el('div', 'th-audio-panel-title', T.inRoom));
+    if (!inRoom.length) inviteResults.appendChild(el('div', 'th-audio-empty-note', needle ? T.noResults : T.noListeners));
+    inRoom.forEach(function (u) { inviteResults.appendChild(inviteRow(u)); });
+
+    if (needle) {
+      var inRoomIds = {};
+      inRoom.forEach(function (u) { inRoomIds[u.id] = true; });
+      var others = (remoteUsers || []).filter(function (u) {
+        var m = members[u.id];
+        return !inRoomIds[u.id] && !(m && m.slotIndex != null);
+      });
+      inviteResults.appendChild(el('div', 'th-audio-panel-title', T.searchResults));
+      if (!others.length) inviteResults.appendChild(el('div', 'th-audio-empty-note', T.noResults));
+      others.forEach(function (u) { inviteResults.appendChild(inviteRow(u)); });
+    }
   }
 
   inviteSearch.addEventListener('input', function () {
     clearTimeout(searchTimer);
     var q = inviteSearch.value.trim();
-    if (!q) { inviteResults.innerHTML = ''; inviteResults.appendChild(el('div', 'th-audio-empty-note', T.searchHint)); return; }
+    renderInviteList(q, []);
+    if (!q) return;
     searchTimer = setTimeout(function () {
       fetch('{% url "website_app:audio-room-user-search" %}?q=' + encodeURIComponent(q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function (r) { return r.json(); })
-        .then(function (data) { if (inviteSearch.value.trim() === q) renderResults(data.users || []); })
+        .then(function (data) { if (inviteSearch.value.trim() === q) renderInviteList(q, data.users || []); })
         .catch(function () {});
     }, 250);
   });
+
+  // base.html's invite card fires this instead of navigating when the
+  // invite is for the very room you're already in.
+  function onInviteAcceptedHere(e) {
+    if (!isSeated() && e.detail && e.detail.requestId) send({ action: 'accept_invite', requestId: Number(e.detail.requestId) });
+  }
+  document.addEventListener('thAudioInviteAccepted', onInviteAcceptedHere);
+  if (window.thOnTeardown) window.thOnTeardown(function () { document.removeEventListener('thAudioInviteAccepted', onInviteAcceptedHere); });
 
   // ---------- speaking indicator ----------
   var audioCtx = null;
@@ -1078,11 +1144,13 @@
       } else if (msg.type === 'participant_joined') {
         members[msg.userId] = { userId: msg.userId, username: msg.username, avatar: msg.avatar, slotIndex: msg.slotIndex, muted: false };
         renderAll();
+        refreshInviteListIfOpen();
       } else if (msg.type === 'participant_left') {
         closePeer(msg.userId);
         delete members[msg.userId];
         delete speaking[msg.userId];
         renderAll();
+        refreshInviteListIfOpen();
       } else if (msg.type === 'participant_seated') {
         if (members[msg.userId]) members[msg.userId].slotIndex = msg.slotIndex;
         delete invites[msg.userId];
@@ -1225,34 +1293,41 @@
     document.getElementById('thAudioViewersTotal').textContent = arr.length;
     viewersList.innerHTML = '';
     arr.forEach(function (m) {
-      var row = el('div', 'th-audio-result');
+      var role = roleOf(m);
+      var row = el('div', 'th-audio-result viewer');
       row.appendChild(avatarEl(m, '', 'fb'));
-      var who = el('a', 'who', '@' + m.username);
+
+      var main = el('div', 'main');
+      var who = el('a', 'name', '@' + m.username);
       who.href = '/u/' + encodeURIComponent(m.username) + '/';
-      who.style.color = 'inherit'; who.style.textDecoration = 'none';
       who.addEventListener('click', function (e) {
         if (window.thBoostedNavigate) { e.preventDefault(); window.thBoostedNavigate(who.getAttribute('href')); viewersModal.classList.remove('show'); }
       });
-      row.appendChild(who);
-      var role = roleOf(m);
-      if (role !== 'listener') row.appendChild(el('span', 'th-audio-role ' + role, role === 'host' ? T.host : '{% translate "على المسرح" %}'));
+      main.appendChild(who);
+      var meta = el('div', 'meta');
+      if (role !== 'listener') meta.appendChild(el('span', 'th-audio-role ' + role, role === 'host' ? T.host : T.onStage));
       if (isHost && statsById) {
         var st = statsById[m.userId] || { taps: 0, comments: 0 };
         var box = el('span', 'th-audio-viewer-stats');
         box.appendChild(el('i', 'bi ' + (st.taps > 0 ? 'bi-heart-fill' : 'bi-heart')));
-        box.appendChild(document.createTextNode(st.taps));
+        box.appendChild(document.createTextNode(' ' + st.taps));
         box.appendChild(el('i', 'bi bi-chat-dots-fill'));
-        box.appendChild(document.createTextNode(st.comments));
-        row.appendChild(box);
+        box.appendChild(document.createTextNode(' ' + st.comments));
+        meta.appendChild(box);
       }
+      if (meta.childNodes.length) main.appendChild(meta);
+      row.appendChild(main);
+
       if (isHost && role !== 'host') {
+        var actions = el('div', 'actions');
         var kick = el('button', 'th-audio-mini-btn'); kick.type = 'button'; kick.title = T.kick;
         kick.appendChild(el('i', 'bi bi-box-arrow-right'));
         kick.addEventListener('click', function () { send({ action: 'kick', target: m.userId }); });
-        var ban = el('button', 'th-audio-mini-btn danger'); ban.type = 'button'; ban.title = '{% translate "امنع" %}';
+        var ban = el('button', 'th-audio-mini-btn danger'); ban.type = 'button'; ban.title = T.block;
         ban.appendChild(el('i', 'bi bi-slash-circle'));
         ban.addEventListener('click', function () { send({ action: 'block', target: m.userId }); });
-        row.appendChild(kick); row.appendChild(ban);
+        actions.appendChild(kick); actions.appendChild(ban);
+        row.appendChild(actions);
       }
       viewersList.appendChild(row);
     });
