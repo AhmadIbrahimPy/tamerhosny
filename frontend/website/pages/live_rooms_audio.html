@@ -134,9 +134,10 @@
   .th-audio-stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
   .th-audio-host-wrap { display: flex; justify-content: center; width: 100%; }
   .th-audio-seats {
-    display: grid; width: 100%; max-width: 560px; gap: 10px;
-    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%;
+    --seat-w: calc((100% - (var(--cols, 2) - 1) * 12px) / var(--cols, 2));
   }
+  .th-audio-seats > * { flex: 0 0 var(--seat-w); max-width: var(--seat-w); }
   .th-audio-seats[data-seats="1"], .th-audio-seats[data-seats="2"] { --av: 76px; }
   .th-audio-seats[data-seats="3"], .th-audio-seats[data-seats="4"] { --av: 66px; }
   .th-audio-seats[data-seats="5"], .th-audio-seats[data-seats="6"] { --av: 56px; }
@@ -325,6 +326,36 @@
   .th-audio-room-ctrl-btn.end { background: #ff3b3b; }
   .th-audio-room-ctrl-btn.hand { background: var(--accent); }
 
+  /* ---------- web layout: main column + chat sidebar ---------- */
+  @media (min-width: 900px) {
+    .th-audio-room-screen {
+      display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto minmax(0, 1fr) auto;
+      column-gap: 20px; padding-inline: max(64px, calc((100vw - 1280px) / 2));
+    }
+    .th-audio-bg { grid-area: 1 / 1 / 4 / 3; }
+    .th-audio-room-header { grid-column: 1 / -1; grid-row: 1; padding-top: 18px; }
+    .th-audio-body { grid-column: 1; grid-row: 2; padding: 10px 0 12px; }
+    .th-audio-chat {
+      grid-column: 2; grid-row: 2 / 4; margin: 10px 0 18px; padding: 16px;
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .th-audio-chat::before {
+      content: '{% translate "التعليقات" %}'; font-size: 12px; font-weight: 800; opacity: .8; margin: 0 2px 12px;
+    }
+    .th-audio-comment-list { flex: 1; max-height: none; min-height: 0; }
+    .th-audio-comment-list:empty { display: block; }
+    .th-audio-comment-list:empty::before { content: '{% translate "لسه مفيش تعليقات" %}'; font-size: 12px; opacity: .5; }
+    .th-audio-room-controls { grid-column: 1; grid-row: 3; justify-self: center; margin-bottom: 18px; }
+    .th-audio-nav { inset-inline-end: auto; inset-inline-start: 10px; }
+    .th-audio-card.host { width: 230px; --av: 112px; padding: 24px 12px 14px; }
+    .th-audio-seats { --seat-w: 168px; }
+    .th-audio-seats[data-seats="1"], .th-audio-seats[data-seats="2"], .th-audio-seats[data-seats="3"], .th-audio-seats[data-seats="4"] { --av: 80px; }
+    .th-audio-seats[data-seats="5"], .th-audio-seats[data-seats="6"] { --av: 70px; --seat-w: 152px; }
+    .th-audio-seats[data-seats="7"], .th-audio-seats[data-seats="8"], .th-audio-seats[data-seats="9"] { --av: 60px; --seat-w: 136px; }
+    .th-audio-seats.many { --av: 52px; --seat-w: 120px; }
+    .th-audio-panel-title { font-size: 13px; }
+  }
+
   .th-audio-room-blocked {
     height: 100dvh; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 14px; color: #fff; text-align: center; padding: 24px;
@@ -376,7 +407,7 @@
     <div class="th-audio-myreq" id="thAudioMyReq" style="display:none;"></div>
 
     <section class="th-audio-panel">
-      <h3 class="th-audio-panel-title">{% translate "على المسرح" %} <span id="thAudioSeatsInfo"></span></h3>
+      <h3 class="th-audio-panel-title">{% translate "على المسرح" %} <span id="thAudioSeatsInfo" dir="ltr"></span></h3>
       <div class="th-audio-stage" id="thAudioStage"></div>
     </section>
 

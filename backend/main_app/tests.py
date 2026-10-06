@@ -327,3 +327,47 @@ class AudioRoomSeatTests(TransactionTestCase):
         name = await database_sync_to_async(lambda: AudioRoom.objects.get(pk=self.room.pk).custom_name)()
         self.assertEqual(name, 'سهرة')
         await h.disconnect(); await g.disconnect()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class HomeLiveStripTests(TransactionTestCase):
+    def test_home_strip_lists_voice_rooms_with_kind_chip(self):
+        from django.test import Client
+
+        host = UserAccount.objects.create(username='voicehost', email='vh3@example.com')
+        AudioRoom.objects.create(host=host, is_live=True, is_public=True, max_participants=6)
+        AudioRoom.objects.create(
+            host=UserAccount.objects.create(username='hidden', email='hid@example.com'),
+            is_live=True, is_public=False,
+        )
+        html = Client().get('/').content.decode()
+        self.assertIn('data-kind="audio"', html)
+        self.assertIn('/live-rooms/audio/voicehost/', html)
+        self.assertNotIn('/live-rooms/audio/hidden/', html)
+        self.assertIn('bi-mic-fill', html)
+
+    async def test_feed_gets_audio_open_and_close_pushes(self):
+        from backend.main_app.consumers import (
+            AudioRoomConsumer, LiveRoomsFeedConsumer, broadcast_audio_room_opened,
+        )
+
+        host = await database_sync_to_async(UserAccount.objects.create)(username='vh4', email='vh4@example.com')
+        room = await database_sync_to_async(AudioRoom.objects.create)(host=host, is_live=True, is_public=True)
+
+        feed = WebsocketCommunicator(LiveRoomsFeedConsumer.as_asgi(), '/ws/live-rooms/feed/')
+        ok, _ = await feed.connect()
+        self.assertTrue(ok)
+
+        await database_sync_to_async(lambda: broadcast_audio_room_opened(AudioRoom.objects.select_related('host').get(pk=room.pk)))()
+        opened = await feed.receive_json_from(timeout=2)
+        self.assertEqual((opened['type'], opened['room']['hostUsername'], opened['room']['kind']), ('audio_room_opened', 'vh4', 'audio'))
+
+        h = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{host.pk}/')
+        h.scope['url_route'] = {'kwargs': {'host_user_id': str(host.pk)}}
+        h.scope['user'] = host
+        ok, _ = await h.connect()
+        self.assertTrue(ok)
+        await h.send_json_to({'action': 'end_room'})
+        closed = await feed.receive_json_from(timeout=2)
+        self.assertEqual((closed['type'], closed['host_user_id']), ('audio_room_closed', host.pk))
+        await feed.disconnect()

@@ -145,6 +145,7 @@ def home(request):
         if song is None:
             continue
         live_rooms.append({
+            'kind': 'song',
             'hostUserId': room.host_id,
             'hostUsername': room.host.username,
             'hostAvatar': room.host.profile_image.url if room.host.profile_image else '',
@@ -152,6 +153,31 @@ def home(request):
             'tapScore': room.tap_score,
             'songTitle': localized_field(song, 'title'),
         })
+
+    # Public live voice rooms share the strip with song rooms - same
+    # ranking (tap_score), told apart on the card by a kind chip.
+    from backend.main_app.models import AudioRoom
+
+    for a_room in AudioRoom.objects.filter(is_live=True, is_public=True).select_related('host'):
+        live_rooms.append({
+            'kind': 'audio',
+            'hostUserId': a_room.host_id,
+            'hostUsername': a_room.host.username,
+            'hostAvatar': a_room.host.profile_image.url if a_room.host.profile_image else '',
+            'roomName': a_room.display_name,
+            'tapScore': a_room.tap_score,
+            'seats': a_room.max_participants,
+        })
+    live_rooms.sort(key=lambda r: r['tapScore'], reverse=True)
+    live_rooms = live_rooms[:10]
+
+    own_live_room_url = None
+    if own_live_room is not None:
+        own_live_room_url = f'/live-rooms/{request.user.username}/'
+    elif request.user.is_authenticated:
+        if AudioRoom.objects.filter(host=request.user, is_live=True).exists():
+            own_live_room = True
+            own_live_room_url = f'/live-rooms/audio/{request.user.username}/'
 
     return render(request, 'website/pages/home.html', {
         'guess_played_today': guess_played_today,
@@ -170,6 +196,7 @@ def home(request):
         'bottom_ad': home_ads[-1] if home_ads else None,
         'live_rooms': live_rooms,
         'own_live_room': own_live_room,
+        'own_live_room_url': own_live_room_url,
     })
 
 
@@ -2830,6 +2857,11 @@ def audio_room_start(request):
     # clean end, this is just the safety net for a session that never
     # closed cleanly (hard kill, server restart mid-call).
     AudioRoomParticipant.objects.filter(room=room).delete()
+
+    from backend.main_app.consumers import broadcast_audio_room_opened
+
+    if not was_live:
+        broadcast_audio_room_opened(room)
 
     if was_live:
         # Reconfiguring (a new seat count) while guests are still

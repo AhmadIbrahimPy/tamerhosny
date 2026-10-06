@@ -37,6 +37,35 @@ STALE_LISTENER_CUTOFF = timedelta(minutes=5)
 SEAT_REQUEST_TTL = timedelta(seconds=60)
 
 
+def _audio_room_card(room):
+    host = room.host
+    return {
+        'kind': 'audio',
+        'hostUserId': host.pk,
+        'hostUsername': host.username,
+        'hostAvatar': host.profile_image.url if host.profile_image else '',
+        'roomName': room.display_name,
+        'tapScore': room.tap_score,
+        'seats': room.max_participants,
+    }
+
+
+def broadcast_audio_room_opened(room):
+    """Public voice room went live (or became public) - pushes a card to
+    the home page's live-rooms strip (LiveRoomsFeedConsumer)."""
+    if not room.is_public:
+        return
+    async_to_sync(get_channel_layer().group_send)('live_rooms_feed', {
+        'type': 'feed.audio_opened', 'room': _audio_room_card(room),
+    })
+
+
+def broadcast_audio_room_closed(host_user_id):
+    async_to_sync(get_channel_layer().group_send)('live_rooms_feed', {
+        'type': 'feed.audio_closed', 'host_user_id': host_user_id,
+    })
+
+
 class SongListenerConsumer(WebsocketConsumer):
 
     def connect(self):
@@ -357,6 +386,12 @@ class LiveRoomsFeedConsumer(WebsocketConsumer):
 
     def feed_room_closed(self, event):
         self.send(text_data=json.dumps({'type': 'room_closed', 'host_user_id': event['host_user_id']}))
+
+    def feed_audio_opened(self, event):
+        self.send(text_data=json.dumps({'type': 'audio_room_opened', 'room': event['room']}))
+
+    def feed_audio_closed(self, event):
+        self.send(text_data=json.dumps({'type': 'audio_room_closed', 'host_user_id': event['host_user_id']}))
 
     def feed_room_renamed(self, event):
         # A rename/visibility change (website_app.views.update_room_
@@ -1470,6 +1505,7 @@ class AudioRoomConsumer(WebsocketConsumer):
         if self.is_host:
             AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
             AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
+            broadcast_audio_room_closed(self.host_user_id)
             async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
         else:
             AudioRoomParticipant.objects.filter(
@@ -1540,6 +1576,7 @@ class AudioRoomConsumer(WebsocketConsumer):
 
             AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
             AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
+            broadcast_audio_room_closed(self.host_user_id)
             async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
 
     # =========================================================
@@ -1867,6 +1904,13 @@ class AudioRoomConsumer(WebsocketConsumer):
             return
 
         AudioRoom.objects.filter(host_id=self.host_user_id).update(**updates)
+
+        room = AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).select_related('host').first()
+        if room is not None:
+            # Re-announce (or withdraw) the home-page card with the new
+            # name/visibility.
+            broadcast_audio_room_closed(self.host_user_id)
+            broadcast_audio_room_opened(room)
 
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'settings.updated',
