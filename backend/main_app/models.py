@@ -492,6 +492,18 @@ class AudioRoomSeatRequest(models.Model):
         indexes = [models.Index(fields=['room', 'user', 'is_resolved'])]
 
 
+class AudioRoomBlock(models.Model):
+    """يوزر الهوست منعه من الروم الصوتية دي - AudioRoomConsumer.connect
+    بيرفض دخوله تاني لحد ما الهوست يفك المنع."""
+
+    room = models.ForeignKey(AudioRoom, on_delete=models.CASCADE, related_name='blocks')
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='audio_room_blocks')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['room', 'user'], name='unique_audio_room_block')]
+
+
 class AudioRoomComment(models.Model):
     """رسالة شات في روم صوتية - نفس فكرة ListenTogetherComment بالظبط،
     بس لـ AudioRoom بدل ListenTogetherRoom. بتتشال مع الروم نفسها

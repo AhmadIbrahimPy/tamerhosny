@@ -1373,6 +1373,12 @@ class AudioRoomConsumer(WebsocketConsumer):
             self.close()
             return
 
+        from backend.main_app.models import AudioRoomBlock
+
+        if user.id != host_user_id and AudioRoomBlock.objects.filter(room=room, user=user).exists():
+            self.close()
+            return
+
         self.user = user
         self.host_user_id = host_user_id
         self.is_host = (user.id == host_user_id)
@@ -1512,6 +1518,14 @@ class AudioRoomConsumer(WebsocketConsumer):
             self._accept_invite(data.get('requestId'))
         elif action == 'kick' and self.is_host:
             self._kick(data.get('target'))
+        elif action == 'block' and self.is_host:
+            self._block(data.get('target'))
+        elif action == 'unblock' and self.is_host:
+            self._unblock(data.get('target'))
+        elif action == 'get_blocked' and self.is_host:
+            self._send_blocked()
+        elif action == 'get_stats' and self.is_host:
+            self._send_stats()
         elif action == 'force_mute' and self.is_host:
             # Host-only: asks one guest's own browser to mute itself (the
             # mic track lives client-side, so the server can only relay).
@@ -1710,6 +1724,52 @@ class AudioRoomConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'participant.kicked', 'target_user_id': target_id,
         })
+
+    def _block(self, target_id):
+        from backend.main_app.models import AudioRoomBlock
+
+        room = self._room()
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            return
+        if room is None or target_id == self.user.id:
+            return
+        AudioRoomBlock.objects.get_or_create(room=room, user_id=target_id)
+        # Same instant removal as a kick; connect() refuses them after this.
+        self._kick(target_id)
+        self._send_blocked()
+
+    def _unblock(self, target_id):
+        from backend.main_app.models import AudioRoomBlock
+
+        AudioRoomBlock.objects.filter(room__host_id=self.host_user_id, user_id=target_id).delete()
+        self._send_blocked()
+
+    def _send_blocked(self):
+        from backend.main_app.models import AudioRoomBlock
+
+        rows = AudioRoomBlock.objects.filter(room__host_id=self.host_user_id).select_related('user')
+        self.send(text_data=json.dumps({
+            'type': 'blocked_list',
+            'users': [{'userId': b.user_id, 'username': b.user.username,
+                       'avatar': b.user.profile_image.url if b.user.profile_image else ''} for b in rows],
+        }))
+
+    def _send_stats(self):
+        """Per-person taps and comments in this room - the host's
+        viewers popup sorts by these, like the song room's."""
+        from django.db.models import Count
+
+        from backend.main_app.models import AudioRoomComment, AudioRoomTap
+
+        stats = {}
+        for t in AudioRoomTap.objects.filter(room__host_id=self.host_user_id):
+            stats.setdefault(t.user_id, {'userId': t.user_id, 'taps': 0, 'comments': 0})['taps'] = t.count
+        for c in (AudioRoomComment.objects.filter(room__host_id=self.host_user_id, kind='message')
+                  .exclude(author=None).values('author_id').annotate(n=Count('id'))):
+            stats.setdefault(c['author_id'], {'userId': c['author_id'], 'taps': 0, 'comments': 0})['comments'] = c['n']
+        self.send(text_data=json.dumps({'type': 'viewer_stats', 'stats': list(stats.values())}))
 
     def _set_muted(self, muted):
         from backend.main_app.models import AudioRoomParticipant

@@ -128,3 +128,202 @@ class AudioRoomPageTests(TransactionTestCase):
         c.force_login(host)
         html = c.get('/live-rooms/audio/Ahmad/').content.decode()
         self.assertNotIn('id="thAudioNextBtn"', html)
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class AudioRoomSeatTests(TransactionTestCase):
+    """Walk-ins are listeners; seats come only from an approved request or an
+    accepted invite (60s), and the host can kick/block anyone instantly."""
+
+    def setUp(self):
+        self.host = UserAccount.objects.create(username='boss', email='b@example.com')
+        self.guest = UserAccount.objects.create(username='guest', email='g@example.com')
+        self.other = UserAccount.objects.create(username='other', email='o2@example.com')
+        self.room = AudioRoom.objects.create(host=self.host, is_live=True, max_participants=4)
+
+    async def _join(self, user):
+        from backend.main_app.consumers import AudioRoomConsumer
+
+        c = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{self.host.pk}/')
+        c.scope['url_route'] = {'kwargs': {'host_user_id': str(self.host.pk)}}
+        c.scope['user'] = user
+        ok, _ = await c.connect()
+        self.assertTrue(ok)
+        roster = await self._until(c, 'roster')
+        return c, roster
+
+    async def _until(self, comm, type_, timeout=2):
+        import asyncio
+
+        end = asyncio.get_event_loop().time() + timeout
+        while True:
+            left = end - asyncio.get_event_loop().time()
+            if left <= 0:
+                raise AssertionError(f'never received {type_}')
+            msg = await comm.receive_json_from(timeout=left)
+            if msg['type'] == type_:
+                return msg
+
+    @database_sync_to_async
+    def _slot(self, user):
+        p = AudioRoomParticipant.objects.filter(room=self.room, user=user).first()
+        return p.slot_index if p else 'gone'
+
+    async def test_walk_in_is_a_listener(self):
+        h, _ = await self._join(self.host)
+        g, roster = await self._join(self.guest)
+        self.assertIsNone(roster['youAre']['slotIndex'])
+        self.assertIsNone(await self._slot(self.guest))
+        await h.disconnect(); await g.disconnect()
+
+    async def test_request_approve_seats_and_broadcasts(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'request_seat'})
+        req = await self._until(h, 'seat_requested')
+        self.assertEqual(req['username'], 'guest')
+        await h.send_json_to({'action': 'respond_seat', 'requestId': req['requestId'], 'approve': True})
+        seated_h = await self._until(h, 'participant_seated')
+        seated_g = await self._until(g, 'participant_seated')
+        self.assertEqual(seated_h['slotIndex'], 1)
+        self.assertEqual(seated_g['userId'], self.guest.pk)
+        self.assertEqual(await self._slot(self.guest), 1)
+        await h.disconnect(); await g.disconnect()
+
+    async def test_request_rejected(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'request_seat'})
+        req = await self._until(h, 'seat_requested')
+        await h.send_json_to({'action': 'respond_seat', 'requestId': req['requestId'], 'approve': False})
+        rej = await self._until(g, 'seat_rejected')
+        self.assertEqual(rej['reason'], 'rejected')
+        self.assertIsNone(await self._slot(self.guest))
+        await h.disconnect(); await g.disconnect()
+
+    async def test_request_older_than_60s_cannot_be_approved(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from backend.main_app.models import AudioRoomSeatRequest
+
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'request_seat'})
+        req = await self._until(h, 'seat_requested')
+        await database_sync_to_async(
+            AudioRoomSeatRequest.objects.filter(pk=req['requestId']).update
+        )(created_at=timezone.now() - timedelta(seconds=61))
+        await h.send_json_to({'action': 'respond_seat', 'requestId': req['requestId'], 'approve': True})
+        await self._until(h, 'seat_request_cancelled')
+        self.assertIsNone(await self._slot(self.guest))
+        await h.disconnect(); await g.disconnect()
+
+    async def test_invite_then_accept(self):
+        from channels.layers import get_channel_layer
+
+        layer = get_channel_layer()
+        inbox = await layer.new_channel()
+        await layer.group_add(f'listen_together_{self.other.pk}', inbox)
+
+        h, _ = await self._join(self.host)
+        await h.send_json_to({'action': 'invite', 'userId': self.other.pk})
+        sent = await self._until(h, 'invite_sent')
+        self.assertEqual(sent['username'], 'other')
+        event = await layer.receive(inbox)
+        self.assertEqual(event['type'], 'audio.invite')
+
+        o, _ = await self._join(self.other)
+        await o.send_json_to({'action': 'accept_invite', 'requestId': event['request_id']})
+        seated = await self._until(o, 'participant_seated')
+        self.assertEqual(seated['userId'], self.other.pk)
+        self.assertEqual(await self._slot(self.other), 1)
+        await h.disconnect(); await o.disconnect()
+
+    async def test_invite_only_works_for_the_invited_user(self):
+        from channels.layers import get_channel_layer
+
+        layer = get_channel_layer()
+        inbox = await layer.new_channel()
+        await layer.group_add(f'listen_together_{self.other.pk}', inbox)
+        h, _ = await self._join(self.host)
+        await h.send_json_to({'action': 'invite', 'userId': self.other.pk})
+        event = await layer.receive(inbox)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'accept_invite', 'requestId': event['request_id']})
+        rej = await self._until(g, 'seat_rejected')
+        self.assertEqual(rej['reason'], 'expired')
+        self.assertIsNone(await self._slot(self.guest))
+        await h.disconnect(); await g.disconnect()
+
+    async def test_host_kick_removes_everywhere_and_frees_seat(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        o, _ = await self._join(self.other)
+        await g.send_json_to({'action': 'request_seat'})
+        req = await self._until(h, 'seat_requested')
+        await h.send_json_to({'action': 'respond_seat', 'requestId': req['requestId'], 'approve': True})
+        await self._until(g, 'participant_seated')
+
+        await h.send_json_to({'action': 'kick', 'target': self.guest.pk})
+        await self._until(g, 'kicked')
+        left_other = await self._until(o, 'participant_left')
+        self.assertEqual(left_other['userId'], self.guest.pk)
+        self.assertEqual(await self._slot(self.guest), 'gone')
+        await h.disconnect(); await o.disconnect()
+
+    async def test_non_host_cannot_kick(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        o, _ = await self._join(self.other)
+        await g.send_json_to({'action': 'kick', 'target': self.other.pk})
+        import asyncio
+        await asyncio.sleep(0.3)
+        self.assertNotEqual(await self._slot(self.other), 'gone')
+        await h.disconnect(); await g.disconnect(); await o.disconnect()
+
+    async def test_block_kicks_and_refuses_reentry_until_unblocked(self):
+        from backend.main_app.consumers import AudioRoomConsumer
+
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await h.send_json_to({'action': 'block', 'target': self.guest.pk})
+        await self._until(g, 'kicked')
+        blocked = await self._until(h, 'blocked_list')
+        self.assertEqual([u['username'] for u in blocked['users']], ['guest'])
+
+        again = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{self.host.pk}/')
+        again.scope['url_route'] = {'kwargs': {'host_user_id': str(self.host.pk)}}
+        again.scope['user'] = self.guest
+        ok, _ = await again.connect()
+        self.assertFalse(ok)
+
+        await h.send_json_to({'action': 'unblock', 'target': self.guest.pk})
+        self.assertEqual((await self._until(h, 'blocked_list'))['users'], [])
+        g2, _ = await self._join(self.guest)
+        await h.disconnect(); await g2.disconnect()
+
+    async def test_stats_and_settings(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'tap'})
+        await g.send_json_to({'action': 'tap'})
+        await g.send_json_to({'action': 'comment', 'text': 'hi'})
+        while (await self._until(h, 'comment'))['kind'] != 'message':
+            pass
+        await h.send_json_to({'action': 'get_stats'})
+        stats = await self._until(h, 'viewer_stats')
+        mine = [x for x in stats['stats'] if x['userId'] == self.guest.pk][0]
+        self.assertEqual((mine['taps'], mine['comments']), (2, 1))
+
+        await h.send_json_to({'action': 'update_settings', 'name': 'سهرة', 'isPublic': False})
+        upd = await self._until(g, 'settings_updated')
+        self.assertEqual((upd['name'], upd['isPublic']), ('سهرة', False))
+        # guests can't change settings
+        await g.send_json_to({'action': 'update_settings', 'name': 'hack'})
+        import asyncio
+        await asyncio.sleep(0.3)
+        name = await database_sync_to_async(lambda: AudioRoom.objects.get(pk=self.room.pk).custom_name)()
+        self.assertEqual(name, 'سهرة')
+        await h.disconnect(); await g.disconnect()

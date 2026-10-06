@@ -94,6 +94,27 @@
 
   .th-audio-room-leave-btn { display: none; }
 
+  .th-room-top-end-btn {
+    display: flex; align-items: center; gap: 4px; border: none; border-radius: 999px;
+    padding: 6px 12px; background: rgba(229,72,77,.85); color: #fff;
+    font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+  }
+  .th-room-requests-badge {
+    display: inline-flex; align-items: center; gap: 4px; cursor: pointer; color: #fff;
+    background: rgba(138,92,255,.4); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; flex-shrink: 0;
+  }
+  .th-room-viewer-badge { cursor: pointer; }
+  .th-audio-radio { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .th-audio-primary-btn { border: none; border-radius: 999px; padding: 11px; background: var(--accent); color: #fff; font-weight: 800; cursor: pointer; }
+  .th-audio-viewer-stats { font-size: 11px; opacity: .8; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .th-audio-viewer-stats i { color: #e5484d; }
+  .th-audio-viewer-stats i.bi-chat-dots-fill { color: #6ab0ff; }
+  .th-audio-role { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.12); }
+  .th-audio-role.host { background: var(--accent); }
+  .th-audio-role.seat { background: rgba(47,191,113,.4); }
+  .th-audio-mini-btn { border: none; border-radius: 50%; width: 30px; height: 30px; background: rgba(255,255,255,.12); color: #fff; cursor: pointer; }
+  .th-audio-mini-btn.danger { background: rgba(255,59,59,.7); }
+
   /* ---------- body: three glass sections ---------- */
   .th-audio-body {
     flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px 10px;
@@ -332,16 +353,19 @@
         {% if room_host.profile_image %}<img src="{{ room_host.profile_image.url }}" class="th-room-slide-avatar" alt="">{% else %}<span class="th-room-slide-avatar-fallback">{{ room_host.username|slice:":1"|upper }}</span>{% endif %}
         <div class="th-room-slide-username">@{{ room_host.username }}</div>
       </a>
+      {% if is_host %}<button type="button" class="th-room-top-end-btn" id="thAudioEndTopBtn" title="{% translate 'إنهاء الروم' %}"><i class="bi bi-stop-fill"></i> {% translate "إنهاء" %}</button>{% endif %}
       {% if not is_host and own_audio_room %}<button type="button" class="th-room-top-my-room-btn" id="thAudioMyRoomBtn"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>{% endif %}
       {% if not is_host %}<button type="button" class="th-room-top-leave-btn" id="thAudioRoomLeaveBtn"><i class="bi bi-box-arrow-right"></i> {% translate "خروج" %}</button>{% endif %}
       <span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>
+      {% if is_host %}<span class="th-room-requests-badge" id="thAudioRequestsBadge"><i class="bi bi-person-plus-fill"></i> {% translate "طلبات" %} <span id="thAudioRequestsCount">0</span></span>{% endif %}
       <span class="th-room-tap-badge" id="thAudioTapBadge"><i class="bi bi-heart-fill"></i> <span id="thAudioTapCount">{{ room.tap_score }}</span></span>
-      <span class="th-room-viewer-badge"><i class="bi bi-headphones"></i> <span id="thAudioViewerCount">1</span></span>
+      <span class="th-room-viewer-badge" id="thAudioViewerBadge" role="button"><i class="bi bi-headphones"></i> <span id="thAudioViewerCount">1</span></span>
     </div>
     <div class="th-room-slide-name-row">
-      <div class="th-room-slide-name">{{ room.display_name }}</div>
+      <div class="th-room-slide-name" id="thAudioRoomName">{{ room.display_name }}</div>
       <button type="button" class="th-room-name-share-btn" id="thAudioShareBtn" title="{% translate 'مشاركة' %}"><i class="bi bi-share-fill"></i></button>
-      <span class="th-room-name-visibility-badge">{% if room.is_public %}<i class="bi bi-globe2"></i> {% translate "عام" %}{% else %}<i class="bi bi-lock-fill"></i> {% translate "خاص" %}{% endif %}</span>
+      {% if is_host %}<button type="button" class="th-room-name-share-btn" id="thAudioSettingsBtn" title="{% translate 'إعدادات الروم' %}"><i class="bi bi-gear-fill"></i></button>{% endif %}
+      <span class="th-room-name-visibility-badge" id="thAudioVis">{% if room.is_public %}<i class="bi bi-globe2"></i> {% translate "عام" %}{% else %}<i class="bi bi-lock-fill"></i> {% translate "خاص" %}{% endif %}</span>
     </div>
     <small class="th-audio-status" id="thAudioRoomStatus">{% translate "بيتوصل..." %}</small>
   </div>
@@ -403,6 +427,31 @@
       <div class="th-audio-results" id="thAudioInviteResults"></div>
     </div>
   </div>
+
+  <div class="th-audio-modal" id="thAudioViewersModal">
+    <div class="th-audio-modal-card">
+      <div class="th-audio-modal-head">{% translate "اللي في الروم" %} <span id="thAudioViewersTotal" style="opacity:.6; font-weight:700; font-size:12px;"></span>
+        <button type="button" id="thAudioViewersClose"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="th-audio-results" id="thAudioViewersList"></div>
+    </div>
+  </div>
+
+  {% if is_host %}
+  <div class="th-audio-modal" id="thAudioSettingsModal">
+    <div class="th-audio-modal-card">
+      <div class="th-audio-modal-head">{% translate "إعدادات الروم" %}
+        <button type="button" id="thAudioSettingsClose"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <input type="text" id="thAudioNameInput" maxlength="60" placeholder="{% translate 'اسم الروم' %}" value="{{ room.custom_name }}">
+      <label class="th-audio-radio"><input type="radio" name="thAudioVisibility" value="public"{% if room.is_public %} checked{% endif %}> <i class="bi bi-globe2"></i> {% translate "عامة - بتظهر في قايمة الرومات" %}</label>
+      <label class="th-audio-radio"><input type="radio" name="thAudioVisibility" value="private"{% if not room.is_public %} checked{% endif %}> <i class="bi bi-lock-fill"></i> {% translate "خاصة - بالرابط بس" %}</label>
+      <button type="button" class="th-audio-primary-btn" id="thAudioSettingsSave">{% translate "حفظ" %}</button>
+      <div class="th-audio-panel-title" style="margin:6px 2px 0;">{% translate "المحظورين" %}</div>
+      <div class="th-audio-results" id="thAudioBlockedList" style="max-height:24dvh;"></div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <audio id="thAudioRoomRemoteAudioPool" style="display:none;"></audio>
@@ -601,6 +650,8 @@
   function renderRequests() {
     requestsEl.innerHTML = '';
     if (!isHost) return;
+    var badgeCount = document.getElementById('thAudioRequestsCount');
+    if (badgeCount) badgeCount.textContent = Object.keys(requests).length;
     var now = Date.now();
     Object.keys(requests).forEach(function (id) {
       var r = requests[id];
@@ -1031,6 +1082,20 @@
       } else if (msg.type === 'kicked') {
         toast(T.kicked);
         endAndLeave(true);
+      } else if (msg.type === 'viewer_stats') {
+        statsById = {};
+        (msg.stats || []).forEach(function (st) { statsById[st.userId] = st; });
+        if (viewersModal.classList.contains('show')) renderViewers();
+      } else if (msg.type === 'blocked_list') {
+        renderBlocked(msg.users || []);
+      } else if (msg.type === 'settings_updated') {
+        if (msg.name !== null && msg.name !== undefined) {
+          document.getElementById('thAudioRoomName').textContent = msg.name || defaultRoomName;
+        }
+        if (msg.isPublic !== null && msg.isPublic !== undefined) {
+          document.getElementById('thAudioVis').innerHTML = msg.isPublic
+            ? '<i class="bi bi-globe2"></i> {% translate "عام" %}' : '<i class="bi bi-lock-fill"></i> {% translate "خاص" %}';
+        }
       } else if (msg.type === 'comment_history') {
         (msg.comments || []).forEach(appendComment);
       } else if (msg.type === 'comment') {
@@ -1092,6 +1157,111 @@
     if (dy < -70 && touchEdgeBottom && nextUsername) goToRoom(nextUsername, 'up');
     else if (dy > 70 && touchEdgeTop && prevUsername) goToRoom(prevUsername, 'down');
   }, { passive: true });
+
+  // ---------- viewers popup (like the song room's) ----------
+  var viewersModal = document.getElementById('thAudioViewersModal');
+  var viewersList = document.getElementById('thAudioViewersList');
+  var statsById = null;
+  var defaultRoomName = '{% translate "روم" %} {{ room_host.username|escapejs }}';
+
+  function roleOf(m) { return m.slotIndex === 0 ? 'host' : (m.slotIndex != null ? 'seat' : 'listener'); }
+
+  function renderViewers() {
+    var arr = Object.keys(members).map(function (k) { return members[k]; });
+    var order = { host: 0, seat: 1, listener: 2 };
+    arr.sort(function (a, b) {
+      var d = order[roleOf(a)] - order[roleOf(b)];
+      if (d) return d;
+      if (isHost && statsById) {
+        var sa = statsById[a.userId] || { taps: 0, comments: 0 }, sb = statsById[b.userId] || { taps: 0, comments: 0 };
+        return (sb.taps + sb.comments) - (sa.taps + sa.comments);
+      }
+      return 0;
+    });
+    document.getElementById('thAudioViewersTotal').textContent = arr.length;
+    viewersList.innerHTML = '';
+    arr.forEach(function (m) {
+      var row = el('div', 'th-audio-result');
+      row.appendChild(avatarEl(m, '', 'fb'));
+      var who = el('a', 'who', '@' + m.username);
+      who.href = '/u/' + encodeURIComponent(m.username) + '/';
+      who.style.color = 'inherit'; who.style.textDecoration = 'none';
+      who.addEventListener('click', function (e) {
+        if (window.thBoostedNavigate) { e.preventDefault(); window.thBoostedNavigate(who.getAttribute('href')); viewersModal.classList.remove('show'); }
+      });
+      row.appendChild(who);
+      var role = roleOf(m);
+      if (role !== 'listener') row.appendChild(el('span', 'th-audio-role ' + role, role === 'host' ? T.host : '{% translate "على المسرح" %}'));
+      if (isHost && statsById) {
+        var st = statsById[m.userId] || { taps: 0, comments: 0 };
+        var box = el('span', 'th-audio-viewer-stats');
+        box.appendChild(el('i', 'bi ' + (st.taps > 0 ? 'bi-heart-fill' : 'bi-heart')));
+        box.appendChild(document.createTextNode(st.taps));
+        box.appendChild(el('i', 'bi bi-chat-dots-fill'));
+        box.appendChild(document.createTextNode(st.comments));
+        row.appendChild(box);
+      }
+      if (isHost && role !== 'host') {
+        var kick = el('button', 'th-audio-mini-btn'); kick.type = 'button'; kick.title = T.kick;
+        kick.appendChild(el('i', 'bi bi-box-arrow-right'));
+        kick.addEventListener('click', function () { send({ action: 'kick', target: m.userId }); });
+        var ban = el('button', 'th-audio-mini-btn danger'); ban.type = 'button'; ban.title = '{% translate "امنع" %}';
+        ban.appendChild(el('i', 'bi bi-slash-circle'));
+        ban.addEventListener('click', function () { send({ action: 'block', target: m.userId }); });
+        row.appendChild(kick); row.appendChild(ban);
+      }
+      viewersList.appendChild(row);
+    });
+  }
+
+  document.getElementById('thAudioViewerBadge').addEventListener('click', function () {
+    renderViewers();
+    viewersModal.classList.add('show');
+    if (isHost) send({ action: 'get_stats' });
+  });
+  document.getElementById('thAudioViewersClose').addEventListener('click', function () { viewersModal.classList.remove('show'); });
+  viewersModal.addEventListener('click', function (e) { if (e.target === viewersModal) viewersModal.classList.remove('show'); });
+
+  // ---------- host: end room, settings, blocked list ----------
+  var endTopBtn = document.getElementById('thAudioEndTopBtn');
+  if (endTopBtn) endTopBtn.addEventListener('click', function () { leaveClicked(); });
+
+  var reqBadge = document.getElementById('thAudioRequestsBadge');
+  if (reqBadge) reqBadge.addEventListener('click', function () { body.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  var settingsModal = document.getElementById('thAudioSettingsModal');
+  function renderBlocked(users) {
+    var box = document.getElementById('thAudioBlockedList');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!users.length) { box.appendChild(el('div', 'th-audio-empty-note', '{% translate "مفيش حد محظور" %}')); return; }
+    users.forEach(function (u) {
+      var row = el('div', 'th-audio-result');
+      row.appendChild(avatarEl(u, '', 'fb'));
+      row.appendChild(el('div', 'who', '@' + u.username));
+      var b = el('button', '', '{% translate "فك المنع" %}'); b.type = 'button';
+      b.addEventListener('click', function () { send({ action: 'unblock', target: u.userId }); });
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+  }
+  if (settingsModal) {
+    document.getElementById('thAudioSettingsBtn').addEventListener('click', function () {
+      settingsModal.classList.add('show');
+      send({ action: 'get_blocked' });
+    });
+    document.getElementById('thAudioSettingsClose').addEventListener('click', function () { settingsModal.classList.remove('show'); });
+    settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.classList.remove('show'); });
+    document.getElementById('thAudioSettingsSave').addEventListener('click', function () {
+      var vis = settingsModal.querySelector('input[name="thAudioVisibility"]:checked');
+      send({
+        action: 'update_settings',
+        name: document.getElementById('thAudioNameInput').value,
+        isPublic: !vis || vis.value === 'public',
+      });
+      settingsModal.classList.remove('show');
+    });
+  }
 
   function leaveClicked() {
     if (isHost) send({ action: 'end_room' });
