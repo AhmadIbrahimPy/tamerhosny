@@ -1137,7 +1137,7 @@ generic "رومات اسمع معاه" copy.
     window.thBrowsingForRoom = true;
     if (typeof thToggleSearch === 'function') thToggleSearch();
     if (window.showToast) {
-      showToast('{% translate "دور على أغنية وشغلها - وهتبقى عندك جروب تلقائي" %}', 'info');
+      showToast('{% translate "دور على أغنية وشغلها - وهتبدأ بيها جروبك" %}', 'info');
     }
   };
 
@@ -1271,6 +1271,11 @@ generic "رومات اسمع معاه" copy.
     // 'thRoomOpened' event that server-side can never fire for them, with
     // nothing telling them why. Caught here, before that dead end.
     if (window.requireAuth && window.requireAuth(null, null)) return;
+
+    // Tells the server this play is a deliberate room creation (see
+    // sendGlobalListenerAction, base.html) - a plain play never opens one.
+    window.thCreatingRoom = true;
+    setTimeout(function () { window.thCreatingRoom = false; }, 6000);
 
     toggleAudio(
       args.audioUrl, null, args.title, '',

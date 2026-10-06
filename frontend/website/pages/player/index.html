@@ -1044,7 +1044,7 @@ function connectListenerSocket(songId) {
     // crashing with a null send once that newer one had already closed.
     if (thisSocket !== listenerSocket) return;
     if (pendingListenerAction) {
-      thisSocket.send(JSON.stringify({ action: pendingListenerAction }));
+      thisSocket.send(JSON.stringify(window.thListenerPayload ? window.thListenerPayload(pendingListenerAction) : { action: pendingListenerAction }));
       pendingListenerAction = null;
     }
   });
@@ -1080,7 +1080,7 @@ function disconnectListenerSocket() {
 
 function sendListenerAction(action) {
   if (listenerSocket && listenerSocket.readyState === WebSocket.OPEN) {
-    listenerSocket.send(JSON.stringify({ action: action }));
+    listenerSocket.send(JSON.stringify(window.thListenerPayload ? window.thListenerPayload(action) : { action: action }));
   } else if (listenerSocket && listenerSocket.readyState === WebSocket.CONNECTING) {
     pendingListenerAction = action;
   }

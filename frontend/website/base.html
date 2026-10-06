@@ -3082,9 +3082,21 @@
       });
     }
 
+    // open_room is only ever true for the explicit "create room" flow
+    // (thStartRoomWithSong, live_rooms.html) or while already hosting -
+    // a song switch tears down the old listener socket (which closes the
+    // room if it was the last row) before the new one's 'start' lands, so
+    // a host's own switch has to ask to keep the room too. A plain play
+    // never opens one. Shared by every page that sends 'start'.
+    window.thListenerPayload = function (action) {
+      var payload = { action: action };
+      if (action === 'start' && (window.thCreatingRoom || window.thIsHostingRoom)) payload.open_room = true;
+      return payload;
+    };
+
     function sendGlobalListenerAction(action) {
       if (globalListenerSocket && globalListenerSocket.readyState === WebSocket.OPEN) {
-        globalListenerSocket.send(JSON.stringify({ action: action }));
+        globalListenerSocket.send(JSON.stringify(window.thListenerPayload(action)));
       }
     }
     // live_rooms.html's own thEndOwnRoom calls this directly as a

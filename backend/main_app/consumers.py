@@ -68,7 +68,10 @@ class SongListenerConsumer(WebsocketConsumer):
         action = data.get('action')
 
         if action == 'start':
-            self._start_listening()
+            # open_room is only ever sent by the explicit "create a room"
+            # flow (thStartRoomWithSong, live_rooms.html) - a plain song
+            # play never opens a room by itself.
+            self._start_listening(open_room=bool(data.get('open_room')))
         elif action == 'stop':
             self._stop_listening()
 
@@ -92,7 +95,7 @@ class SongListenerConsumer(WebsocketConsumer):
 
         return None, None
 
-    def _start_listening(self):
+    def _start_listening(self, open_room=False):
         if not Song.objects.filter(pk=self.song_id).exists():
             return
 
@@ -107,7 +110,7 @@ class SongListenerConsumer(WebsocketConsumer):
         self._broadcast_live_status()
 
         if user is not None:
-            self._maybe_open_room(user)
+            self._maybe_open_room(user, explicit=open_room)
 
     def _stop_listening(self):
         user, session_key = self._identity()
@@ -137,9 +140,20 @@ class SongListenerConsumer(WebsocketConsumer):
     # =========================================================
 
     @staticmethod
-    def _maybe_open_room(user):
-        from backend.main_app.models import AudioRoom, ListenTogetherRoom
+    def _maybe_open_room(user, explicit=False):
+        from backend.main_app.models import AudioRoom, AudioRoomParticipant, ListenTogetherRoom
         from backend.main_app.tasks import generate_room_name_task
+
+        # Playing a song never creates a room on its own - only the
+        # explicit create flow (explicit=True) does. A room that's
+        # already live just carries on across song switches.
+        if not explicit and not ListenTogetherRoom.objects.filter(host=user, is_live=True).exists():
+            return
+
+        # Being a guest in someone else's voice room counts the same as
+        # hosting one: no song room around that playback.
+        if AudioRoomParticipant.objects.filter(user=user).exists():
+            return
 
         # A user hosting a live voice room can still play music privately
         # (this only gates the listen-together SONG room from opening
@@ -1366,6 +1380,14 @@ class AudioRoomConsumer(WebsocketConsumer):
                 AudioRoomParticipant.objects.create(room=room, user=user, slot_index=self.slot_index)
 
         self._joined = True
+
+        # Can't be in a voice room and hosting a song room at once (the
+        # client's stopListeningWith() normally already ended it - this
+        # is the server-side guarantee for when it didn't).
+        from backend.main_app.models import ListenTogetherRoom
+        if ListenTogetherRoom.objects.filter(host=user, is_live=True).exists():
+            CurrentSongListener.objects.filter(user=user).delete()
+            SongListenerConsumer._maybe_close_room(user.id)
 
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
         self.accept()
