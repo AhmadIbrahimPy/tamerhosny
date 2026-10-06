@@ -9,61 +9,195 @@
   body.th-audio-room-page #globalAudioPlayer,
   body.th-audio-room-page .th-mic-fab { display: none !important; }
 
+  /* Fixed + full viewport (not a plain 100dvh block inside the page):
+     the site header above #th-page-root used to push this screen's own
+     bottom edge below the fold, hiding the mic/leave controls entirely. */
   .th-audio-room-screen {
-    height: 100dvh; background: #0b0b12; color: #fff;
+    position: fixed; inset: 0; z-index: 1100;
+    background: #0b0b12; color: #fff;
     display: flex; flex-direction: column;
   }
-  .th-audio-room-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 18px; flex-shrink: 0;
+  /* Same top bar / name row as the song room (th-room-slide-top etc.). */
+  .th-audio-room-header { flex-shrink: 0; padding-top: 14px; }
+  .th-room-slide-top {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 8px;
+    padding: 4px 16px 0;
   }
-  .th-audio-room-title { font-weight: 800; font-size: 15px; }
-  .th-audio-room-title small { display: block; font-weight: 400; opacity: .6; font-size: 12px; }
-  .th-audio-room-leave-btn {
-    border: none; background: rgba(255,255,255,.1); color: #fff;
-    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+  .th-room-top-my-room-btn, .th-room-top-leave-btn {
+    display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 6px 12px; background: rgba(0,0,0,.35); color: #fff;
+    font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+  }
+  .th-room-slide-avatar, .th-room-slide-avatar-fallback {
+    width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(255,255,255,.6); flex-shrink: 0;
+  }
+  .th-room-slide-avatar-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.2); font-weight: 900;
+  }
+  .th-room-slide-username { font-weight: 800; font-size: 14px; }
+  .th-room-slide-identity {
+    display: flex; align-items: center; gap: 10px;
+    color: inherit; text-decoration: none; min-width: 0; flex-shrink: 0;
+  }
+  .th-room-live-badge, .th-room-tap-badge, .th-room-viewer-badge, .th-room-name-visibility-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+    flex-shrink: 0; color: #fff;
+  }
+  .th-room-live-badge { margin-inline-start: auto; }
+  .leaderboard-live-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #fff; animation: thAudioLiveDot 1.4s ease-in-out infinite;
+  }
+  @keyframes thAudioLiveDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+  .th-room-tap-badge i { color: #e5484d; }
+  .th-room-slide-name-row {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px 4px;
+  }
+  .th-room-slide-name {
+    font-size: 22px; font-weight: 900; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 10px rgba(0,0,0,.5);
+  }
+  .th-room-name-share-btn {
+    width: 30px; height: 30px; border-radius: 50%; border: none; flex-shrink: 0;
+    background: rgba(0,0,0,.35); color: #fff; font-size: 13px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
+  .th-audio-status { display: block; font-size: 12px; opacity: .6; padding: 0 16px; }
 
-  .th-audio-room-grid {
-    flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-    gap: 10px; padding: 8px 18px 18px; align-content: start; justify-items: center;
-    overflow-y: auto;
+  /* Up/down between live voice rooms (guests only), like the song feed. */
+  .th-audio-nav {
+    position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 10px; z-index: 6;
   }
+  .th-audio-nav button {
+    width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #fff; font-size: 16px;
+  }
+  .th-audio-nav button:disabled { opacity: .3; cursor: default; }
+  .th-audio-room-screen { transition: transform .22s ease, opacity .22s ease; }
+  .th-audio-room-screen.leaving-up { transform: translateY(-40px); opacity: 0; }
+  .th-audio-room-screen.leaving-down { transform: translateY(40px); opacity: 0; }
+
+  .th-audio-room-leave-btn { display: none; }
+
+  /* ---------- stage: host on top, guests sized by how many there are ---------- */
+  .th-audio-stage {
+    flex: 1; min-height: 0; overflow-y: auto; padding: 6px 16px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .th-audio-host-wrap { display: flex; justify-content: center; width: 100%; }
+  .th-audio-guests {
+    display: grid; width: 100%; max-width: 560px; justify-content: center; gap: 12px;
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  }
+  .th-audio-guests[data-count="1"] { max-width: 220px; --av: 84px; }
+  .th-audio-guests[data-count="2"], .th-audio-guests[data-count="3"], .th-audio-guests[data-count="4"] { --av: 62px; }
+  .th-audio-guests[data-count="5"], .th-audio-guests[data-count="6"], .th-audio-guests[data-count="7"],
+  .th-audio-guests[data-count="8"], .th-audio-guests[data-count="9"] { --av: 50px; }
+  .th-audio-guests.many { --av: 42px; }
 
   .th-audio-card {
-    width: 100%; max-width: 88px; aspect-ratio: 1; border-radius: 16px;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; position: relative; padding: 6px; text-align: center;
+    gap: 6px; position: relative; padding: 14px 8px 10px; text-align: center; min-width: 0;
+    transition: border-color .15s, box-shadow .15s;
   }
-  .th-audio-card.is-empty { border-style: dashed; opacity: .5; }
-  .th-audio-card-plus { font-size: 18px; opacity: .5; }
+  .th-audio-card.host { width: 168px; padding: 18px 10px 12px; --av: 96px; border-color: rgba(255,255,255,.14); }
+  .th-audio-card.speaking { border-color: #3ddc84; box-shadow: 0 0 0 2px rgba(61,220,132,.35); }
   .th-audio-card-avatar, .th-audio-card-fallback {
-    width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+    width: var(--av, 62px); height: var(--av, 62px); border-radius: 50%; object-fit: cover;
     display: flex; align-items: center; justify-content: center;
-    background: #22263a; color: var(--accent); font-weight: 900; font-size: 13px;
+    background: #22263a; color: var(--accent); font-weight: 900; font-size: calc(var(--av, 62px) * .38);
   }
-  .th-audio-card-name { font-size: 10px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-audio-card-name { font-size: 12px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .th-audio-card-host-badge {
-    position: absolute; top: 4px; inset-inline-start: 4px; font-size: 8px; font-weight: 800;
-    background: var(--accent); padding: 1px 6px; border-radius: 999px;
+    position: absolute; top: 8px; inset-inline-start: 8px; font-size: 9px; font-weight: 800;
+    background: var(--accent); padding: 2px 8px; border-radius: 999px;
   }
   .th-audio-card-mic {
-    position: absolute; bottom: 4px; inset-inline-end: 4px; font-size: 9px;
-    width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,.5);
+    position: absolute; top: 8px; inset-inline-end: 8px; font-size: 11px;
+    width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,.5);
     display: flex; align-items: center; justify-content: center;
   }
   .th-audio-card-mic.is-muted { color: #ff6b6b; }
+  .th-audio-card-kick {
+    border: none; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,.1); color: #fff; cursor: pointer;
+  }
+  .th-audio-seats-chip {
+    font-size: 12px; opacity: .55; padding: 6px 14px; border-radius: 999px;
+    border: 1px dashed rgba(255,255,255,.25);
+  }
+  .th-audio-waiting { font-size: 13px; opacity: .6; text-align: center; padding: 10px 0; }
+
+  /* ---------- comments + tap (same pieces as the song room) ---------- */
+  .th-audio-chat { flex-shrink: 0; padding: 0 16px 8px; }
+  .th-audio-comment-list {
+    max-height: 24dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 8px; scrollbar-width: none;
+  }
+  .th-audio-comment-list::-webkit-scrollbar { display: none; }
+  .th-audio-comment { font-size: 13px; line-height: 1.4; }
+  .th-audio-comment.system { opacity: .75; font-style: italic; }
+  .th-audio-comment:not(.system) { display: flex; align-items: flex-start; gap: 6px; }
+  .th-audio-comment .author { font-weight: 800; margin-inline-end: 4px; color: inherit; text-decoration: none; }
+  .th-audio-comment-avatar, .th-audio-comment-fallback {
+    width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-top: 1px;
+  }
+  .th-audio-comment-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.15); font-size: 11px; font-weight: 900;
+  }
+  .th-audio-comment-body { min-width: 0; overflow-wrap: break-word; }
+  .th-audio-comment-form { display: flex; gap: 8px; position: relative; }
+  .th-audio-comment-input-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+  .th-audio-comment-form input {
+    flex: 1; width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.3);
+    background: rgba(0,0,0,.35); color: #fff; padding-inline: 14px 45px; padding-block: 9px; font-size: 13px;
+  }
+  .th-audio-comment-form input::placeholder { color: rgba(255,255,255,.6); }
+  .th-audio-comment-form button[type="submit"], .th-audio-heart-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none; flex-shrink: 0; cursor: pointer;
+  }
+  .th-audio-comment-form button[type="submit"] { background: var(--accent); color: #0b0c12; }
+  .th-audio-heart-btn { background: rgba(255,255,255,.1); color: #e5484d; font-size: 17px; }
+  .th-audio-emoji-btn {
+    position: absolute; inset-inline-end: 8px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent;
+    color: rgba(255,255,255,.7); cursor: pointer; font-size: 16px; z-index: 1;
+  }
+  .th-audio-emoji-popup {
+    position: absolute; bottom: 48px; inset-inline-end: 0; display: none;
+    background: rgba(30,33,48,.97); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 4px; grid-auto-rows: 34px;
+    width: min(288px, 82vw); max-height: 40vh; overflow-y: auto; z-index: 5;
+  }
+  .th-audio-emoji-popup.show { display: grid; }
+  .th-audio-emoji-item {
+    display: flex; align-items: center; justify-content: center; font-size: 19px; cursor: pointer;
+    border-radius: 6px; padding: 0; background: transparent; border: none;
+  }
+  .th-audio-emoji-item:hover { background: rgba(255,255,255,.1); }
+  @keyframes thAudioHeartBurst {
+    0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
+    100% { transform: translate(-50%, -180%) scale(1.6); opacity: 0; }
+  }
+  .th-audio-heart-burst {
+    position: fixed; z-index: 1200; font-size: 30px; color: #e5484d; pointer-events: none;
+    animation: thAudioHeartBurst .9s ease-out forwards;
+  }
 
   .th-audio-room-controls {
-    flex-shrink: 0; display: flex; justify-content: center; gap: 16px;
-    padding: 18px; padding-bottom: max(18px, env(safe-area-inset-bottom));
+    flex-shrink: 0; display: flex; justify-content: center; gap: 18px;
+    padding: 10px 18px; padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
   .th-audio-room-ctrl-btn {
-    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-    background: rgba(255,255,255,.1); color: #fff;
+    width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: rgba(255,255,255,.12); color: #fff;
   }
   .th-audio-room-ctrl-btn.is-muted { background: #ff6b6b; }
   .th-audio-room-ctrl-btn.end { background: #ff3b3b; }
@@ -88,19 +222,50 @@
   <a href="/live-rooms/">{% translate "رجوع للرومات" %}</a>
 </div>
 {% else %}
-<div class="th-audio-room-screen">
+<div class="th-audio-room-screen" id="thAudioScreen">
   <div class="th-audio-room-header">
-    <div class="th-audio-room-title">
-      {% blocktranslate with host=room_host.username %}روم {{ host }}{% endblocktranslate %}
-      <small id="thAudioRoomStatus">{% translate "بيتوصل..." %}</small>
+    <div class="th-room-slide-top">
+      <a href="/u/{{ room_host.username }}/" class="th-room-slide-identity" onclick="if (window.thBoostedNavigate) { event.preventDefault(); window.thBoostedNavigate(this.getAttribute('href')); }">
+        {% if room_host.profile_image %}<img src="{{ room_host.profile_image.url }}" class="th-room-slide-avatar" alt="">{% else %}<span class="th-room-slide-avatar-fallback">{{ room_host.username|slice:":1"|upper }}</span>{% endif %}
+        <div class="th-room-slide-username">@{{ room_host.username }}</div>
+      </a>
+      {% if not is_host and own_audio_room %}<button type="button" class="th-room-top-my-room-btn" id="thAudioMyRoomBtn"><i class="bi bi-house-fill"></i> {% translate "غرفتي" %}</button>{% endif %}
+      {% if not is_host %}<button type="button" class="th-room-top-leave-btn" id="thAudioRoomLeaveBtn"><i class="bi bi-box-arrow-right"></i> {% translate "خروج" %}</button>{% endif %}
+      <span class="th-room-live-badge"><span class="leaderboard-live-dot"></span> {% translate "مباشر" %}</span>
+      <span class="th-room-tap-badge" id="thAudioTapBadge"><i class="bi bi-heart-fill"></i> <span id="thAudioTapCount">{{ room.tap_score }}</span></span>
+      <span class="th-room-viewer-badge"><i class="bi bi-headphones"></i> <span id="thAudioViewerCount">1</span></span>
     </div>
-    <button type="button" class="th-audio-room-leave-btn" id="thAudioRoomLeaveBtn" title="{% translate 'خروج' %}">
-      <i class="bi bi-box-arrow-right"></i>
-    </button>
+    <div class="th-room-slide-name-row">
+      <div class="th-room-slide-name">{{ room.display_name }}</div>
+      <button type="button" class="th-room-name-share-btn" id="thAudioShareBtn" title="{% translate 'مشاركة' %}"><i class="bi bi-share-fill"></i></button>
+      <span class="th-room-name-visibility-badge">{% if room.is_public %}<i class="bi bi-globe2"></i> {% translate "عام" %}{% else %}<i class="bi bi-lock-fill"></i> {% translate "خاص" %}{% endif %}</span>
+    </div>
+    <small class="th-audio-status" id="thAudioRoomStatus">{% translate "بيتوصل..." %}</small>
   </div>
-  <div class="th-audio-room-grid" id="thAudioRoomGrid"></div>
+
+  <div class="th-audio-stage" id="thAudioStage"></div>
+  {% if not is_host and prev_username or not is_host and next_username %}
+  <div class="th-audio-nav">
+    <button type="button" id="thAudioPrevBtn" title="{% translate 'الروم اللي فات' %}"{% if not prev_username %} disabled{% endif %}><i class="bi bi-chevron-up"></i></button>
+    <button type="button" id="thAudioNextBtn" title="{% translate 'الروم اللي بعده' %}"{% if not next_username %} disabled{% endif %}><i class="bi bi-chevron-down"></i></button>
+  </div>
+  {% endif %}
+
+  <div class="th-audio-chat">
+    <div class="th-audio-comment-list" id="thAudioCommentList"></div>
+    <form class="th-audio-comment-form" id="thAudioCommentForm" hx-boost="false">
+      <div class="th-audio-comment-input-wrap">
+        <input type="text" maxlength="300" placeholder="{% translate 'اكتب تعليق...' %}" id="thAudioCommentInput">
+        <button type="button" class="th-audio-emoji-btn" id="thAudioEmojiBtn"><i class="bi bi-emoji-smile"></i></button>
+      </div>
+      <button type="submit" title="{% translate 'إرسال' %}"><i class="bi bi-send-fill"></i></button>
+      <button type="button" class="th-audio-heart-btn" id="thAudioHeartBtn" title="{% translate 'تكبيس' %}"><i class="bi bi-heart-fill"></i></button>
+      <div class="th-audio-emoji-popup" id="thAudioEmojiPopup"></div>
+    </form>
+  </div>
+
   <div class="th-audio-room-controls">
-    <button type="button" class="th-audio-room-ctrl-btn" id="thAudioRoomMuteBtn" title="{% translate 'كتم' %}">
+    <button type="button" class="th-audio-room-ctrl-btn" id="thAudioRoomMuteBtn" title="{% translate 'كتم / تشغيل الميك' %}">
       <i class="bi bi-mic-fill"></i>
     </button>
     <button type="button" class="th-audio-room-ctrl-btn end" id="thAudioRoomEndBtn" title="{% translate 'خروج' %}">
@@ -110,7 +275,6 @@
 </div>
 
 <audio id="thAudioRoomRemoteAudioPool" style="display:none;"></audio>
-{{ room.max_participants|json_script:"thAudioRoomMaxSlots" }}
 {% endif %}
 {% endblock %}
 
@@ -127,69 +291,121 @@
   var isHost = {{ is_host|yesno:"true,false" }};
   var hostUserId = {{ room_host.pk }};
   var myUserId = window.thUserId;
-  var grid = document.getElementById('thAudioRoomGrid');
+  var stage = document.getElementById('thAudioStage');
   var statusEl = document.getElementById('thAudioRoomStatus');
   var muteBtn = document.getElementById('thAudioRoomMuteBtn');
   var endBtn = document.getElementById('thAudioRoomEndBtn');
   var leaveBtn = document.getElementById('thAudioRoomLeaveBtn');
   var remoteAudioPool = document.getElementById('thAudioRoomRemoteAudioPool');
+  var commentList = document.getElementById('thAudioCommentList');
+  var commentForm = document.getElementById('thAudioCommentForm');
+  var commentInput = document.getElementById('thAudioCommentInput');
+  var tapCountEl = document.getElementById('thAudioTapCount');
+  var tapBadge = document.getElementById('thAudioTapBadge');
+  var viewerCountEl = document.getElementById('thAudioViewerCount');
+  var screenEl = document.getElementById('thAudioScreen');
+  var prevUsername = {% if prev_username %}'{{ prev_username|escapejs }}'{% else %}null{% endif %};
+  var nextUsername = {% if next_username %}'{{ next_username|escapejs }}'{% else %}null{% endif %};
+  var ownRoomUsername = {% if own_audio_room %}'{{ request.user.username|escapejs }}'{% else %}null{% endif %};
 
   // slotIndex -> {userId, username, avatar, isHost, muted}
   var slots = {};
-  // userId -> RTCPeerConnection
+  // userId -> RTCPeerConnection (each carries .thSender, its one audio sender)
   var peers = {};
-  // userId -> <audio> element playing their remote stream
+  var pendingIce = {};
   var remoteAudioEls = {};
   var localStream = null;
   var isMuted = false;
   var socket = null;
   var left = false;
+  var speaking = {};
+  var lastSelfTap = 0;
 
   var ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
   function initials(name) { return (name || '?').slice(0, 1).toUpperCase(); }
 
+  function localTrack() {
+    return localStream && localStream.getAudioTracks()[0] || null;
+  }
+
+  // ---------- stage ----------
+  function buildCard(o, isHostCard) {
+    var card = el('div', 'th-audio-card' + (isHostCard ? ' host' : '') + (speaking[o.userId] ? ' speaking' : ''));
+    card.dataset.uid = o.userId;
+    if (o.avatar) {
+      var img = el('img', 'th-audio-card-avatar');
+      img.src = o.avatar; img.alt = '';
+      card.appendChild(img);
+    } else {
+      card.appendChild(el('span', 'th-audio-card-fallback', initials(o.username)));
+    }
+    card.appendChild(el('span', 'th-audio-card-name', o.username));
+    if (o.isHost) card.appendChild(el('span', 'th-audio-card-host-badge', '{% translate "الهوست" %}'));
+    var mic = el('span', 'th-audio-card-mic' + (o.muted ? ' is-muted' : ''));
+    mic.appendChild(el('i', 'bi ' + (o.muted ? 'bi-mic-mute-fill' : 'bi-mic-fill')));
+    card.appendChild(mic);
+    if (isHost && !o.isHost && !o.muted) {
+      var kick = el('button', 'th-audio-card-kick', '{% translate "كتم" %}');
+      kick.type = 'button';
+      kick.addEventListener('click', function () { send({ action: 'force_mute', target: o.userId }); });
+      card.appendChild(kick);
+    }
+    return card;
+  }
+
   function renderGrid() {
-    grid.innerHTML = '';
-    for (var i = 0; i < maxSlots; i++) {
-      var occupant = slots[i];
-      var card = document.createElement('div');
-      card.className = 'th-audio-card' + (occupant ? '' : ' is-empty');
-      card.id = 'thAudioCardSlot' + i;
-      if (occupant) {
-        card.innerHTML =
-          (occupant.avatar
-            ? '<img class="th-audio-card-avatar" src="' + occupant.avatar + '" alt="">'
-            : '<span class="th-audio-card-fallback">' + initials(occupant.username) + '</span>') +
-          '<span class="th-audio-card-name">' + occupant.username + '</span>' +
-          (occupant.isHost ? '<span class="th-audio-card-host-badge">{% translate "الهوست" %}</span>' : '') +
-          '<span class="th-audio-card-mic' + (occupant.muted ? ' is-muted' : '') + '"><i class="bi ' + (occupant.muted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i></span>';
-      } else {
-        card.innerHTML = '<span class="th-audio-card-plus">+</span>';
-      }
-      grid.appendChild(card);
+    stage.innerHTML = '';
+    var hostOcc = slots[0] || null;
+    var guests = [];
+    for (var i = 1; i < maxSlots; i++) { if (slots[i]) guests.push(slots[i]); }
+
+    if (viewerCountEl) viewerCountEl.textContent = (hostOcc ? 1 : 0) + guests.length;
+
+    var hostWrap = el('div', 'th-audio-host-wrap');
+    if (hostOcc) hostWrap.appendChild(buildCard(hostOcc, true));
+    stage.appendChild(hostWrap);
+
+    var n = guests.length;
+    if (n === 0) {
+      stage.appendChild(el('div', 'th-audio-waiting', '{% translate "مستني الضيوف يدخلوا..." %}'));
+    } else {
+      // Card size/columns follow how many guests there actually are,
+      // not the room's seat capacity - one guest gets a big card, a full
+      // room gets a compact grid.
+      var cols = n === 1 ? 1 : (n <= 4 ? 2 : (n <= 9 ? 3 : 4));
+      var grid = el('div', 'th-audio-guests' + (n >= 10 ? ' many' : ''));
+      grid.dataset.count = n;
+      grid.style.setProperty('--cols', cols);
+      guests.forEach(function (g) { grid.appendChild(buildCard(g, false)); });
+      stage.appendChild(grid);
+    }
+
+    var free = maxSlots - 1 - n;
+    if (free > 0) {
+      stage.appendChild(el('div', 'th-audio-seats-chip', free + ' {% translate "مقعد فاضي" %}'));
     }
   }
 
-  function setSlot(slotIndex, data) {
-    slots[slotIndex] = data;
-    renderGrid();
-  }
+  function setSlot(slotIndex, data) { slots[slotIndex] = data; renderGrid(); }
 
   function clearSlotByUserId(userId) {
     for (var idx in slots) {
-      if (slots[idx] && slots[idx].userId === userId) {
-        delete slots[idx];
-      }
+      if (slots[idx] && slots[idx].userId === userId) delete slots[idx];
     }
+    delete speaking[userId];
     renderGrid();
   }
 
   function updateMicIcon(userId, muted) {
     for (var idx in slots) {
-      if (slots[idx] && slots[idx].userId === userId) {
-        slots[idx].muted = muted;
-      }
+      if (slots[idx] && slots[idx].userId === userId) slots[idx].muted = muted;
     }
     renderGrid();
   }
@@ -198,6 +414,39 @@
     if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload));
   }
 
+  // ---------- speaking indicator ----------
+  var audioCtx = null;
+  var analysers = {};
+
+  function watchStream(userId, stream) {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      audioCtx.createMediaStreamSource(stream).connect(analyser);
+      analysers[userId] = { analyser: analyser, data: new Uint8Array(analyser.frequencyBinCount) };
+    } catch (e) {}
+  }
+
+  setInterval(function () {
+    Object.keys(analysers).forEach(function (uid) {
+      var a = analysers[uid];
+      a.analyser.getByteFrequencyData(a.data);
+      var sum = 0;
+      for (var i = 0; i < a.data.length; i++) sum += a.data[i];
+      var on = (sum / a.data.length) > 14 && !(String(uid) === String(myUserId) && isMuted);
+      if (!!speaking[uid] !== on) {
+        speaking[uid] = on;
+        var card = stage.querySelector('[data-uid="' + uid + '"]');
+        if (card) card.classList.toggle('speaking', on);
+      }
+    });
+  }, 140);
+
+  // ---------- WebRTC ----------
   function closePeer(userId) {
     if (peers[userId]) {
       try { peers[userId].close(); } catch (e) {}
@@ -207,64 +456,206 @@
       remoteAudioEls[userId].remove();
       delete remoteAudioEls[userId];
     }
+    delete analysers[userId];
+    delete pendingIce[userId];
   }
 
   function attachRemoteStream(userId, stream) {
-    var el = document.createElement('audio');
-    el.autoplay = true;
-    el.srcObject = stream;
-    remoteAudioPool.appendChild(el);
-    remoteAudioEls[userId] = el;
+    if (remoteAudioEls[userId]) remoteAudioEls[userId].remove();
+    var a = document.createElement('audio');
+    a.autoplay = true;
+    a.srcObject = stream;
+    remoteAudioPool.appendChild(a);
+    remoteAudioEls[userId] = a;
+    watchStream(userId, stream);
   }
 
-  function createPeerConnection(userId) {
+  // One sendrecv audio transceiver per peer, always - even with no mic yet
+  // (the sender just has no track). Without it, a mic-less offerer's SDP
+  // had no audio line at all, so that person could neither be heard nor
+  // hear anyone; turning the mic on later is now a plain replaceTrack,
+  // no renegotiation.
+  function bindSender(pc, transceiver) {
+    transceiver.direction = 'sendrecv';
+    pc.thSender = transceiver.sender;
+    var t = localTrack();
+    if (t) transceiver.sender.replaceTrack(t).catch(function () {});
+  }
+
+  function createPeerConnection(userId, asOfferer) {
     var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     peers[userId] = pc;
+    if (asOfferer) bindSender(pc, pc.addTransceiver('audio', { direction: 'sendrecv' }));
 
-    if (localStream) {
-      localStream.getTracks().forEach(function (track) { pc.addTrack(track, localStream); });
-    }
-
-    pc.ontrack = function (event) {
-      attachRemoteStream(userId, event.streams[0]);
-    };
-
+    pc.ontrack = function (event) { attachRemoteStream(userId, event.streams[0] || new MediaStream([event.track])); };
     pc.onicecandidate = function (event) {
-      if (event.candidate) {
-        send({ action: 'signal', to: userId, data: { kind: 'ice', candidate: event.candidate } });
-      }
+      if (event.candidate) send({ action: 'signal', to: userId, data: { kind: 'ice', candidate: event.candidate } });
     };
-
     return pc;
   }
 
   async function makeOfferTo(userId) {
-    var pc = createPeerConnection(userId);
+    var pc = createPeerConnection(userId, true);
     var offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     send({ action: 'signal', to: userId, data: { kind: 'offer', sdp: offer } });
   }
 
+  async function flushIce(userId, pc) {
+    var list = pendingIce[userId] || [];
+    pendingIce[userId] = [];
+    for (var i = 0; i < list.length; i++) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(list[i])); } catch (e) {}
+    }
+  }
+
   async function handleSignal(fromUserId, data) {
-    var pc = peers[fromUserId] || createPeerConnection(fromUserId);
+    var pc = peers[fromUserId] || createPeerConnection(fromUserId, false);
 
     if (data.kind === 'offer') {
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      if (!pc.thSender) {
+        var tr = pc.getTransceivers().filter(function (t) { return t.receiver && t.receiver.track && t.receiver.track.kind === 'audio'; })[0];
+        if (tr) bindSender(pc, tr);
+      }
+      await flushIce(fromUserId, pc);
       var answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       send({ action: 'signal', to: fromUserId, data: { kind: 'answer', sdp: answer } });
     } else if (data.kind === 'answer') {
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      await flushIce(fromUserId, pc);
     } else if (data.kind === 'ice' && data.candidate) {
-      try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) {}
+      if (pc.remoteDescription) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) {}
+      } else {
+        (pendingIce[fromUserId] = pendingIce[fromUserId] || []).push(data.candidate);
+      }
     }
   }
 
+  // ---------- mic ----------
+  function renderMuteBtn() {
+    muteBtn.classList.toggle('is-muted', isMuted);
+    muteBtn.innerHTML = '<i class="bi ' + (isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i>';
+  }
+
+  function applyMuted(muted, notify) {
+    isMuted = muted;
+    if (localStream) localStream.getAudioTracks().forEach(function (t) { t.enabled = !muted; });
+    renderMuteBtn();
+    if (notify) send({ action: 'mute', muted: muted });
+    updateMicIcon(myUserId, muted);
+  }
+
+  // Turning the mic on when it was never acquired (permission denied at
+  // join, or no device then) tries again right here instead of being a
+  // dead button - and hands the new track to every existing peer.
+  async function ensureLocalStream() {
+    if (localTrack()) return true;
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    } catch (e) {
+      statusEl.textContent = '{% translate "الميكروفون مش متاح - فعّل صلاحية المايك من إعدادات المتصفح" %}';
+      return false;
+    }
+    var t = localTrack();
+    Object.keys(peers).forEach(function (uid) {
+      if (peers[uid].thSender) peers[uid].thSender.replaceTrack(t).catch(function () {});
+    });
+    watchStream(myUserId, localStream);
+    statusEl.textContent = '{% translate "لايف دلوقتي" %}';
+    return true;
+  }
+
+  muteBtn.addEventListener('click', async function () {
+    if (isMuted) {
+      if (!(await ensureLocalStream())) return;
+      applyMuted(false, true);
+    } else {
+      applyMuted(true, true);
+    }
+  });
+
+  // ---------- comments + taps ----------
+  function appendComment(c) {
+    if (c.id != null && commentList.querySelector('[data-comment-id="' + c.id + '"]')) return;
+    var row = el('div', 'th-audio-comment' + (c.kind === 'system' ? ' system' : ''));
+    if (c.id != null) row.dataset.commentId = c.id;
+    if (c.kind === 'system') {
+      row.textContent = c.text;
+    } else {
+      var url = c.author ? '/u/' + encodeURIComponent(c.author) + '/' : '';
+      if (c.authorAvatar) {
+        var img = el('img', 'th-audio-comment-avatar'); img.src = c.authorAvatar; img.alt = '';
+        row.appendChild(img);
+      } else {
+        row.appendChild(el('span', 'th-audio-comment-fallback', initials(c.author)));
+      }
+      var body = el('span', 'th-audio-comment-body');
+      var name = el(url ? 'a' : 'span', 'author', c.author || '');
+      if (url) name.href = url;
+      body.appendChild(name);
+      body.appendChild(document.createTextNode(c.text));
+      row.appendChild(body);
+    }
+    commentList.appendChild(row);
+    commentList.scrollTop = commentList.scrollHeight;
+  }
+
+  commentForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var text = commentInput.value.trim();
+    if (!text) return;
+    send({ action: 'comment', text: text });
+    commentInput.value = '';
+  });
+
+  var emojiBtn = document.getElementById('thAudioEmojiBtn');
+  var emojiPopup = document.getElementById('thAudioEmojiPopup');
+  ['😀','😁','😂','🤣','😊','😍','🥰','😘','😜','😎','🤩','🥳','😇','🙂','🤔','😢','😭','😡','😱','🥺',
+   '👍','👏','🙌','🙏','💪','❤️','💔','💕','🔥','✨','⭐','💯','🎉','🎵','🎶','🎤','🎧','🕺','💃','👑'
+  ].forEach(function (emoji) {
+    var b = el('button', 'th-audio-emoji-item', emoji);
+    b.type = 'button';
+    b.addEventListener('click', function (e) { e.preventDefault(); commentInput.value += emoji; commentInput.focus(); });
+    emojiPopup.appendChild(b);
+  });
+  emojiBtn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); emojiPopup.classList.add('show'); });
+  document.addEventListener('click', function (e) {
+    if (!commentForm.contains(e.target)) emojiPopup.classList.remove('show');
+  });
+
+  function burstAt(x, y) {
+    var h = el('i', 'bi bi-heart-fill th-audio-heart-burst');
+    h.style.left = x + 'px'; h.style.top = y + 'px';
+    document.body.appendChild(h);
+    setTimeout(function () { h.remove(); }, 900);
+  }
+
+  document.getElementById('thAudioHeartBtn').addEventListener('click', function (e) {
+    lastSelfTap = Date.now();
+    send({ action: 'tap' });
+    var r = e.currentTarget.getBoundingClientRect();
+    burstAt(r.left + r.width / 2, r.top);
+  });
+
+  function onTapped(score) {
+    if (typeof score === 'number') tapCountEl.textContent = score;
+    if (Date.now() - lastSelfTap > 400) {
+      var r = tapBadge.getBoundingClientRect();
+      burstAt(r.left + r.width / 2 + (Math.random() * 24 - 12), r.top + r.height / 2);
+    }
+  }
+
+  // ---------- lifecycle ----------
   function endAndLeave(navigateHome) {
     if (left) return;
     left = true;
     Object.keys(peers).forEach(function (uid) { closePeer(uid); });
     if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
+    if (audioCtx) { try { audioCtx.close(); } catch (e) {} }
     if (socket) { try { socket.close(); } catch (e) {} }
     if (navigateHome) {
       if (window.thBoostedNavigate) { window.thBoostedNavigate('/live-rooms/'); } else { window.location.href = '/live-rooms/'; }
@@ -273,43 +664,30 @@
 
   async function start() {
     // Can't be "في روم" two ways at once - following someone's song
-    // room (thFollowSocket, base.html) or hosting your own (playback
-    // still running) both have to end before joining a voice call.
-    // stopListeningWith() already does exactly this: closes the follow
-    // socket if there is one, and unconditionally pauses globalAudio,
-    // whose own 'pause' listener is what actually ends YOUR song room
-    // server-side (sendGlobalListenerAction('stop') ->
-    // SongListenerConsumer._maybe_close_room) - safe to call even if
-    // neither was happening.
+    // room or hosting your own both have to end before joining a voice
+    // call. stopListeningWith() closes the follow socket and pauses
+    // playback (which ends YOUR song room server-side).
     if (window.stopListeningWith) window.stopListeningWith();
 
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      watchStream(myUserId, localStream);
     } catch (e) {
-      // No mic (denied, none present, blocked by the browser) shouldn't
-      // be a dead end - you still take your seat and can listen, just
-      // start out muted (no local track to send at all, so 'muted' here
-      // is really "nothing to unmute yet" until a mic actually shows
-      // up). Previously this returned early and the WebSocket never
-      // even opened - the host's own slot 0 stayed a "+" forever,
-      // looking like they weren't in their own room.
+      // No mic yet shouldn't be a dead end: you still take your seat and
+      // listen, start muted, and the mic button retries the permission.
       isMuted = true;
-      muteBtn.classList.add('is-muted');
-      muteBtn.innerHTML = '<i class="bi bi-mic-mute-fill"></i>';
-      statusEl.textContent = '{% translate "الميكروفون مش متاح - هتقدر تسمع بس" %}';
+      renderMuteBtn();
+      statusEl.textContent = '{% translate "الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله" %}';
     }
 
     var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     socket = new WebSocket(protocol + window.location.host + '/ws/audio-room/' + hostUserId + '/');
 
     socket.onopen = function () {
-      statusEl.textContent = '{% translate "لايف دلوقتي" %}';
+      if (localTrack()) statusEl.textContent = '{% translate "لايف دلوقتي" %}';
     };
-
     socket.onclose = function () {
-      if (!left) {
-        statusEl.textContent = '{% translate "الاتصال اتقطع" %}';
-      }
+      if (!left) statusEl.textContent = '{% translate "الاتصال اتقطع" %}';
     };
 
     socket.onmessage = function (event) {
@@ -320,6 +698,9 @@
           userId: myUserId, username: window.thUsername, avatar: window.thUserAvatar || '',
           isHost: msg.youAre.slotIndex === 0, muted: isMuted,
         });
+        // A guest who joined already muted (no mic) must tell the room
+        // so, otherwise everyone sees an active mic icon.
+        if (isMuted) send({ action: 'mute', muted: true });
         msg.participants.forEach(function (p) {
           setSlot(p.slotIndex, {
             userId: p.userId, username: p.username, avatar: p.avatar,
@@ -337,32 +718,85 @@
         clearSlotByUserId(msg.userId);
       } else if (msg.type === 'participant_muted') {
         updateMicIcon(msg.userId, msg.muted);
+      } else if (msg.type === 'force_muted') {
+        applyMuted(true, true);
       } else if (msg.type === 'signal') {
         handleSignal(msg.fromUserId, msg.data);
+      } else if (msg.type === 'comment_history') {
+        (msg.comments || []).forEach(appendComment);
+      } else if (msg.type === 'comment') {
+        appendComment(msg);
+      } else if (msg.type === 'tapped') {
+        onTapped(msg.tap_score);
       } else if (msg.type === 'room_ended') {
         endAndLeave(true);
       }
     };
   }
 
-  muteBtn.addEventListener('click', function () {
-    isMuted = !isMuted;
-    if (localStream) localStream.getAudioTracks().forEach(function (t) { t.enabled = !isMuted; });
-    muteBtn.classList.toggle('is-muted', isMuted);
-    muteBtn.innerHTML = '<i class="bi ' + (isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i>';
-    send({ action: 'mute', muted: isMuted });
-    updateMicIcon(myUserId, isMuted);
-  });
-
   function leaveClicked() {
     if (isHost) send({ action: 'end_room' });
     endAndLeave(true);
   }
   endBtn.addEventListener('click', leaveClicked);
-  leaveBtn.addEventListener('click', leaveClicked);
+  if (leaveBtn) leaveBtn.addEventListener('click', leaveClicked);
 
   window.addEventListener('beforeunload', function () { endAndLeave(false); });
 
+  // ---------- top bar actions + up/down between rooms ----------
+  var shareBtn = document.getElementById('thAudioShareBtn');
+  if (shareBtn) shareBtn.addEventListener('click', function () {
+    var url = window.location.origin + '/live-rooms/audio/' + encodeURIComponent('{{ room_host.username|escapejs }}') + '/';
+    if (window.thShare) window.thShare('room', hostUserId, '{{ room.display_name|escapejs }}', url);
+    else if (navigator.share) navigator.share({ url: url }).catch(function () {});
+  });
+
+  var myRoomBtn = document.getElementById('thAudioMyRoomBtn');
+  if (myRoomBtn) myRoomBtn.addEventListener('click', function () {
+    goToRoom(ownRoomUsername, null);
+  });
+
+  var navigating = false;
+  function goToRoom(username, dir) {
+    if (!username || navigating) return;
+    navigating = true;
+    if (dir && screenEl) screenEl.classList.add(dir === 'up' ? 'leaving-up' : 'leaving-down');
+    setTimeout(function () {
+      endAndLeave(false);
+      var url = '/live-rooms/audio/' + encodeURIComponent(username) + '/';
+      if (window.thBoostedNavigate) { window.thBoostedNavigate(url); } else { window.location.href = url; }
+    }, dir ? 200 : 0);
+  }
+
+  var prevBtn = document.getElementById('thAudioPrevBtn');
+  var nextBtn = document.getElementById('thAudioNextBtn');
+  if (prevBtn) prevBtn.addEventListener('click', function () { goToRoom(prevUsername, 'down'); });
+  if (nextBtn) nextBtn.addEventListener('click', function () { goToRoom(nextUsername, 'up'); });
+
+  // Wheel / swipe on the stage moves to the next/previous room once the
+  // stage itself is scrolled to that edge (so a long guest list still
+  // scrolls normally first). Never from the chat/controls area.
+  function atTop() { return stage.scrollTop <= 1; }
+  function atBottom() { return stage.scrollTop + stage.clientHeight >= stage.scrollHeight - 2; }
+  var wheelLock = 0;
+  stage.addEventListener('wheel', function (e) {
+    if (Math.abs(e.deltaY) < 30 || Date.now() < wheelLock) return;
+    if (e.deltaY > 0 && atBottom() && nextUsername) { wheelLock = Date.now() + 900; goToRoom(nextUsername, 'up'); }
+    else if (e.deltaY < 0 && atTop() && prevUsername) { wheelLock = Date.now() + 900; goToRoom(prevUsername, 'down'); }
+  }, { passive: true });
+  var touchY = null, touchEdgeTop = false, touchEdgeBottom = false;
+  stage.addEventListener('touchstart', function (e) {
+    touchY = e.touches[0].clientY; touchEdgeTop = atTop(); touchEdgeBottom = atBottom();
+  }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    if (touchY == null) return;
+    var dy = e.changedTouches[0].clientY - touchY;
+    touchY = null;
+    if (dy < -70 && touchEdgeBottom && nextUsername) goToRoom(nextUsername, 'up');
+    else if (dy > 70 && touchEdgeTop && prevUsername) goToRoom(prevUsername, 'down');
+  }, { passive: true });
+
+  renderMuteBtn();
   renderGrid();
   start();
 })();

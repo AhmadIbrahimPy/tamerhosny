@@ -106,3 +106,25 @@ class SongRoomLifecycleTests(TransactionTestCase):
         self.assertFalse(await self._live())
         await v.disconnect()
         await c.disconnect()
+
+
+class AudioRoomPageTests(TransactionTestCase):
+    def test_page_renders_with_prev_next_and_controls(self):
+        from django.test import Client
+
+        host = UserAccount.objects.create(username='Ahmad', email='a@example.com')
+        other = UserAccount.objects.create(username='Other', email='o@example.com')
+        viewer = UserAccount.objects.create(username='viewer', email='v@example.com')
+        AudioRoom.objects.create(host=host, is_live=True, tap_score=5)
+        AudioRoom.objects.create(host=other, is_live=True, tap_score=1)
+        c = Client()
+        c.force_login(viewer)
+        r = c.get('/live-rooms/audio/Ahmad/')
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        for needle in ('thAudioNextBtn', 'thAudioHeartBtn', 'thAudioCommentForm', 'th-room-viewer-badge', 'th-room-name-share-btn'):
+            self.assertIn(needle, html)
+        # host viewing own room: no up/down nav, no leave-top button
+        c.force_login(host)
+        html = c.get('/live-rooms/audio/Ahmad/').content.decode()
+        self.assertNotIn('id="thAudioNextBtn"', html)

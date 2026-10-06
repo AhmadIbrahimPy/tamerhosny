@@ -1488,6 +1488,13 @@ class AudioRoomConsumer(WebsocketConsumer):
             self._post_comment(data.get('text'))
         elif action == 'tap':
             self._tap()
+        elif action == 'force_mute' and self.is_host:
+            # Host-only: asks one guest's own browser to mute itself (the
+            # mic track lives client-side, so the server can only relay).
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {
+                'type': 'force.mute',
+                'target_user_id': data.get('target'),
+            })
         elif action == 'update_settings' and self.is_host:
             self._update_settings(data)
         elif action == 'end_room' and self.is_host:
@@ -1616,6 +1623,11 @@ class AudioRoomConsumer(WebsocketConsumer):
 
     def room_tapped(self, event):
         self.send(text_data=json.dumps({'type': 'tapped', 'tap_score': event.get('tap_score')}))
+
+    def force_mute(self, event):
+        if event.get('target_user_id') != self.user.id:
+            return
+        self.send(text_data=json.dumps({'type': 'force_muted'}))
 
     def settings_updated(self, event):
         self.send(text_data=json.dumps({
