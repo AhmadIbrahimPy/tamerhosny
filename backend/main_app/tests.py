@@ -462,3 +462,40 @@ class OneRoomAtATimeTests(TransactionTestCase):
             lambda: ListenTogetherRoom.objects.filter(host=self.me, is_live=True).exists())()
         self.assertTrue(live)
         await comm.disconnect()
+
+
+class AudioRoomAdsTests(TransactionTestCase):
+    def test_page_carries_live_rooms_ads_and_no_listeners_panel(self):
+        import json
+        import tempfile
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.test import Client
+
+        from backend.ads_app.models import Advertisement
+
+        # 1x1 PNG
+        png = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89'
+               b'\x00\x00\x00\rIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xa7\x9a\xa0\xa0\x00\x00\x00\x00IEND\xaeB`\x82')
+        with override_settings(MEDIA_ROOT=tempfile.mkdtemp()):
+            self._run(png, json, Client, Advertisement, SimpleUploadedFile)
+
+    def _run(self, png, json, Client, Advertisement, SimpleUploadedFile):
+        Advertisement.objects.create(
+            title='Promo', image=SimpleUploadedFile('x.png', png, 'image/png'), is_active=True,
+            external_url='https://example.com', show_on_all_pages=False, placements=['LIVE_ROOMS'],
+        )
+        Advertisement.objects.create(
+            title='Other page only', image=SimpleUploadedFile('y.png', png, 'image/png'), is_active=True,
+            show_on_all_pages=False, placements=['HOME'],
+        )
+        host = UserAccount.objects.create(username='adhost', email='ad@example.com')
+        AudioRoom.objects.create(host=host, is_live=True)
+        c = Client()
+        c.force_login(host)
+        html = c.get('/live-rooms/audio/adhost/').content.decode()
+        self.assertIn('id="thAudioAdSlot"', html)
+        self.assertNotIn('id="thAudioListeners"', html)
+        data = html.split('id="thAudioAdsData" type="application/json">')[1].split('</script>')[0]
+        titles = [a['title'] for a in json.loads(data)]
+        self.assertEqual(titles, ['Promo'])

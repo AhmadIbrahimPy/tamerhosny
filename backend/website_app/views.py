@@ -2936,7 +2936,16 @@ def audio_room_detail(request, username):
     if not is_host:
         own_audio_room = AudioRoom.objects.filter(host=request.user, is_live=True).first()
 
+    # Same placement as the song rooms' ad card (live_rooms view).
+    from backend.ads_app.models import Advertisement
+    from backend.ads_app.shared_utils.serializers import serialize_ad
+
+    room_ads = [
+        serialize_ad(ad, request) for ad in _ads_for(Advertisement.Placement.LIVE_ROOMS)[:8]
+    ]
+
     return render(request, 'website/pages/live_rooms_audio.html', {
+        'room_ads': room_ads,
         'room': room,
         'room_host': account,
         'is_host': is_host,

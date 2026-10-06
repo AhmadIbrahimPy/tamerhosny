@@ -144,6 +144,13 @@
   }
   .th-audio-panel-title span { font-weight: 700; opacity: .7; }
 
+  /* Ad card: empty (display:none) most of the time, shown briefly - same cadence as the song rooms. */
+  .th-room-ad-slot:empty { display: none; }
+  .th-room-ad-card { opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .4s ease; pointer-events: none; }
+  .th-room-ad-card.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .th-room-ad-card .th-ad-banner { border-radius: 18px; border: 1px solid rgba(255,255,255,.14); }
+  .th-room-ad-card .th-ad-banner img { max-height: 140px; }
+  @media (min-width: 900px) { .th-room-ad-card .th-ad-banner img { max-height: 200px; } }
   .th-audio-stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
   .th-audio-host-wrap { display: flex; justify-content: center; width: 100%; }
   .th-audio-seats {
@@ -279,7 +286,7 @@
   .th-audio-result button:disabled { opacity: .5; cursor: default; }
 
   /* ---------- comments + tap (same pieces as the song room) ---------- */
-  .th-audio-chat { flex-shrink: 0; margin: 0 14px 8px; padding: 12px; }
+  .th-audio-chat { flex-shrink: 0; margin: 12px 14px 8px; padding: 12px; }
   .th-audio-comment-list {
     max-height: 20dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
     margin-bottom: 8px; scrollbar-width: none;
@@ -438,10 +445,7 @@
       <div class="th-audio-stage" id="thAudioStage"></div>
     </section>
 
-    <section class="th-audio-panel">
-      <h3 class="th-audio-panel-title">{% translate "المستمعين" %} <span id="thAudioListenersCount">0</span></h3>
-      <div class="th-audio-listeners" id="thAudioListeners"></div>
-    </section>
+    <div class="th-room-ad-slot" id="thAudioAdSlot"></div>
   </div>
 
   {% if not is_host and prev_username or not is_host and next_username %}
@@ -517,6 +521,7 @@
   {% endif %}
 </div>
 
+{{ room_ads|json_script:"thAudioAdsData" }}
 <audio id="thAudioRoomRemoteAudioPool" style="display:none;"></audio>
 {% endif %}
 {% endblock %}
@@ -558,8 +563,6 @@
   var screenEl = document.getElementById('thAudioScreen');
   var requestsEl = document.getElementById('thAudioRequests');
   var myReqEl = document.getElementById('thAudioMyReq');
-  var listenersEl = document.getElementById('thAudioListeners');
-  var listenersCountEl = document.getElementById('thAudioListenersCount');
   var seatsInfoEl = document.getElementById('thAudioSeatsInfo');
   var prevUsername = {% if prev_username %}'{{ prev_username|escapejs }}'{% else %}null{% endif %};
   var nextUsername = {% if next_username %}'{{ next_username|escapejs }}'{% else %}null{% endif %};
@@ -655,12 +658,11 @@
 
   function renderAll() {
     stage.innerHTML = '';
-    var hostM = null, seated = {}, listeners = [];
+    var hostM = null, seated = {};
     Object.keys(members).forEach(function (uid) {
       var m = members[uid];
       if (m.slotIndex === 0) hostM = m;
       else if (m.slotIndex != null) seated[m.slotIndex] = m;
-      else listeners.push(m);
     });
 
     var hostWrap = el('div', 'th-audio-host-wrap');
@@ -679,21 +681,6 @@
       stage.appendChild(grid);
     }
     seatsInfoEl.textContent = (Object.keys(seated).length) + ' / ' + n;
-
-    listenersEl.innerHTML = '';
-    listenersCountEl.textContent = listeners.length;
-    if (!listeners.length) listenersEl.appendChild(el('div', 'th-audio-empty-note', T.noListeners));
-    listeners.forEach(function (m) {
-      var chip = el('div', 'th-audio-listener');
-      chip.appendChild(avatarEl(m, '', 'fb'));
-      chip.appendChild(el('span', '', m.username));
-      if (isHost) {
-        var x = el('button', '', '✕'); x.type = 'button'; x.title = T.kick;
-        x.addEventListener('click', function () { send({ action: 'kick', target: m.userId }); });
-        chip.appendChild(x);
-      }
-      listenersEl.appendChild(chip);
-    });
 
     if (viewerCountEl) viewerCountEl.textContent = Object.keys(members).length;
 
@@ -1269,6 +1256,45 @@
     if (dy < -70 && touchEdgeBottom && nextUsername) goToRoom(nextUsername, 'up');
     else if (dy > 70 && touchEdgeTop && prevUsername) goToRoom(prevUsername, 'down');
   }, { passive: true });
+
+  // ---------- ads: same briefly-shown card as the song rooms ----------
+  var adSlot = document.getElementById('thAudioAdSlot');
+  var adsDataEl = document.getElementById('thAudioAdsData');
+  var roomAds = adsDataEl ? JSON.parse(adsDataEl.textContent) : [];
+  var adTimers = [];
+
+  function scheduleAd(delay) {
+    adTimers.push(setTimeout(showAd, delay));
+  }
+
+  function showAd() {
+    if (left || !adSlot || !adSlot.isConnected || !roomAds.length) return;
+    var ad = roomAds[Math.floor(Math.random() * roomAds.length)];
+    var card = el('div', 'th-room-ad-card');
+    var a = el('a', 'th-ad-banner plain');
+    if (ad.target_url) {
+      a.href = ad.target_url;
+      if (ad.linked_kind === null && ad.external_url) { a.target = '_blank'; a.rel = 'noopener sponsored'; }
+    }
+    a.addEventListener('click', function () { if (window.thTrack) window.thTrack('EXTERNAL_CLICK', 'ad', ad.id, {}); });
+    var img = el('img'); img.src = ad.image_url; img.alt = ad.title || ''; img.loading = 'lazy';
+    a.appendChild(img);
+    a.appendChild(el('span', 'th-ad-tag', '{{ _("إعلان")|escapejs }}'));
+    card.appendChild(a);
+    adSlot.innerHTML = '';
+    adSlot.appendChild(card);
+    if (window.thTrack) window.thTrack('VIEW', 'ad', ad.id);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.add('show'); }); });
+    adTimers.push(setTimeout(function () {
+      card.classList.remove('show');
+      adTimers.push(setTimeout(function () {
+        if (adSlot.isConnected) adSlot.innerHTML = '';
+        scheduleAd(12000 + Math.random() * 8000);
+      }, 450));
+    }, 12000));
+  }
+  if (roomAds.length) scheduleAd(2500);
+  if (window.thOnTeardown) window.thOnTeardown(function () { adTimers.forEach(clearTimeout); });
 
   // ---------- viewers popup (like the song room's) ----------
   var viewersModal = document.getElementById('thAudioViewersModal');
