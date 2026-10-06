@@ -494,8 +494,15 @@
 <script>
 (function () {
   document.body.classList.add('th-audio-room-page');
+  // Navigating away (a boosted nav swaps the page without unloading it)
+  // must hang up: close the socket and peers, stop the mic. Without this
+  // the call stayed alive - mic open, still counted in the room - while
+  // you were in a song room.
   if (window.thOnTeardown) {
-    window.thOnTeardown(function () { document.body.classList.remove('th-audio-room-page'); });
+    window.thOnTeardown(function () {
+      document.body.classList.remove('th-audio-room-page');
+      endAndLeave(false);
+    });
   }
 
   var maxSlots = {{ room.max_participants }};
@@ -1033,6 +1040,9 @@
     // Can't be "في روم" two ways at once - following someone's song room
     // or hosting your own both end before joining a voice room.
     if (window.stopListeningWith) window.stopListeningWith();
+    // pause() only ends a hosted song room if the audio was actually
+    // playing; this makes it unconditional (same as thEndOwnRoom does).
+    if (window.sendGlobalListenerAction) window.sendGlobalListenerAction('stop');
 
     var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     socket = new WebSocket(protocol + window.location.host + '/ws/audio-room/' + hostUserId + '/');
@@ -1110,6 +1120,9 @@
       } else if (msg.type === 'seat_rejected') {
         myRequestExpiresAt = 0; renderMyRequest();
         toast(msg.reason === 'full' ? T.seatFull : (msg.reason === 'expired' ? T.expired : T.rejected));
+      } else if (msg.type === 'moved') {
+        toast('{% translate "دخلت روم تانية - اتقفلت الروم الصوتية" %}');
+        endAndLeave(false);
       } else if (msg.type === 'kicked') {
         toast(T.kicked);
         endAndLeave(true);

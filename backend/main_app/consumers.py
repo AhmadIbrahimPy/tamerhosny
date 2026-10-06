@@ -66,6 +66,28 @@ def broadcast_audio_room_closed(host_user_id):
     })
 
 
+def leave_audio_rooms(user):
+    """Being in a voice room and in a song room are mutually exclusive:
+    joining/creating a song room pulls this user out of any voice room
+    right now - hosting one ends it for everyone, being in one removes
+    the seat/listener row and tells their own browser to hang up."""
+    from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+    layer = get_channel_layer()
+
+    hosted = AudioRoom.objects.filter(host=user, is_live=True)
+    if hosted.exists():
+        hosted.update(is_live=False)
+        AudioRoomParticipant.objects.filter(room__host=user).delete()
+        broadcast_audio_room_closed(user.id)
+        async_to_sync(layer.group_send)(f'audio_room_{user.id}', {'type': 'room.ended'})
+
+    for host_id in list(AudioRoomParticipant.objects.filter(user=user).values_list('room__host_id', flat=True)):
+        AudioRoomParticipant.objects.filter(room__host_id=host_id, user=user).delete()
+        async_to_sync(layer.group_send)(f'audio_room_{host_id}', {'type': 'participant.left', 'user_id': user.id})
+        async_to_sync(layer.group_send)(f'audio_room_{host_id}', {'type': 'participant.moved', 'target_user_id': user.id})
+
+
 class SongListenerConsumer(WebsocketConsumer):
 
     def connect(self):
@@ -182,19 +204,14 @@ class SongListenerConsumer(WebsocketConsumer):
         if not explicit and not ListenTogetherRoom.objects.filter(host=user, is_live=True).exists():
             return
 
-        # Being a guest in someone else's voice room counts the same as
-        # hosting one: no song room around that playback.
-        if AudioRoomParticipant.objects.filter(user=user).exists():
-            return
-
-        # A user hosting a live voice room can still play music privately
-        # (this only gates the listen-together SONG room from opening
-        # around that playback, not playback itself) - otherwise a plain
-        # song play while on a call would silently spin up a second,
-        # public "room" of the other kind at the same time. See
-        # audio_room_start (website_app/views.py) for the mirror image
-        # of this same rule.
-        if AudioRoom.objects.filter(host=user, is_live=True).exists():
+        # Explicitly creating a song room (explicit=True) ends any voice
+        # room this user is in or hosting - one kind at a time. A plain
+        # play (already-live song room carrying on) never gets here with
+        # a voice room around, but the same guard stays as a safety net.
+        if explicit:
+            leave_audio_rooms(user)
+        elif (AudioRoomParticipant.objects.filter(user=user).exists()
+              or AudioRoom.objects.filter(host=user, is_live=True).exists()):
             return
 
         room, created = ListenTogetherRoom.objects.get_or_create(host=user)
@@ -649,6 +666,10 @@ class ListenTogetherConsumer(WebsocketConsumer):
             self.group_name, self.channel_name,
         )
         self.accept()
+
+        # Following someone's song room pulls you out of any voice room.
+        if not self.is_host and self.is_approved_follower:
+            leave_audio_rooms(user)
 
         if self.is_host:
             self._send_pending_join_requests()
@@ -1958,6 +1979,14 @@ class AudioRoomConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'participant_seated', 'userId': event['user_id'], 'slotIndex': event['slot_index'],
         }))
+
+    def participant_moved(self, event):
+        # Left for a song room elsewhere (leave_audio_rooms): hang up this
+        # browser's voice connection.
+        if event.get('target_user_id') != self.user.id:
+            return
+        self.send(text_data=json.dumps({'type': 'moved'}))
+        self.close()
 
     def participant_kicked(self, event):
         if event.get('target_user_id') != self.user.id:

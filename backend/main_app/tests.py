@@ -79,13 +79,13 @@ class SongRoomLifecycleTests(TransactionTestCase):
         self.assertFalse(await self._live())
         await c.disconnect()
 
-    async def test_voice_host_or_guest_blocks_song_room(self):
+    async def test_plain_play_while_in_a_voice_room_never_opens_a_song_room(self):
         host = await database_sync_to_async(UserAccount.objects.create)(username='vh', email='vh@example.com')
         room = await database_sync_to_async(AudioRoom.objects.create)(host=host, is_live=True)
         await database_sync_to_async(AudioRoomParticipant.objects.create)(
             room=room, user=self.user, slot_index=1)
         c = await self._connect(self.song1)
-        await self._send(c, action='start', open_room=True)
+        await self._send(c, action='start')
         self.assertFalse(await self._live())
         await c.disconnect()
 
@@ -371,3 +371,94 @@ class HomeLiveStripTests(TransactionTestCase):
         closed = await feed.receive_json_from(timeout=2)
         self.assertEqual((closed['type'], closed['host_user_id']), ('audio_room_closed', host.pk))
         await feed.disconnect()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class OneRoomAtATimeTests(TransactionTestCase):
+    """Song room and voice room never coexist: entering one pulls you out of the other."""
+
+    def setUp(self):
+        self.vhost = UserAccount.objects.create(username='vhost', email='vh5@example.com')
+        self.me = UserAccount.objects.create(username='me', email='me@example.com')
+        self.shost = UserAccount.objects.create(username='shost', email='sh@example.com')
+        self.song = Song.objects.create(title_ar='x')
+        self.room = AudioRoom.objects.create(host=self.vhost, is_live=True)
+        p = mock.patch('backend.main_app.tasks.generate_room_name_task.delay')
+        p.start()
+        self.addCleanup(p.stop)
+
+    async def _voice_join(self, user, host):
+        from backend.main_app.consumers import AudioRoomConsumer
+
+        c = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{host.pk}/')
+        c.scope['url_route'] = {'kwargs': {'host_user_id': str(host.pk)}}
+        c.scope['user'] = user
+        ok, _ = await c.connect()
+        self.assertTrue(ok)
+        while (await c.receive_json_from(timeout=2))['type'] != 'roster':
+            pass
+        return c
+
+    async def _follow_song_room(self, user, host):
+        from backend.main_app.consumers import ListenTogetherConsumer
+
+        c = WebsocketCommunicator(ListenTogetherConsumer.as_asgi(), f'/ws/listen-together/{host.pk}/')
+        c.scope['url_route'] = {'kwargs': {'host_user_id': str(host.pk)}}
+        c.scope['user'] = user
+        ok, _ = await c.connect()
+        self.assertTrue(ok)
+        return c
+
+    @database_sync_to_async
+    def _in_voice(self, user):
+        return AudioRoomParticipant.objects.filter(user=user).exists()
+
+    async def test_following_a_song_room_leaves_the_voice_room(self):
+        v = await self._voice_join(self.me, self.vhost)
+        self.assertTrue(await self._in_voice(self.me))
+        f = await self._follow_song_room(self.me, self.shost)
+
+        seen = []
+        while True:
+            try:
+                seen.append((await v.receive_json_from(timeout=1))['type'])
+            except Exception:
+                break
+            if 'moved' in seen:
+                break
+        self.assertIn('moved', seen)
+        self.assertFalse(await self._in_voice(self.me))
+        await f.disconnect()
+
+    async def test_hosting_voice_then_following_song_room_ends_the_voice_room(self):
+        v = await self._voice_join(self.vhost, self.vhost)
+        f = await self._follow_song_room(self.vhost, self.shost)
+        types = []
+        while True:
+            try:
+                types.append((await v.receive_json_from(timeout=1))['type'])
+            except Exception:
+                break
+            if 'room_ended' in types:
+                break
+        self.assertIn('room_ended', types)
+        live = await database_sync_to_async(lambda: AudioRoom.objects.get(pk=self.room.pk).is_live)()
+        self.assertFalse(live)
+        await f.disconnect()
+
+    async def test_creating_a_song_room_leaves_the_voice_room(self):
+        v = await self._voice_join(self.me, self.vhost)
+        comm = WebsocketCommunicator(SongListenerConsumer.as_asgi(), f'/ws/songs/{self.song.pk}/listening/')
+        comm.scope['url_route'] = {'kwargs': {'song_id': str(self.song.pk)}}
+        comm.scope['user'] = self.me
+        ok, _ = await comm.connect()
+        self.assertTrue(ok)
+        await comm.receive_json_from()
+        await comm.send_json_to({'action': 'start', 'open_room': True})
+        import asyncio
+        await asyncio.sleep(0.4)
+        self.assertFalse(await self._in_voice(self.me))
+        live = await database_sync_to_async(
+            lambda: ListenTogetherRoom.objects.filter(host=self.me, is_live=True).exists())()
+        self.assertTrue(live)
+        await comm.disconnect()
