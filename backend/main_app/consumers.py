@@ -1528,12 +1528,18 @@ class AudioRoomConsumer(WebsocketConsumer):
             'avatar': p.user.profile_image.url if p.user.profile_image else '',
             'slotIndex': p.slot_index,
             'isMuted': p.is_muted,
+            'hostMuted': p.is_host_muted,
         } for p in participants]
 
         self.send(text_data=json.dumps({
             'type': 'roster',
             'maxParticipants': room.max_participants,
-            'youAre': {'userId': user.id, 'slotIndex': self.slot_index},
+            'youAre': {
+                'userId': user.id, 'slotIndex': self.slot_index,
+                'hostMuted': (not self.is_host) and AudioRoomParticipant.objects.filter(
+                    room=room, user=user, is_host_muted=True,
+                ).exists(),
+            },
             'participants': roster,
         }))
 
@@ -1636,12 +1642,9 @@ class AudioRoomConsumer(WebsocketConsumer):
         elif action == 'get_stats' and self.is_host:
             self._send_stats()
         elif action == 'force_mute' and self.is_host:
-            # Host-only: asks one guest's own browser to mute itself (the
-            # mic track lives client-side, so the server can only relay).
-            async_to_sync(self.channel_layer.group_send)(self.group_name, {
-                'type': 'force.mute',
-                'target_user_id': data.get('target'),
-            })
+            self._force_mute(data.get('target'))
+        elif action == 'force_unmute' and self.is_host:
+            self._force_unmute(data.get('target'))
         elif action == 'update_settings' and self.is_host:
             self._update_settings(data)
         elif action == 'end_room' and self.is_host:
@@ -1881,18 +1884,70 @@ class AudioRoomConsumer(WebsocketConsumer):
             stats.setdefault(c['author_id'], {'userId': c['author_id'], 'taps': 0, 'comments': 0})['comments'] = c['n']
         self.send(text_data=json.dumps({'type': 'viewer_stats', 'stats': list(stats.values())}))
 
+    def _force_mute(self, target_id):
+        """Host mutes a seated guest AND locks it: the guest can't unmute
+        until the host gives the mic back (_force_unmute)."""
+        from backend.main_app.models import AudioRoomParticipant
+
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            return
+        updated = AudioRoomParticipant.objects.filter(
+            room__host_id=self.host_user_id, user_id=target_id, slot_index__isnull=False,
+        ).update(is_host_muted=True, is_muted=True)
+        if not updated:
+            return
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.muted', 'user_id': target_id, 'muted': True, 'host_muted': True,
+        })
+        # The mic track lives in their browser - they have to apply it.
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'force.mute', 'target_user_id': target_id,
+        })
+
+    def _force_unmute(self, target_id):
+        """Lifts the lock only: the guest is still muted until THEY choose
+        to open the mic again."""
+        from backend.main_app.models import AudioRoomParticipant
+
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            return
+        updated = AudioRoomParticipant.objects.filter(
+            room__host_id=self.host_user_id, user_id=target_id, is_host_muted=True,
+        ).update(is_host_muted=False)
+        if not updated:
+            return
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'participant.muted', 'user_id': target_id, 'muted': True, 'host_muted': False,
+        })
+        async_to_sync(self.channel_layer.group_send)(self.group_name, {
+            'type': 'force.unmute', 'target_user_id': target_id,
+        })
+
     def _set_muted(self, muted):
         from backend.main_app.models import AudioRoomParticipant
 
+        host_muted = False
         if not self.is_host:
-            AudioRoomParticipant.objects.filter(
+            row = AudioRoomParticipant.objects.filter(
                 room__host_id=self.host_user_id, user=self.user,
-            ).update(is_muted=muted)
+            ).first()
+            if row is not None and row.is_host_muted and not muted:
+                # Host-locked: enforced here, not just in the UI.
+                self.send(text_data=json.dumps({'type': 'mute_locked'}))
+                return
+            if row is not None:
+                AudioRoomParticipant.objects.filter(pk=row.pk).update(is_muted=muted)
+                host_muted = row.is_host_muted
 
         async_to_sync(self.channel_layer.group_send)(self.group_name, {
             'type': 'participant.muted',
             'user_id': self.user.id,
             'muted': muted,
+            'host_muted': host_muted,
         })
 
     def _create_comment(self, kind, text, author=None):
@@ -2055,6 +2110,11 @@ class AudioRoomConsumer(WebsocketConsumer):
             return
         self.send(text_data=json.dumps({'type': 'force_muted'}))
 
+    def force_unmute(self, event):
+        if event.get('target_user_id') != self.user.id:
+            return
+        self.send(text_data=json.dumps({'type': 'force_unmuted'}))
+
     def settings_updated(self, event):
         self.send(text_data=json.dumps({
             'type': 'settings_updated',
@@ -2079,6 +2139,7 @@ class AudioRoomConsumer(WebsocketConsumer):
     def participant_muted(self, event):
         self.send(text_data=json.dumps({
             'type': 'participant_muted', 'userId': event['user_id'], 'muted': event['muted'],
+            'hostMuted': event.get('host_muted', False),
         }))
 
     def webrtc_signal(self, event):

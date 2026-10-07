@@ -662,3 +662,99 @@ class HostRefreshGraceTests(TransactionTestCase):
         live, _, _ = await self._room()
         self.assertFalse(live)
         await h2.disconnect()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class HostMuteLockTests(TransactionTestCase):
+    """A host mute is a lock (guest can't unmute until the host gives the mic
+    back); a guest muting themselves is free to undo."""
+
+    def setUp(self):
+        self.host = UserAccount.objects.create(username='mhost', email='mh@example.com')
+        self.guest = UserAccount.objects.create(username='mguest', email='mg@example.com')
+        self.room = AudioRoom.objects.create(host=self.host, is_live=True, max_participants=4)
+        AudioRoomParticipant.objects.create(room=self.room, user=self.guest, slot_index=1)
+
+    async def _join(self, user):
+        from backend.main_app.consumers import AudioRoomConsumer
+
+        c = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{self.host.pk}/')
+        c.scope['url_route'] = {'kwargs': {'host_user_id': str(self.host.pk)}}
+        c.scope['user'] = user
+        ok, _ = await c.connect()
+        assert ok
+        while True:
+            m = await c.receive_json_from(timeout=2)
+            if m['type'] == 'roster':
+                return c, m
+
+    async def _until(self, comm, type_, timeout=2):
+        import asyncio
+
+        end = asyncio.get_event_loop().time() + timeout
+        while True:
+            left = end - asyncio.get_event_loop().time()
+            if left <= 0:
+                raise AssertionError(f'never received {type_}')
+            m = await comm.receive_json_from(timeout=left)
+            if m['type'] == type_:
+                return m
+
+    @database_sync_to_async
+    def _row(self):
+        p = AudioRoomParticipant.objects.get(room=self.room, user=self.guest)
+        return p.is_muted, p.is_host_muted
+
+    async def test_host_mute_locks_and_guest_cannot_unmute(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await h.send_json_to({'action': 'force_mute', 'target': self.guest.pk})
+        await self._until(g, 'force_muted')
+        seen = await self._until(h, 'participant_muted')
+        self.assertEqual((seen['userId'], seen['muted'], seen['hostMuted']), (self.guest.pk, True, True))
+        self.assertEqual(await self._row(), (True, True))
+
+        await g.send_json_to({'action': 'mute', 'muted': False})   # tries to unmute
+        await self._until(g, 'mute_locked')
+        self.assertEqual(await self._row(), (True, True))          # still muted + locked
+        await h.disconnect(); await g.disconnect()
+
+    async def test_roster_carries_the_lock_flag(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await h.send_json_to({'action': 'force_mute', 'target': self.guest.pk})
+        await self._until(g, 'force_muted')
+        await g.disconnect()
+        g2, roster = await self._join(self.guest)
+        # (disconnect removes the participant row in this app, so the join
+        # starts fresh; what matters is a still-connected guest keeps the lock)
+        self.assertIn('hostMuted', roster['youAre'])
+        await h.disconnect(); await g2.disconnect()
+
+    async def test_host_gives_the_mic_back_and_guest_can_unmute(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await h.send_json_to({'action': 'force_mute', 'target': self.guest.pk})
+        await self._until(g, 'force_muted')
+        await h.send_json_to({'action': 'force_unmute', 'target': self.guest.pk})
+        await self._until(g, 'force_unmuted')
+        self.assertEqual(await self._row(), (True, False))         # lock off, still muted until THEY choose
+        await g.send_json_to({'action': 'mute', 'muted': False})
+        got = await self._until(h, 'participant_muted')
+        while got['muted']:                                         # skip the earlier mute broadcasts
+            got = await self._until(h, 'participant_muted')
+        self.assertEqual((got['userId'], got['muted']), (self.guest.pk, False))
+        self.assertEqual(await self._row(), (False, False))
+        await h.disconnect(); await g.disconnect()
+
+    async def test_self_mute_is_not_a_lock(self):
+        h, _ = await self._join(self.host)
+        g, _ = await self._join(self.guest)
+        await g.send_json_to({'action': 'mute', 'muted': True})
+        await g.send_json_to({'action': 'mute', 'muted': False})
+        got = await self._until(h, 'participant_muted')
+        while got['muted']:
+            got = await self._until(h, 'participant_muted')
+        self.assertFalse(got['hostMuted'])
+        self.assertEqual(await self._row(), (False, False))
+        await h.disconnect(); await g.disconnect()

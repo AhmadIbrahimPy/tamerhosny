@@ -6581,3 +6581,19 @@ msgstr "No rooms live right now - be the first to start"
 #: frontend/website/pages/live_rooms_audio.html
 msgid "الهوست قطع الاتصال - مستنيينه يرجع..."
 msgstr "The host disconnected - waiting for them to come back..."
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "رجّع الميك"
+msgstr "Give mic back"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست كاتمك - مش هتقدر تفتح الميك لحد ما يرجّعه"
+msgstr "The host muted you - you can't unmute until they give the mic back"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست رجّعلك الميك - تقدر تفتحه"
+msgstr "The host gave your mic back - you can unmute now"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست كاتمه"
+msgstr "Muted by the host"

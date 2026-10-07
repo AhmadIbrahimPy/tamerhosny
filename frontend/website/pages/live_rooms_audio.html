@@ -359,6 +359,9 @@
   .th-audio-room-ctrl-btn.is-muted { background: #ff6b6b; }
   .th-audio-room-ctrl-btn.end { background: #ff3b3b; }
   .th-audio-room-ctrl-btn.hand { background: var(--accent); }
+  .th-audio-room-ctrl-btn { position: relative; }
+  .th-audio-room-ctrl-btn.is-locked { opacity: .6; }
+  .th-audio-lock { position: absolute; bottom: 8px; inset-inline-end: 8px; font-size: 12px; }
 
   /* ---------- web layout: main column + chat sidebar ---------- */
   @media (min-width: 900px) {
@@ -606,7 +609,10 @@
   var inviteIdFromUrl = new URLSearchParams(window.location.search).get('invite');
 
   var T = {
-    host: '{{ _("الهوست")|escapejs }}', onStage: '{{ _("على المسرح")|escapejs }}', block: '{{ _("امنع")|escapejs }}', mute: '{{ _("كتم")|escapejs }}', kick: '{{ _("طرد")|escapejs }}',
+    host: '{{ _("الهوست")|escapejs }}', unmuteGuest: '{{ _("رجّع الميك")|escapejs }}',
+    lockedMsg: '{{ _("الهوست كاتمك - مش هتقدر تفتح الميك لحد ما يرجّعه")|escapejs }}',
+    unlockedMsg: '{{ _("الهوست رجّعلك الميك - تقدر تفتحه")|escapejs }}',
+    hostMutedTitle: '{{ _("الهوست كاتمه")|escapejs }}', onStage: '{{ _("على المسرح")|escapejs }}', block: '{{ _("امنع")|escapejs }}', mute: '{{ _("كتم")|escapejs }}', kick: '{{ _("طرد")|escapejs }}',
     freeSeat: '{{ _("مقعد فاضي")|escapejs }}', invite: '{{ _("ادعو")|escapejs }}', request: '{{ _("اطلب")|escapejs }}',
     noListeners: '{{ _("مفيش مستمعين دلوقتي")|escapejs }}', sec: '{{ _("ث")|escapejs }}',
     wantsSeat: '{{ _("عايز يقعد على مقعد")|escapejs }}', invited: '{{ _("اتدعى - مستني الرد")|escapejs }}',
@@ -629,6 +635,7 @@
   var remoteAudioEls = {};
   var localStream = null;
   var isMuted = false;
+  var micLocked = false;   // the HOST muted me: I can't unmute until they give the mic back
   var socket = null;
   var left = false;
   var speaking = {};
@@ -665,15 +672,16 @@
     card.appendChild(el('span', 'th-audio-card-name', o.username));
     if (o.slotIndex === 0) card.appendChild(el('span', 'th-audio-card-host-badge', T.host));
     var mic = el('span', 'th-audio-card-mic' + (o.muted ? ' is-muted' : ''));
-    mic.appendChild(el('i', 'bi ' + (o.muted ? 'bi-mic-mute-fill' : 'bi-mic-fill')));
+    if (o.hostMuted) mic.title = T.hostMutedTitle;
+    mic.appendChild(el('i', 'bi ' + (o.hostMuted ? 'bi-lock-fill' : (o.muted ? 'bi-mic-mute-fill' : 'bi-mic-fill'))));
     card.appendChild(mic);
     if (isHost && o.slotIndex !== 0) {
       var actions = el('div', 'th-audio-card-actions');
-      if (!o.muted) {
-        var m = el('button', '', T.mute); m.type = 'button';
-        m.addEventListener('click', function () { send({ action: 'force_mute', target: o.userId }); });
-        actions.appendChild(m);
-      }
+      var m = el('button', '', o.hostMuted ? T.unmuteGuest : T.mute); m.type = 'button';
+      m.addEventListener('click', function () {
+        send({ action: o.hostMuted ? 'force_unmute' : 'force_mute', target: o.userId });
+      });
+      actions.appendChild(m);
       var k = el('button', 'danger', T.kick); k.type = 'button';
       k.addEventListener('click', function () { send({ action: 'kick', target: o.userId }); });
       actions.appendChild(k);
@@ -986,11 +994,17 @@
   // ---------- mic ----------
   function renderMuteBtn() {
     muteBtn.classList.toggle('is-muted', isMuted);
-    muteBtn.innerHTML = '<i class="bi ' + (isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i>';
+    muteBtn.classList.toggle('is-locked', micLocked);
+    muteBtn.title = micLocked ? T.hostMutedTitle : '';
+    muteBtn.innerHTML = '<i class="bi ' + (isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill') + '"></i>' +
+      (micLocked ? '<i class="bi bi-lock-fill th-audio-lock"></i>' : '');
   }
 
-  function setMemberMuted(userId, muted) {
-    if (members[userId]) members[userId].muted = muted;
+  function setMemberMuted(userId, muted, hostMuted) {
+    if (members[userId]) {
+      members[userId].muted = muted;
+      if (hostMuted !== undefined) members[userId].hostMuted = !!hostMuted;
+    }
     renderAll();
   }
 
@@ -999,7 +1013,7 @@
     if (localStream) localStream.getAudioTracks().forEach(function (t) { t.enabled = !muted; });
     renderMuteBtn();
     if (notify) send({ action: 'mute', muted: muted });
-    setMemberMuted(myUserId, muted);
+    setMemberMuted(myUserId, muted, micLocked);
   }
 
   // Acquires the mic (again, if it was denied before) and hands the track
@@ -1023,6 +1037,7 @@
 
   muteBtn.addEventListener('click', async function () {
     if (!isSeated()) return;
+    if (micLocked) { toast(T.lockedMsg); return; }
     if (isMuted) {
       if (!(await ensureLocalStream())) return;
       applyMuted(false, true);
@@ -1035,11 +1050,8 @@
   // approved): mic on, and connect to everyone not connected yet.
   async function becomeSpeaker() {
     var ok = await ensureLocalStream();
-    if (ok) {
-      applyMuted(false, true);
-    } else {
-      applyMuted(true, true);
-    }
+    // Still host-muted (e.g. a refresh while locked): stay muted.
+    applyMuted(micLocked || !ok, true);
     Object.keys(members).forEach(function (uid) {
       if (Number(uid) !== myUserId) makeOfferTo(Number(uid));
     });
@@ -1144,12 +1156,15 @@
 
       if (msg.type === 'roster') {
         mySlot = msg.youAre.slotIndex;
+        micLocked = !!msg.youAre.hostMuted;
+        if (micLocked) isMuted = true;
+        renderMuteBtn();
         members[myUserId] = {
           userId: myUserId, username: window.thUsername, avatar: window.thUserAvatar || '',
-          slotIndex: mySlot, muted: isMuted,
+          slotIndex: mySlot, muted: isMuted, hostMuted: micLocked,
         };
         msg.participants.forEach(function (p) {
-          members[p.userId] = { userId: p.userId, username: p.username, avatar: p.avatar, slotIndex: p.slotIndex, muted: p.isMuted };
+          members[p.userId] = { userId: p.userId, username: p.username, avatar: p.avatar, slotIndex: p.slotIndex, muted: p.isMuted, hostMuted: !!p.hostMuted };
         });
         renderAll();
         if (isSeated()) {
@@ -1189,9 +1204,21 @@
           renderAll();
         }
       } else if (msg.type === 'participant_muted') {
-        setMemberMuted(msg.userId, msg.muted);
+        setMemberMuted(msg.userId, msg.muted, msg.hostMuted);
       } else if (msg.type === 'force_muted') {
-        applyMuted(true, true);
+        micLocked = true;
+        applyMuted(true, false);   // server already knows (it set the lock)
+        toast(T.lockedMsg);
+      } else if (msg.type === 'force_unmuted') {
+        micLocked = false;
+        renderMuteBtn();
+        if (members[myUserId]) members[myUserId].hostMuted = false;
+        renderAll();
+        toast(T.unlockedMsg);
+      } else if (msg.type === 'mute_locked') {
+        micLocked = true;
+        applyMuted(true, false);
+        toast(T.lockedMsg);
       } else if (msg.type === 'signal') {
         handleSignal(msg.fromUserId, msg.data);
       } else if (msg.type === 'seat_requested') {

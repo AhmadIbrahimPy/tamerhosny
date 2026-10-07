@@ -1507,12 +1507,45 @@ generic "رومات اسمع معاه" copy.
   //      trying when a room-specific suggestion isn't there yet either
   //      (e.g. thLoadSuggestCards' own fetch hasn't resolved yet).
   function thComputeUpNextArgs(headerEl) {
-    if (window.thHostQueue && window.thHostQueue.length) {
-      return window.thHostQueue[0];
+    var args = thComputeUpNextArgsOnce(headerEl);
+    // Everything on offer has been played already: start over (still
+    // never the song that's playing right now) rather than leave "بعدها"
+    // empty.
+    if (!args && window.thUpNextPlayed && Object.keys(window.thUpNextPlayed).length) {
+      window.thUpNextPlayed = {};
+      window.thLastUpNextId = null;
+      args = thComputeUpNextArgsOnce(headerEl);
+    }
+    return args;
+  }
+
+  function thComputeUpNextArgsOnce(headerEl) {
+    // Songs already played from "بعدها" in this room (thPlayUpNext), plus
+    // whatever's playing right now, are never offered as "next" again -
+    // otherwise pressing play on "بعدها" left the very same song sitting
+    // there (it's still first in "شغّل كمان", or still the next-in-list
+    // after a not-yet-updated currentSongId).
+    var played = window.thUpNextPlayed || (window.thUpNextPlayed = {});
+    // base.html's currentSongId is a script-level `let` (not on window),
+    // so the room's own song - kept current by songChanged - is the
+    // reliable source for "what's playing now".
+    var activeRoom = rooms[activeIndex];
+    var currentId = (activeRoom && activeRoom.song && activeRoom.song.songId != null)
+      ? activeRoom.song.songId : window.currentSongId;
+    function skipped(id) {
+      if (id == null || id === '') return false;
+      return String(id) === String(currentId) || !!played[String(id)];
     }
 
-    var suggestRow = headerEl ? headerEl.querySelector('.th-room-suggest-cards .th-suggested-song-row') : null;
-    if (suggestRow) {
+    if (window.thHostQueue && window.thHostQueue.length) {
+      var queued = window.thHostQueue.filter(function (a) { return !skipped(a[9]); })[0];
+      if (queued) return queued;
+    }
+
+    var suggestRows = headerEl ? headerEl.querySelectorAll('.th-room-suggest-cards .th-suggested-song-row') : [];
+    for (var i = 0; i < suggestRows.length; i++) {
+      var suggestRow = suggestRows[i];
+      if (skipped(suggestRow.dataset.songId)) continue;
       return [
         suggestRow.dataset.audioUrl, null, suggestRow.dataset.title, '',
         suggestRow.dataset.image ? [suggestRow.dataset.image] : null,
@@ -1522,19 +1555,21 @@ generic "رومات اسمع معاه" copy.
     }
 
     var list = window.otherSongsList;
-    if (!list || !list.length || window.currentSongId == null || typeof window.pickAdjacentIndex !== 'function') {
-      return null;
+    var baseId = window.thLastUpNextId != null ? window.thLastUpNextId : currentId;
+    if (!list || !list.length || baseId == null) return null;
+    var baseIndex = list.findIndex(function (sg) { return sg.songId == baseId; });
+    if (baseIndex === -1) return null;
+    for (var step = 1; step < list.length; step++) {
+      var song = list[(baseIndex + step) % list.length];
+      if (!song || skipped(song.songId)) continue;
+      return [
+        song.url, null, song.title, '',
+        song.image ? [song.image] : null,
+        song.link || null, song.artist, song.album,
+        false, song.songId, song.albumLink, false,
+      ];
     }
-    var currentIndex = list.findIndex(function (s) { return s.songId == window.currentSongId; });
-    if (currentIndex === -1) return null;
-    var song = list[window.pickAdjacentIndex(list, currentIndex, 1)];
-    if (!song) return null;
-    return [
-      song.url, null, song.title, '',
-      song.image ? [song.image] : null,
-      song.link || null, song.artist, song.album,
-      false, song.songId, song.albumLink, false,
-    ];
+    return null;
   }
 
   // "بعدها" card - own room only, always showing something once
@@ -1664,8 +1699,19 @@ generic "رومات اسمع معاه" copy.
       false, nextArgs[9], nextArgs[10], false
     );
 
-    window.thHostQueue = [];
+    // This one is now playing: it leaves the queue and is never offered
+    // as "next" again, so "بعدها" moves on to the song after it (the rest
+    // of a queued batch stays queued, in order).
+    var playedId = String(nextArgs[9]);
+    var played = window.thUpNextPlayed || (window.thUpNextPlayed = {});
+    if (Object.keys(played).length > 60) { window.thUpNextPlayed = played = {}; }
+    played[playedId] = true;
+    window.thLastUpNextId = nextArgs[9];
+    window.thHostQueue = (window.thHostQueue || []).filter(function (a) { return String(a[9]) !== playedId; });
     thRenderUpNextCard(headerEl);
+    // Fresh "شغّل كمان" too, so the played song drops out of that list.
+    var strip = headerEl.querySelector('.th-room-suggest-strip');
+    if (strip) thLoadSuggestCards(strip);
   };
 
   var upBtn = null, downBtn = null;

@@ -465,6 +465,10 @@ class AudioRoomParticipant(models.Model):
 
     is_muted = models.BooleanField(default=False, verbose_name=_('مكتوم'))
 
+    # الهوست هو اللي كتمه: الضيف مايقدرش يفتح الميك بنفسه لحد ما الهوست
+    # يرجّعه (كتم الضيف لنفسه ملوش علاقة - ده بيفتحه براحته).
+    is_host_muted = models.BooleanField(default=False)
+
     joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الدخول'))
 
     class Meta:
