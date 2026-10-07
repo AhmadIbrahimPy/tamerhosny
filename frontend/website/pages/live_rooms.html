@@ -1330,7 +1330,15 @@ generic "رومات اسمع معاه" copy.
     if (window.thOnTeardown) {
       window.thOnTeardown(function () { document.removeEventListener('thRoomClosed', goToFeed); });
     }
-    setTimeout(goToFeed, 2000);
+    // The server-side end (HTTP, so it doesn't depend on a socket that may
+    // have gone stale) is what actually guarantees the room is closed -
+    // including when another tab/device is still listening, which used to
+    // keep it open and bounce "إنهاء" straight back into the room.
+    fetch('{% url "website_app:live-room-end" %}', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' },
+    }).then(function () { setTimeout(goToFeed, 250); }).catch(function () {});
+    setTimeout(goToFeed, 2500);
   };
 
   // "غرفتي" - shown on anyone ELSE's room slide. Leaves whatever's

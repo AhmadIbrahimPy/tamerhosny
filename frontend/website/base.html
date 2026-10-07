@@ -3090,7 +3090,10 @@
     // never opens one. Shared by every page that sends 'start'.
     window.thListenerPayload = function (action) {
       var payload = { action: action };
-      if (action === 'start' && (window.thCreatingRoom || window.thIsHostingRoom)) payload.open_room = true;
+      if (action === 'start') {
+        if (window.thCreatingRoom) payload.open_room = true;      // explicit "create a room"
+        else if (window.thIsHostingRoom) payload.keep_room = true; // still hosting (song switch)
+      }
       return payload;
     };
 

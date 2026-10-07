@@ -145,6 +145,11 @@ class ListenTogetherRoom(models.Model):
     # /live-rooms/ بيعتمد عليه مباشرة، مفيش لوحة ترتيب منفصلة.
     tap_score = models.PositiveIntegerField(default=0, verbose_name=_('نقاط التكبيس'))
 
+    # آخر مرة الهوست داس "إنهاء" صراحةً - لمدة قصيرة بعدها مفيش بلاي
+    # عادي (حتى من تاب تاني لسه فاكر إنه هوست) بيفتح الروم تاني؛ بس
+    # إنشاء روم جديد صريح بيفتحها وبيمسح ده.
+    ended_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإنشاء'))
 
     class Meta:

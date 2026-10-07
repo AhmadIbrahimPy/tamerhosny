@@ -120,6 +120,24 @@ def sweep_abandoned_audio_rooms():
         end_audio_room(host_id)
 
 
+# After an explicit "إنهاء" nothing but an explicit new room creation reopens
+# the song room for this long (a second tab still playing must not revive it).
+ROOM_END_COOLDOWN = timedelta(seconds=30)
+
+
+def end_listen_together_room(user):
+    """The authoritative "end my song room": every listening row this user
+    has (other tabs, other devices, stale leftovers) goes - the room used
+    to stay open as long as ANY of them survived, which made "إنهاء" look
+    like a refresh - then the room closes and everyone is told."""
+    from backend.main_app.models import CurrentSongListener, ListenTogetherRoom
+
+    async_to_sync(get_channel_layer().group_send)(f'listen_together_{user.id}', {'type': 'room.ended'})
+    CurrentSongListener.objects.filter(user=user).delete()
+    ListenTogetherRoom.objects.filter(host=user).update(ended_at=timezone.now())
+    SongListenerConsumer._maybe_close_room(user.id)
+
+
 class SongListenerConsumer(WebsocketConsumer):
 
     def connect(self):
@@ -157,7 +175,9 @@ class SongListenerConsumer(WebsocketConsumer):
             # open_room is only ever sent by the explicit "create a room"
             # flow (thStartRoomWithSong, live_rooms.html) - a plain song
             # play never opens a room by itself.
-            self._start_listening(open_room=bool(data.get('open_room')))
+            self._start_listening(
+                open_room=bool(data.get('open_room')), keep_room=bool(data.get('keep_room')),
+            )
         elif action == 'stop':
             self._stop_listening()
 
@@ -181,7 +201,7 @@ class SongListenerConsumer(WebsocketConsumer):
 
         return None, None
 
-    def _start_listening(self, open_room=False):
+    def _start_listening(self, open_room=False, keep_room=False):
         if not Song.objects.filter(pk=self.song_id).exists():
             return
 
@@ -196,7 +216,7 @@ class SongListenerConsumer(WebsocketConsumer):
         self._broadcast_live_status()
 
         if user is not None:
-            self._maybe_open_room(user, explicit=open_room)
+            self._maybe_open_room(user, explicit=open_room, keep=keep_room)
 
     def _stop_listening(self):
         user, session_key = self._identity()
@@ -226,20 +246,31 @@ class SongListenerConsumer(WebsocketConsumer):
     # =========================================================
 
     @staticmethod
-    def _maybe_open_room(user, explicit=False):
+    def _maybe_open_room(user, explicit=False, keep=False):
         from backend.main_app.models import AudioRoom, AudioRoomParticipant, ListenTogetherRoom
         from backend.main_app.tasks import generate_room_name_task
 
-        # Playing a song never creates a room on its own - only the
-        # explicit create flow (explicit=True) does. A room that's
-        # already live just carries on across song switches.
-        if not explicit and not ListenTogetherRoom.objects.filter(host=user, is_live=True).exists():
-            return
+        # explicit  = the create-a-room flow: always opens (and ends any
+        #             voice room this user is in).
+        # keep      = this browser still believes it is hosting (a song
+        #             switch tore the old socket down, closing the room,
+        #             before the new one's 'start' landed): reopens it,
+        #             unless the host just ended it on purpose.
+        # neither   = a plain play: only ever carries on a room that is
+        #             already live, never opens one.
+        if not explicit:
+            ended_recently = ListenTogetherRoom.objects.filter(
+                host=user, ended_at__gt=timezone.now() - ROOM_END_COOLDOWN,
+            ).exists()
+            if ended_recently:
+                return
+            is_live = ListenTogetherRoom.objects.filter(host=user, is_live=True).exists()
+            if not is_live and not keep:
+                return
 
-        # Explicitly creating a song room (explicit=True) ends any voice
-        # room this user is in or hosting - one kind at a time. A plain
-        # play (already-live song room carrying on) never gets here with
-        # a voice room around, but the same guard stays as a safety net.
+        # Explicitly creating a song room ends any voice room this user is
+        # in or hosting - one kind at a time; the guard below is the same
+        # rule for the non-explicit paths.
         if explicit:
             leave_audio_rooms(user)
         elif (AudioRoomParticipant.objects.filter(user=user).exists()
@@ -247,6 +278,9 @@ class SongListenerConsumer(WebsocketConsumer):
             return
 
         room, created = ListenTogetherRoom.objects.get_or_create(host=user)
+        if explicit and room.ended_at is not None:
+            room.ended_at = None
+            room.save(update_fields=['ended_at'])
         if created:
             generate_room_name_task.delay(user.id)
 
@@ -855,9 +889,7 @@ class ListenTogetherConsumer(WebsocketConsumer):
         # cleanup itself still goes through the normal stop path (the
         # client sends this alongside, not instead of, stopping playback)
         # - this is purely an extra "and this one's for real" signal.
-        async_to_sync(self.channel_layer.group_send)(self.group_name, {
-            'type': 'room.ended',
-        })
+        end_listen_together_room(self.user)
 
     def _announce_follower_joined(self):
         from backend.main_app.models import ListenTogetherRoom, ListenTogetherViewer

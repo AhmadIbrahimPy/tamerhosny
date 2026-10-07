@@ -66,7 +66,7 @@ class SongRoomLifecycleTests(TransactionTestCase):
         import asyncio
         await asyncio.sleep(0.3)
         c2 = await self._connect(self.song2)
-        await self._send(c2, action='start', open_room=True)  # thIsHostingRoom still true
+        await self._send(c2, action='start', keep_room=True)  # thIsHostingRoom still true
         self.assertTrue(await self._live())
         await c2.disconnect()
 
@@ -758,3 +758,114 @@ class HostMuteLockTests(TransactionTestCase):
         self.assertFalse(got['hostMuted'])
         self.assertEqual(await self._row(), (False, False))
         await h.disconnect(); await g.disconnect()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class EndSongRoomTests(TransactionTestCase):
+    """"إنهاء" must really end the room - even when another tab/device is
+    still listening - and nothing but an explicit create may reopen it."""
+
+    def setUp(self):
+        self.user = UserAccount.objects.create(username='enderhost', email='eh@example.com')
+        self.song1 = Song.objects.create(title_ar='s1')
+        self.song2 = Song.objects.create(title_ar='s2')
+        p = mock.patch('backend.main_app.tasks.generate_room_name_task.delay')
+        p.start()
+        self.addCleanup(p.stop)
+
+    async def _song_socket(self, song):
+        comm = WebsocketCommunicator(SongListenerConsumer.as_asgi(), f'/ws/songs/{song.pk}/listening/')
+        comm.scope['url_route'] = {'kwargs': {'song_id': str(song.pk)}}
+        comm.scope['user'] = self.user
+        ok, _ = await comm.connect()
+        assert ok
+        await comm.receive_json_from()
+        return comm
+
+    @database_sync_to_async
+    def _live(self):
+        return ListenTogetherRoom.objects.filter(host=self.user, is_live=True).exists()
+
+    @database_sync_to_async
+    def _rows(self):
+        return CurrentSongListener.objects.filter(user=self.user).count()
+
+    async def _go(self, comm, wait=0.3, **data):
+        import asyncio
+
+        await comm.send_json_to(data)
+        await asyncio.sleep(wait)
+
+    async def test_http_end_closes_room_even_with_another_listener_alive(self):
+        from asgiref.sync import sync_to_async
+        from django.test import Client
+
+        c1 = await self._song_socket(self.song1)
+        await self._go(c1, action='start', open_room=True)
+        c2 = await self._song_socket(self.song2)               # "another tab" still listening
+        await self._go(c2, action='start')
+        self.assertTrue(await self._live())
+        self.assertEqual(await self._rows(), 2)
+
+        # a plain pause in one tab can't close it (the other is still listening)...
+        await self._go(c1, action='stop')
+        self.assertTrue(await self._live())
+
+        def end():
+            client = Client()
+            client.force_login(self.user)
+            return client.post('/live-rooms/end/')
+        resp = await sync_to_async(end)()
+        self.assertEqual(resp.status_code, 200)
+        # ...but "إنهاء" ends it regardless
+        self.assertFalse(await self._live())
+        self.assertEqual(await self._rows(), 0)
+        await c1.disconnect(); await c2.disconnect()
+
+    async def test_end_is_post_only_and_login_only(self):
+        from asgiref.sync import sync_to_async
+        from django.test import Client
+
+        def hit():
+            anon = Client().post('/live-rooms/end/')
+            logged = Client()
+            logged.force_login(self.user)
+            return anon.status_code, logged.get('/live-rooms/end/').status_code
+        anon_status, get_status = await sync_to_async(hit)()
+        self.assertIn(anon_status, (302, 401, 403))
+        self.assertEqual(get_status, 405)
+
+    async def test_ws_end_room_action_is_authoritative_too(self):
+        from backend.main_app.consumers import ListenTogetherConsumer
+
+        c1 = await self._song_socket(self.song1)
+        await self._go(c1, action='start', open_room=True)
+        c2 = await self._song_socket(self.song2)
+        await self._go(c2, action='start')
+        host = WebsocketCommunicator(ListenTogetherConsumer.as_asgi(), f'/ws/listen-together/{self.user.pk}/')
+        host.scope['url_route'] = {'kwargs': {'host_user_id': str(self.user.pk)}}
+        host.scope['user'] = self.user
+        ok, _ = await host.connect()
+        self.assertTrue(ok)
+        await self._go(host, action='end_room')
+        self.assertFalse(await self._live())
+        await c1.disconnect(); await c2.disconnect(); await host.disconnect()
+
+    async def test_hosting_flag_cannot_revive_an_ended_room_but_explicit_create_can(self):
+        from backend.main_app.consumers import end_listen_together_room
+
+        c = await self._song_socket(self.song1)
+        await self._go(c, action='start', open_room=True)
+        await database_sync_to_async(end_listen_together_room)(self.user)
+        self.assertFalse(await self._live())
+
+        # another tab that still thinks it's hosting (keep_room) or a plain play
+        await self._go(c, action='start', keep_room=True)
+        self.assertFalse(await self._live())
+        await self._go(c, action='start')
+        self.assertFalse(await self._live())
+
+        # deliberately creating a room again works at once
+        await self._go(c, action='start', open_room=True)
+        self.assertTrue(await self._live())
+        await c.disconnect()

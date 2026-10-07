@@ -3121,6 +3121,19 @@ def _suggested_song_groups_for_empty_feed(request):
     return [{'mood': '', 'label': _('🎵 جرب دول'), 'songs': flat}]
 
 
+@login_required
+@require_POST
+def live_room_end(request):
+    """"إنهاء" from the song-room slide: ends the caller's own song room
+    server-side. Sent over plain HTTP alongside the websocket messages so
+    it works even when a socket is stale/closed, and ends the room even if
+    another tab or device is still listening."""
+    from backend.main_app.consumers import end_listen_together_room
+
+    end_listen_together_room(request.user)
+    return JsonResponse({'status': 'success'})
+
+
 def live_rooms_trending_songs(request):
     """AJAX - the room song picker's (navbar search in "start a room" mode)
     default list while nothing is typed yet: the trending chart, best
