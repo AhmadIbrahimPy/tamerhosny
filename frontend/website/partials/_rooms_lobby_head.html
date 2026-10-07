@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="th-lobby-head">
+  <div>
+    <h1 class="th-lobby-title">{% translate "الرومات المباشرة" %}</h1>
+    <p class="th-lobby-sub">{% translate "انضم لروم شغالة أو ابدأ روم جديدة" %}</p>
+  </div>
+  <div class="th-lobby-seg" role="tablist">
+    <button type="button" class="th-lobby-seg-btn{% if active == 'songs' %} active{% endif %}" data-tab="songs"><i class="bi bi-music-note-beamed"></i> {% translate "روم أغاني" %}</button>
+    <button type="button" class="th-lobby-seg-btn{% if active == 'audio' %} active{% endif %}" data-tab="audio"><i class="bi bi-mic-fill"></i> {% translate "روم صوتية" %}{% if audio_rooms %} <span class="th-lobby-count">{{ audio_rooms|length }}</span>{% endif %}</button>
+  </div>
+</div>

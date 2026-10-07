@@ -9,6 +9,19 @@
     cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
   }
   .th-room-type-tab.active { background: var(--accent); color: #fff; }
+
+  /* The desktop tabs live inside .th-nav-links, which is hidden under
+     980px - on a phone there was no way to switch between song rooms and
+     voice rooms. This compact pill sits in the mobile toolbar instead,
+     only on /live-rooms/ pages (body.th-live-rooms-page). */
+  .th-room-tabs-mobile {
+    display: none; gap: 2px; padding: 3px; border-radius: 999px;
+    background: rgba(255,255,255,.1); margin-inline-end: 4px;
+  }
+  .th-room-tabs-mobile .th-room-type-tab { padding: 6px 12px; font-size: 12px; gap: 5px; }
+  @media (max-width: 980px) {
+    body.th-live-rooms-page .th-room-tabs-mobile, body.th-audio-room-page .th-room-tabs-mobile { display: flex; }
+  }
 </style>
 <form id="langSwitchForm" action="{% url 'set_language' %}" method="post" class="d-none">
   {% csrf_token %}
@@ -138,6 +151,10 @@
       {% endif %}
     </div>
     <div class="th-mobile-toggles">
+      <div class="th-room-tabs-mobile" id="thRoomTabsMobile">
+        <button type="button" class="th-room-type-tab active" data-tab="songs"><i class="bi bi-music-note-beamed"></i> {% translate "موسيقى" %}</button>
+        <button type="button" class="th-room-type-tab" data-tab="audio"><i class="bi bi-mic-fill"></i> {% translate "صوت" %}</button>
+      </div>
       <button type="button" class="th-search-btn-mobile" id="thSearchBtnMobile" onclick="thToggleSearch()" aria-label="{% translate 'بحث' %}">
         <i class="bi bi-search"></i>
       </button>

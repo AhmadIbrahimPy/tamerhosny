@@ -499,3 +499,23 @@ class AudioRoomAdsTests(TransactionTestCase):
         data = html.split('id="thAudioAdsData" type="application/json">')[1].split('</script>')[0]
         titles = [a['title'] for a in json.loads(data)]
         self.assertEqual(titles, ['Promo'])
+
+
+class LiveRoomsLobbyTests(TransactionTestCase):
+    def test_lobby_shows_voice_rooms_even_with_no_song_rooms_and_has_type_switch(self):
+        from django.test import Client
+
+        viewer = UserAccount.objects.create(username='lobbyviewer', email='lv@example.com')
+        AudioRoom.objects.create(
+            host=UserAccount.objects.create(username='voiceonly', email='vo@example.com'),
+            is_live=True, is_public=True, custom_name='سهرة',
+        )
+        c = Client()
+        c.force_login(viewer)
+        html = c.get('/live-rooms/').content.decode()
+        self.assertIn('th-lobby-seg-btn', html)
+        self.assertIn('data-tab="songs"', html)
+        self.assertIn('data-tab="audio"', html)
+        # the voice room is listed on the music lobby too, not "no one's listening"
+        self.assertIn('/live-rooms/audio/voiceonly/', html)
+        self.assertNotIn('مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد', html)

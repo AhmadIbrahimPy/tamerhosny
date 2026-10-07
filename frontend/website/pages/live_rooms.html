@@ -44,53 +44,92 @@ generic "رومات اسمع معاه" copy.
      nav (.th-nav, itself position:sticky) as a plain block. A fixed
      pill here used to float on TOP of the nav instead (same stacking
      context, no room reserved for it), covering it. */
-  .th-audio-hub {
-    height: 106dvh; overflow-y: auto; background: #000; color: #fff;
-    padding: 16px 16px 32px;
+  /* ---------- lobby: ONE scroll area, no nested boxes, no horizontal scrollers ---------- */
+  .th-lobby {
+    height: 106dvh; overflow-y: auto; background: #07080d; color: #fff;
+    padding: 28px 18px 48px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent;
   }
-  .th-audio-hub-inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-  .th-audio-hub-start-card {
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 20px; padding: 24px; text-align: center;
+  .th-lobby-inner { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  .th-lobby-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .th-lobby-title { font-size: 26px; font-weight: 900; margin: 0 0 4px; }
+  .th-lobby-sub { margin: 0; font-size: 13px; color: rgba(255,255,255,.6); }
+  .th-lobby-seg {
+    display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
   }
-  .th-audio-hub-start-card > i { font-size: 34px; color: var(--accent); }
-  .th-audio-hub-start-card > p { margin: 10px 0 16px; font-weight: 700; }
-  .th-audio-hub-size-picker { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .th-lobby-seg-btn {
+    display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+    padding: 9px 18px; border-radius: 999px; background: transparent; color: rgba(255,255,255,.75);
+    font-weight: 800; font-size: 13px; transition: background .15s, color .15s;
+  }
+  .th-lobby-seg-btn.active { background: var(--accent); color: #0b0c12; }
+  .th-lobby-count {
+    min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 900;
+    display: inline-flex; align-items: center; justify-content: center; background: #e5484d; color: #fff;
+  }
+  .th-lobby-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .th-lobby-section-title { font-size: 15px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .th-lobby-link { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 13px; cursor: pointer; padding: 0; }
+
+  .th-lobby-start {
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    padding: 22px 24px; border-radius: 22px; border: 1px solid rgba(255,255,255,.12);
+    background: linear-gradient(135deg, rgba(139,92,255,.22), rgba(31,111,224,.16));
+  }
+  .th-lobby-start.music { background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(229,72,77,.14)); }
+  .th-lobby-start-text { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1 1 260px; }
+  .th-lobby-start-icon {
+    width: 54px; height: 54px; border-radius: 16px; flex-shrink: 0; font-size: 24px;
+    display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12);
+  }
+  .th-lobby-start h2 { font-size: 17px; font-weight: 900; margin: 0 0 3px; }
+  .th-lobby-start p { margin: 0; font-size: 12.5px; color: rgba(255,255,255,.65); }
+  .th-lobby-start-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .th-lobby-btn {
+    display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; text-decoration: none;
+    padding: 11px 24px; border-radius: 999px; background: var(--accent); color: #0b0c12; font-weight: 900; font-size: 14px;
+  }
+  .th-lobby-btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.25); }
+  .th-lobby-btn.spinning i { animation: thSpin .7s linear infinite; }
+  .th-lobby-note { font-size: 12px; color: rgba(255,255,255,.55); }
+  .th-lobby-size { display: flex; align-items: center; gap: 8px; }
+  .th-lobby-size-label { font-size: 12px; color: rgba(255,255,255,.6); }
   .th-audio-hub-size-btn {
-    width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2);
+    width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25);
     background: transparent; color: #fff; font-weight: 800; cursor: pointer;
   }
-  .th-audio-hub-size-btn.active { background: var(--accent); border-color: var(--accent); }
-  .th-audio-hub-start-btn {
-    display: inline-block; border: none; background: var(--accent); color: #fff;
-    font-weight: 800; padding: 12px 28px; border-radius: 999px; cursor: pointer;
-    text-decoration: none; font-size: 14px;
+  .th-audio-hub-size-btn.active { background: var(--accent); border-color: var(--accent); color: #0b0c12; }
+  .th-audio-hub-resume-link { font-size: 12px; color: rgba(255,255,255,.7); text-decoration: underline; }
+
+  .th-lobby-rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .th-lobby-room {
+    display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; color: #fff; text-decoration: none;
+    background: linear-gradient(160deg, #1d2f6e, #0a1030); border: 1px solid rgba(255,255,255,.1);
+    transition: transform .15s, border-color .15s;
   }
-  .th-audio-hub-resume-link {
-    display: block; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,.6);
-    text-decoration: underline;
+  .th-lobby-room:hover { transform: translateY(-3px); border-color: rgba(255,255,255,.3); }
+  .th-lobby-room.is-full { opacity: .55; }
+  .th-lobby-room-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .th-lobby-room-tags { display: flex; align-items: center; gap: 6px; }
+  .th-lobby-tag {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 900; border-radius: 999px;
+    padding: 3px 9px; background: rgba(255,255,255,.18);
   }
-  .th-audio-hub-list-title { font-weight: 800; opacity: .8; font-size: 14px; }
-  .th-audio-hub-list { display: flex; flex-direction: column; gap: 10px; }
-  .th-audio-hub-room-card {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px; text-decoration: none; color: #fff;
+  .th-lobby-tag.kind { background: rgba(80,170,255,.4); }
+  .th-lobby-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: leaderboardLiveDotPulse 1.4s ease-in-out infinite; }
+  .th-lobby-room-host { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .th-lobby-room-host img, .th-audio-hub-room-fallback {
+    width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid rgba(255,255,255,.4);
+    display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.14); font-weight: 900;
   }
-  .th-audio-hub-room-card.is-full { opacity: .5; }
-  .th-audio-hub-room-card img, .th-audio-hub-room-fallback {
-    width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: #22263a; color: var(--accent); font-weight: 900;
+  .th-lobby-room-name { font-weight: 800; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-lobby-room-sub { font-size: 12px; color: rgba(255,255,255,.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-lobby-room-foot { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 700; color: rgba(255,255,255,.85); }
+  .th-lobby-room-foot i.bi-heart-fill { color: #ff8a94; }
+  .th-lobby-empty {
+    grid-column: 1 / -1; text-align: center; padding: 34px 16px; border-radius: 20px;
+    border: 1px dashed rgba(255,255,255,.18); color: rgba(255,255,255,.55); font-size: 13px;
   }
-  .th-audio-hub-room-meta { flex: 1; min-width: 0; }
-  .th-audio-hub-room-name { font-weight: 700; }
-  .th-audio-hub-room-count { font-size: 12px; opacity: .7; }
-  .th-audio-hub-room-full-badge {
-    font-size: 11px; font-weight: 700; background: rgba(255,255,255,.12);
-    padding: 4px 10px; border-radius: 999px;
-  }
-  .th-audio-hub-empty { text-align: center; opacity: .6; padding: 24px 0; }
 
   .th-room-feed-nav-arrows {
     /* Mobile scrolls the feed by hand (swipe) - the arrows are
@@ -627,15 +666,10 @@ generic "رومات اسمع معاه" copy.
   }
 
   .th-room-feed-empty {
-    /* Same 106dvh (mobile) / 92dvh (desktop, min-width:768px above) as
-       .th-room-feed/.th-room-slide above. */
+    /* The music lobby (see .th-lobby above for the scroll behaviour) -
+       same 106dvh (mobile) / 92dvh (desktop) as the feed it stands in for. */
     height: 106dvh;
-    /* Visible by default (not hidden-until-JS-says-so) - the same
-       "don't depend on the script having run" reasoning as
-       .th-room-feed:empty above. extra_js hides this instead, once it
-       actually has slides to show in its place. */
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 14px; color: var(--muted); text-align: center;
+    display: block; text-align: start; color: #fff;
   }
 
   /* Desktop/web gets the shorter 92dvh instead of mobile's 106dvh (see
@@ -643,16 +677,12 @@ generic "رومات اسمع معاه" copy.
      rules so it actually wins the cascade at this width, not just
      matched by source-order luck. */
   @media (min-width:768px){
-    .th-room-feed, .th-room-slide, .th-room-feed-empty { height: 92dvh; }
-  }
-
-  .th-room-feed-empty button {
-    padding: 10px 20px; border-radius: 999px; border: none; background: var(--accent);
-    color: #0b0c12; font-weight: 800; cursor: pointer;
+    .th-room-feed, .th-room-slide, .th-room-feed-empty, .th-lobby { height: 92dvh; }
   }
 
   /* Live-pushed "a room just opened" banner on the empty state - see
      the feedSocket wiring below (LiveRoomsFeedConsumer). */
+  .th-lobby > .th-room-new-banner { margin: 0 auto 18px; width: max-content; max-width: 100%; }
   .th-room-new-banner {
     display: flex; align-items: center; gap: 8px;
     padding: 10px 16px; border-radius: 999px; border: 1px solid var(--border);
@@ -819,45 +849,24 @@ generic "رومات اسمع معاه" copy.
      views.py) instead of one flat list - starting a room is choosing
      what to play, and "أنهي نوع أغاني عايز؟" is a much more actionable
      question than an undifferentiated pile of songs. */
-  .th-mood-groups {
-    display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: min(92vw, 460px);
-    max-height: 44vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
-    padding-block: 2px;
-  }
-  .th-mood-groups::-webkit-scrollbar { display: none; }
-  /* A flat 420px cap on every screen only ever showed ~3 cards before
-     forcing a horizontal scroll for the rest, even on a screen easily
-     wide enough to show more at once - scales up in steps instead
-     (min() with a vw share keeps it from ever touching the screen
-     edges on anything in between two breakpoints too). */
-  @media (min-width: 600px) {
-    .th-mood-groups { max-width: min(88vw, 640px); }
-  }
-  @media (min-width: 900px) {
-    .th-mood-groups { max-width: min(85vw, 820px); }
-  }
-  @media (min-width: 1200px) {
-    .th-mood-groups { max-width: 960px; }
-  }
+  .th-mood-groups { display: flex; flex-direction: column; gap: 26px; width: 100%; }
   .th-mood-group {
     animation: thMoodGroupIn .5s ease both;
     animation-delay: calc(var(--i, 0) * 80ms);
   }
-  .th-mood-group-head { padding-inline: 20px; margin-bottom: 8px; text-align: start; }
+  .th-mood-group-head { margin-bottom: 10px; text-align: start; }
   .th-mood-group-label { font-size: 13px; font-weight: 800; color: var(--text); }
   .th-mood-group-track {
-    display: flex; gap: 10px; overflow-x: auto; padding-inline: 20px;
-    scrollbar-width: none; -ms-overflow-style: none;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px;
   }
-  .th-mood-group-track::-webkit-scrollbar { display: none; }
   .th-mood-group-track .th-suggested-song-row {
-    flex-direction: column; align-items: flex-start; gap: 8px; width: 112px; flex-shrink: 0;
+    flex-direction: column; align-items: flex-start; gap: 8px; width: auto; min-width: 0;
     padding: 10px; position: relative;
     animation: thMoodCardIn .45s ease both;
     animation-delay: calc(var(--i, 0) * 60ms);
   }
-  .th-mood-group-track .th-suggested-song-cover-wrap { width: 100%; height: 100px; border-radius: 10px; }
-  .th-mood-group-track .th-suggested-song-info { width: 100%; }
+  .th-mood-group-track .th-suggested-song-cover-wrap { width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; }
+  .th-mood-group-track .th-suggested-song-info { width: 100%; padding-inline-end: 38px; min-height: 34px; }
   .th-mood-group-track .th-suggested-song-artist { display: none; }
   /* Centered on the cover image, not the row's own corner - the button
      is a sibling of .th-suggested-song-cover-wrap in the markup (not
@@ -868,9 +877,8 @@ generic "رومات اسمع معاه" copy.
      moving the button into the cover-wrap via JS (thLoadSuggestCards) -
      not worth doing here too for a fixed, known card size. */
   .th-mood-group-track .th-suggested-song-play {
-    position: absolute; top: 60px; inset-inline-start: 50%;
-    transform: translate(-50%, -50%);
-    width: 34px; height: 34px; font-size: 13px;
+    position: absolute; bottom: 10px; inset-inline-end: 10px; top: auto;
+    width: 32px; height: 32px; font-size: 13px;
     box-shadow: 0 6px 16px -4px rgba(0,0,0,.6);
   }
   @keyframes thMoodGroupIn {
@@ -909,65 +917,131 @@ generic "رومات اسمع معاه" copy.
 {% endblock %}
 
 {% block content %}
-<div id="thAudioRoomsHub" class="th-audio-hub" style="display:none;">
-  <div class="th-audio-hub-inner">
+<div id="thAudioRoomsHub" class="th-audio-hub th-lobby" style="display:none;">
+  <div class="th-lobby-inner">
+    {% include "website/partials/_rooms_lobby_head.html" with active="audio" %}
+
     {% if request.user.is_authenticated %}
-    <div class="th-audio-hub-start-card">
-      <i class="bi bi-people-fill"></i>
-      <p>{% if own_audio_room %}{% translate "عايز تبقوا كام في الروم؟" %}{% else %}{% translate "ابدأ روم صوتية جديدة" %}{% endif %}</p>
-      <div class="th-audio-hub-size-picker" id="thAudioHubSizePicker">
-        {% for size, label in audio_room_sizes %}
-        <button type="button" class="th-audio-hub-size-btn{% if own_audio_room.max_participants == size or not own_audio_room and size == 4 %} active{% endif %}" data-size="{{ size }}">{{ size }}</button>
-        {% endfor %}
+    <div class="th-lobby-start">
+      <div class="th-lobby-start-text">
+        <div class="th-lobby-start-icon"><i class="bi bi-mic-fill"></i></div>
+        <div>
+          <h2>{% if own_audio_room %}{% translate "عايز تبقوا كام في الروم؟" %}{% else %}{% translate "ابدأ روم صوتية جديدة" %}{% endif %}</h2>
+          <p>{% translate "اتكلموا مع بعض لايف - الهوست بيدعو الضيوف لمقاعد" %}</p>
+        </div>
       </div>
-      <form method="post" action="{% url 'website_app:audio-room-start' %}" id="thAudioHubStartForm">
+      <form method="post" action="{% url 'website_app:audio-room-start' %}" id="thAudioHubStartForm" class="th-lobby-start-actions">
         {% csrf_token %}
+        <div class="th-lobby-size">
+          <span class="th-lobby-size-label">{% translate "عدد المقاعد" %}</span>
+          <div id="thAudioHubSizePicker" style="display:flex; gap:6px;">
+            {% for size, label in audio_room_sizes %}
+            <button type="button" class="th-audio-hub-size-btn{% if own_audio_room.max_participants == size or not own_audio_room and size == 4 %} active{% endif %}" data-size="{{ size }}">{{ size }}</button>
+            {% endfor %}
+          </div>
+        </div>
         <input type="hidden" name="max_participants" id="thAudioHubSizeInput" value="{{ own_audio_room.max_participants|default:4 }}">
-        <button type="submit" class="th-audio-hub-start-btn">{% translate "ابدأ الروم" %}</button>
+        <button type="submit" class="th-lobby-btn"><i class="bi bi-broadcast"></i> {% translate "ابدأ الروم" %}</button>
+        {% if own_audio_room %}<a href="/live-rooms/audio/{{ request.user.username }}/" class="th-audio-hub-resume-link">{% translate "أو روح لروحك الشغالة دلوقتي" %}</a>{% endif %}
       </form>
-      {% if own_audio_room %}
-      <a href="/live-rooms/audio/{{ request.user.username }}/" class="th-audio-hub-resume-link">{% translate "أو روح لروحك الشغالة دلوقتي" %}</a>
-      {% endif %}
     </div>
     {% endif %}
 
-    <div class="th-audio-hub-list-title">{% translate "رومات صوتية شغالة دلوقتي" %}</div>
-    <div class="th-audio-hub-list" id="thAudioHubList">
-      {% for room in audio_rooms %}
-      <a href="/live-rooms/audio/{{ room.hostUsername }}/" class="th-audio-hub-room-card{% if room.isFull %} is-full{% endif %}">
-        {% if room.hostAvatar %}
-          <img src="{{ room.hostAvatar }}" alt="{{ room.hostUsername }}">
-        {% else %}
-          <span class="th-audio-hub-room-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>
-        {% endif %}
-        <div class="th-audio-hub-room-meta">
-          <div class="th-audio-hub-room-name">{{ room.hostUsername }}</div>
-          <div class="th-audio-hub-room-count"><i class="bi bi-person-fill"></i> {{ room.currentCount }}/{{ room.maxParticipants }}</div>
-        </div>
-        {% if room.isFull %}<span class="th-audio-hub-room-full-badge">{% translate "مكتملة" %}</span>{% endif %}
-      </a>
-      {% empty %}
-      <div class="th-audio-hub-empty">{% translate "مفيش رومات صوتية شغالة دلوقتي" %}</div>
-      {% endfor %}
-    </div>
+    <section>
+      <div class="th-lobby-section-head">
+        <h3 class="th-lobby-section-title"><span class="leaderboard-live-dot"></span> {% translate "رومات صوتية شغالة دلوقتي" %}</h3>
+      </div>
+      <div class="th-lobby-rooms" id="thAudioHubList">
+        {% for room in audio_rooms %}
+        <a href="/live-rooms/audio/{{ room.hostUsername }}/" class="th-lobby-room{% if room.isFull %} is-full{% endif %}">
+          <div class="th-lobby-room-top">
+            <div class="th-lobby-room-tags">
+              <span class="th-lobby-tag"><span class="dot"></span> {% translate "مباشر" %}</span>
+              <span class="th-lobby-tag kind"><i class="bi bi-mic-fill"></i> {% translate "صوت" %}</span>
+            </div>
+            {% if room.isFull %}<span class="th-lobby-tag">{% translate "مكتملة" %}</span>{% endif %}
+          </div>
+          <div class="th-lobby-room-host">
+            {% if room.hostAvatar %}<img src="{{ room.hostAvatar }}" alt="">{% else %}<span class="th-audio-hub-room-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>{% endif %}
+            <div style="min-width:0;">
+              <div class="th-lobby-room-name">{{ room.roomName }}</div>
+              <div class="th-lobby-room-sub">@{{ room.hostUsername }}</div>
+            </div>
+          </div>
+          <div class="th-lobby-room-foot"><span><i class="bi bi-people-fill"></i> {{ room.currentCount }}/{{ room.maxParticipants }}</span></div>
+        </a>
+        {% empty %}
+        <div class="th-lobby-empty">{% translate "مفيش رومات صوتية شغالة دلوقتي" %}</div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
 </div>
 
 <div id="thRoomFeed" class="th-room-feed"></div>
-<div id="thRoomFeedEmpty" class="th-room-feed-empty">
-  <div class="th-room-feed-empty-emoji">🎧</div>
-  <p>{% translate "مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد." %}</p>
-  {% if suggested_song_groups %}
-  <div class="th-mood-groups" id="thSuggestedSongGroups">
-    {% include "website/partials/_suggested_song_groups.html" %}
-  </div>
-  {% endif %}
-  <div style="display:flex; gap:8px;">
-    <button type="button" onclick="thRoomFeedCreateRoom()">{% translate "تصفح" %}</button>
+<div id="thRoomFeedEmpty" class="th-room-feed-empty th-lobby">
+  <div class="th-lobby-inner">
+    {% include "website/partials/_rooms_lobby_head.html" with active="songs" %}
+
+    {% if audio_rooms %}
+    <section>
+      <div class="th-lobby-section-head">
+        <h3 class="th-lobby-section-title"><span class="leaderboard-live-dot"></span> {% translate "رومات صوتية شغالة دلوقتي" %}</h3>
+        <button type="button" class="th-lobby-link" data-tab="audio">{% translate "عرض الكل" %}</button>
+      </div>
+      <div class="th-lobby-rooms">
+        {% for room in audio_rooms|slice:":4" %}
+        <a href="/live-rooms/audio/{{ room.hostUsername }}/" class="th-lobby-room{% if room.isFull %} is-full{% endif %}">
+          <div class="th-lobby-room-top">
+            <div class="th-lobby-room-tags">
+              <span class="th-lobby-tag"><span class="dot"></span> {% translate "مباشر" %}</span>
+              <span class="th-lobby-tag kind"><i class="bi bi-mic-fill"></i> {% translate "صوت" %}</span>
+            </div>
+          </div>
+          <div class="th-lobby-room-host">
+            {% if room.hostAvatar %}<img src="{{ room.hostAvatar }}" alt="">{% else %}<span class="th-audio-hub-room-fallback">{{ room.hostUsername|slice:":1"|upper }}</span>{% endif %}
+            <div style="min-width:0;">
+              <div class="th-lobby-room-name">{{ room.roomName }}</div>
+              <div class="th-lobby-room-sub">@{{ room.hostUsername }}</div>
+            </div>
+          </div>
+          <div class="th-lobby-room-foot"><span><i class="bi bi-people-fill"></i> {{ room.currentCount }}/{{ room.maxParticipants }}</span></div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <div class="th-lobby-start music">
+      <div class="th-lobby-start-text">
+        <div class="th-lobby-start-icon"><i class="bi bi-music-note-beamed"></i></div>
+        <div>
+          <h2>{% translate "ابدأ روم موسيقى" %}</h2>
+          <p>{% translate "اختار أغنية وشغّلها - هتبدأ بيها جروبك" %}</p>
+        </div>
+      </div>
+      <div class="th-lobby-start-actions">
+        <button type="button" class="th-lobby-btn" onclick="thRoomFeedCreateRoom()"><i class="bi bi-search"></i> {% translate "تصفح" %}</button>
+        {% if suggested_song_groups %}
+        <button type="button" class="th-lobby-btn ghost th-suggested-songs-refresh" onclick="thRefreshSuggestedSongGroups(this)" title="{% translate 'تحديث القائمة' %}">
+          <i class="bi bi-arrow-clockwise"></i> {% translate "تحديث" %}
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
     {% if suggested_song_groups %}
-    <button type="button" class="th-suggested-songs-refresh" onclick="thRefreshSuggestedSongGroups(this)" title="{% translate 'تحديث القائمة' %}">
-      <i class="bi bi-arrow-clockwise"></i> {% translate "تحديث" %}
-    </button>
+    <section>
+      <div class="th-lobby-section-head">
+        <h3 class="th-lobby-section-title">{% translate "اقتراحات عشان تبدأ بيها" %}</h3>
+        <span class="th-lobby-note">{% translate "مفيش رومات موسيقى شغالة دلوقتي" %}</span>
+      </div>
+      <div class="th-mood-groups" id="thSuggestedSongGroups">
+        {% include "website/partials/_suggested_song_groups.html" %}
+      </div>
+    </section>
+    {% else %}
+    <div class="th-lobby-empty">{% translate "مفيش رومات موسيقى شغالة دلوقتي" %}</div>
     {% endif %}
   </div>
 </div>
@@ -1018,28 +1092,30 @@ generic "رومات اسمع معاه" copy.
   // display on its container vs #thAudioRoomsHub.
   var typeTabs = document.getElementById('thRoomTypeTabs');
   var audioHub = document.getElementById('thAudioRoomsHub');
-  if (typeTabs && audioHub) {
+  if (audioHub) {
     // thRoomLoadingOverlay deliberately excluded - it's only ever shown
-    // by thPlaySuggestedSong's own async round-trip (see its own
-    // comment further down), not by tab switching. Clearing its inline
-    // display:none here (style.display = '') used to fall back to its
-    // CSS class's own `display:flex`, which made switching from audio
-    // back to the songs tab show it permanently stuck open even though
-    // nothing was actually loading.
-    var songPanels = [
-      document.getElementById('thRoomFeed'),
-      document.getElementById('thRoomFeedEmpty'),
-    ].filter(Boolean);
+    // by thPlaySuggestedSong's own async round-trip, not by tab switching.
+    var feedPanel = document.getElementById('thRoomFeed');
+    var emptyPanel = document.getElementById('thRoomFeedEmpty');
 
-    typeTabs.querySelectorAll('.th-room-type-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        var showAudio = tab.dataset.tab === 'audio';
-        typeTabs.querySelectorAll('.th-room-type-tab').forEach(function (t) {
-          t.classList.toggle('active', t === tab);
-        });
-        audioHub.style.display = showAudio ? 'block' : 'none';
-        songPanels.forEach(function (el) { el.style.display = showAudio ? 'none' : ''; });
+    // One switch for every control that picks the room type: the header
+    // tabs and the in-page segmented control / links (data-tab).
+    window.thSetRoomTab = function (tab) {
+      var showAudio = tab === 'audio';
+      document.querySelectorAll('.th-room-type-tab, .th-lobby-seg-btn').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.tab === tab);
       });
+      audioHub.style.display = showAudio ? 'block' : 'none';
+      // The song side shows the live feed when it has rooms, else the
+      // lobby - never both (the feed's own JS hides the lobby once it
+      // has slides; a blind display:'' here used to bring it back).
+      var hasSlides = feedPanel && feedPanel.children.length > 0;
+      if (feedPanel) feedPanel.style.display = showAudio ? 'none' : '';
+      if (emptyPanel) emptyPanel.style.display = (showAudio || hasSlides) ? 'none' : '';
+    };
+
+    document.querySelectorAll('.th-room-type-tab, .th-lobby-seg-btn, .th-lobby-link[data-tab]').forEach(function (tab) {
+      tab.addEventListener('click', function () { window.thSetRoomTab(tab.dataset.tab); });
     });
 
     var sizePicker = document.getElementById('thAudioHubSizePicker');

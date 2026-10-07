@@ -6541,3 +6541,35 @@ msgstr "Listed in the rooms list"
 #: frontend/website/pages/live_rooms_audio.html
 msgid "بالرابط بس"
 msgstr "Link only"
+
+#: frontend/website/pages/live_rooms.html
+msgid "الرومات المباشرة"
+msgstr "Live rooms"
+
+#: frontend/website/pages/live_rooms.html
+msgid "انضم لروم شغالة أو ابدأ روم جديدة"
+msgstr "Join a live room or start a new one"
+
+#: frontend/website/pages/live_rooms.html
+msgid "اتكلموا مع بعض لايف - الهوست بيدعو الضيوف لمقاعد"
+msgstr "Talk live - the host invites guests to seats"
+
+#: frontend/website/pages/live_rooms.html
+msgid "عدد المقاعد"
+msgstr "Seats"
+
+#: frontend/website/pages/live_rooms.html
+msgid "ابدأ روم موسيقى"
+msgstr "Start a music room"
+
+#: frontend/website/pages/live_rooms.html
+msgid "اختار أغنية وشغّلها - هتبدأ بيها جروبك"
+msgstr "Pick a song and play it - it starts your group"
+
+#: frontend/website/pages/live_rooms.html
+msgid "اقتراحات عشان تبدأ بيها"
+msgstr "Suggestions to start with"
+
+#: frontend/website/pages/live_rooms.html
+msgid "مفيش رومات موسيقى شغالة دلوقتي"
+msgstr "No music rooms live right now"
