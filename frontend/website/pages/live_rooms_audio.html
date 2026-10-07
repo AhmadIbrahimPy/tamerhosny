@@ -9,11 +9,10 @@
   body.th-audio-room-page #globalAudioPlayer,
   body.th-audio-room-page .th-mic-fab { display: none !important; }
 
-  /* Fixed + full viewport (not a plain 100dvh block inside the page):
-     the site header above #th-page-root used to push this screen's own
-     bottom edge below the fold, hiding the mic/leave controls entirely. */
+  /* Under the site header (not fixed over it) - same 106dvh (mobile, where
+     body zoom shrinks it) / 92dvh (desktop) as the other live-rooms pages. */
   .th-audio-room-screen {
-    position: fixed; inset: 0; z-index: 1100; overflow: hidden;
+    position: relative; height: 106dvh; overflow: hidden;
     background: #0b0b12; color: #fff;
     display: flex; flex-direction: column;
   }
@@ -361,6 +360,7 @@
   /* ---------- web layout: main column + chat sidebar ---------- */
   @media (min-width: 900px) {
     .th-audio-room-screen {
+      height: 92dvh;
       display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto minmax(0, 1fr) auto;
       column-gap: 20px; padding-inline: max(64px, calc((100vw - 1280px) / 2));
     }
@@ -388,6 +388,33 @@
     .th-audio-panel-title { font-size: 13px; }
     .th-audio-modal { align-items: center; }
     .th-audio-modal-card { border-radius: 24px; min-height: 320px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  }
+
+  /* ---------- phones: compact stage ---------- */
+  @media (max-width: 600px) {
+    .th-audio-body { padding: 6px 12px 8px; gap: 10px; }
+    .th-audio-panel { padding: 12px; border-radius: 18px; }
+    .th-audio-panel-title { margin-bottom: 10px; }
+    .th-audio-stage { gap: 10px; }
+    .th-audio-card.host { width: 132px; --av: 60px; padding: 14px 8px 10px; }
+    .th-audio-seats { gap: 8px; --seat-w: calc((100% - 16px) / 3); }
+    .th-audio-seats[data-seats], .th-audio-seats.many { --av: 44px; }
+    .th-audio-card, .th-audio-seat-empty { min-height: calc(var(--av, 44px) + 46px); border-radius: 14px; }
+    .th-audio-card { padding: 12px 6px 8px; gap: 4px; }
+    .th-audio-card-name { font-size: 11px; }
+    .th-audio-card-mic { width: 18px; height: 18px; font-size: 9px; top: 6px; inset-inline-end: 6px; }
+    .th-audio-card-host-badge { font-size: 8px; padding: 1px 6px; top: 6px; inset-inline-start: 6px; }
+    .th-audio-card-actions button { padding: 3px 8px; font-size: 10px; }
+    .th-audio-seat-empty { padding: 6px; gap: 2px; }
+    .th-audio-seat-empty i { font-size: 22px; }
+    .th-audio-seat-empty small { font-size: 10px; }
+    .th-audio-chat { margin: 0 12px 6px; padding: 10px; }
+    .th-audio-room-controls { margin-bottom: 8px; padding: 6px 14px; gap: 12px; }
+    .th-audio-room-ctrl-btn { width: 46px; height: 46px; font-size: 18px; }
+    .th-audio-room-header { padding-top: 8px; }
+    .th-room-slide-top { padding-top: 0; }
+    .th-room-slide-avatar, .th-room-slide-avatar-fallback { width: 36px; height: 36px; }
+    .th-room-slide-name { font-size: 18px; }
   }
 
   .th-audio-room-blocked {
@@ -1407,6 +1434,24 @@
       settingsModal.classList.remove('show');
     });
   }
+
+  // Header tabs (desktop) / compact pill (phones) switch room type from
+  // here too: leave this call and land on the matching live-rooms view.
+  function onTypeTabClick(e) {
+    var tab = e.currentTarget.dataset.tab;
+    if (tab === 'audio') return;
+    endAndLeave(false);
+    var url = '/live-rooms/';
+    if (window.thBoostedNavigate) { window.thBoostedNavigate(url); } else { window.location.href = url; }
+  }
+  var typeTabEls = document.querySelectorAll('.th-room-type-tab');
+  typeTabEls.forEach(function (t) {
+    t.classList.toggle('active', t.dataset.tab === 'audio');
+    t.addEventListener('click', onTypeTabClick);
+  });
+  if (window.thOnTeardown) window.thOnTeardown(function () {
+    typeTabEls.forEach(function (t) { t.removeEventListener('click', onTypeTabClick); });
+  });
 
   function leaveClicked() {
     if (isHost) send({ action: 'end_room' });
