@@ -131,7 +131,10 @@
   .th-audio-body {
     flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px 10px;
     display: flex; flex-direction: column; gap: 12px;
+    /* Still scrolls (wheel/touch), just without the visible side bar. */
+    scrollbar-width: none; -ms-overflow-style: none;
   }
+  .th-audio-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .th-audio-panel {
     background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
     border-radius: 22px; padding: 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -396,18 +399,20 @@
     .th-audio-panel { padding: 12px; border-radius: 18px; }
     .th-audio-panel-title { margin-bottom: 10px; }
     .th-audio-stage { gap: 10px; }
-    .th-audio-card.host { width: 132px; --av: 60px; padding: 14px 8px 10px; }
-    .th-audio-seats { gap: 8px; --seat-w: calc((100% - 16px) / 3); }
-    .th-audio-seats[data-seats], .th-audio-seats.many { --av: 44px; }
-    .th-audio-card, .th-audio-seat-empty { min-height: calc(var(--av, 44px) + 46px); border-radius: 14px; }
-    .th-audio-card { padding: 12px 6px 8px; gap: 4px; }
+    .th-audio-card.host { width: 112px; --av: 50px; padding: 12px 8px 8px; }
+    /* Four small squares per row, whatever the seat count. */
+    .th-audio-seats { gap: 6px; --seat-w: calc((100% - 18px) / 4); }
+    .th-audio-seats[data-seats], .th-audio-seats.many { --av: 34px; }
+    .th-audio-card, .th-audio-seat-empty { min-height: calc(var(--av, 34px) + 36px); border-radius: 12px; }
+    .th-audio-card { padding: 10px 4px 6px; gap: 3px; }
+    .th-audio-card-actions { flex-wrap: wrap; justify-content: center; gap: 4px; }
     .th-audio-card-name { font-size: 11px; }
-    .th-audio-card-mic { width: 18px; height: 18px; font-size: 9px; top: 6px; inset-inline-end: 6px; }
-    .th-audio-card-host-badge { font-size: 8px; padding: 1px 6px; top: 6px; inset-inline-start: 6px; }
+    .th-audio-card-mic { width: 16px; height: 16px; font-size: 8px; top: 4px; inset-inline-end: 4px; }
+    .th-audio-card-host-badge { font-size: 8px; padding: 1px 6px; top: 5px; inset-inline-start: 5px; }
     .th-audio-card-actions button { padding: 3px 8px; font-size: 10px; }
-    .th-audio-seat-empty { padding: 6px; gap: 2px; }
-    .th-audio-seat-empty i { font-size: 22px; }
-    .th-audio-seat-empty small { font-size: 10px; }
+    .th-audio-seat-empty { padding: 4px; gap: 1px; border-width: 1.5px; }
+    .th-audio-seat-empty i { font-size: 18px; }
+    .th-audio-seat-empty small { font-size: 9px; }
     .th-audio-chat { margin: 0 12px 6px; padding: 10px; }
     .th-audio-room-controls { margin-bottom: 8px; padding: 6px 14px; gap: 12px; }
     .th-audio-room-ctrl-btn { width: 46px; height: 46px; font-size: 18px; }
@@ -565,6 +570,10 @@
   if (window.thOnTeardown) {
     window.thOnTeardown(function () {
       document.body.classList.remove('th-audio-room-page');
+      // Navigating away deliberately ends a host's room; a page refresh
+      // goes through beforeunload instead (no end_room) and gets the
+      // server's reconnect grace period.
+      if (isHost && !left) send({ action: 'end_room' });
       endAndLeave(false);
     });
   }
@@ -606,7 +615,7 @@
     expired: '{{ _("الطلب أو الدعوة انتهت")|escapejs }}', kicked: '{{ _("الهوست أخرجك من الروم")|escapejs }}',
     gotSeat: '{{ _("بقيت على المسرح - الميك بتاعك شغال")|escapejs }}', onlyHost: '{{ _("الهوست بس اللي يقدر يدعو")|escapejs }}',
     micDenied: '{{ _("الميكروفون مش متاح - فعّل صلاحية المايك من إعدادات المتصفح")|escapejs }}',
-    live: '{{ _("لايف دلوقتي")|escapejs }}', cut: '{{ _("الاتصال اتقطع")|escapejs }}',
+    live: '{{ _("لايف دلوقتي")|escapejs }}', hostAway: '{{ _("الهوست قطع الاتصال - مستنيينه يرجع...")|escapejs }}', cut: '{{ _("الاتصال اتقطع")|escapejs }}',
     listenOnly: '{{ _("بتسمع بس - اضغط على مقعد فاضي عشان تطلب مقعد")|escapejs }}',
     noMic: '{{ _("الميكروفون مش متاح - هتقدر تسمع، وزرار الميك هيحاول يشغّله")|escapejs }}',
     inRoom: '{{ _("اللي في الروم")|escapejs }}', searchResults: '{{ _("نتايج البحث")|escapejs }}', noResults: '{{ _("مفيش نتايج")|escapejs }}', invitedBtn: '{{ _("اتبعت")|escapejs }}'
@@ -1157,6 +1166,7 @@
         }
       } else if (msg.type === 'participant_joined') {
         members[msg.userId] = { userId: msg.userId, username: msg.username, avatar: msg.avatar, slotIndex: msg.slotIndex, muted: false };
+        if (msg.slotIndex === 0) statusEl.textContent = isSeated() ? T.live : T.listenOnly;
         renderAll();
         refreshInviteListIfOpen();
       } else if (msg.type === 'participant_left') {
@@ -1202,6 +1212,14 @@
       } else if (msg.type === 'seat_rejected') {
         myRequestExpiresAt = 0; renderMyRequest();
         toast(msg.reason === 'full' ? T.seatFull : (msg.reason === 'expired' ? T.expired : T.rejected));
+      } else if (msg.type === 'host_away') {
+        // Host's socket dropped (refresh/blip) - they have a short grace
+        // period to come back; drop the dead connection to them so the
+        // fresh offer they send on return starts clean.
+        Object.keys(members).forEach(function (uid) {
+          if (members[uid].slotIndex === 0) closePeer(Number(uid));
+        });
+        statusEl.textContent = T.hostAway;
       } else if (msg.type === 'moved') {
         toast('{{ _("دخلت روم تانية - اتقفلت الروم الصوتية")|escapejs }}');
         endAndLeave(false);
@@ -1440,6 +1458,7 @@
   function onTypeTabClick(e) {
     var tab = e.currentTarget.dataset.tab;
     if (tab === 'audio') return;
+    if (isHost) send({ action: 'end_room' });
     endAndLeave(false);
     var url = '/live-rooms/';
     if (window.thBoostedNavigate) { window.thBoostedNavigate(url); } else { window.location.href = url; }

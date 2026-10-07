@@ -139,3 +139,20 @@ def keep_seed_rooms_alive():
         )
         if not created:
             ListenTogetherTap.objects.filter(pk=tap.pk).update(count=F('count') + bump)
+
+
+@shared_task
+def end_audio_room_if_host_absent(host_user_id):
+    """Fires HOST_GRACE after a voice-room host's socket dropped: if they
+    haven't reconnected by now (host_left_at still set), the room ends."""
+    from django.utils import timezone
+
+    from backend.main_app.consumers import HOST_GRACE, end_audio_room
+    from backend.main_app.models import AudioRoom
+
+    room = AudioRoom.objects.filter(host_id=host_user_id, is_live=True).first()
+    if room is None or room.host_left_at is None:
+        return False
+    if timezone.now() - room.host_left_at < HOST_GRACE:
+        return False
+    return end_audio_room(host_user_id)

@@ -575,3 +575,90 @@ class TrendingSuggestionTests(TransactionTestCase):
         html = c.get('/live-rooms/').content.decode()
         self.assertNotIn('مفيش رومات موسيقى شغالة دلوقتي', html)
         self.assertNotIn('مفيش رومات شغالة دلوقتي - ابدأ إنت أول واحد', html)
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+class HostRefreshGraceTests(TransactionTestCase):
+    """A host refreshing the page must not end the room for everyone."""
+
+    def setUp(self):
+        self.host = UserAccount.objects.create(username='refresher', email='rf@example.com')
+        self.guest = UserAccount.objects.create(username='stayer', email='st@example.com')
+        self.room = AudioRoom.objects.create(host=self.host, is_live=True)
+        p = mock.patch('backend.main_app.tasks.end_audio_room_if_host_absent.apply_async')
+        self.celery = p.start()
+        self.addCleanup(p.stop)
+
+    async def _join(self, user):
+        from backend.main_app.consumers import AudioRoomConsumer
+
+        c = WebsocketCommunicator(AudioRoomConsumer.as_asgi(), f'/ws/audio-room/{self.host.pk}/')
+        c.scope['url_route'] = {'kwargs': {'host_user_id': str(self.host.pk)}}
+        c.scope['user'] = user
+        ok, _ = await c.connect()
+        assert ok
+        while (await c.receive_json_from(timeout=2))['type'] != 'roster':
+            pass
+        return c
+
+    @database_sync_to_async
+    def _room(self):
+        r = AudioRoom.objects.get(pk=self.room.pk)
+        return r.is_live, r.host_left_at, AudioRoomParticipant.objects.filter(room=r).count()
+
+    async def test_refresh_keeps_room_and_guests(self):
+        h = await self._join(self.host)
+        g = await self._join(self.guest)
+        await h.disconnect()                      # the refresh: socket drops
+        live, left_at, guests = await self._room()
+        self.assertTrue(live)
+        self.assertIsNotNone(left_at)
+        self.assertEqual(guests, 1)               # guest still seated/listening
+        # guest is told the host is away, not that the room ended
+        seen = []
+        while 'host_away' not in seen:
+            seen.append((await g.receive_json_from(timeout=2))['type'])
+        self.assertNotIn('room_ended', seen)
+        self.celery.assert_called_once()
+
+        h2 = await self._join(self.host)          # the reloaded page
+        live, left_at, _ = await self._room()
+        self.assertTrue(live)
+        self.assertIsNone(left_at)
+        await h2.disconnect()
+        await g.disconnect()
+
+    async def test_old_socket_closing_after_reconnect_does_not_start_countdown(self):
+        h_old = await self._join(self.host)
+        h_new = await self._join(self.host)       # reload connected before old one closed
+        await h_old.disconnect()
+        live, left_at, _ = await self._room()
+        self.assertTrue(live)
+        self.assertIsNone(left_at)
+        await h_new.disconnect()
+
+    async def test_room_ends_after_grace_and_explicit_end_is_immediate(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from backend.main_app.consumers import sweep_abandoned_audio_rooms
+
+        h = await self._join(self.host)
+        await h.disconnect()
+        await database_sync_to_async(
+            AudioRoom.objects.filter(pk=self.room.pk).update
+        )(host_left_at=timezone.now() - timedelta(seconds=25))
+        await database_sync_to_async(sweep_abandoned_audio_rooms)()
+        live, _, _ = await self._room()
+        self.assertFalse(live)
+
+        # explicit end (end button / navigating away) needs no grace
+        await database_sync_to_async(AudioRoom.objects.filter(pk=self.room.pk).update)(is_live=True, host_left_at=None)
+        h2 = await self._join(self.host)
+        await h2.send_json_to({'action': 'end_room'})
+        import asyncio
+        await asyncio.sleep(0.3)
+        live, _, _ = await self._room()
+        self.assertFalse(live)
+        await h2.disconnect()

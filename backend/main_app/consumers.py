@@ -36,6 +36,10 @@ STALE_LISTENER_CUTOFF = timedelta(minutes=5)
 # How long a voice-room seat request / invite stays answerable.
 SEAT_REQUEST_TTL = timedelta(seconds=60)
 
+# A voice-room host whose socket drops (page refresh, a network blip) has
+# this long to come back before the room is ended for everyone.
+HOST_GRACE = timedelta(seconds=20)
+
 
 def _audio_room_card(room):
     host = room.host
@@ -86,6 +90,34 @@ def leave_audio_rooms(user):
         AudioRoomParticipant.objects.filter(room__host_id=host_id, user=user).delete()
         async_to_sync(layer.group_send)(f'audio_room_{host_id}', {'type': 'participant.left', 'user_id': user.id})
         async_to_sync(layer.group_send)(f'audio_room_{host_id}', {'type': 'participant.moved', 'target_user_id': user.id})
+
+
+def end_audio_room(host_user_id):
+    """Ends a live voice room for everyone: row off, seats cleared, the
+    home-page card withdrawn, every connected browser told to hang up."""
+    from backend.main_app.models import AudioRoom, AudioRoomParticipant
+
+    ended = AudioRoom.objects.filter(host_id=host_user_id, is_live=True).update(
+        is_live=False, host_left_at=None,
+    )
+    AudioRoomParticipant.objects.filter(room__host_id=host_user_id).delete()
+    if ended:
+        broadcast_audio_room_closed(host_user_id)
+        async_to_sync(get_channel_layer().group_send)(f'audio_room_{host_user_id}', {'type': 'room.ended'})
+    return bool(ended)
+
+
+def sweep_abandoned_audio_rooms():
+    """Lazy safety net next to the Celery task (main_app.tasks): any room
+    whose host has been gone longer than HOST_GRACE ends now."""
+    from backend.main_app.models import AudioRoom
+
+    cutoff = timezone.now() - HOST_GRACE
+    stale = list(
+        AudioRoom.objects.filter(is_live=True, host_left_at__lt=cutoff).values_list('host_id', flat=True)
+    )
+    for host_id in stale:
+        end_audio_room(host_id)
 
 
 class SongListenerConsumer(WebsocketConsumer):
@@ -1424,6 +1456,8 @@ class AudioRoomConsumer(WebsocketConsumer):
 
         from backend.main_app.models import AudioRoom, AudioRoomParticipant
 
+        sweep_abandoned_audio_rooms()
+
         room = AudioRoom.objects.filter(host_id=host_user_id, is_live=True).first()
         if room is None:
             self.close()
@@ -1454,6 +1488,11 @@ class AudioRoomConsumer(WebsocketConsumer):
                 AudioRoomParticipant.objects.create(room=room, user=user, slot_index=None)
 
         self._joined = True
+
+        if self.is_host:
+            # Back (or first time): clears any grace countdown and makes
+            # THIS socket the host's current one.
+            AudioRoom.objects.filter(pk=room.pk).update(host_left_at=None, host_channel=self.channel_name)
 
         # Can't be in a voice room and hosting a song room at once (the
         # client's stopListeningWith() normally already ended it - this
@@ -1524,10 +1563,23 @@ class AudioRoomConsumer(WebsocketConsumer):
         from backend.main_app.models import AudioRoom, AudioRoomParticipant
 
         if self.is_host:
-            AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).update(is_live=False)
-            AudioRoomParticipant.objects.filter(room__host_id=self.host_user_id).delete()
-            broadcast_audio_room_closed(self.host_user_id)
-            async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'room.ended'})
+            # Not ended outright: a refresh or a blip would otherwise kill
+            # the room for everyone. Only counts if this is still the
+            # host's CURRENT socket (an old one closing after a newer one
+            # connected must not start the countdown).
+            room = AudioRoom.objects.filter(host_id=self.host_user_id, is_live=True).first()
+            if room is not None and room.host_channel == self.channel_name:
+                AudioRoom.objects.filter(pk=room.pk).update(host_left_at=timezone.now())
+                async_to_sync(self.channel_layer.group_send)(self.group_name, {'type': 'host.away'})
+                try:
+                    from backend.main_app.tasks import end_audio_room_if_host_absent
+
+                    end_audio_room_if_host_absent.apply_async(
+                        args=[self.host_user_id], countdown=int(HOST_GRACE.total_seconds()) + 3,
+                    )
+                except Exception:
+                    # No broker reachable - the lazy sweep ends it instead.
+                    pass
         else:
             AudioRoomParticipant.objects.filter(
                 room__host_id=self.host_user_id, user=self.user,
@@ -1979,6 +2031,10 @@ class AudioRoomConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'participant_seated', 'userId': event['user_id'], 'slotIndex': event['slot_index'],
         }))
+
+    def host_away(self, event):
+        if not self.is_host:
+            self.send(text_data=json.dumps({'type': 'host_away'}))
 
     def participant_moved(self, event):
         # Left for a song room elsewhere (leave_audio_rooms): hang up this

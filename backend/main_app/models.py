@@ -414,6 +414,13 @@ class AudioRoom(models.Model):
     # موجود، مش بيتشال، عشان أي إعدادات محفوظة تفضل لو رجع تاني).
     is_live = models.BooleanField(default=True, verbose_name=_('شغالة دلوقتي'))
 
+    # لما سوكيت الهوست يتقفل (ريفريش، أو النت قطع لحظة) الروم مبتتقفلش
+    # فوراً - بتستنى consumers.HOST_GRACE لو رجع. host_channel هو
+    # السوكيت الحالي بتاعه، فـ disconnect قديم وصل بعد reconnect جديد
+    # مبيعتبرش إنه خرج.
+    host_left_at = models.DateTimeField(null=True, blank=True)
+    host_channel = models.CharField(max_length=255, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الإنشاء'))
 
     class Meta:

@@ -6577,3 +6577,7 @@ msgstr "No music rooms live right now"
 #: frontend/website/pages/live_rooms.html
 msgid "مفيش رومات شغالة دلوقتي - ابدأ إنت أول واحد"
 msgstr "No rooms live right now - be the first to start"
+
+#: frontend/website/pages/live_rooms_audio.html
+msgid "الهوست قطع الاتصال - مستنيينه يرجع..."
+msgstr "The host disconnected - waiting for them to come back..."

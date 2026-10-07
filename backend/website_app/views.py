@@ -156,7 +156,10 @@ def home(request):
 
     # Public live voice rooms share the strip with song rooms - same
     # ranking (tap_score), told apart on the card by a kind chip.
+    from backend.main_app.consumers import sweep_abandoned_audio_rooms
     from backend.main_app.models import AudioRoom
+
+    sweep_abandoned_audio_rooms()
 
     for a_room in AudioRoom.objects.filter(is_live=True, is_public=True).select_related('host'):
         live_rooms.append({
@@ -2782,7 +2785,10 @@ def live_rooms(request, username=None):
 
     from django.db.models import Count as _Count
 
+    from backend.main_app.consumers import sweep_abandoned_audio_rooms
     from backend.main_app.models import AudioRoom
+
+    sweep_abandoned_audio_rooms()
 
     # is_public=True only - a private voice room has no join-request/
     # approval flow (unlike ListenTogetherRoom), so there's no way to
@@ -2845,6 +2851,9 @@ def audio_room_start(request):
     if max_participants not in valid_sizes:
         max_participants = 4
 
+    from backend.main_app.consumers import sweep_abandoned_audio_rooms
+
+    sweep_abandoned_audio_rooms()
     was_live = AudioRoom.objects.filter(host=request.user, is_live=True).exists()
 
     room, _created = AudioRoom.objects.update_or_create(
@@ -2904,8 +2913,10 @@ def audio_room_user_search(request):
 
 @login_required
 def audio_room_detail(request, username):
+    from backend.main_app.consumers import sweep_abandoned_audio_rooms
     from backend.main_app.models import AudioRoom, AudioRoomParticipant, UserAccount
 
+    sweep_abandoned_audio_rooms()
     account = get_object_or_404(UserAccount, username__iexact=username)
     room = AudioRoom.objects.filter(host=account, is_live=True).first()
 
