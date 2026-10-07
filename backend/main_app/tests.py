@@ -519,3 +519,59 @@ class LiveRoomsLobbyTests(TransactionTestCase):
         # the voice room is listed on the music lobby too, not "no one's listening"
         self.assertIn('/live-rooms/audio/voiceonly/', html)
         self.assertNotIn('مفيش حد بيسمع دلوقتي - يلا ابدأ انت أول واحد', html)
+
+
+class TrendingSuggestionTests(TransactionTestCase):
+    def setUp(self):
+        import tempfile
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        # The serializer opens the audio file, so it has to really exist.
+        self._media = override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+        self._media.enable()
+        self.addCleanup(self._media.disable)
+        self._upload = SimpleUploadedFile('x.mp3', b'ID3' + b'\x00' * 64, 'audio/mpeg')
+
+    def _song(self):
+        return Song.objects.create(title_ar='اتحامى فيا', audio_file=self._upload)
+
+    def test_single_trending_song_still_becomes_the_first_suggestion_group(self):
+        from types import SimpleNamespace
+
+        from django.test import RequestFactory
+
+        from backend.website_app import views
+
+        song = self._song()
+        with mock.patch('backend.main_app.shared_utils.trending.get_trending',
+                        return_value=[SimpleNamespace(song=song)]):
+            groups = views._suggested_song_groups_for_empty_feed(RequestFactory().get('/'))
+        self.assertEqual(groups[0]['mood'], 'TRENDING')
+        self.assertEqual([s['songId'] for s in groups[0]['songs']], [song.pk])
+
+    def test_trending_endpoint_for_the_room_song_picker(self):
+        from types import SimpleNamespace
+
+        from django.test import Client
+
+        song = self._song()
+        with mock.patch('backend.main_app.shared_utils.trending.get_trending',
+                        return_value=[SimpleNamespace(song=song)]):
+            data = Client().get('/live-rooms/trending-songs/').json()
+        self.assertEqual([s['title'] for s in data['songs']], ['اتحامى فيا'])
+        self.assertTrue(data['songs'][0]['url'])
+
+    def test_lobby_does_not_claim_no_rooms_when_voice_rooms_are_live(self):
+        from django.test import Client
+
+        viewer = UserAccount.objects.create(username='lv2', email='lv2@example.com')
+        AudioRoom.objects.create(
+            host=UserAccount.objects.create(username='vo2', email='vo2@example.com'),
+            is_live=True, is_public=True,
+        )
+        c = Client()
+        c.force_login(viewer)
+        html = c.get('/live-rooms/').content.decode()
+        self.assertNotIn('مفيش رومات موسيقى شغالة دلوقتي', html)
+        self.assertNotIn('مفيش رومات شغالة دلوقتي - ابدأ إنت أول واحد', html)

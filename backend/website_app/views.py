@@ -3076,8 +3076,11 @@ def _suggested_song_groups_for_empty_feed(request):
         rank.song for rank in get_trending(limit=SUGGESTED_SONGS_MOOD_POOL)
         if rank.song.audio_file
     ]
-    if len(trending_songs) >= SUGGESTED_SONGS_MIN_PER_MOOD:
-        songs = random.sample(trending_songs, min(len(trending_songs), SUGGESTED_SONGS_PER_MOOD))
+    if trending_songs:
+        # Chart order (rank 1 first), not a random sample, and shown even
+        # when the chart is short - "what's trending" is meaningful with
+        # one or two songs in a way a mood slider isn't.
+        songs = trending_songs[:SUGGESTED_SONGS_PER_MOOD]
         groups.append({
             'mood': 'TRENDING',
             'label': _('📈 ترند دلوقتي'),
@@ -3105,6 +3108,20 @@ def _suggested_song_groups_for_empty_feed(request):
     if not flat:
         return []
     return [{'mood': '', 'label': _('🎵 جرب دول'), 'songs': flat}]
+
+
+def live_rooms_trending_songs(request):
+    """AJAX - the room song picker's (navbar search in "start a room" mode)
+    default list while nothing is typed yet: the trending chart, best
+    first, so picking a song to open a room with is one tap."""
+    from backend.main_app.shared_utils.trending import get_trending
+
+    songs = [
+        _serialize_song_for_listen_together(rank.song)
+        for rank in get_trending(limit=SUGGESTED_SONGS_MOOD_POOL)
+        if rank.song.audio_file
+    ][:8]
+    return JsonResponse({'songs': songs})
 
 
 def live_rooms_suggested_song_groups(request):

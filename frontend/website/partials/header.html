@@ -21,6 +21,9 @@
   .th-room-tabs-mobile .th-room-type-tab { padding: 6px 12px; font-size: 12px; gap: 5px; }
   @media (max-width: 980px) {
     body.th-live-rooms-page .th-room-tabs-mobile, body.th-audio-room-page .th-room-tabs-mobile { display: flex; }
+    /* Rooms pages only: the toolbar is for switching room type there. */
+    body.th-live-rooms-page .th-search-btn-mobile, body.th-audio-room-page .th-search-btn-mobile,
+    body.th-live-rooms-page .th-push-btn-mobile, body.th-audio-room-page .th-push-btn-mobile { display: none !important; }
   }
 </style>
 <form id="langSwitchForm" action="{% url 'set_language' %}" method="post" class="d-none">
@@ -349,6 +352,7 @@
     } else {
       input.placeholder = window.thBrowsingForRoom ? ROOM_PLACEHOLDER : DEFAULT_PLACEHOLDER;
       overlay.classList.add('show');
+      if (window.thBrowsingForRoom && !input.value.trim()) showRoomSuggestions();
       setTimeout(function () { input.focus(); }, 30);
     }
   };
@@ -482,11 +486,36 @@
       .catch(function () {});
   }
 
+  // Picking a song to open a room with: until something is typed, the
+  // trending chart is the suggestion list (one tap starts the room).
+  var TRENDING_LABEL = '{% translate "📈 ترند دلوقتي" %}';
+  var trendingCache = null;
+  function showRoomSuggestions() {
+    resultsEl.innerHTML = '<div class="th-search-hint">' + ROOM_HINT + '</div>';
+    var render = function (songs) {
+      if (!window.thBrowsingForRoom || input.value.trim() || !songs.length) return;
+      var html = '<div class="th-search-group"><div class="th-search-group-label">' + TRENDING_LABEL + '</div>';
+      songs.forEach(function (sg) {
+        html += renderRow({
+          type: 'songs', title: sg.title, subtitle: sg.artist, image: sg.image, audioUrl: sg.url, url: sg.link,
+          artist: sg.artist, album: sg.album, albumLink: sg.albumLink, songId: sg.songId
+        }, true);
+      });
+      resultsEl.innerHTML = html + '</div>';
+    };
+    if (trendingCache) { render(trendingCache); return; }
+    fetch('/live-rooms/trending-songs/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { trendingCache = data.songs || []; render(trendingCache); })
+      .catch(function () {});
+  }
+
   input.addEventListener('input', function () {
     var query = input.value.trim();
     clearTimeout(debounceTimer);
     if (!query) {
-      resultsEl.innerHTML = '<div class="th-search-hint">' + (window.thBrowsingForRoom ? ROOM_HINT : DEFAULT_HINT) + '</div>';
+      if (window.thBrowsingForRoom) showRoomSuggestions();
+      else resultsEl.innerHTML = '<div class="th-search-hint">' + DEFAULT_HINT + '</div>';
       return;
     }
     debounceTimer = setTimeout(function () { runSearch(query); }, 280);
