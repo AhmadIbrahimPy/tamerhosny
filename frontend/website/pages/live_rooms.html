@@ -1113,6 +1113,28 @@ generic "رومات اسمع معاه" copy.
       if (emptyPanel) emptyPanel.style.display = (showAudio || hasSlides) ? 'none' : '';
     };
 
+    // The lobby has its own in-page music/voice switch, so the phone
+    // toolbar's copy of it (header.html) is hidden while a lobby shows -
+    // it stays for the full-screen feed, which has no in-page switch.
+    var lobbyObserver = new MutationObserver(function () { syncLobbyClass(); });
+    function syncLobbyClass() {
+      var shown = [audioHub, emptyPanel].some(function (el) {
+        return el && window.getComputedStyle(el).display !== 'none';
+      });
+      document.body.classList.toggle('th-rooms-lobby', shown);
+    }
+    [audioHub, emptyPanel].forEach(function (el) {
+      if (el) lobbyObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    });
+    if (feedPanel) lobbyObserver.observe(feedPanel, { childList: true });
+    syncLobbyClass();
+    if (window.thOnTeardown) {
+      window.thOnTeardown(function () {
+        lobbyObserver.disconnect();
+        document.body.classList.remove('th-rooms-lobby');
+      });
+    }
+
     document.querySelectorAll('.th-room-type-tab, .th-lobby-seg-btn, .th-lobby-link[data-tab]').forEach(function (tab) {
       tab.addEventListener('click', function () { window.thSetRoomTab(tab.dataset.tab); });
     });
